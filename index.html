@@ -7,7 +7,7 @@
 
 
 <meta name="theme-color" content="#090f20">
-<meta name="studio-design" content="delta-10">
+<meta name="studio-design" content="delta-11">
 <title>Grabador de voz Delta · Prueba Delta</title>
 <style>
 :root{color-scheme:dark;--bg:#090f20;--bg2:#172139;--card:#101a2e;--ink:#edf3ff;--mut:#a1b0cc;--line:#293852;--acc:#9cbaff;--acc-ink:#0a1836;--acc-soft:#1c3156;--rec:#ff8e9b;--rec-ink:#300c17;--note-bg:#292637;--note-ink:#ded1b8;--bar-l:65%}
@@ -327,6 +327,19 @@ body.delta-transcribing.delta-recording{padding-bottom:calc(400px + env(safe-are
 @media(prefers-reduced-motion:reduce){
  .transcription-spinner,.transcription-dock-bar.indeterminate i{animation:none}
 }
+
+/* Delta 11 · Acciones directas de audio y texto */
+.record-save-audio{margin:20px 0 12px;padding:14px;border-radius:16px;background:#173039;border:1px solid #365b60;display:grid;gap:9px}
+.record-save-audio .chk{margin:0;font-size:15px}
+.record-save-audio .chk small{font-size:13px;line-height:1.45;color:#cadadd}
+#recordDownloadAudio{min-height:54px;font-size:16px;background:#b9e9dc;color:#10362f;border:1px solid #b9e9dc;font-weight:750}
+#recordDownloadAudio:disabled{opacity:.52}
+#recordAudioHint{margin:0;font-size:13px;line-height:1.4}
+.editor-quick-actions{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.editor-quick-actions button{min-height:52px;font-size:15px}
+#share{background:#1d4143;color:#e0fff5;border:1px solid #517b79}
+#selAll{background:#243643;border:1px solid #46616b;color:#e9f7f5}
+@media(max-width:380px){.editor-quick-actions button{font-size:14px;padding:10px 6px}}
 </style>
 </head>
 <body data-view="grabacion">
@@ -359,6 +372,11 @@ body.delta-transcribing.delta-recording{padding-bottom:calc(400px + env(safe-are
       </div>
     </div>
     <p class="mark-help">«Marcar» señala un momento en la transcripción.</p>
+    <div class="record-save-audio">
+      <label class="chk" for="recordSaveAudio"><input type="checkbox" id="recordSaveAudio"><span><b>Conservar también el audio</b><small>Activalo antes de grabar. Tu voz queda guardada en Brave hasta que la descargues o borres.</small></span></label>
+      <button type="button" id="recordDownloadAudio" disabled>Guardar audio</button>
+      <p class="hint" id="recordAudioHint" role="status">Activá «Conservar también el audio» antes de grabar.</p>
+    </div>
     <div class="warn" id="keepOn" style="display:none;text-align:center;margin-top:12px">Mantené la pantalla encendida y no cambies de app: si no, la grabación puede cortarse.</div>
     <div class="bar" id="bar"><i id="barI"></i></div>
     <div id="status" role="status" aria-live="polite"></div>
@@ -488,11 +506,12 @@ body.delta-transcribing.delta-recording{padding-bottom:calc(400px + env(safe-are
       <label for="text">Texto de la nota <span class="opt">(editable)</span></label>
       <div class="editor-quick-actions">
         <button type="button" id="correctSelection" aria-haspopup="dialog">Corregir selección</button>
-        <button class="ghost" id="copyAll">Copiar texto</button>
+        <button type="button" class="ghost" id="copyAll">Copiar</button>
+        <button type="button" class="ghost" id="selAll">Seleccionar todo</button>
+        <button type="button" class="ghost" id="share">Compartir</button>
       </div>
       <details class="text-tools"><summary>Otras herramientas</summary>
         <div class="tools">
-          <button class="ghost" id="selAll">Seleccionar todo</button>
           <button class="ghost danger" id="clear" title="Podés deshacer el borrado">Borrar texto</button>
           <button class="ghost" id="undoClear" style="display:none">Deshacer borrado</button>
         </div>
@@ -579,7 +598,7 @@ body.delta-transcribing.delta-recording{padding-bottom:calc(400px + env(safe-are
       <div class="row" style="margin-top:6px">
         <button id="doc">Exportar a Word</button>
         <button id="txt">Descargar .txt</button>
-        <button id="share" style="display:none">Compartir</button>
+        
       </div>
     </div>
 </div></details>
@@ -591,7 +610,7 @@ body.delta-transcribing.delta-recording{padding-bottom:calc(400px + env(safe-are
 
 </main>
 
-<footer>DELTA 10 · VERSIÓN DE PRUEBA<br>Usá únicamente datos ficticios.</footer>
+<footer>DELTA 11 · VERSIÓN DE PRUEBA<br>Usá únicamente datos ficticios.</footer>
 </div>
 
 <aside class="studio-dock" aria-label="Acciones de la nota">
@@ -1364,10 +1383,30 @@ function makeDoc(){
 function download(file){ const a = document.createElement('a'); a.href = URL.createObjectURL(file); a.download = file.name; document.body.append(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href), 60000); }
 $('doc').onclick = () => $('text').value.trim() ? (pendingOk() && anonOk() && download(makeDoc())) : flash('No hay texto para exportar.');
 $('txt').onclick = () => $('text').value.trim() ? (pendingOk() && anonOk() && download(makeTxt())) : flash('No hay texto para exportar.');
-if (navigator.canShare && navigator.canShare({files:[new File(['x'],'x.txt',{type:'text/plain'})]})) {
-  $('share').style.display = '';
-  $('share').onclick = async () => { if (!$('text').value.trim() || !pendingOk() || !anonOk()) return; try { await navigator.share({files:[makeDoc()], title: $('title').value || 'Nota'}); } catch (e) {} };
+/* Compartir texto usa la hoja nativa de Android, no exige compatibilidad con archivos Word.
+   Si no existe Web Share, copia el texto y explica qué pasó. */
+async function shareNote() {
+  const text = $('text').value;
+  if (!text.trim()) return flash('No hay texto para compartir.');
+  if (!pendingOk() || !anonOk()) return;
+  const payload = {title: $('title').value.trim() || 'Nota', text};
+  if (typeof navigator.share === 'function') {
+    try { await navigator.share(payload); flash('Se cerró la ventana de compartir.'); }
+    catch (e) {
+      if (e && e.name === 'AbortError') return;
+      flash('No se pudo compartir (' + ((e && e.name) || 'error del navegador') + '). Podés usar Copiar.');
+    }
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(text);
+    flash('Brave no ofrece el menú Compartir aquí. El texto se copió para pegarlo en otra aplicación.');
+  } catch (e) {
+    $('text').focus(); $('text').select();
+    flash('Brave no ofrece el menú Compartir aquí. El texto está seleccionado para copiarlo manualmente.');
+  }
 }
+$('share').onclick = shareNote;
 
 /* ====================================================================
    Diccionario propio
@@ -2117,6 +2156,10 @@ function startAudioSave(stream){
 async function refreshAudioBox(){
   const box = $('audioBox'); let m = null, previous = null;
   try { [m, previous] = await Promise.all([audioGetMeta(), audioGetPrevious()]); } catch (e) {}
+  $('recordDownloadAudio').disabled = !m || audioBusy();
+  $('recordAudioHint').textContent = m
+    ? 'Audio guardado en Brave (' + fmtClock(m.ms) + '). Tocá «Guardar audio» para descargarlo.'
+    : ($('saveAudio').checked ? 'Se conservará el audio de la próxima grabación.' : 'Activá «Conservar también el audio» antes de grabar.');
   if (!m) { box.style.display = 'none'; return; }
   $('audioInfo').textContent = (m.complete ? '' : 'Quedó una grabación que no llegó a cerrarse (se cortó); se guardó lo grabado hasta ahí. ') + fmtClock(m.ms) + ' · ' + mb(m.bytes) + ' · ' + fmt(m.ts) + (m.downloaded ? ' · descarga solicitada' : '') + (previous ? ' · Podés recuperar el audio anterior.' : '');
   $('aDownSub').textContent = 'recomendado · .' + audioExt(m.mime);
@@ -2126,6 +2169,19 @@ async function refreshAudioBox(){
 const audioBtns = on => ['aDown', 'aMp3', 'aTx', 'aDel', 'aUndoAudio'].forEach(id => $(id).disabled = on);
 const audioBusy = () => recording || busy || outstanding > 0 || feeding;
 const audioMsg = t => $('audioMsg').textContent = t;
+$('recordDownloadAudio').onclick = () => {
+  if (audioBusy()) return flash('Esperá a que termine la grabación y la transcripción para guardar el audio.');
+  $('aDown').click();
+};
+$('recordSaveAudio').addEventListener('change', () => {
+  $('saveAudio').checked = $('recordSaveAudio').checked;
+  $('saveAudio').dispatchEvent(new Event('change', {bubbles:true}));
+  refreshAudioBox();
+});
+$('saveAudio').addEventListener('change', () => {
+  $('recordSaveAudio').checked = $('saveAudio').checked;
+  refreshAudioBox();
+});
 $('aDown').onclick = async () => {
   if (audioBusy()) return audioMsg('Esperá a que termine la grabación y la transcripción.');
   audioBtns(true);
@@ -2352,7 +2408,7 @@ function updWC(){
 }
 $('text').addEventListener('input', updWC);
 setInterval(updWC, 300);
-loadCfg(); updateModelHint(); loadDict(); loadPeople(); loadGenerator(); updateGeneratorUI(); renderList(); restoreDraft(); updWC(); refreshAudioBox();
+loadCfg(); $('recordSaveAudio').checked = $('saveAudio').checked; updateModelHint(); loadDict(); loadPeople(); loadGenerator(); updateGeneratorUI(); renderList(); restoreDraft(); updWC(); refreshAudioBox();
 </script>
 <script>
 /* Corrección explícita: una aparición, reglas futuras solo con consentimiento. */
