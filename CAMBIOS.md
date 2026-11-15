@@ -1,5 +1,18 @@
 # Registro de cambios — Grabador de voz Delta
 
+## Delta 03 · Preparación y diagnóstico del dictado local — 15 de noviembre de 2026
+
+**Objetivo:** evitar que el modo «Dictado del navegador» se active y se detenga sin información cuando falta el paquete de idioma o hay errores del navegador.
+
+- Antes de habilitar el modo se consulta al navegador si el idioma **es-AR** está disponible para reconocimiento **local** (si implementa la consulta).
+- Cuando el navegador ofrece instalar el idioma se muestra una acción explícita; **solo se descarga con confirmación del usuario**. Si no ofrece esa posibilidad se explica y se recomienda Whisper.
+- Se conserva `processLocally = true`; **no se habilita ningún servicio de dictado remoto**.
+- Los errores y cierres inmediatos informan qué ocurrió. Se evita intentar reiniciar indefinidamente tras una detención rápida.
+- Se agregan tres comprobaciones automáticas; no se modifica la grabación Whisper, la descarga TXT ni el almacenamiento de notas.
+
+**Validación:** revisar CI en GitHub Actions; falta prueba real en Brave Android. No se garantiza compatibilidad: depende de si el navegador implementa reconocimiento local y dispone del paquete es-AR.
+
+
 ## Delta 02 · Guardar nota en archivo TXT — 15 de noviembre de 2026
 
 **Objetivo:** que el botón principal «Guardar .txt» solicite la descarga de la transcripción como archivo de texto en el dispositivo (en la ubicación que use Brave para las descargas), sin enviar contenido a GitHub.
