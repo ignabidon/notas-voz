@@ -10,7 +10,7 @@
 - Los errores y cierres inmediatos informan qué ocurrió. Se evita intentar reiniciar indefinidamente tras una detención rápida.
 - Se agregan tres comprobaciones automáticas; no se modifica la grabación Whisper, la descarga TXT ni el almacenamiento de notas.
 
-**Validación:** revisar CI en GitHub Actions; falta prueba real en Brave Android. No se garantiza compatibilidad: depende de si el navegador implementa reconocimiento local y dispone del paquete es-AR.
+**Validación:** 22/22 pruebas automáticas aprobadas en GitHub Actions. **Prueba real comunicada por el usuario (Brave en Motorola Android, 15/11/2026): el dictado del navegador no funciona; Whisper sí funciona.** No se obtuvo código de error ni detalles de disponibilidad, por lo que la causa exacta no está demostrada. La compatibilidad del reconocimiento local es limitada en Android y no corresponde habilitar dictado remoto automáticamente. Mantener Whisper como opción recomendada; no borrar el código alternativo sin autorización.
 
 
 ## Delta 02 · Guardar nota en archivo TXT — 15 de noviembre de 2026
