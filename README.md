@@ -89,7 +89,37 @@ Referencias: [WhisperTextStreamer en Transformers.js 3.8.1](https://huggingface.
 4. Probá Pausar/Reanudar y cambiá entre Grabar/Texto/Ajustes. El mensaje debe seguir el estado; solo aparece barra de procesamiento si hay trabajo pendiente o preparación del modelo. No deben entrar palabras como «Grabando audio» en la nota ni en el TXT.
 5. En un navegador que admita dictado local, comprobá provisionales bajo el editor y frases finales sin duplicados. No insistir en esa vía si la opción permanece deshabilitada.
 
-Pruebas automáticas e interfaz en Firefox/Linux con estados simulados satisfactorias. La nueva explicación en el Motorola y con micrófono físico sigue pendiente; Whisper ya había sido confirmado por el usuario, pero eso no valida esta revisión de interfaz ni mide batería.
+Pruebas automáticas e interfaz en Firefox/Linux con estados simulados satisfactorias. Posteriormente el usuario informó que probó esa nueva versión, sin detallar dispositivo ni cada caso. Esa confirmación no valida por extensión el ajuste ergonómico posterior ni mide batería.
+
+## Lectura y uso con una mano (15/11/2026)
+
+Se conservan Grabar / Texto / Ajustes, los colores oscuros y los mismos comandos de grabación y edición. En **Ajustes → Lectura y comodidad → Tamaño del texto** elegí:
+
+| Tamaño | Transcripción aproximada | Uso |
+| --- | --- | --- |
+| Compacto | 16,2 px | Más contenido, sin reducir el editor por debajo de 16 px. |
+| Normal (predeterminado) | 18 px | Mantiene el tamaño previo del editor y mejora rótulos pequeños. |
+| Grande | 21,6 px | Aumenta también menús, ayudas y controles, con espacio para que los rótulos ocupen más de una línea. |
+
+El ajuste se aplica inmediatamente y se guarda en la configuración existente del navegador. No cambia el contenido, el tamaño de letra de TXT/Word ni el zoom del navegador. Si no se permite guardar ajustes se informa; el tamaño elegido sigue aplicado durante la sesión. No se deshabilitó el zoom por gestos.
+
+**Controles al alcance:** Grabar ahora está también en la barra inferior de Texto, junto a Anonimizar y Guardar .txt. Usa el mismo comando: si tenés «Empezar de cero al grabar» activado se aplica igual que antes; desactivalo si querés agregar a la nota. Durante la captura la barra mantiene Pausar/Reanudar y Detener, aunque cambies de pantalla o desplaces una nota larga. No se agregó otro grabador.
+
+La barra de Corregir selección / Copiar / Seleccionar todo / Compartir queda visible al desplazar la página dentro de Texto cuando hay suficiente espacio vertical. Se aumentan áreas táctiles principales a 48 px como mínimo y separaciones a 10–12 px. Los rótulos pueden ocupar dos líneas antes que quedar recortados.
+
+**Espacio y teclado:** el margen inferior se calcula con la altura real de la barra, incluido texto grande y avisos de Whisper. Así se puede desplazar el final del contenido por encima de los controles. En pantallas táctiles pequeñas, si el navegador informa una reducción compatible con teclado abierto, la barra se compacta y se ubica sobre el teclado: conserva acciones, navegación con rótulos, estado principal y cancelación si corresponde. Solo se omiten iconos/texto secundario del aviso durante esa situación. Los errores y los controles no se ocultan. Para dejar espacio a la escritura, las herramientas superiores dejan de ser flotantes con teclado o en horizontal de poca altura; siguen en su ubicación normal y se conserva la corrección contextual. El cuadro de corrección se limita al área visible y puede desplazarse por dentro.
+
+Se usa VisualViewport cuando está disponible y el navegador puede aceptar `interactive-widget=resizes-content`; si no, se conserva el comportamiento nativo y se aprovechan eventos de tamaño de ventana. No hay una API universal que confirme la presencia del teclado: la detección usa foco editable, reducción de altura y escala, evita confundir zoom por gestos y puede variar con pantalla dividida, teclados flotantes o versiones del navegador. Referencias: [VisualViewport](https://developer.mozilla.org/en-US/docs/Web/API/VisualViewport), [viewport e interactive-widget](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/meta/name/viewport).
+
+### Evaluación desde el celular
+
+1. Recargá Delta sin borrar datos. Probá Normal y Grande en Ajustes; volvé a Texto y confirmá legibilidad. Recargá otra vez y comprobá que se conserva la elección.
+2. Con una nota ficticia larga, desplazá tanto la página como el interior del editor. Comprobá que podés llegar al final y que Grabar, Anonimizar y Guardar .txt siguen accesibles abajo. Probá Copiar, Seleccionar todo y Corregir selección; no uses datos privados.
+3. Grabá una frase ficticia desde Grabar o desde Texto. Cambiá de vista y desplazá la página: Pausar/Reanudar y Detener deben seguir visibles y responder. Revisá antes la opción Empezar de cero si querés conservar el texto actual.
+4. Abrí el teclado tocando la transcripción. Revisá que se vean lo que escribís y los controles; corregí una palabra en el cuadro de corrección. Cerrá el teclado con el botón Atrás de Android y comprobá que se restaura la barra completa sin saltos ni pérdida de texto.
+5. Repetí en horizontal y con letra Grande. En computadora comprobá teclado físico, selección con mouse y navegación por Tab. Si hay un solapamiento, informá navegador, orientación, tamaño de letra y si el teclado estaba abierto; evitá capturas con notas reales.
+
+**Verificación disponible:** 79 pruebas Node; interfaz Firefox 153/Linux a 320/360/412/760/1365 px, tres tamaños, persistencia, notas largas, corrección y controles con captura simulada; horizontal 915×412. Teclado simulado en dos modos de redimensionado. No se probó el teclado físico/virtual real del Motorola ni se hizo una nueva grabación física con esta revisión.
 
 ## Organización
 

@@ -919,3 +919,40 @@ test('aviso único: permanece durante la captura sin trabajos pendientes y no si
   assert.equal(f(true,true,false,0,false,false,true,null,true).active,false);
   assert.match(html,/bar.hidden = !state.processing/);
 });
+
+const keyboardGeometry = new Function(html.match(/function keyboardLayoutState\([\s\S]*?\n\}/)[0]+';return keyboardLayoutState;')();
+test('ergonomía: teclado distingue reducción visual, layout redimensionado y zoom',()=>{
+  assert.deepEqual(keyboardGeometry(true,true,800,470,0,1,800),{open:true,inset:330});
+  assert.deepEqual(keyboardGeometry(true,true,470,470,0,1,800),{open:true,inset:0});
+  assert.deepEqual(keyboardGeometry(true,true,800,480,20,1,800),{open:true,inset:300});
+  assert.deepEqual(keyboardGeometry(true,false,800,470,0,1,800),{open:false,inset:0});
+  assert.deepEqual(keyboardGeometry(false,true,800,470,0,1,800),{open:false,inset:0});
+  assert.deepEqual(keyboardGeometry(true,true,800,400,0,2,800),{open:false,inset:0});
+  assert.deepEqual(keyboardGeometry(true,true,800,760,0,1,800),{open:false,inset:0});
+});
+test('ergonomía: tamaño se valida y solo modifica presentación, con fallback normal',()=>{
+  const root={dataset:{}},select={value:''};
+  const apply=new Function('document','$',html.match(/function applyTextSize\([\s\S]*?\n\}/)[0]+';return applyTextSize;')({documentElement:root},()=>select);
+  for(const value of ['compact','normal','large']){apply(value);assert.equal(root.dataset.textSize,value);assert.equal(select.value,value);}
+  for(const value of ['enorme',undefined,null,'<script>']){apply(value);assert.equal(root.dataset.textSize,'normal');}
+  assert.match(html,/textSize:\$\('textSize'\)\.value/);
+  assert.match(html,/applyTextSize\(c.textSize\)/);
+});
+test('ergonomía: barra de Texto conserva acceso a Grabar y controles de grabación existentes',()=>{
+  assert.match(html,/body\[data-view="transcripcion"\] #studioDockStart\{display:flex\}/);
+  assert.match(html,/startAction.addEventListener\('click',\(\)=>startButton.click\(\)\)/);
+  assert.match(html,/\$\('studioDockStop'\)\.addEventListener\('click',\(\)=>\$\('rec'\)\.click\(\)\)/);
+  assert.match(html,/\$\('studioDockPause'\)\.addEventListener\('click',\(\)=>\$\('pause'\)\.click\(\)\)/);
+  assert.match(html,/dock.getBoundingClientRect\(\).height \+ state.inset \+ 24/);
+  assert.match(html,/new ResizeObserver\(schedule\).observe\(dock\)/);
+  assert.match(html,/interactive-widget=resizes-content/);
+});
+test('ergonomía: guardar tamaño conserva configuración anterior y comunica fallo de persistencia',()=>{
+  const line=html.match(/const saveCfg = \(\) => \{[^\n]+/)[0];let saved=null;
+  const values={textSize:'large',model:'Xenova/whisper-small',accel:'cpu',mic:'raw'};
+  const make=storage=>new Function('localStorage','$','eng','CKEY',line+';return saveCfg;')(storage,id=>({value:values[id],checked:true}),()=> 'whisper','notasvoz.gamma.cfg.v1');
+  const save=make({setItem:(key,value)=>{saved={key,cfg:JSON.parse(value)};}});assert.equal(save(),true);
+  assert.equal(saved.key,'notasvoz.gamma.cfg.v1');assert.equal(saved.cfg.textSize,'large');assert.equal(saved.cfg.model,values.model);assert.equal(saved.cfg.accel,'cpu');assert.equal(saved.cfg.saveAudio,true);
+  assert.equal(make({setItem(){throw Error('storage blocked');}})(),false);
+  assert.match(html,/El tamaño se aplicó, pero este navegador no permitió guardar el ajuste/);
+});

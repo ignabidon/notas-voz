@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,interactive-widget=resizes-content">
 <meta name="color-scheme" content="dark">
 
 
@@ -342,6 +342,73 @@ body.delta-transcribing.delta-recording{padding-bottom:calc(400px + env(safe-are
 #share{background:#1d4143;color:#e0fff5;border:1px solid #517b79}
 #selAll{background:#243643;border:1px solid #46616b;color:#e9f7f5}
 @media(max-width:380px){.editor-quick-actions button{font-size:14px;padding:10px 6px}}
+/* Ergonomía progresiva: mismos controles, tamaños ajustables y espacio real de la barra. */
+:root{--text-scale:1;--dock-space:210px;--keyboard-inset:0px;--visual-height:100dvh}
+:root[data-text-size="compact"]{--text-scale:.9}
+:root[data-text-size="large"]{--text-scale:1.2}
+.settings-module-top h3{font-size:calc(18px * var(--text-scale))}
+.screen-title p,.c-rec .rec-caption{font-size:max(14px,calc(14px * var(--text-scale)))}
+#pause,#mark,#anon{font-size:max(15px,calc(15px * var(--text-scale)))}
+body{font-size:calc(16px * var(--text-scale))}
+body,body.delta-transcribing,body.delta-transcribing.delta-recording{padding-bottom:var(--dock-space)}
+html{scroll-padding-bottom:var(--dock-space)}
+textarea#text{font-size:max(16px,calc(18px * var(--text-scale)));line-height:1.7;scroll-padding-block:16px 76px}
+.n{font-size:calc(16px * var(--text-scale))}
+label,.chk,.record-save-audio .chk,.code-config label,summary,.settings-inner>summary,.settings-experimental>summary{font-size:max(15px,calc(16px * var(--text-scale)))}
+.hint,.warn,.note,.mark-help,.selection-help,.meta,.eng small,.chk small,summary small,.settings-module .hint,.settings-experimental>summary small,.record-save-audio .chk small,#recordAudioHint,#nativeInterim{font-size:max(14px,calc(14px * var(--text-scale)));line-height:1.55}
+button,input[type=text],input[type=number],textarea,select,.mono,.code-config input,.code-config select{font-size:max(16px,calc(16px * var(--text-scale)))}
+button,summary,.text-tools>summary,.c-rec>details>summary{min-height:48px}
+select,input[type=text],input[type=number]{min-height:48px}
+.editor-quick-actions{position:sticky;top:8px;z-index:3;background:#11232d;padding:8px;border:1px solid #395560;border-radius:16px;gap:12px}
+.editor-quick-actions button,.text-tools .tools button,.tools button,.studio-anon-secondary button,.chip,#recordDownloadAudio,#aTx,#quickCorrect{min-height:48px;font-size:max(15px,calc(15px * var(--text-scale)));white-space:normal;overflow-wrap:anywhere}
+.row,.tools,.side,.studio-anon-secondary,.dialog-actions{gap:12px}
+#studioDockCapture{gap:10px}
+.dock-actions,#studioDockCapture .dock-actions{gap:12px}
+#studioDockCapture .dock-actions{grid-template-columns:1fr 1.3fr}
+.dock-actions button,#studioDockStop{min-height:56px;font-size:max(15px,calc(15px * var(--text-scale)));white-space:normal}
+body[data-view="transcripcion"] #studioDockNotes{grid-template-columns:.85fr 1.35fr 1.1fr}
+body[data-view="transcripcion"] #studioDockStart{display:flex}
+body[data-view="transcripcion"] #studioDockNotes button{flex-direction:column;gap:4px;padding:8px 5px;line-height:1.25}
+.studio-dock .studio-nav{gap:10px}
+.studio-dock .studio-nav a{min-height:48px;font-size:max(14px,calc(14px * var(--text-scale)));line-height:1.3;overflow-wrap:anywhere}
+#transcriptionDockCancel{min-height:48px;font-size:max(14px,calc(14px * var(--text-scale)))}
+#transcriptionDockMessage,.transcription-dock-bottom,#transcriptionDockTime{font-size:max(14px,calc(14px * var(--text-scale)))}
+.transcription-dock-top strong{font-size:max(14px,calc(14px * var(--text-scale)))}
+#status,#audioInfo,#audioMsg{font-size:max(15px,calc(15px * var(--text-scale)))}
+#privacidad{scroll-margin-bottom:var(--dock-space)}
+#correctionDialog{max-height:calc(var(--visual-height) - 24px)}
+@media(max-width:760px),(pointer:coarse) and (max-width:1024px){
+ .studio-dock{bottom:var(--keyboard-inset)}
+ .c-edit{padding-inline:12px}
+ .editor-quick-actions{top:4px;padding:6px;gap:10px}
+ body.keyboard-open .studio-dock{padding-top:6px;padding-bottom:6px;border-radius:12px 12px 0 0;backdrop-filter:none}
+ body.keyboard-open .studio-dock .studio-nav{margin-top:4px;padding-top:4px;gap:8px}
+ body.keyboard-open .studio-dock .studio-nav a{flex-direction:row;padding:6px 2px}
+ body.keyboard-open .studio-dock .studio-nav svg{display:none}
+ body.keyboard-open #studioDockNotes button{flex-direction:row;gap:4px;min-height:48px}
+ body.keyboard-open #studioDockNotes svg{display:none}
+ body.keyboard-open #studioDockCapture .dock-actions button{min-height:48px}
+ body.keyboard-open .dock-capture-status{padding:0;font-size:14px}
+ body.keyboard-open .transcription-dock{padding:6px 9px;margin-bottom:6px}
+ body.keyboard-open #transcriptionDockMessage,body.keyboard-open .transcription-dock-bottom{display:none}
+ body.keyboard-open .transcription-dock-top{margin-bottom:4px}
+ body.keyboard-open .editor-quick-actions{position:static}
+ body.keyboard-open textarea#text{min-height:180px}
+ body.keyboard-open #correctionDialog{top:calc(var(--visual-top,0px) + 12px);bottom:auto;margin:0 auto}
+}
+
+@media(max-height:540px) and (pointer:coarse){
+ .studio-dock{padding-top:6px;padding-bottom:max(6px,env(safe-area-inset-bottom))}
+ #transcriptionDockMessage,.transcription-dock-bottom{display:none}
+ .transcription-dock{padding:6px 9px;margin-bottom:6px}
+ .studio-dock .studio-nav{margin-top:4px;padding-top:4px}
+ .studio-dock .studio-nav a{flex-direction:row;min-height:48px}
+ .studio-dock .studio-nav svg{display:none}
+ body[data-view="transcripcion"] #studioDockNotes button{flex-direction:row;min-height:48px}
+ #studioDockNotes svg{display:none}
+ #studioDockCapture .dock-actions button{min-height:48px}
+ .editor-quick-actions{position:static}
+}
 </style>
 </head>
 <body data-view="grabacion">
@@ -423,6 +490,11 @@ body.delta-transcribing.delta-recording{padding-bottom:calc(400px + env(safe-are
     <div class="body">
       <div class="screen-title"><span class="screen-overline">PERSONALIZACIÓN</span><h2>Ajustes</h2><p>Configurá Delta a tu manera.</p></div>
 
+      <section class="settings-module" id="settingsReading"><div class="settings-module-top"><span class="module-icon" aria-hidden="true">Aa</span><h3>Lectura y comodidad</h3></div>
+        <label for="textSize">Tamaño del texto</label>
+        <select id="textSize" aria-describedby="textSizeHelp"><option value="compact">Compacto</option><option value="normal" selected>Normal</option><option value="large">Grande</option></select>
+        <p class="hint" id="textSizeHelp">Ajusta la transcripción, los menús y los botones. Se conserva en este navegador; no cambia el texto de los archivos exportados.</p>
+      </section>
       <section class="settings-module" id="settingsQuality"><div class="settings-module-top"><span class="module-icon">✦</span><h3>Calidad de transcripción</h3></div>
         <label for="model" style="margin-top:16px">Modelo de Whisper</label>
       <select id="model">
@@ -507,14 +579,14 @@ body.delta-transcribing.delta-recording{padding-bottom:calc(400px + env(safe-are
   <!-- 2 · Texto -->
   <section class="card c-edit" id="transcripcion">
     <div class="screen-title text-screen-title"><span class="screen-overline">TU BORRADOR</span><h2>Transcripción</h2><p>Leé, corregí y guardá lo que grabaste.</p></div>
-    <div class="lbl-row">
-      <label for="text">Texto de la nota <span class="opt">(editable)</span></label>
       <div class="editor-quick-actions">
         <button type="button" id="correctSelection" aria-haspopup="dialog">Corregir selección</button>
         <button type="button" class="ghost" id="copyAll">Copiar</button>
         <button type="button" class="ghost" id="selAll">Seleccionar todo</button>
         <button type="button" class="ghost" id="share">Compartir</button>
       </div>
+    <div class="lbl-row">
+      <label for="text">Texto de la nota <span class="opt">(editable)</span></label>
       <details class="text-tools"><summary>Otras herramientas</summary>
         <div class="tools">
           <button class="ghost danger" id="clear" title="Podés deshacer el borrado">Borrar texto</button>
@@ -2573,6 +2645,48 @@ $('rec').onclick = async () => {
   }
 };
 
+/* Solo medidas de interfaz: nunca cambia la captura, el texto ni el foco del editor. */
+function keyboardLayoutState(mobile, focused, layoutHeight, visualHeight, offsetTop, scale, baselineHeight){
+  if (!mobile || !focused || scale > 1.05) return {open:false,inset:0};
+  const inset = Math.max(0, Math.round(layoutHeight - visualHeight - offsetTop));
+  return {open:inset > 120 || baselineHeight - visualHeight > 120, inset:inset > 120 ? inset : 0};
+}
+function initErgonomics(){
+  const root = document.documentElement, dock = document.querySelector('.studio-dock'), viewport = window.visualViewport;
+  let frame = 0, baselineHeight = window.innerHeight, lastWidth = window.innerWidth;
+  const write = (name, value) => { if (root.style.getPropertyValue(name) !== value) root.style.setProperty(name,value); };
+  function measure(){
+    frame = 0;
+    const active = document.activeElement;
+    const focused = !!(active && active.matches('textarea,input:not([type=checkbox]):not([type=radio]):not([type=button])'));
+    const height = viewport ? viewport.height : window.innerHeight;
+    const scale = viewport ? viewport.scale : 1;
+    if (Math.abs(lastWidth - window.innerWidth) > 80) { baselineHeight = window.innerHeight; lastWidth = window.innerWidth; }
+    else if (!focused) baselineHeight = Math.max(baselineHeight, window.innerHeight);
+    const mobile = window.innerWidth <= 1024 && matchMedia('(pointer:coarse)').matches;
+    const state = keyboardLayoutState(mobile, focused, window.innerHeight, height, viewport?.offsetTop || 0, scale, baselineHeight);
+    document.body.classList.toggle('keyboard-open',state.open);
+    write('--keyboard-inset',state.inset + 'px');
+    write('--visual-height',Math.round(height) + 'px');
+    write('--visual-top',Math.round(viewport?.offsetTop || 0) + 'px');
+    write('--dock-space',Math.ceil(dock.getBoundingClientRect().height + state.inset + 24) + 'px');
+  }
+  function schedule(){ if (!frame) frame = requestAnimationFrame(measure); }
+  window.addEventListener('resize',schedule,{passive:true});
+  document.addEventListener('focusin',schedule);
+  document.addEventListener('focusout',schedule);
+  viewport?.addEventListener('resize',schedule,{passive:true});
+  viewport?.addEventListener('scroll',schedule,{passive:true});
+  if (window.ResizeObserver) new ResizeObserver(schedule).observe(dock);
+  else new MutationObserver(schedule).observe(dock,{subtree:true,attributes:true,childList:true,characterData:true});
+  schedule();
+}
+function applyTextSize(value){
+  const size = ['compact','normal','large'].includes(value) ? value : 'normal';
+  document.documentElement.dataset.textSize = size;
+  $('textSize').value = size;
+}
+
 /* ---------- Ajustes guardados ---------- */
 const MODEL_HELP = {
   'Xenova/whisper-tiny': 'Tiny: más liviano y generalmente más rápido; puede omitir o confundir más palabras. Ideal para pruebas.',
@@ -2585,9 +2699,11 @@ function updateModelHint(){
 $('model').addEventListener('change', updateModelHint);
 const hasOpt = (sel, v) => [...sel.options].some(o => o.value === v);
 function loadCfg(){
+  applyTextSize('normal');
   try {
     const c = JSON.parse(localStorage.getItem(CKEY) || '{}');
     $('liveAnon').checked = false; // Solo anonimización posterior
+    applyTextSize(c.textSize);
     if (typeof c.pVolatile === 'boolean') $('pVolatile').checked = c.pVolatile;
     if (c.model && hasOpt($('model'), c.model)) $('model').value = c.model;
     else if (!c.model && matchMedia('(pointer:coarse)').matches) $('model').value = 'Xenova/whisper-base'; // en celulares, la opción rápida por defecto
@@ -2598,7 +2714,8 @@ function loadCfg(){
     if (typeof c.saveAudio === 'boolean') $('saveAudio').checked = c.saveAudio;
   } catch (e) {}
 }
-const saveCfg = () => { try { localStorage.setItem(CKEY, JSON.stringify({model:$('model').value, accel:$('accel').value, mic:$('mic').value, eng:eng(), replace:$('replace').checked, saveAudio:$('saveAudio').checked, pVolatile:$('pVolatile').checked})); } catch (e) {} };
+const saveCfg = () => { try { localStorage.setItem(CKEY, JSON.stringify({textSize:$('textSize').value, model:$('model').value, accel:$('accel').value, mic:$('mic').value, eng:eng(), replace:$('replace').checked, saveAudio:$('saveAudio').checked, pVolatile:$('pVolatile').checked})); return true; } catch (e) { return false; } };
+$('textSize').addEventListener('change', () => { applyTextSize($('textSize').value); if (!saveCfg()) flash('El tamaño se aplicó, pero este navegador no permitió guardar el ajuste.'); });
 ['model', 'accel', 'mic', 'replace', 'saveAudio', 'pVolatile'].forEach(id => $(id).addEventListener('change', saveCfg));
 document.querySelectorAll('input[name=eng]').forEach(r => r.addEventListener('change', () => { setStatus(''); saveCfg(); }));
 
@@ -2655,7 +2772,7 @@ function updWC(){
 }
 $('text').addEventListener('input', updWC);
 setInterval(updWC, 300);
-loadCfg(); $('recordSaveAudio').checked = $('saveAudio').checked; updateModelHint(); loadDict(); loadPeople(); loadGenerator(); updateGeneratorUI(); renderList(); restoreDraft(); updWC(); refreshAudioBox();
+initErgonomics(); loadCfg(); $('recordSaveAudio').checked = $('saveAudio').checked; updateModelHint(); loadDict(); loadPeople(); loadGenerator(); updateGeneratorUI(); renderList(); restoreDraft(); updWC(); refreshAudioBox();
 </script>
 <script>
 /* Corrección explícita: una aparición, reglas futuras solo con consentimiento. */
