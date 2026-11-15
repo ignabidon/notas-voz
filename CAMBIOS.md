@@ -1,5 +1,19 @@
 # Registro de cambios — Grabador de voz Delta
 
+## Delta 05 · Primera etapa de confiabilidad de grabaciones largas — 15 de noviembre de 2026
+
+**Objetivo:** evitar pérdidas silenciosas y facilitar la recuperación de audio cuando Brave retrasa la entrega de datos o Whisper se atrasa; sin alterar los modelos ni los fragmentos usados por Whisper.
+
+- Si está activado «Guardar el audio», Delta solicita un fragmento adicional al **pausar**, agregar una **marca** o pasar la página a **segundo plano**. Esto complementa los fragmentos periódicos que proporciona MediaRecorder; no garantiza grabar con pantalla apagada.
+- Vigila cuándo llegaron por última vez muestras del micrófono. Si pasan al menos 7 segundos sin recibirlas, muestra un aviso en la pantalla.
+- Avisa cuando hay 6 o más fragmentos pendientes de transcribir; recomienda pausar para que Whisper alcance al audio. **No elimina fragmentos ni corta automáticamente la grabación.** El riesgo de memoria en sesiones extensas sigue siendo una cuestión a medir.
+- Detecta cierres y errores de MediaRecorder y distingue si se detuvo a pedido o inesperadamente. Incluso con error, intenta conservar el último fragmento entregado. Anota solo estados técnicos, nunca audio o contenido de las notas.
+- No cambia IndexedDB, la recuperación del audio anterior, Whisper, el dictado alternativo, la descarga TXT ni ajustes previos.
+- **Verificación:** pruebas automáticas agregadas; aún hace falta ensayar una grabación ficticia de varios minutos con pantalla encendida en Brave Android.
+
+**Límites:** con la pantalla bloqueada Android puede suspender el navegador y retrasar los eventos de audio. Los avisos y cortes preventivos no garantizan impedirlo. Para pruebas largas conviene activar «Guardar el audio» y conservar una copia descargada.
+
+
 ## Delta 04 · Recuperar el último audio anterior — 15 de noviembre de 2026
 
 **Objetivo:** permitir deshacer el último reemplazo accidental sin crear una biblioteca permanente de grabaciones.
@@ -8,7 +22,7 @@
 - El audio anterior **no se borra antes de solicitar el micrófono**; se desplaza a recuperación en una transacción IndexedDB cuando se guarda el primer fragmento del nuevo audio. Así, si la captura falla, se conserva lo previo.
 - El botón «Recuperar audio anterior» intercambia las referencias principal y anterior sin duplicar los archivos; también permite revertir el intercambio.
 - «Borrar audio» elimina principal y temporal con aviso claro. La descarga TXT, Whisper, dictado local y claves históricas permanecen sin cambios.
-- Se agregan pruebas automáticas de rotación, recuperación, primeras partes y ausencia de borrado prematuro. La validación en Motorola con audios ficticios todavía es necesaria.
+- Se agregan pruebas automáticas de rotación, recuperación, primeras partes y ausencia de borrado prematuro. **Validación real:** el usuario confirmó en su Motorola que funcionó recuperar el audio anterior (15/11/2026).
 - **Límites:** solo sirve para el último reemplazo; los datos todavía dependen de IndexedDB y no tienen cifrado. No se realizó limpieza automática del navegador ni migración.
 
 
