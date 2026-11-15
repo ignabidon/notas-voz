@@ -7,7 +7,7 @@
 
 
 <meta name="theme-color" content="#090f20">
-<meta name="studio-design" content="delta-09">
+<meta name="studio-design" content="delta-10">
 <title>Grabador de voz Delta · Prueba Delta</title>
 <style>
 :root{color-scheme:dark;--bg:#090f20;--bg2:#172139;--card:#101a2e;--ink:#edf3ff;--mut:#a1b0cc;--line:#293852;--acc:#9cbaff;--acc-ink:#0a1836;--acc-soft:#1c3156;--rec:#ff8e9b;--rec-ink:#300c17;--note-bg:#292637;--note-ink:#ded1b8;--bar-l:65%}
@@ -305,15 +305,24 @@ footer{color:#7f9a9f;font-size:11px;padding:18px 0;letter-spacing:.4px}
 @keyframes delta-moving{0%{transform:translateX(-100%)}100%{transform:translateX(250%)}}
 #transcriptionDockCancel{display:block;min-height:38px;margin-top:9px;width:100%;font-size:13px;font-weight:600;color:#ffe0e0;background:#432e38;border:1px solid #80525c;border-radius:11px}
 #transcriptionDockCancel[hidden]{display:none!important}
+/* El aviso fijo sustituye los mensajes antiguos solo mientras Whisper procesa.
+   La misma zona conserva advertencias importantes y mensajes finales cuando se oculta. */
+body.delta-transcribing #status,
+body.delta-transcribing #processingTimer,
+body.delta-transcribing #cancelProcessing,
+body.delta-transcribing #cancelNote,
+body.delta-transcribing #tp,
+body.delta-transcribing #busy,
+body.delta-transcribing #interim{display:none!important}
 body.delta-transcribing{padding-bottom:calc(345px + env(safe-area-inset-bottom))}
-body.delta-transcribing:has(#studioDockCapture:not([hidden])){padding-bottom:calc(400px + env(safe-area-inset-bottom))}
+body.delta-transcribing.delta-recording{padding-bottom:calc(400px + env(safe-area-inset-bottom))}
 .studio-dock .studio-nav svg{stroke-linecap:round;stroke-linejoin:round}
 @media(max-width:760px){
  .transcription-dock{padding:10px 12px}
  .transcription-dock-top strong{font-size:13.5px}
  #transcriptionDockMessage{font-size:12.5px}
  body.delta-transcribing{padding-bottom:calc(350px + env(safe-area-inset-bottom))}
- body.delta-transcribing:has(#studioDockCapture:not([hidden])){padding-bottom:calc(405px + env(safe-area-inset-bottom))}
+ body.delta-transcribing.delta-recording{padding-bottom:calc(405px + env(safe-area-inset-bottom))}
 }
 @media(prefers-reduced-motion:reduce){
  .transcription-spinner,.transcription-dock-bar.indeterminate i{animation:none}
@@ -582,7 +591,7 @@ body.delta-transcribing:has(#studioDockCapture:not([hidden])){padding-bottom:cal
 
 </main>
 
-<footer>DELTA 09 · VERSIÓN DE PRUEBA<br>Usá únicamente datos ficticios.</footer>
+<footer>DELTA 10 · VERSIÓN DE PRUEBA<br>Usá únicamente datos ficticios.</footer>
 </div>
 
 <aside class="studio-dock" aria-label="Acciones de la nota">
@@ -1732,20 +1741,25 @@ function refreshTranscriptionDock(){
   );
   const state = transcriptionDockState(recEng === 'whisper', recording, busy, outstanding, feeding, modelLoading, dead, hasProgress, !!(engine && typeof engine.terminate === 'function'));
   const dock = $('transcriptionDock');
-  dock.hidden = !state.active;
+  // Mantiene el indicador como fuente única, sin repintar los mismos valores cada 500 ms.
+  if (dock.hidden === state.active) dock.hidden = !state.active;
   document.body.classList.toggle('delta-transcribing', state.active);
+  document.body.classList.toggle('delta-recording', state.active && recording);
   if (!state.active) return;
-  $('transcriptionDockTitle').textContent = state.title;
-  $('transcriptionDockMessage').textContent = state.message;
-  $('transcriptionDockParts').textContent = state.parts;
-  $('transcriptionDockTime').textContent = !recording && processingStartedAt ? fmtClock(Date.now() - processingStartedAt) : '';
-  $('transcriptionDockPercent').textContent = state.progress === null ? '' : '≈ ' + state.progress + '%';
-  const bar = $('transcriptionDockBar');
-  bar.classList.toggle('indeterminate', state.progress === null);
-  $('transcriptionDockBarFill').style.width = state.progress === null ? '40%' : state.progress + '%';
-  if (state.progress === null) bar.removeAttribute('aria-valuenow');
-  else bar.setAttribute('aria-valuenow', String(state.progress));
-  $('transcriptionDockCancel').hidden = !state.cancel;
+  const putText = (id, value) => { const el = $(id); if (el.textContent !== value) el.textContent = value; };
+  putText('transcriptionDockTitle', state.title);
+  putText('transcriptionDockMessage', state.message);
+  putText('transcriptionDockParts', state.parts);
+  putText('transcriptionDockTime', !recording && processingStartedAt ? fmtClock(Date.now() - processingStartedAt) : '');
+  putText('transcriptionDockPercent', state.progress === null ? '' : '≈ ' + state.progress + '%');
+  const bar = $('transcriptionDockBar'), pending = state.progress === null;
+  bar.classList.toggle('indeterminate', pending);
+  const width = pending ? '40%' : state.progress + '%';
+  if ($('transcriptionDockBarFill').style.width !== width) $('transcriptionDockBarFill').style.width = width;
+  if (pending) { if (bar.hasAttribute('aria-valuenow')) bar.removeAttribute('aria-valuenow'); }
+  else if (bar.getAttribute('aria-valuenow') !== String(state.progress)) bar.setAttribute('aria-valuenow', String(state.progress));
+  const cancel = $('transcriptionDockCancel');
+  if (cancel.hidden === state.cancel) cancel.hidden = !state.cancel;
 }
 function updProgress(){
   const tp = $('tp'), bz = $('busy');
