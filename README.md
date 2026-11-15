@@ -38,6 +38,14 @@ Al tocar **Guardar .txt** se solicita al navegador descargar un archivo de texto
 
 Este botón también conserva la copia local anterior como respaldo; no borra ni migra contenido. La lista interna de notas guardadas sigue oculta en este cambio. La descarga TXT es únicamente de la nota actual; no incluye audio, diccionario, claves o ajustes. No usar información sensible real antes de validar el proceso.
 
+## Progreso visible en cualquier pantalla (Delta 09)
+
+Al transcribir con Whisper, un **cartel fijo sobre la barra inferior** informa que la transcripción sigue en marcha tanto en Grabar como en Texto o Ajustes. Tras detener la grabación muestra «Esperá mientras se completa la transcripción», tiempo y fragmentos pendientes. Mientras estás grabando con Whisper, el mensaje indica que podés seguir grabando o consultar Texto. Si no puede calcular un porcentaje, usa una animación sin número para evitar estimaciones falsas. Puede ofrecer **Cancelar transcripción**, reutilizando el control original y su confirmación de pérdida de las partes todavía sin transcribir.
+
+Los iconos de navegación ahora tienen un estilo uniforme: micrófono para Grabar, hoja para Texto y **sliders** para Ajustes. El indicador desaparece al finalizar, cancelar o fallar el procesamiento. La transcripción y el reconocimiento no cambian.
+
+**Prueba:** con contenido ficticio, grabá y detené; mientras Whisper termina, entrá a Texto, revisá que el aviso continúe arriba de la navegación y que las últimas palabras aparezcan. Volvé a Ajustes y comprobá que el aviso persiste y que el símbolo es de sliders. Al completarse, el indicador debe desaparecer. No hace falta probar «Cancelar» si querés conservar la transcripción completa.
+
 ## Navegación en tres pantallas (Delta 08)
 
 El rediseño crea tres vistas distintas, sin instalar otra app: **Grabar** (micrófono grande, cronómetro, estado y audio conservado), **Texto** (editor amplio, corregir, copiar, anonimizar y Guardar .txt) y **Ajustes** (calidad de Whisper, audio, privacidad, diccionario y opciones avanzadas). La barra inferior cambia las acciones disponibles según la pantalla. Durante una grabación, los controles fijos Pausar y Detener se mantienen visibles incluso si entrás en Texto para consultar la transcripción.
