@@ -38,6 +38,14 @@ Al tocar **Guardar .txt** se solicita al navegador descargar un archivo de texto
 
 Este botón también conserva la copia local anterior como respaldo; no borra ni migra contenido. La lista interna de notas guardadas sigue oculta en este cambio. La descarga TXT es únicamente de la nota actual; no incluye audio, diccionario, claves o ajustes. No usar información sensible real antes de validar el proceso.
 
+## Un solo estado de transcripción y cómo investigar una demora (Delta 10)
+
+El estado de Whisper queda **exclusivamente en la barra inferior fija** mientras la transcripción está en marcha. Ya no repite «Procesando», tiempo, barra de progreso o «Cancelar procesamiento» dentro de la pantalla Grabar o del editor. Los mensajes de finalización, errores y advertencias importantes se conservan al terminar. El cartel global también funciona si cambiás de Grabar a Texto o Ajustes.
+
+Si parece que tarda más, abrí **Ajustes → Calidad de transcripción** y comprobá el modelo: **Small** suele exigir mucho más tiempo y memoria que **Base**. Para comparar sin cambiar la grabación, activá Guardar audio, conservá el TXT actual y retranscribí **el mismo audio ficticio** con Base y Small. Consultá **Grabar → Detalles técnicos de la última grabación**: se informan nombre del modelo, método GPU/CPU, partes y tiempo de proceso sin guardar lo que dijiste en esos detalles. El tiempo que muestra la barra es transcurrido de espera, no una medida del rendimiento de cada modelo.
+
+El motor de inferencia y los modelos no cambiaron en esta etapa. Se redujeron escrituras visuales repetidas; no está demostrado que eso explique ni corrija una diferencia de velocidad. Las comparaciones confiables requieren el mismo audio, el mismo modelo y condiciones similares de teléfono.
+
 ## Progreso visible en cualquier pantalla (Delta 09)
 
 Al transcribir con Whisper, un **cartel fijo sobre la barra inferior** informa que la transcripción sigue en marcha tanto en Grabar como en Texto o Ajustes. Tras detener la grabación muestra «Esperá mientras se completa la transcripción», tiempo y fragmentos pendientes. Mientras estás grabando con Whisper, el mensaje indica que podés seguir grabando o consultar Texto. Si no puede calcular un porcentaje, usa una animación sin número para evitar estimaciones falsas. Puede ofrecer **Cancelar transcripción**, reutilizando el control original y su confirmación de pérdida de las partes todavía sin transcribir.

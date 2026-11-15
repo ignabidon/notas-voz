@@ -1,5 +1,14 @@
 # Registro de cambios — Grabador de voz Delta
 
+## Delta 10 · Progreso único y revisión de demora — 15 de noviembre de 2026
+
+- Se quitan visualmente las duplicaciones de estado en Grabar y Texto **solo mientras** el indicador global fijo de Whisper está activo. Los elementos históricos siguen en DOM para que la lógica, cancelar y compatibilidad no se rompan. Cuando Whisper termina o falla, los mensajes finales y advertencias vuelven a mostrarse como siempre.
+- La barra fija conserva el tiempo, texto de espera, fragmentos pendientes y control de cancelación. No se duplica la acción de cancelación.
+- En Delta 09 el indicador global añadía operaciones sobre elementos del DOM cada 500 ms; Delta 10 comprueba si el texto, anchura o atributo cambió antes de escribirlos. Se reemplaza el selector CSS `:has()` de padding inferior por una clase de estado explícita.
+- **Diagnóstico de velocidad:** se comparó el código de Delta 09 con Delta 08; no hay cambios en modelo elegido, motor Whisper, segmentación, carga de audio ni inferencia. La demora observada podría deberse a un modelo más grande (Small vs Base), procesamiento CPU o carga del dispositivo, pero **no se ha demostrado la causa** y tampoco se puede afirmar que optimizar la UI la resuelva. Los detalles técnicos muestran modelo, backend y segundos de procesamiento de cada parte, sin audio ni transcripciones.
+- No se cambian modelos, audio, notas, claves de Brave ni recuperación del audio previo. Requiere prueba funcional real en Motorola y comparación controlada con el mismo audio.
+
+
 ## Delta 09 · Progreso fijo de Whisper e iconografía coherente — 15 de noviembre de 2026
 
 **Solicitud del usuario:** cuando Whisper siga transcribiendo, mostrar su estado sobre los controles inferiores en **Grabar / Texto / Ajustes**, incluyendo un aviso de espera, y sustituir el sol de Ajustes por sliders con un lenguaje visual consistente.
