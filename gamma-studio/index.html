@@ -7,7 +7,7 @@
 
 
 <meta name="theme-color" content="#090f20">
-<meta name="studio-design" content="2026-11-15-v6">
+<meta name="studio-design" content="2026-11-15-v7">
 <title>Notas por voz · Transcripción y anonimización</title>
 <style>
 :root{color-scheme:dark;--bg:#090f20;--bg2:#172139;--card:#101a2e;--ink:#edf3ff;--mut:#a1b0cc;--line:#293852;--acc:#9cbaff;--acc-ink:#0a1836;--acc-soft:#1c3156;--rec:#ff8e9b;--rec-ink:#300c17;--note-bg:#292637;--note-ink:#ded1b8;--bar-l:65%}
@@ -30,6 +30,18 @@ html{scroll-padding-bottom:200px}
 .studio-dock .studio-nav a{min-height:40px;padding:7px;font-size:11px;color:#b8c9e7}
 .studio-dock #flash{margin:0 0 9px;padding:9px 12px;background:#243b5c;border-radius:10px;color:#edf4ff;font-size:12px;max-height:80px;overflow:auto}
 .studio-dock #flash:empty{display:none}
+#studioDockCapture{display:grid;gap:8px}
+#studioDockCapture[hidden],#studioDockNotes[hidden]{display:none!important}
+.dock-capture-status{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:1px 3px 0;color:#ffbbc6;font-weight:700;font-size:12px}
+.dock-capture-status .capture-clock{color:#e9f1ff;font-size:16px;font-variant-numeric:tabular-nums;letter-spacing:1px}
+.dock-capture-status .capture-mode{display:flex;align-items:center;gap:8px}
+.dock-capture-status .capture-dot{width:9px;height:9px;flex:none;border-radius:100%;background:#ff899b;box-shadow:0 0 0 4px #ff899b24}
+#studioDockCapture.paused .capture-dot{background:#b8c4d9;box-shadow:0 0 0 4px #b8c4d924}
+#studioDockCapture .dock-actions{grid-template-columns:0.82fr 1.18fr}
+#studioDockPause{background:#233652;border:1px solid #7186a7;color:#edf3ff}
+#studioDockStop{background:#ff9aa8;border:1px solid #ffb9c3;color:#350e19;font-size:15px}
+#studioDockStop:hover:not(:disabled){background:#ffbac4}
+#studioDockCapture .dock-actions button{min-width:0}
 #anon{min-height:56px;border:1px solid #d0f4eb;font-weight:750;box-shadow:0 3px 12px #061b2240}
 #aTx{flex-basis:100%;min-height:52px;background:#b4cbff;border:1px solid #d0dfff;color:#102449;font-size:14px;font-weight:750}
 #aTx:hover:not(:disabled){background:#d0dfff}
@@ -289,14 +301,24 @@ html{scroll-padding-bottom:200px}
 
 </main>
 
-<footer>Notas por voz · Diseño 06<br>Versión experimental · Usá solo datos ficticios</footer>
+<footer>Notas por voz · Diseño 07<br>Versión experimental · Usá solo datos ficticios</footer>
 </div>
 
 <aside class="studio-dock" aria-label="Acciones de la nota">
   <div id="flash" role="status" aria-live="polite"></div>
-  <div class="dock-actions">
+  <div class="dock-actions" id="studioDockNotes">
     <button type="button" id="studioAnonAction" aria-label="Anonimizar transcripción"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3 4 6v6c0 4 8 9 8 9s8-5 8-9V6z"/><path d="m8 12 3 3 5-6"/></svg><span>Anonimizar</span></button>
     <button type="button" class="p" id="save"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 3h12l4 4v14H3V3zM7 3v6h10V3M7 21v-8h10v8"/></svg><span>Guardar nota</span></button>
+  </div>
+  <div id="studioDockCapture" hidden aria-label="Controles fijos de grabación">
+    <div class="dock-capture-status" role="status" aria-live="off">
+      <span class="capture-mode"><span class="capture-dot" aria-hidden="true"></span><span id="studioDockMode">Grabando</span></span>
+      <span class="capture-clock" id="studioDockClock" aria-label="Tiempo grabado">00:00</span>
+    </div>
+    <div class="dock-actions">
+      <button type="button" id="studioDockPause">Pausar</button>
+      <button type="button" id="studioDockStop">Detener grabación</button>
+    </div>
   </div>
 <nav class="studio-nav" aria-label="Secciones"><a href="#grabacion"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>Grabar</a><a href="#transcripcion"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5"/></svg>Texto</a><a href="#ajustes" id="studioSettingsLink"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3" fill="#17243b"/><circle cx="15" cy="17" r="3" fill="#17243b"/></svg>Ajustes</a></nav></aside>
 <dialog id="correctionDialog" aria-labelledby="correctionTitle" aria-describedby="correctionDescription">
@@ -1384,6 +1406,7 @@ function refreshTitle(){
 function updClock(){
   const c = $('clock'); c.textContent = fmtClock(elapsedMs()); c.classList.toggle('on', recording && !paused);
   refreshTitle();
+  updateDockRecording();
 }
 function setCtl(on){
   $('pause').disabled = !on; $('mark').disabled = !on;
@@ -1589,6 +1612,21 @@ async function transcribeSaved(){
   if (!busy && outstanding === 0) maybeDone();
 }
 
+function updateDockRecording(){
+  const capture=$('studioDockCapture'),active=recording;
+  $('studioDockNotes').hidden=active;
+  capture.hidden=!active;
+  if(!active)return;
+  capture.classList.toggle('paused',paused);
+  $('studioDockMode').textContent=paused?'Grabación en pausa':'Grabando';
+  $('studioDockClock').textContent=fmtClock(elapsedMs());
+  $('studioDockPause').textContent=paused?'Reanudar':'Pausar';
+  $('studioDockPause').disabled=$('pause').disabled;
+  $('studioDockStop').disabled=$('rec').disabled;
+}
+// Reutiliza los controles principales, incluidas sus confirmaciones y estados.
+$('studioDockPause').addEventListener('click',()=>$('pause').click());
+$('studioDockStop').addEventListener('click',()=>$('rec').click());
 function stopUI(){
   recording = false; endClock(); paused = false; clearInterval(clockT); clockT = null;
   $('lv').style.display = 'none'; $('lvTxt').textContent = ''; $('rec').classList.remove('on'); $('rec').textContent = 'Grabar';
@@ -1607,12 +1645,13 @@ $('rec').onclick = async () => {
     try {
       recording = true;
       if (recEng === 'native') { startNative(); prepareNew(); } else await startWhisper();
-      $('rec').classList.add('on'); $('rec').textContent = 'Detener'; beginClock(); setCtl(true);
+      $('rec').classList.add('on'); $('rec').textContent = 'Detener'; beginClock(); setCtl(true); updateDockRecording();
     } catch (e) {
       stopUI(); lockUI(false); clearInterval(timer); timer = null;
       setStatus('No se pudo usar el micrófono: ' + (e.message || e));
     }
     $('rec').disabled = false;
+    updateDockRecording();
   } else {
     if (elapsedMs() > 60000 && !confirm('¿Detener la grabación? Lleva ' + fmtClock(elapsedMs()) + '.')) return;
     recording = false; stopUI();
