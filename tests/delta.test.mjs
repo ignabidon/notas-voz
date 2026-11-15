@@ -123,3 +123,7 @@ test('diagnósticos: errores con etapa y errores inesperados', () => {
   for (const s of ["addEventListener('error'", "addEventListener('unhandledrejection'", "type:'note'", 'stage', 'analyzeText(c)', 'onSkip: skipDiag', 'audio recibido del micrófono'])
     assert.ok(html.includes(s), 'falta ' + s);
 });
+test('diagnósticos v2: motivo de la placa de video, hilos y duración de pausas', () => {
+  for (const s of ['WebGPU sin adaptador', 'no ofrece WebGPU', 'hilos de cálculo del procesador', 'página aislada', 'estuvo en pausa', 'diagnósticos v2'])
+    assert.ok(html.includes(s), 'falta ' + s);
+});
