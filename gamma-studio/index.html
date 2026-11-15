@@ -438,9 +438,9 @@ textarea#text{min-height:300px;font-size:17px;line-height:1.65;padding:16px}
     </div>
   </details>
 
-  <!-- 4 · Notas guardadas -->
-  <section class="card c-notes">
-    <h2>Notas guardadas</h2>
+  <!-- Gamma Studio: se retira la sección visual de notas guardadas.
+       Se mantienen los nodos para que la lógica original no falle. -->
+  <section class="c-notes" hidden aria-hidden="true" style="display:none!important">
     <div id="filt"></div>
     <div id="list"></div>
   </section>
