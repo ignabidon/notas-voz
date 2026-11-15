@@ -5,12 +5,13 @@
 ## Una sola versión oficial
 - Repositorio: ignabidon/notas-voz, rama activa: **main**.
 - Única aplicación web: **/index.html**.
-- Nombre visible: **Grabador de voz Delta**, etapa **Prueba Delta 08**.
+- Nombre visible: **Grabador de voz Delta**, etapa **Prueba Delta 09**.
 - Publicación: https://ignabidon.github.io/notas-voz/
 - No crear carpetas paralelas como delta-v2, nueva-gamma o copias index2.html.
 - Versionar cambios mediante commits; documentarlos en CAMBIOS.md.
 - Archivo inalterable de prototipos antiguos: rama **archivo-antes-de-delta-2026-11-15**. No usarla como fuente de desarrollo ni borrarla.
 - Respaldo exacto antes del rediseño en tres pantallas: **respaldo-delta-07-antes-de-delta-08**. Conservarla.
+- El aviso de transcripción es único y global dentro de `.studio-dock`; no duplicar Worker, temporizadores ni acciones de cancelación. Mantenerlo sincronizado con `updProgress`, `maybeDone` y cancelación.
 - No renombrar el repositorio, cambiar la URL de Pages o modificar ramas ajenas sin solicitud del usuario.
 
 ## Funcionalidades que deben preservarse

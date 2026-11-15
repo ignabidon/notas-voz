@@ -7,7 +7,7 @@
 
 
 <meta name="theme-color" content="#090f20">
-<meta name="studio-design" content="delta-08">
+<meta name="studio-design" content="delta-09">
 <title>Grabador de voz Delta · Prueba Delta</title>
 <style>
 :root{color-scheme:dark;--bg:#090f20;--bg2:#172139;--card:#101a2e;--ink:#edf3ff;--mut:#a1b0cc;--line:#293852;--acc:#9cbaff;--acc-ink:#0a1836;--acc-soft:#1c3156;--rec:#ff8e9b;--rec-ink:#300c17;--note-bg:#292637;--note-ink:#ded1b8;--bar-l:65%}
@@ -288,6 +288,36 @@ footer{color:#7f9a9f;font-size:11px;padding:18px 0;letter-spacing:.4px}
 @media(min-width:761px){
  .studio-dock{width:min(540px,calc(100% - 30px))}
 }
+
+/* Delta 09: aviso fijo y único de Whisper para Grabar, Texto y Ajustes */
+.transcription-dock{background:#18363a;border:1px solid #42746e;border-radius:16px;padding:11px 13px 12px;margin-bottom:10px;box-shadow:0 4px 16px #0003}
+.transcription-dock[hidden]{display:none!important}
+.transcription-dock-top{display:flex;align-items:center;gap:9px}
+.transcription-dock-top strong{flex:1;min-width:0;color:#ebfff8;font-size:14px;line-height:1.35}
+.transcription-spinner{width:15px;height:15px;flex:none;border:2px solid #74a99f;border-top-color:#d0fff0;border-radius:50%;animation:delta-spinning 1.1s linear infinite}
+@keyframes delta-spinning{to{transform:rotate(360deg)}}
+#transcriptionDockTime{font-size:13px;font-weight:700;color:#d1eee7;font-variant-numeric:tabular-nums}
+#transcriptionDockMessage{font-size:13px;line-height:1.4;color:#d0e5df;margin:6px 0 8px}
+.transcription-dock-bottom{display:flex;justify-content:space-between;gap:12px;align-items:center;font-size:12px;color:#b9d6ce;margin-bottom:6px}
+.transcription-dock-bar{height:5px;background:#365852;border-radius:99px;overflow:hidden}
+.transcription-dock-bar i{display:block;height:100%;width:0;background:#a8ead8;border-radius:99px;transition:width .3s}
+.transcription-dock-bar.indeterminate i{animation:delta-moving 1.6s ease-in-out infinite}
+@keyframes delta-moving{0%{transform:translateX(-100%)}100%{transform:translateX(250%)}}
+#transcriptionDockCancel{display:block;min-height:38px;margin-top:9px;width:100%;font-size:13px;font-weight:600;color:#ffe0e0;background:#432e38;border:1px solid #80525c;border-radius:11px}
+#transcriptionDockCancel[hidden]{display:none!important}
+body.delta-transcribing{padding-bottom:calc(345px + env(safe-area-inset-bottom))}
+body.delta-transcribing:has(#studioDockCapture:not([hidden])){padding-bottom:calc(400px + env(safe-area-inset-bottom))}
+.studio-dock .studio-nav svg{stroke-linecap:round;stroke-linejoin:round}
+@media(max-width:760px){
+ .transcription-dock{padding:10px 12px}
+ .transcription-dock-top strong{font-size:13.5px}
+ #transcriptionDockMessage{font-size:12.5px}
+ body.delta-transcribing{padding-bottom:calc(350px + env(safe-area-inset-bottom))}
+ body.delta-transcribing:has(#studioDockCapture:not([hidden])){padding-bottom:calc(405px + env(safe-area-inset-bottom))}
+}
+@media(prefers-reduced-motion:reduce){
+ .transcription-spinner,.transcription-dock-bar.indeterminate i{animation:none}
+}
 </style>
 </head>
 <body data-view="grabacion">
@@ -552,10 +582,24 @@ footer{color:#7f9a9f;font-size:11px;padding:18px 0;letter-spacing:.4px}
 
 </main>
 
-<footer>DELTA 08 · VERSIÓN DE PRUEBA<br>Usá únicamente datos ficticios.</footer>
+<footer>DELTA 09 · VERSIÓN DE PRUEBA<br>Usá únicamente datos ficticios.</footer>
 </div>
 
 <aside class="studio-dock" aria-label="Acciones de la nota">
+  <section id="transcriptionDock" class="transcription-dock" aria-label="Estado de la transcripción" hidden>
+    <div class="transcription-dock-top">
+      <span class="transcription-spinner" aria-hidden="true"></span>
+      <strong id="transcriptionDockTitle" role="status" aria-live="polite">Whisper está transcribiendo</strong>
+      <span id="transcriptionDockTime" aria-label="Tiempo de procesamiento" aria-live="off"></span>
+    </div>
+    <p id="transcriptionDockMessage">Esperá mientras se completa la transcripción.</p>
+    <div class="transcription-dock-bottom">
+      <span id="transcriptionDockParts"></span>
+      <span id="transcriptionDockPercent"></span>
+    </div>
+    <div id="transcriptionDockBar" class="transcription-dock-bar" role="progressbar" aria-label="Avance de Whisper" aria-valuemin="0" aria-valuemax="100"><i id="transcriptionDockBarFill"></i></div>
+    <button type="button" id="transcriptionDockCancel" hidden>Cancelar transcripción</button>
+  </section>
   <div id="flash" role="status" aria-live="polite"></div>
   <div class="dock-actions" id="studioDockNotes">
     <button type="button" id="studioDockStart" aria-label="Empezar a grabar"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4M8 22h8"/></svg><span>Grabar</span></button>
@@ -573,9 +617,9 @@ footer{color:#7f9a9f;font-size:11px;padding:18px 0;letter-spacing:.4px}
     </div>
   </div>
 <nav class="studio-nav" aria-label="Pantallas de Delta">
-  <a href="#grabacion" data-delta-view="grabacion" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg><span>Grabar</span></a>
-  <a href="#transcripcion" data-delta-view="transcripcion"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 3h10l3 3v15H6zM9 11h7M9 15h7"/></svg><span>Texto</span></a>
-  <a href="#ajustes" id="studioSettingsLink" data-delta-view="ajustes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2.2 2.2M16.8 16.8 19 19M19 5l-2.2 2.2M7.2 16.8 5 19"/></svg><span>Ajustes</span></a>
+  <a href="#grabacion" data-delta-view="grabacion" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2.5" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3.5M8.5 21.5h7"/></svg><span>Grabar</span></a>
+  <a href="#transcripcion" data-delta-view="transcripcion"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 2.5h8l4 4V21H7zM15 2.5v4h4M10 11h6M10 15h6M10 19h4"/></svg><span>Texto</span></a>
+  <a href="#ajustes" id="studioSettingsLink" data-delta-view="ajustes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h6M14 6h6M4 12h11M19 12h1M4 18h3M11 18h9"/><circle cx="12" cy="6" r="2"/><circle cx="17" cy="12" r="2"/><circle cx="9" cy="18" r="2"/></svg><span>Ajustes</span></a>
 </nav></aside>
 <dialog id="correctionDialog" aria-labelledby="correctionTitle" aria-describedby="correctionDescription">
   <form id="correctionForm">
@@ -1668,6 +1712,41 @@ function fmtEta(ms){
   const s = Math.max(5, Math.round(ms / 5000) * 5);
   return s < 60 ? 'unos ' + s + ' s' : 'unos ' + Math.ceil(s / 60) + ' min';
 }
+/* El mismo estado de Whisper alimenta un único aviso, visible en las tres pantallas. */
+function transcriptionDockState(whisper, recording, busy, outstanding, feeding, loading, dead, progress, cancellable){
+  const active = whisper && !dead && (busy || outstanding > 0 || feeding || loading);
+  if (!active) return {active:false, cancel:false, progress:null};
+  return {
+    active:true,
+    title:recording ? 'Whisper está transcribiendo en vivo' : 'Whisper está terminando la transcripción',
+    message:recording ? 'Podés seguir grabando o pasar a Texto.' : 'Esperá mientras se completa la transcripción. Podés revisar el texto.',
+    parts:outstanding > 0 ? outstanding + (outstanding === 1 ? ' parte pendiente' : ' partes pendientes') : loading ? 'Preparando el modelo…' : feeding ? 'Leyendo audio guardado…' : 'Procesando el último fragmento…',
+    progress:Number.isFinite(progress) && progress >= 0 ? Math.min(99,Math.round(progress)) : null,
+    cancel:!recording && cancellable
+  };
+}
+function refreshTranscriptionDock(){
+  const hasProgress = recording ? null : (
+    feed.len > 0 && feed.done > 0 ? 100 * feed.done / feed.len :
+    totalSec > 0 && doneSec > 0 ? 100 * doneSec / totalSec : null
+  );
+  const state = transcriptionDockState(recEng === 'whisper', recording, busy, outstanding, feeding, modelLoading, dead, hasProgress, !!(engine && typeof engine.terminate === 'function'));
+  const dock = $('transcriptionDock');
+  dock.hidden = !state.active;
+  document.body.classList.toggle('delta-transcribing', state.active);
+  if (!state.active) return;
+  $('transcriptionDockTitle').textContent = state.title;
+  $('transcriptionDockMessage').textContent = state.message;
+  $('transcriptionDockParts').textContent = state.parts;
+  $('transcriptionDockTime').textContent = !recording && processingStartedAt ? fmtClock(Date.now() - processingStartedAt) : '';
+  $('transcriptionDockPercent').textContent = state.progress === null ? '' : '≈ ' + state.progress + '%';
+  const bar = $('transcriptionDockBar');
+  bar.classList.toggle('indeterminate', state.progress === null);
+  $('transcriptionDockBarFill').style.width = state.progress === null ? '40%' : state.progress + '%';
+  if (state.progress === null) bar.removeAttribute('aria-valuenow');
+  else bar.setAttribute('aria-valuenow', String(state.progress));
+  $('transcriptionDockCancel').hidden = !state.cancel;
+}
 function updProgress(){
   const tp = $('tp'), bz = $('busy');
   const working = recording || busy || outstanding > 0 || feeding;
@@ -1683,6 +1762,7 @@ function updProgress(){
   if (processing) $('processClock').textContent = fmtClock(Date.now() - processingStartedAt);
   if (!processing && !recording) processingStartedAt = 0;
   refreshTitle();
+  refreshTranscriptionDock();
   if (!totalSec || (!recording && outstanding === 0 && !busy && !feeding)) { tp.classList.remove('on'); return; }
   const pct = Math.min(100, Math.round((feed.len ? feed.done / feed.len : doneSec / totalSec) * 100));
   $('tpI').style.width = pct + '%';
@@ -1818,11 +1898,13 @@ function cancelProcessing(){
   $('cancelProcessing').hidden = true;
   $('cancelNote').hidden = true;
   processingStartedAt = 0;
+  refreshTranscriptionDock();
   setStatus('Procesamiento cancelado. El texto visible puede estar incompleto.');
   refreshTitle();
   logDiag('El usuario canceló el procesamiento pendiente.');
 }
 $('cancelProcessing').onclick = cancelProcessing;
+$('transcriptionDockCancel').onclick = () => $('cancelProcessing').click();
 function resetPipeline(){
   processingEpoch++;
   dead = false; jobs = []; busy = false; outstanding = 0; gotText = false; lastMs = 0; modelErr = ''; chain = Promise.resolve(); failedParts = 0; warnParts = 0; oddParts = 0; segN = 0; diagLines = []; totalSec = 0; doneSec = 0; procMs = 0; procSec = 0; $('diag').textContent = '';

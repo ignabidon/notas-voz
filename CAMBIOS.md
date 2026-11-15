@@ -1,5 +1,19 @@
 # Registro de cambios — Grabador de voz Delta
 
+## Delta 09 · Progreso fijo de Whisper e iconografía coherente — 15 de noviembre de 2026
+
+**Solicitud del usuario:** cuando Whisper siga transcribiendo, mostrar su estado sobre los controles inferiores en **Grabar / Texto / Ajustes**, incluyendo un aviso de espera, y sustituir el sol de Ajustes por sliders con un lenguaje visual consistente.
+
+- Se agrega **un único aviso fijo**, ubicado en el contenedor de navegación existente, visible en todas las vistas cuando Whisper está cargando o procesando partes pendientes.
+- Durante una grabación con trabajo de Whisper, indica «transcribiendo en vivo» y permite seguir en Texto. Después de detener, indica «Esperá mientras se completa la transcripción», partes pendientes y tiempo de procesamiento.
+- El indicador de avance es **animado sin porcentaje** cuando no hay datos suficientes; solo muestra porcentaje aproximado si hay métricas reales de partes ya procesadas, y nunca anuncia 100% antes de completar.
+- El botón de cancelar del panel fijo delega al mismo control de cancelación ya existente, con su confirmación y la advertencia de texto incompleto. El panel se oculta cuando termina, se cancela o falla; no se duplica Whisper.
+- Iconos de **Grabar (micrófono), Texto (documento), Ajustes (sliders)** normalizados al mismo tamaño, trazo y grosor, sin dependencias externas.
+- Se agregan pruebas automáticas para estado, vistas, porcentaje indeterminado, cierre/cancelación e iconografía.
+- Se conservan audio previo, Whisper, diccionario, anonimización, notas, descargas, claves de Brave y respaldo Delta 07. Ningún contenido de voz se incorpora a diagnósticos.
+- **Validación pendiente:** prueba real desde Brave Android con material ficticio, pasando de Grabar a Texto mientras procesa, midiendo legibilidad y espacio útil sobre el teclado.
+
+
 ## Delta 08 · Tres pantallas reales con estética Android — 15 de noviembre de 2026
 
 **Alcance:** rediseño estructural y visual. Se conserva un único `index.html`, un solo motor de grabación, un solo editor, un solo almacenamiento y la misma URL pública.

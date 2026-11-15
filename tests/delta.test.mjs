@@ -10,7 +10,7 @@ const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map(m => m[1]);
 test('título y punto único de entrada', () => {
   assert.match(html, /<title>Grabador de voz Delta/);
   assert.match(html, /<h1>Grabador de voz Delta<\/h1>/);
-  assert.match(html, /DELTA 08 · VERSIÓN DE PRUEBA/);
+  assert.match(html, /DELTA 09 · VERSIÓN DE PRUEBA/);
 });
 
 test('los scripts se pueden analizar', () => {
@@ -453,4 +453,83 @@ test('Delta 08: nuevo sistema visual y diseño móvil adaptable', () => {
   assert.match(html,/@media\(max-width:760px\)/);
   assert.match(html,/env\(safe-area-inset-bottom\)/);
   assert.match(html,/@media\(max-width:380px\)/);
+});
+
+
+test('Delta 09: banner global en barra fija y visible desde las tres pantallas', () => {
+  const aside=html.match(/<aside class="studio-dock"[\s\S]*?<\/aside>/);
+  assert.ok(aside);
+  const banner=aside[0].match(/<section id="transcriptionDock"[\s\S]*?<\/section>/);
+  assert.ok(banner,'banner no está dentro de barra fija');
+  for(const id of ['transcriptionDockTitle','transcriptionDockMessage','transcriptionDockParts',
+    'transcriptionDockTime','transcriptionDockPercent','transcriptionDockBar','transcriptionDockBarFill','transcriptionDockCancel'])
+    assert.match(banner[0],new RegExp('id="'+id+'"'));
+  assert.match(banner[0],/Esperá mientras se completa la transcripción/);
+  assert.match(html,/\.transcription-dock\[hidden\]\{display:none!important\}/);
+  assert.match(html,/body\.delta-transcribing\{padding-bottom:/);
+  assert.match(html,/document\.body\.classList\.toggle\('delta-transcribing', state\.active\)/);
+  assert.doesNotMatch(banner[0],/data-delta-view/);
+});
+
+test('Delta 09: estado único de Whisper incluye trabajo, grabación y fin', () => {
+  const found=html.match(/function transcriptionDockState\([\s\S]*?\n\}/);
+  assert.ok(found);
+  const f=new Function(found[0]+';return transcriptionDockState;')();
+  const idle=f(true,false,false,0,false,false,false,null,true);
+  assert.deepEqual(idle,{active:false,cancel:false,progress:null});
+  assert.equal(f(false,false,true,2,false,false,false,null,true).active,false,'sin Whisper no se muestra');
+  assert.equal(f(true,false,true,2,false,false,true,null,true).active,false,'cancelado o fallado no se muestra');
+  const active=f(true,false,true,2,false,false,false,37.6,true);
+  assert.equal(active.active,true);
+  assert.equal(active.cancel,true);
+  assert.equal(active.progress,38);
+  assert.match(active.message,/Esperá mientras se completa/);
+  assert.match(active.parts,/2 partes pendientes/);
+  const recording=f(true,true,true,1,false,false,false,null,true);
+  assert.equal(recording.active,true);
+  assert.equal(recording.cancel,false);
+  assert.equal(recording.progress,null);
+  assert.match(recording.title,/en vivo/);
+  assert.match(recording.message,/Podés seguir grabando/);
+  assert.equal(f(true,false,false,0,false,true,false,null,false).active,true,'carga del modelo');
+  assert.equal(f(true,false,false,0,true,false,false,null,false).active,true,'transcribe audio guardado');
+  assert.equal(f(true,false,true,1,false,false,false,100,true).progress,99,'sin 100% prematuro');
+});
+
+test('Delta 09: la barra es indeterminada cuando no hay estimación fiable', () => {
+  assert.match(html,/const hasProgress = recording \? null/);
+  assert.match(html,/state\.progress === null \? '' : '≈ '/);
+  assert.match(html,/bar\.classList\.toggle\('indeterminate', state\.progress === null\)/);
+  assert.match(html,/bar\.removeAttribute\('aria-valuenow'\)/);
+  assert.match(html,/bar\.setAttribute\('aria-valuenow', String\(state\.progress\)\)/);
+  assert.match(html,/\.transcription-dock-bar\.indeterminate i\{animation:/);
+  assert.match(html,/@media\(prefers-reduced-motion:reduce\)/);
+});
+
+test('Delta 09: un mismo ciclo de actualización muestra y oculta el aviso', () => {
+  assert.match(html,/function updProgress\(\)\{[\s\S]*?refreshTranscriptionDock\(\);/);
+  assert.match(html,/function maybeDone\(\)\{[\s\S]*?updProgress\(\);/);
+  assert.match(html,/processingStartedAt = 0;\s+refreshTranscriptionDock\(\);\s+setStatus\('Procesamiento cancelado/);
+  assert.match(html,/\$\('transcriptionDockCancel'\)\.onclick = \(\) => \$\('cancelProcessing'\)\.click\(\)/);
+  assert.match(html,/dock\.hidden = !state\.active/);
+  assert.match(html,/if \(!state\.active\) return/);
+  assert.match(html,/recEng === 'whisper'/);
+  assert.match(html,/id="cancelProcessing"/);
+});
+
+test('Delta 09: todos los íconos del menú tienen el mismo grosor y Ajustes usa sliders', () => {
+  const nav=html.match(/<nav class="studio-nav"[\s\S]*?<\/nav>/);
+  assert.ok(nav);
+  const icons=[...nav[0].matchAll(/<svg\b[^>]*>[\s\S]*?<\/svg>/g)].map(x=>x[0]);
+  assert.equal(icons.length,3);
+  for(const icon of icons) {
+    assert.match(icon,/viewBox="0 0 24 24"/);
+    assert.match(icon,/stroke-width="1.9"/);
+    assert.match(icon,/stroke-linecap="round"/);
+    assert.match(icon,/stroke-linejoin="round"/);
+  }
+  assert.match(nav[0],/id="studioSettingsLink"[\s\S]*?<circle cx="12" cy="6" r="2"\/><circle cx="17" cy="12" r="2"\/><circle cx="9" cy="18" r="2"\/>/);
+  assert.match(nav[0],/data-delta-view="grabacion"/);
+  assert.match(nav[0],/data-delta-view="transcripcion"/);
+  assert.match(nav[0],/data-delta-view="ajustes"/);
 });
