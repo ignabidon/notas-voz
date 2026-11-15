@@ -1,5 +1,31 @@
 # Registro de cambios — Grabador de voz Delta
 
+## Delta 11 · Legibilidad, controles con una mano y teclado — 15/11/2026
+
+**Base:** `e561eb7eb968f15b21aee5aebd188cc69d9164e2`, rama `fix/mobile-ergonomics`. La distribución propuesta se comunicó antes de editar: conservar tres vistas/estilo oscuro, tamaño configurable, controles inferiores y adaptación de espacio/teclado. Se registra que el usuario informó haber probado la versión anterior de feedback de texto; sin detalle de dispositivo/casos y sin extrapolar a esta revisión.
+
+### Cambios progresivos
+
+- Lectura y comodidad en Ajustes: Compacto/Normal/Grande. Editor ~16,2/18/21,6 px y menús, ayudas y controles escalados con mínimos legibles. Se conserva el 18 px previo como Normal y se permite zoom del navegador. `textSize` se guarda como campo opcional validado de CKEY histórico; no hay migración ni cambios al texto/exportaciones. Fallo de almacenamiento se avisa sin deshacer la elección visual de sesión.
+- Áreas principales de al menos 48 px, más separación entre botones (10–12 px), rótulos que pueden envolver. Pausar y Detener conservan diferenciación y accesibilidad inferior. Grabar aparece también en Texto junto a Anonimizar/Guardar, reutilizando exactamente el comando #rec y la opción Empezar de cero; no es una captura nueva paralela.
+- Herramientas Corregir/Copiar/Seleccionar/Compartir movidas como grupo directo de la tarjeta y sticky al desplazar notas largas. Con teclado o poca altura táctil dejan de flotar para no ocupar permanentemente la zona de escritura; quedan disponibles en su lugar, junto a la corrección contextual existente.
+- Altura real del dock observada con ResizeObserver y márgenes inferiores calculados: captura, avisos y letra grande no dependen de un margen fijo que pueda quedar corto. Medidas agrupadas por requestAnimationFrame; sin polling ni timers nuevos. Fallback a MutationObserver si falta ResizeObserver.
+- Meta viewport permite al navegador usar interactive-widget=resizes-content. VisualViewport/foco/escala/altura permiten inferir teclado en dispositivos táctiles pequeños (hasta 1024 px) y ubicar barra sobre él si solo se reduce viewport visual; si layout se redimensiona no se duplica el desplazamiento. Se conserva referencia de altura ante foco transitorio en botones y se reinicia con cambio importante de ancho. Evita tratar zoom por gestos como teclado. No cambia foco, selección ni contenido desde layout.
+- Barra compacta con teclado o pantalla táctil de poca altura: mantiene comandos, navegación textual, estado principal y cancelación; omite iconos y detalle secundario del aviso. No oculta errores. Cuadro de corrección alineado y limitado al viewport visible, con scroll interno. Estilo oscuro conservado, sin agregar efectos decorativos.
+- **Sin cambios de motor:** 12 funciones críticas comparadas idénticas a base: makeSegmenter, workerBody, startCapture, stopCapture, toMono16k, ensureModel, pump, onSegment, startWhisper, stopWhisper, appendMachine y setPaused. No se modifican calidad, CPU/GPU, audio ni cola de Whisper.
+
+### Verificación y límites
+
+- **Código:** documentado en esta rama; fusión/CI/Pages se informan por separado al entregar.
+- **Local:** `node --test tests/delta.test.mjs`: **79/79 aprobadas**, `git diff --check` limpio. Pruebas nuevas de teclado (viewport visual y layout, offsets, foco, zoom, escritorio), tamaños válidos/fallback, persistencia sin perder configuración y fallo de almacenamiento, reutilización de controles y margen según altura real.
+- **Firefox 153/Linux, interfaz:** 320/360/412/760/1365×915 con tres tamaños: sin desborde horizontal ni botones principales recortados, alturas >=48 px, preferencia conservada al recargar, nota ficticia larga y corrección por diálogo. Grabar desde Texto, Pausar/Reanudar y Detener accionaron comandos con captura simulada mientras se desplazaba. Horizontal 915×412 también aprobado, dock de captura menor de 300 px y controles dentro de pantalla.
+- **Teclado simulado:** pruebas a 320/360/412/760 con foco editable y reducción de 330 px del viewport visual, y layout completo a 470 px; barra sobre zona de teclado sin doble inset, corrección dentro del área visible, cambio de foco a botones/diálogo sin perder compacción, restauración al cerrar. Se inspeccionaron capturas de móvil/Grande, teclado simulado y grabación.
+- **No confirmado físicamente:** teclado Android, teclados flotantes, pantalla dividida, navegador del Motorola, micrófono/grabación reales en esta revisión. La detección de teclado es heurística; un navegador que no notifique geometría puede no activar compacción. No se asegura compatibilidad universal ni se midió rendimiento/batería. La captura de prueba fue simulada, no inferencia real.
+- **Prueba del usuario:** README → Lectura y uso con una mano. Validar tamaño/persistencia, nota larga, scroll, Grabar en Texto, Pausar/Detener, teclado abierto/cerrado, corrección y horizontal. Repetir con datos ficticios antes de dar por verificada la revisión en el Motorola.
+
+Referencias técnicas: [VisualViewport](https://developer.mozilla.org/en-US/docs/Web/API/VisualViewport), [meta viewport / interactive-widget](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/meta/name/viewport). No dependencias nuevas ni servicios/telemetría.
+
+
 ## Delta 11 · Explicar el texto por fragmentos durante la grabación — 15/11/2026
 
 **Base:** `14e8dbe757f0b02a670df3d903ae60bdcedb8cdd`, rama `fix/transcription-feedback`. Revisión técnica y propuesta comunicadas al usuario antes de editar. Se respeta la decisión previa de dejar en pausa el desarrollo del dictado del navegador. Mismos modelos, almacenamiento y URL.

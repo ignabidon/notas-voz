@@ -81,3 +81,13 @@ En una etapa anterior de Gamma se observaron números o errores en la transcripc
 - El aviso inferior sigue siendo único. Activo durante captura Whisper aun con cero trabajos; decir «por partes», distinguir pausa y reunir audio de inferencia. Sin barra/spinner animado cuando no hay trabajo. No esconder el estado de error de preparación (`modelErr`). La ayuda junto al editor explica el modo: no duplicar porcentajes/tiempos/cancelación allí.
 - Dictado del navegador queda en pausa de desarrollo, conforme al usuario: no reintentar habilitar motores o servicios remotos. Se conservan provisionales y finales separados cuando una plataforma lo admite.
 - 75 pruebas locales y UI Firefox 153 a anchos 412/1365 con estados simulados; flujo nativo simulado también pasó. No prueba física Motorola ni mediciones de batería. Ver CAMBIOS y README.
+
+## Ergonomía progresiva — 15/11/2026
+
+- El usuario informó que probó la versión de feedback de texto; no indicó cada caso/dispositivo. No extrapolar esa confirmación a esta revisión.
+- Mantener tres vistas y misma identidad visual. `textSize` es un campo adicional opcional de CKEY existente, con compacto/normal/grande validados; no renombrar claves ni modificar notas/exportaciones al cambiar tamaño. Si falla persistencia, avisar y conservar aplicación en sesión.
+- Grabar accesible también desde Texto, reutiliza #rec. Pausar/Detener inferiores siguen reutilizando controles originales. No duplicar lógica de captura. Respetar Empezar de cero al grabar.
+- Herramientas de edición sticky dentro de tarjeta Texto; estáticas con teclado o poca altura táctil para dejar espacio de escritura. Mínimos táctiles 48 px en principales; separación 10–12 px. No recortar rótulos para hacerlos entrar.
+- `initErgonomics` mide barra con ResizeObserver y usa eventos/RAF agrupados, sin polling/timers nuevos de teclado. Margen inferior dinámico; teclado inferido por foco y geometría, nunca certeza universal. Considerar viewport visual y layout, zoom, orientación y foco transitorio de botones. No cambiar foco ni texto desde medidas de layout.
+- Barra compacta mantiene comandos/navegación/estado principal; ocultar solo detalles secundarios del aviso cuando teclado/poca altura. Cuadro de corrección dentro del viewport visual, desplazable.
+- 79 tests locales y UI Firefox 153 a 320/360/412/760/1365, horizontal 915×412; teclado y captura simulados. Sin teclado/micrófono real Motorola. Audio/transcripción no modificados; leer CAMBIOS para límites.
