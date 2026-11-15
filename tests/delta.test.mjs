@@ -190,3 +190,76 @@ test('dictado local: detención inmediata deja mensaje y no reinicia sin límite
   assert.match(html, /else if \(e\.error === 'no-speech'\)/);
   assert.match(html, /r\.disabled = on \|\| \(r\.value === 'native' && !nativeReady\)/);
 });
+
+
+test('audio: conserva un principal y solo la última copia recuperable', () => {
+  const match = html.match(/function audioHistoryPlan\(current, previous, next\) \{[\s\S]*?\n\}/);
+  assert.ok(match);
+  const plan = new Function(match[0] + '; return audioHistoryPlan;')();
+  const old = {id:'last',sid:'A',complete:true};
+  const previous = {id:'previous',sid:'B',complete:true};
+  const r = plan(old, previous, {sid:'C'});
+  assert.deepEqual(r.keepPrevious, {...old,id:'previous'});
+  assert.equal(r.expiredSid, 'B');
+  assert.deepEqual(plan(null, previous, {sid:'C'}), {keepPrevious:null,expiredSid:'B'});
+});
+
+test('audio: la primera parte nueva conserva el audio previo y elimina solo el más antiguo', async () => {
+  const matchPlan = html.match(/function audioHistoryPlan\(current, previous, next\) \{[\s\S]*?\n\}/);
+  const matchFirst = html.match(/async function audioPutFirstChunk\(sid, n, b, meta\) \{[\s\S]*?\n\}/);
+  assert.ok(matchFirst);
+  const plan = new Function(matchPlan[0] + '; return audioHistoryPlan;')();
+  const metas = new Map([['last',{id:'last',sid:'A'}],['previous',{id:'previous',sid:'B'}]]);
+  const chunks = new Map([['A:000000','AUDIO A'],['B:000000','AUDIO B']]);
+  const idbDo = async (stores, mode, fn) => {
+    assert.deepEqual(stores,['chunks','meta']);
+    assert.equal(mode,'readwrite');
+    fn({objectStore: name => name === 'meta'
+      ? {put:o=>metas.set(o.id,o),delete:k=>metas.delete(k)}
+      : {put:o=>chunks.set(o.k,o.b),delete:range=>{
+          for(const k of [...chunks.keys()]) if(k>=range.lower&&k<=range.upper) chunks.delete(k);
+        }}});
+  };
+  const get = async id => metas.get(id);
+  const IDBKeyRange = {bound:(lower,upper)=>({lower,upper})};
+  const commit = new Function('audioGetMeta','audioGetPrevious','audioHistoryPlan','idbDo','IDBKeyRange',
+    matchFirst[0]+'; return audioPutFirstChunk;')(()=>get('last'),()=>get('previous'),plan,idbDo,IDBKeyRange);
+  await commit('C',0,'AUDIO C',{id:'last',sid:'C',complete:false});
+  assert.equal(metas.get('last').sid,'C');
+  assert.equal(metas.get('previous').sid,'A');
+  assert.equal(chunks.has('A:000000'),true);
+  assert.equal(chunks.has('B:000000'),false);
+  assert.equal(chunks.get('C:000000'),'AUDIO C');
+});
+
+test('audio: recupera el anterior intercambiando referencias sin copiar ni borrar archivos', async () => {
+  const m = html.match(/async function audioUndoReplace\(\) \{[\s\S]*?\n\}/);
+  assert.ok(m);
+  const metas = new Map([['last',{id:'last',sid:'C'}],['previous',{id:'previous',sid:'A'}]]);
+  const idbDo = async (stores,mode,fn) => {
+    assert.deepEqual(stores,['meta']);
+    assert.equal(mode,'readwrite');
+    fn({objectStore:()=>({put:o=>metas.set(o.id,o)})});
+  };
+  const recover = new Function('audioGetMeta','audioGetPrevious','idbDo',
+    m[0] + '; return audioUndoReplace;')(
+      async()=>metas.get('last'),async()=>metas.get('previous'),idbDo);
+  assert.equal(await recover(),true);
+  assert.equal(metas.get('last').sid,'A');
+  assert.equal(metas.get('previous').sid,'C');
+  assert.equal(await recover(),true);
+  assert.equal(metas.get('last').sid,'C');
+});
+
+test('audio: antes de grabar no destruye el anterior', async () => {
+  const m = html.match(/async function audioSlotOk\(\)\{[\s\S]*?\n\}/);
+  assert.ok(m);
+  assert.doesNotMatch(m[0], /audioClear\(/);
+  let confirms=0;
+  const fn = new Function('audioGetMeta','confirm',m[0]+'; return audioSlotOk;')(
+    async()=>({sid:'A',downloaded:false}),()=>{confirms++;return true;});
+  assert.equal(await fn(),'ok');
+  assert.equal(confirms,1);
+  assert.match(html, /id="aUndoAudio"/);
+  assert.match(html, /id="audioUndoRow"/);
+});
