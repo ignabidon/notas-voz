@@ -604,7 +604,7 @@ document.addEventListener('DOMContentLoaded',function(){
       if (link.dataset.deltaView===view) link.setAttribute('aria-current','page');
       else link.removeAttribute('aria-current');
     });
-    if (scrollToTop) window.scrollTo({top:0,behavior:'instant'});
+    if (scrollToTop) window.scrollTo({top:0,behavior:'auto'});
     return view;
   }
   document.querySelectorAll('[data-delta-view]').forEach(link=>{
