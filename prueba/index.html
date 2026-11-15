@@ -361,11 +361,14 @@ textarea{min-height:240px}
       </div>
 
       <label class="chk"><input type="checkbox" id="replace" checked><span><b>Empezar de cero al grabar</b><small>Podés deshacer el borrado. Si lo desactivás, lo nuevo se suma al final.</small></span></label>
-      <label for="model" style="margin-top:16px">Calidad de Whisper</label>
+      <label for="model" style="margin-top:16px">Modelo de Whisper</label>
       <select id="model">
-        <option value="Xenova/whisper-base">Rápida · descarga ~75 MB</option>
-        <option value="Xenova/whisper-small" selected>Más precisa · descarga ~250 MB (más lenta)</option>
+        <option value="Xenova/whisper-tiny">Tiny · más liviano (para pruebas)</option>
+        <option value="Xenova/whisper-base">Base · equilibrio entre velocidad y precisión</option>
+        <option value="Xenova/whisper-small" selected>Small · más precisión, más lento</option>
       </select>
+      <div class="hint" id="modelHint" role="status">Small: para mayor precisión. Requiere más memoria y tiempo de procesamiento.</div>
+      <div class="hint">La primera vez se descarga el modelo elegido. Después puede usarse sin conexión si quedó guardado en el navegador. Elegir otro modelo puede requerir una nueva descarga.</div>
 
       <label for="accel" style="margin-top:14px">Velocidad de cálculo</label>
       <select id="accel">
@@ -493,7 +496,7 @@ textarea{min-height:240px}
 
 </main>
 
-<footer>Versión de prueba · Anonimización prioritaria · Usá datos ficticios</footer>
+<footer>Versión de prueba · Tres modelos Whisper · Usá datos ficticios</footer>
 </div>
 
 <script>
@@ -1672,6 +1675,15 @@ $('rec').onclick = async () => {
 };
 
 /* ---------- Ajustes guardados ---------- */
+const MODEL_HELP = {
+  'Xenova/whisper-tiny': 'Tiny: más liviano y generalmente más rápido; puede omitir o confundir más palabras. Ideal para pruebas.',
+  'Xenova/whisper-base': 'Base: equilibrio entre precisión y velocidad. Recomendado para uso cotidiano en el celular.',
+  'Xenova/whisper-small': 'Small: prioriza la precisión, pero puede tardar bastante y usar más memoria.'
+};
+function updateModelHint(){
+  $('modelHint').textContent = MODEL_HELP[$('model').value] || '';
+}
+$('model').addEventListener('change', updateModelHint);
 const hasOpt = (sel, v) => [...sel.options].some(o => o.value === v);
 function loadCfg(){
   try {
@@ -1721,7 +1733,7 @@ function updWC(){
 }
 $('text').addEventListener('input', updWC);
 setInterval(updWC, 300);
-loadCfg(); loadDict(); loadPeople(); renderList(); restoreDraft(); updWC(); refreshAudioBox();
+loadCfg(); updateModelHint(); loadDict(); loadPeople(); renderList(); restoreDraft(); updWC(); refreshAudioBox();
 </script>
 </body>
 </html>
