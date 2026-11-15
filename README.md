@@ -12,7 +12,7 @@ Esta es la **única versión web activa** del repositorio, derivada de Gamma Stu
 - Transcripción local con Whisper. Descargar o cambiar de modelo puede requerir conexión a internet.
 - Corrección contextual de palabras o frases; guardar correcciones frecuentes en un diccionario solo si se elige esa opción.
 - Edición de texto, anonimización posterior (revisar siempre), deshacer, códigos o alias de personas.
-- Borrador, notas y audio guardados en el navegador; exportación y diagnósticos técnicos.
+- Borrador, notas y audio guardados en el navegador; el botón Guardar solicita además un archivo TXT descargable; exportación y diagnósticos técnicos.
 
 ## Organización
 
@@ -31,6 +31,12 @@ Esta es la **única versión web activa** del repositorio, derivada de Gamma Stu
 Los prototipos web (`gamma-studio`, `gamma-profesional`, `gamma`, `prueba` y la web original), el experimento Android Alfa y su workflow se retiraron de **main**, pero se conservaron en la rama de archivo: [archivo-antes-de-delta-2026-11-15](https://github.com/ignabidon/notas-voz/tree/archivo-antes-de-delta-2026-11-15). También siguen en el historial de Git.
 
 La URL del repositorio permanece como **ignabidon/notas-voz** para no cambiar los enlaces. El nombre visible de la app es **Grabador de voz Delta**.
+
+## Guardar en Descargas (Delta 02)
+
+Al tocar **Guardar .txt** se solicita al navegador descargar un archivo de texto con el título y la transcripción actual. En Android, buscá el archivo en **Descargas de Brave** o en la carpeta de descargas configurada en el dispositivo. El navegador puede consultar dónde guardarlo. La aplicación no puede comprobar desde la página que el archivo terminó de guardarse: abrí el archivo para verificarlo.
+
+Este botón también conserva la copia local anterior como respaldo; no borra ni migra contenido. La lista interna de notas guardadas sigue oculta en este cambio. La descarga TXT es únicamente de la nota actual; no incluye audio, diccionario, claves o ajustes. No usar información sensible real antes de validar el proceso.
 
 ## Notas y almacenamiento
 
