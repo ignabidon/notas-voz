@@ -13,18 +13,21 @@
   .sub{color:var(--mut);font-size:13px;margin-bottom:12px}
   .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px}
   label{font-size:13px;color:var(--mut);display:block;margin-bottom:4px}
-  input[type=text],textarea{width:100%;font:inherit;color:inherit;background:transparent;border:1px solid var(--line);border-radius:8px;padding:9px}
+  input[type=text],textarea,select{width:100%;font:inherit;color:inherit;background:transparent;border:1px solid var(--line);border-radius:8px;padding:9px}
   textarea{min-height:200px;resize:vertical}
+  textarea.mono{min-height:150px;font:13px/1.4 ui-monospace,Menlo,Consolas,monospace}
   .eng{display:flex;flex-direction:column;gap:6px;font-size:14px}
-  .eng label{display:flex;gap:8px;align-items:flex-start;color:var(--ink);font-size:14px;margin:0}
+  .eng label,.chk{display:flex;gap:8px;align-items:flex-start;color:var(--ink);font-size:14px;margin:0}
+  .chk{margin-top:10px}
   .eng small{color:var(--mut);display:block}
   button{font:inherit;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:9px 12px;border-radius:8px}
   button.p{background:var(--acc);color:#fff;border-color:var(--acc)}
+  button:disabled{opacity:.5}
   .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
   #rec{width:100%;padding:16px;font-size:17px;font-weight:600;background:var(--acc);color:#fff;border:0;border-radius:12px}
   #rec.on{background:var(--rec)}
   #rec:disabled{opacity:.5}
-  #status{font-size:13px;color:var(--mut);margin-top:8px;min-height:18px}
+  #status{font-size:13px;color:var(--mut);margin-top:8px;min-height:18px;overflow-wrap:anywhere}
   #interim{color:var(--mut);font-style:italic;font-size:14px;min-height:18px;margin-top:6px}
   .bar{height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin-top:6px;display:none}
   .bar i{display:block;height:100%;width:0;background:var(--acc)}
@@ -37,30 +40,38 @@
   .chip.sel{background:var(--acc);color:#fff;border-color:var(--acc)}
   details{margin-top:10px;font-size:14px}
   summary{color:var(--mut);font-size:13px}
+  #flash{min-height:16px;margin-top:6px}
 </style>
 </head>
 <body>
 <h1>Notas por voz</h1>
-<div class="sub">El audio no se guarda ni se envía a ningún servidor. Las notas quedan en este dispositivo.</div>
+<div class="sub">El audio no se guarda ni se envía a ningún servidor. Las notas quedan en este dispositivo. · v2</div>
 
 <div class="card">
   <label>Motor de transcripción</label>
   <div class="eng">
     <label><input type="radio" name="eng" value="whisper" checked>
-      <span>Whisper local<small>Corre en el dispositivo. La primera vez descarga el modelo y después funciona sin conexión. Transcribe al terminar de grabar.</small></span></label>
+      <span>Whisper local<small>Corre en el dispositivo. La primera vez descarga el modelo y después funciona sin conexión. Transcribe por partes mientras hablás, así al terminar queda poco por esperar.</small></span></label>
     <label id="lblNative"><input type="radio" name="eng" value="native">
       <span>Dictado del navegador (local)<small id="nativeNote">En vivo, mientras hablás.</small></span></label>
   </div>
   <label for="model" style="margin-top:10px">Precisión de Whisper</label>
-  <select id="model" style="width:100%;font:inherit;color:inherit;background:transparent;border:1px solid var(--line);border-radius:8px;padding:9px">
+  <select id="model">
     <option value="Xenova/whisper-base" style="color:#000">Rápida (~75 MB)</option>
     <option value="Xenova/whisper-small" style="color:#000" selected>Mejor (~250 MB, más lenta)</option>
+  </select>
+  <label for="accel" style="margin-top:10px">Aceleración</label>
+  <select id="accel">
+    <option value="auto" style="color:#000" selected>Automática (usa la GPU si puede)</option>
+    <option value="cpu" style="color:#000">Solo procesador (si la GPU da errores o texto raro)</option>
   </select>
   <div class="bar" id="bar"><i id="barI"></i></div>
 </div>
 
 <div class="card">
   <button id="rec">🎙️ Grabar</button>
+  <label class="chk"><input type="checkbox" id="replace" checked>
+    <span>Al grabar, empezar de cero: borra el texto anterior (se puede deshacer). Si lo destildás, lo nuevo se agrega al final.</span></label>
   <div id="status"></div>
   <div id="interim"></div>
 </div>
@@ -69,7 +80,15 @@
   <label for="title">Título</label>
   <input type="text" id="title" placeholder="Ej.: Clase 4to año – 14/11">
   <label for="text" style="margin-top:10px">Texto (podés editarlo)</label>
+  <div class="row" style="margin:0 0 8px">
+    <button id="selAll">Seleccionar todo</button>
+    <button id="copyAll">Copiar todo</button>
+    <button id="clear">Borrar</button>
+    <button id="undoClear" style="display:none">Deshacer borrado</button>
+  </div>
   <textarea id="text" placeholder="Acá aparece la transcripción…"></textarea>
+  <div class="warn" id="flash"></div>
+  <div id="learn"></div>
   <label style="margin-top:10px">Etiquetas</label>
   <div id="chips"></div>
   <div class="row" style="margin-top:0">
@@ -83,9 +102,18 @@
     <button id="newn">Nueva</button>
     <button id="doc">Exportar a Word</button>
     <button id="txt">TXT</button>
-    <button id="copy">Copiar</button>
     <button id="share" style="display:none">Compartir</button>
   </div>
+  <details>
+    <summary>Mi diccionario (correcciones y palabras propias)</summary>
+    <div class="warn" style="margin:8px 0 6px">Se aplica solo después de transcribir. Una regla por línea: <b>lo que escribe Whisper =&gt; lo que querés</b>. Una palabra sola (sin =&gt;) sirve para nombres propios: se corrige si suena parecido. Las líneas con # son comentarios. Se guarda en este dispositivo; no pongas nombres de pacientes.</div>
+    <textarea id="dict" class="mono" spellcheck="false" autocapitalize="off"></textarea>
+    <div class="warn" id="dictInfo" style="margin-top:4px"></div>
+    <div class="row">
+      <button id="applyDict">Aplicar al texto actual</button>
+      <button id="voseo">Agregar voseo rioplatense</button>
+    </div>
+  </details>
   <details>
     <summary>Ajustes de anonimización</summary>
     <label style="margin-top:8px">Ocultar además estas palabras (separadas por coma)</label>
@@ -105,15 +133,186 @@
 </div>
 
 <script>
+/* ====================================================================
+   Funciones puras (se prueban aparte, sin navegador)
+   ==================================================================== */
+/*PURE-START*/
+const norm = s => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+const TOK = /[\p{L}\p{N}]+(?:['’][\p{L}\p{N}]+)*|[^\p{L}\p{N}]+/gu;
+const WORDS = /[\p{L}\p{N}]+(?:['’][\p{L}\p{N}]+)*/gu;
+const isWord = p => /^[\p{L}\p{N}]/u.test(p);
+const isUp = s => !!s && s[0] !== s[0].toLowerCase();
+const capFirst = s => s ? s[0].toUpperCase() + s.slice(1) : s;
+
+function lev(a, b) {
+  if (a === b) return 0;
+  let prev = Array.from({length: b.length + 1}, (_, j) => j);
+  for (let i = 1; i <= a.length; i++) {
+    const cur = [i];
+    for (let j = 1; j <= b.length; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    prev = cur;
+  }
+  return prev[b.length];
+}
+/* Clave fonética del español rioplatense: v=b, s=z=c(e,i), ll=y, h muda, etc. */
+function phon(w) {
+  return norm(w).replace(/ch/g, '1').replace(/h/g, '').replace(/qu/g, 'k').replace(/gu(?=[ei])/g, 'G')
+    .replace(/g(?=[ei])/g, 'j').replace(/c(?=[ei])/g, 's').replace(/[zc]/g, m => m === 'z' ? 's' : 'k')
+    .replace(/G/g, 'g').replace(/ll/g, 'y').replace(/v/g, 'b').replace(/w/g, 'u').replace(/x/g, 'ks')
+    .replace(/(.)\1+/g, '$1');
+}
+
+/* Diccionario: "dice => pone" (reglas) y palabras sueltas (nombres propios) */
+function parseDict(src) {
+  const rules = [], V = [];
+  String(src || '').split(/\n/).forEach(line => {
+    line = line.trim();
+    if (!line || line[0] === '#') return;
+    const i = line.indexOf('=>');
+    if (i > 0) {
+      const a = line.slice(0, i).trim(), b = line.slice(i + 2).trim();
+      const w = (a.match(WORDS) || []).map(x => x.toLowerCase());
+      if (w.length) rules.push({a, w, b});
+    } else {
+      line.split(',').map(s => s.trim()).filter(t => t && !/\s/.test(t)).forEach(t => V.push({t, l: t.toLowerCase(), k: phon(t)}));
+    }
+  });
+  rules.sort((x, y) => y.w.length - x.w.length);
+  return {rules, V};
+}
+function applyDict(text, D) {
+  if (!D || !text || (!D.rules.length && !D.V.length)) return text;
+  const parts = text.match(TOK) || [];
+  const low = parts.map(p => isWord(p) ? p.toLowerCase() : null);
+  const res = []; let i = 0, del = false;
+  while (i < parts.length) {
+    let hit = null;
+    if (low[i] !== null) {
+      for (const r of D.rules) {
+        const k = r.w.length; let ok = true;
+        for (let j = 0; j < k && ok; j++) {
+          const p = i + 2 * j;
+          if (low[p] !== r.w[j]) ok = false;
+          else if (j < k - 1 && !/^\s+$/.test(parts[p + 1] || '')) ok = false;
+        }
+        if (ok) { hit = r; break; }
+      }
+    }
+    if (hit) {
+      const b = hit.b && isUp(parts[i]) && !isUp(hit.b) ? capFirst(hit.b) : hit.b;
+      if (b) res.push({v: b, w: true, f: true}); else del = true;
+      i += 2 * hit.w.length - 1;
+    } else { res.push({v: parts[i], w: low[i] !== null, f: false}); i++; }
+  }
+  if (D.V.length) res.forEach(x => {
+    if (!x.w || x.f) return;
+    const v = x.v, l = v.toLowerCase();
+    const ex = D.V.find(t => t.l === l);
+    if (ex) { if (v !== ex.t && !(isUp(v) && !isUp(ex.t))) x.v = ex.t; return; }
+    if (v.length < 5) return;
+    const k = phon(v); let best = null, bd = 9;
+    for (const t of D.V) {
+      if (t.k.length < 4 || Math.abs(t.k.length - k.length) > 2) continue;
+      const d = lev(k, t.k), th = t.k.length >= 8 ? 2 : 1;
+      if (d <= th && d < bd) { best = t; bd = d; }
+    }
+    if (best) x.v = isUp(v) && !isUp(best.t) ? capFirst(best.t) : best.t;
+  });
+  let out = res.map(x => x.v).join('');
+  if (del) out = out.replace(/ {2,}/g, ' ');
+  return out;
+}
+
+/* Frases fantasma que Whisper inventa con silencio o ruido */
+const HALL = /^(?:¡?gracias por (?:ver|vernos|su atenci[oó]n)[^.]*\.?|subt[ií]tulos?[^.]*\.?|suscr[ií]bete[^.]*\.?|¡?hasta la pr[oó]xima[^.]*\.?|amara\.org[^.]*)$/i;
+function cleanText(t) {
+  t = String(t || '').replace(/\s+/g, ' ').trim();
+  return HALL.test(t) ? '' : t;
+}
+
+/* Aprender de lo que corregiste: compara el texto de la máquina con el tuyo.
+   Solo propone cambios en minúsculas (así nunca sugiere nombres propios). */
+function suggest(base, edited, known) {
+  const A = base.match(WORDS) || [], B = edited.match(WORDS) || [];
+  if (!A.length || !B.length || A.length * B.length > 4e6) return [];
+  const al = A.map(w => w.toLowerCase()), bl = B.map(w => w.toLowerCase());
+  const n = A.length, m = B.length, W = m + 1, L = new Uint16Array((n + 1) * (m + 1));
+  for (let i = n - 1; i >= 0; i--) for (let j = m - 1; j >= 0; j--)
+    L[i * W + j] = al[i] === bl[j] ? L[(i + 1) * W + j + 1] + 1 : Math.max(L[(i + 1) * W + j], L[i * W + j + 1]);
+  const hunks = []; let i = 0, j = 0, rem = [], add = [], pi = -1;
+  const flush = nextWord => {
+    if (rem.length && add.length) hunks.push({rem, add, prev: pi >= 0 ? al[pi] : null, next: nextWord});
+    rem = []; add = [];
+  };
+  while (i < n || j < m) {
+    if (i < n && j < m && al[i] === bl[j]) { flush(al[i]); pi = i; i++; j++; }
+    else if (i < n && (j >= m || L[(i + 1) * W + j] >= L[i * W + j + 1])) rem.push(A[i++]);
+    else add.push(B[j++]);
+  }
+  flush(null);
+  const seen = new Set(known || []), out = [];
+  for (const h of hunks) {
+    if (h.rem.length > 3 || h.add.length > 3) continue;
+    const bad = h.rem.concat(h.add).some(t => /\p{Lu}|\p{N}/u.test(t));
+    if (bad) continue;
+    const ctxP = h.prev ? [h.prev] : [], ctxN = !h.prev && h.next ? [h.next] : [];
+    const a = ctxP.concat(h.rem.map(t => t.toLowerCase()), ctxN).join(' ');
+    const b = ctxP.concat(h.add.map(t => t.toLowerCase()), ctxN).join(' ');
+    if (a === b || seen.has(a)) continue;
+    seen.add(a); out.push({a, b});
+    if (out.length >= 8) break;
+  }
+  return out;
+}
+
+/* Corta la grabación en partes de hasta ~29 s, en las pausas, y comprime los silencios largos.
+   Whisper procesa siempre una ventana de 30 s: cuanta más voz entra en cada ventana, menos tarda. */
+function makeSegmenter(rate, emit, o) {
+  o = o || {};
+  const d = 4096 / rate;
+  const minEff = Math.round((o.minSec || 20) / d), maxEff = Math.round((o.maxSec || 29) / d);
+  const cap = Math.round((o.capSil || 0.8) / d), look = Math.round(2.5 / d), keepN = Math.ceil(0.25 / d), floorN = Math.round(8 / d);
+  let seg = [], silRun = 0; const ring = [];
+  const rms = b => { let s = 0; for (let i = 0; i < b.length; i++) s += b[i] * b[i]; return Math.sqrt(s / b.length); };
+  function out(n) {
+    const a = seg.slice(0, n); seg = seg.slice(n);
+    if (a.reduce((c, x) => c + (x.s ? 0 : 1), 0) >= keepN) emit(a.map(x => x.d));
+  }
+  return {
+    push(b) {
+      const r = rms(b); ring.push(r); if (ring.length > floorN) ring.shift();
+      const thr = Math.min(0.015, Math.max(0.004, 2.5 * Math.min.apply(null, ring)));
+      const s = r < thr;
+      silRun = s ? silRun + 1 : 0;
+      if (s && silRun > cap) { if (seg.length >= minEff) out(seg.length); return; }
+      seg.push({d: b, r, s});
+      if (seg.length >= maxEff) {
+        let k = seg.length - 1, best = Infinity;
+        for (let i = Math.max(0, seg.length - look); i < seg.length; i++) if (seg[i].r < best) { best = seg[i].r; k = i; }
+        out(k + 1);
+      }
+    },
+    flush() { out(seg.length); }
+  };
+}
+/*PURE-END*/
+
+/* ====================================================================
+   Estado general
+   ==================================================================== */
 const $ = id => document.getElementById(id);
-const KEY = 'notasvoz.v1';
-let notes = [], cur = null;
+const KEY = 'notasvoz.v1', DKEY = 'notasvoz.dict.v1', CKEY = 'notasvoz.cfg.v1';
+let notes = [], cur = null, tags = [], activeTag = null, anonBackup = null, baseline = '', clearBackup = null;
 try { notes = JSON.parse(localStorage.getItem(KEY) || '[]'); } catch (e) { notes = []; }
-const persist = () => { try { localStorage.setItem(KEY, JSON.stringify(notes)); } catch (e) { setStatus('No se pudo guardar en este navegador.'); } };
 const setStatus = s => $('status').textContent = s;
+let ft; const flash = s => { $('flash').textContent = s; clearTimeout(ft); ft = setTimeout(() => $('flash').textContent = '', 6000); };
+const persist = () => { try { localStorage.setItem(KEY, JSON.stringify(notes)); } catch (e) { flash('No se pudo guardar en este navegador.'); } };
+const eng = () => document.querySelector('input[name=eng]:checked').value;
+const nWords = s => (s.match(WORDS) || []).length;
 
 /* ---------- Notas ---------- */
 function fmt(ts){ return new Date(ts).toLocaleString('es-AR', {dateStyle:'short', timeStyle:'short'}); }
+function resetEdit(){ anonBackup = null; $('undo').disabled = true; $('anonRes').textContent = ''; $('learn').innerHTML = ''; }
 function renderList(){
   const l = $('list'); l.innerHTML = '';
   const f = $('filt'); f.innerHTML = '';
@@ -127,24 +326,47 @@ function renderList(){
     const s = document.createElement('span'); s.textContent = n.title || 'Sin título';
     const sm = document.createElement('small'); sm.textContent = fmt(n.ts) + ((n.tags || []).length ? ' · ' + n.tags.join(', ') : '');
     const o = document.createElement('button'); o.textContent = 'Abrir';
-    o.onclick = () => { cur = n.id; $('title').value = n.title; $('text').value = n.text; tags = (n.tags || []).slice(); renderChips(); anonBackup = null; $('undo').disabled = true; $('anonRes').textContent = ''; window.scrollTo({top:0, behavior:'smooth'}); };
+    o.onclick = () => { cur = n.id; $('title').value = n.title; $('text').value = n.text; baseline = n.text; tags = (n.tags || []).slice(); renderChips(); resetEdit(); window.scrollTo({top:0, behavior:'smooth'}); };
     const x = document.createElement('button'); x.textContent = '✕';
     x.onclick = () => { if (confirm('¿Borrar esta nota?')) { notes = notes.filter(m => m.id !== n.id); if (cur === n.id) cur = null; persist(); renderList(); } };
     d.append(s, sm, o, x); l.append(d);
   });
 }
 $('save').onclick = () => {
-  const text = $('text').value.trim(); if (!text) return setStatus('No hay texto para guardar.');
+  const text = $('text').value.trim(); if (!text) return flash('No hay texto para guardar.');
   let n = notes.find(m => m.id === cur);
   if (!n) { n = {id: Date.now().toString(36)}; notes.push(n); cur = n.id; }
   n.title = $('title').value.trim() || ('Nota ' + fmt(Date.now())); n.text = $('text').value; n.tags = tags.slice(); n.ts = Date.now();
-  persist(); renderList(); setStatus('Guardada.');
+  persist(); renderList(); flash('Guardada.');
+  showSuggestions(suggest(baseline, $('text').value, D.rules.map(r => r.a.toLowerCase())));
+  baseline = $('text').value;
 };
-$('newn').onclick = () => { cur = null; $('title').value = ''; $('text').value = ''; tags = []; renderChips(); anonBackup = null; $('undo').disabled = true; $('anonRes').textContent = ''; setStatus(''); };
+$('newn').onclick = () => { cur = null; $('title').value = ''; $('text').value = ''; baseline = ''; tags = []; renderChips(); resetEdit(); flash(''); };
+
+/* ---------- Seleccionar, copiar, borrar ---------- */
+$('selAll').onclick = () => { const t = $('text'); t.focus(); t.select(); try { t.setSelectionRange(0, t.value.length); } catch (e) {} };
+$('copyAll').onclick = async () => {
+  const t = $('text'); if (!t.value.trim()) return flash('No hay texto para copiar.');
+  try { await navigator.clipboard.writeText(t.value); }
+  catch (e) { t.focus(); t.select(); try { document.execCommand('copy'); } catch (e2) { return flash('No se pudo copiar. Usá Seleccionar todo y copiá a mano.'); } }
+  flash('Copiado (' + nWords(t.value) + ' palabras).');
+};
+function doClear(auto){
+  if (!$('text').value && !$('title').value && !tags.length) return;
+  clearBackup = {title: $('title').value, text: $('text').value, tags: tags.slice(), cur, baseline};
+  cur = null; $('title').value = ''; $('text').value = ''; baseline = ''; tags = []; renderChips(); resetEdit();
+  $('undoClear').style.display = '';
+  flash(auto ? 'Se borró el texto anterior. Podés deshacerlo.' : 'Texto borrado. Podés deshacerlo.');
+}
+$('clear').onclick = () => doClear(false);
+$('undoClear').onclick = () => {
+  if (!clearBackup) return;
+  const b = clearBackup; clearBackup = null;
+  cur = b.cur; $('title').value = b.title; $('text').value = b.text; baseline = b.baseline; tags = b.tags; renderChips();
+  $('undoClear').style.display = 'none'; flash('Recuperado.');
+};
 
 /* ---------- Etiquetas por tema (cálculo local) ---------- */
-let tags = [], activeTag = null, anonBackup = null;
-const norm = s => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 function renderChips(){
   const c = $('chips'); c.innerHTML = '';
   tags.forEach(t => { const b = document.createElement('button'); b.className = 'chip'; b.textContent = t + ' ✕'; b.onclick = () => { tags = tags.filter(x => x !== t); renderChips(); }; c.append(b); });
@@ -160,8 +382,8 @@ $('tagSug').onclick = () => {
   let c = [...freq.values()].sort((a, b) => b.n - a.n);
   const rep = c.filter(e => e.n >= 2);
   c = (rep.length ? rep : c).slice(0, 5);
-  if (!c.length) return setStatus('Hace falta más texto para sugerir etiquetas.');
-  c.forEach(e => addTag(e.w)); setStatus('Etiquetas sugeridas. Quitá o agregá las que quieras.');
+  if (!c.length) return flash('Hace falta más texto para sugerir etiquetas.');
+  c.forEach(e => addTag(e.w)); flash('Etiquetas sugeridas. Quitá o agregá las que quieras.');
 };
 
 /* ---------- Anonimizar (reglas locales) ---------- */
@@ -211,13 +433,15 @@ function anonymize(){
     });
     return s;
   };
-  anonBackup = {title: $('title').value, text: $('text').value};
+  anonBackup = {title: $('title').value, text: $('text').value, baseline};
   $('title').value = run($('title').value); $('text').value = run($('text').value);
+  baseline = $('text').value; // para que el diccionario nunca "aprenda" los nombres ocultados
+  $('learn').innerHTML = '';
   $('undo').disabled = false;
   $('anonRes').textContent = 'Se ocultaron ' + np + ' nombre(s) y ' + nOther + ' dato(s) (correo, teléfono, fecha). Revisá el texto: pueden quedar nombres sin detectar (al empezar una oración o en minúscula).';
 }
-$('anon').onclick = () => { if (!$('text').value.trim()) return setStatus('No hay texto para anonimizar.'); anonymize(); };
-$('undo').onclick = () => { if (!anonBackup) return; $('title').value = anonBackup.title; $('text').value = anonBackup.text; anonBackup = null; $('undo').disabled = true; $('anonRes').textContent = 'Se deshizo el anonimizado.'; };
+$('anon').onclick = () => { if (!$('text').value.trim()) return flash('No hay texto para anonimizar.'); anonymize(); };
+$('undo').onclick = () => { if (!anonBackup) return; $('title').value = anonBackup.title; $('text').value = anonBackup.text; baseline = anonBackup.baseline; anonBackup = null; $('undo').disabled = true; $('anonRes').textContent = 'Se deshizo el anonimizado.'; };
 
 /* ---------- Exportar ---------- */
 const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -228,18 +452,81 @@ function makeDoc(){
   return new File(['﻿' + html], fname('doc'), {type:'application/msword'});
 }
 function download(file){ const a = document.createElement('a'); a.href = URL.createObjectURL(file); a.download = file.name; document.body.append(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href), 4000); }
-$('doc').onclick = () => $('text').value.trim() ? download(makeDoc()) : setStatus('No hay texto para exportar.');
-$('txt').onclick = () => $('text').value.trim() ? download(new File([($('title').value ? $('title').value + '\n\n' : '') + $('text').value], fname('txt'), {type:'text/plain'})) : setStatus('No hay texto para exportar.');
-$('copy').onclick = async () => { try { await navigator.clipboard.writeText($('text').value); setStatus('Copiado.'); } catch (e) { $('text').select(); document.execCommand('copy'); setStatus('Copiado.'); } };
+$('doc').onclick = () => $('text').value.trim() ? download(makeDoc()) : flash('No hay texto para exportar.');
+$('txt').onclick = () => $('text').value.trim() ? download(new File([($('title').value ? $('title').value + '\n\n' : '') + $('text').value], fname('txt'), {type:'text/plain'})) : flash('No hay texto para exportar.');
 if (navigator.canShare && navigator.canShare({files:[new File(['x'],'x.txt',{type:'text/plain'})]})) {
   $('share').style.display = '';
   $('share').onclick = async () => { if (!$('text').value.trim()) return; try { await navigator.share({files:[makeDoc()], title: $('title').value || 'Nota'}); } catch (e) {} };
 }
 
-/* ---------- Transcripción ---------- */
-const append = t => { t = t.trim(); if (!t) return; const ta = $('text'); ta.value += (ta.value && !/\s$/.test(ta.value) ? ' ' : '') + t; };
-const eng = () => document.querySelector('input[name=eng]:checked').value;
-let recording = false;
+/* ====================================================================
+   Diccionario propio
+   ==================================================================== */
+const DEFAULT_DICT = [
+  '# Reglas: lo que escribe Whisper => lo que querés que diga',
+  'por vos => por voz',
+  '',
+  '# Palabras propias: una por línea (o separadas por coma).',
+  '# Si Whisper escribe algo que suena parecido, se corrige.',
+  'Winnicott', 'Klein', 'Freud'
+].join('\n');
+const VOSEO = ['# Voseo rioplatense', 'tú => vos', 'tienes => tenés', 'quieres => querés', 'puedes => podés', 'sabes => sabés', 'eres => sos', 'vienes => venís', 'haces => hacés', 'dices => decís', 'piensas => pensás', 'sientes => sentís'];
+let D = {rules: [], V: []};
+function loadDict(){
+  let s = null; try { s = localStorage.getItem(DKEY); } catch (e) {}
+  $('dict').value = s === null ? DEFAULT_DICT : s;
+  updDict(false);
+}
+function updDict(save){
+  D = parseDict($('dict').value);
+  $('dictInfo').textContent = D.rules.length + ' regla(s) y ' + D.V.length + ' palabra(s) propia(s).';
+  if (save) { try { localStorage.setItem(DKEY, $('dict').value); } catch (e) {} }
+}
+$('dict').addEventListener('input', () => updDict(true));
+function addRule(a, b){
+  const d = $('dict'); d.value = d.value.replace(/\s*$/, '') + '\n' + a + ' => ' + b + '\n'; updDict(true);
+}
+$('applyDict').onclick = () => {
+  const t = $('text').value, n = applyDict(t, D);
+  if (n === t) return flash('El diccionario no encontró nada para cambiar.');
+  if (t === baseline) baseline = n;
+  $('text').value = n; flash('Correcciones aplicadas.');
+};
+$('voseo').onclick = () => {
+  if ($('dict').value.includes('# Voseo rioplatense')) return flash('El voseo ya está en el diccionario.');
+  $('dict').value = $('dict').value.replace(/\s*$/, '') + '\n\n' + VOSEO.join('\n') + '\n'; updDict(true);
+  flash('Agregado. Podés borrar las reglas que no quieras.');
+};
+function showSuggestions(list){
+  const box = $('learn'); box.innerHTML = '';
+  if (!list.length) return;
+  const h = document.createElement('div'); h.className = 'warn'; h.style.margin = '8px 0 4px';
+  h.textContent = 'Corregiste algunas palabras. Tocá para que la app las corrija sola la próxima vez:';
+  box.append(h);
+  list.forEach(s => {
+    const b = document.createElement('button'); b.className = 'chip'; b.textContent = s.a + ' → ' + s.b + '  ＋';
+    b.onclick = () => { addRule(s.a, s.b); b.remove(); flash('Agregada al diccionario.'); if (!box.querySelector('.chip')) box.innerHTML = ''; };
+    box.append(b);
+  });
+  const x = document.createElement('button'); x.className = 'chip'; x.textContent = 'Ignorar'; x.onclick = () => box.innerHTML = ''; box.append(x);
+}
+
+/* ====================================================================
+   Transcripción
+   ==================================================================== */
+let recording = false, recEng = 'whisper';
+function appendMachine(t){
+  t = t.trim(); if (!t) return;
+  const ta = $('text'), pristine = ta.value === baseline;
+  ta.value += (ta.value && !/\s$/.test(ta.value) ? ' ' : '') + t;
+  ta.scrollTop = ta.scrollHeight;
+  baseline = pristine ? ta.value : baseline + (baseline && !/\s$/.test(baseline) ? ' ' : '') + t;
+}
+/* Al empezar a grabar: borra lo anterior (si está tildado) y deja el texto base limpio */
+function prepareNew(){
+  if ($('replace').checked) doClear(true);
+  baseline = $('text').value; resetEdit();
+}
 
 /* Dictado del navegador: solo se habilita si puede procesar localmente */
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -255,7 +542,7 @@ function startNative(){
   rec.onresult = e => {
     let interim = '';
     for (let i = e.resultIndex; i < e.results.length; i++) {
-      if (e.results[i].isFinal) append(e.results[i][0].transcript); else interim += e.results[i][0].transcript;
+      if (e.results[i].isFinal) { const c = cleanText(e.results[i][0].transcript); if (c) appendMachine(applyDict(c, D)); } else interim += e.results[i][0].transcript;
     }
     $('interim').textContent = interim;
   };
@@ -268,80 +555,227 @@ function startNative(){
   rec.start(); setStatus('Escuchando (procesamiento local)…');
 }
 
-/* Whisper local */
-let backend = 'CPU', asr = null, asrModel = null, loading = null, loadingModel = null, mr = null, chunks = [], stream = null;
-async function loadWhisper(){
-  const model = $('model').value;
-  if (asr && asrModel === model) return asr;
-  if (loading && loadingModel === model) return loading;
-  loadingModel = model;
-  loading = (async () => {
-    setStatus('Cargando modelo… (solo la primera vez necesita internet)');
-    $('bar').style.display = 'block';
-    const { pipeline, env } = await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3');
-    env.allowLocalModels = false;
-    const progress_callback = p => { if (p.status === 'progress' && p.progress != null) $('barI').style.width = p.progress.toFixed(0) + '%'; };
-    asr = null; backend = 'CPU';
+/* ---------- Whisper local: motor en segundo plano (Worker) ---------- */
+function workerBody(){
+  let asr = null, key = '', be = 'CPU', lib = null, model = '';
+  const say = m => self.postMessage(m);
+  async function getLib(){
+    if (!lib) { lib = await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3'); lib.env.allowLocalModels = false; }
+    return lib;
+  }
+  async function build(m, gpu){
+    const { pipeline } = await getLib();
+    const progress_callback = p => { if (p.status === 'progress' && p.progress != null) say({type:'progress', progress:p.progress}); };
+    if (gpu) return pipeline('automatic-speech-recognition', m, { device: 'webgpu', dtype: { encoder_model: 'fp32', decoder_model_merged: 'q4' }, progress_callback });
+    return pipeline('automatic-speech-recognition', m, { progress_callback });
+  }
+  async function load(m, accel){
+    const k = m + '|' + accel;
+    if (asr && key === k) return;
+    asr = null; be = 'CPU'; model = m;
+    if (accel !== 'cpu') {
+      try { if (self.navigator && navigator.gpu && await navigator.gpu.requestAdapter()) { asr = await build(m, true); be = 'GPU'; } }
+      catch (e) { asr = null; }
+    }
+    if (!asr) asr = await build(m, false);
+    key = k;
+  }
+  self.onmessage = async ({data: m}) => {
     try {
-      if (navigator.gpu && await navigator.gpu.requestAdapter()) {
-        asr = await pipeline('automatic-speech-recognition', model, { device: 'webgpu', dtype: { encoder_model: 'fp32', decoder_model_merged: 'q4' }, progress_callback });
-        backend = 'GPU';
+      if (m.type === 'load') { await load(m.model, m.accel); say({type:'ready', id:m.id, backend:be}); }
+      else if (m.type === 'run') {
+        const opt = {language:'spanish', task:'transcribe'};
+        let r;
+        try { r = await asr(m.audio, opt); }
+        catch (e) {
+          if (be !== 'GPU') throw e;
+          asr = await build(model, false); be = 'CPU'; // la GPU falló: sigue con el procesador
+          r = await asr(m.audio, opt);
+        }
+        say({type:'result', id:m.id, text:r.text, backend:be});
       }
-    } catch (e) { asr = null; }
-    if (!asr) asr = await pipeline('automatic-speech-recognition', model, { progress_callback });
-    asrModel = model;
-    $('bar').style.display = 'none';
-    return asr;
-  })();
-  try { return await loading; } catch (e) { loading = null; $('bar').style.display = 'none'; throw e; }
+    } catch (err) { say({type:'error', id:m.id, message:String(err && err.message || err)}); }
+  };
 }
-async function to16k(blob){
-  const ctx = new (window.AudioContext || window.webkitAudioContext)();
-  const audio = await ctx.decodeAudioData(await blob.arrayBuffer()); ctx.close();
-  const off = new OfflineAudioContext(1, Math.max(1, Math.ceil(audio.duration * 16000)), 16000);
-  const src = off.createBufferSource(); src.buffer = audio; src.connect(off.destination); src.start();
-  return (await off.startRendering()).getChannelData(0);
+let engine = null, noWorker = false, seq = 0; const waiters = new Map();
+function onMsg(m){
+  if (m.type === 'progress') { $('barI').style.width = m.progress.toFixed(0) + '%'; return; }
+  const w = waiters.get(m.id); if (!w) return;
+  waiters.delete(m.id);
+  if (m.type === 'error') w.rej(new Error(m.message)); else w.res(m);
+}
+function failAll(err){ const a = [...waiters.values()]; waiters.clear(); a.forEach(w => w.rej(err)); }
+function makeEngine(){
+  const src = '(' + workerBody.toString() + ')()';
+  if (!noWorker) {
+    try {
+      const w = new Worker(URL.createObjectURL(new Blob([src], {type:'text/javascript'})), {type:'module'});
+      w.onmessage = e => onMsg(e.data);
+      w.onerror = e => { if (e.preventDefault) e.preventDefault(); noWorker = true; engine = null; ready = null; failAll(new Error('el motor en segundo plano falló' + (e.message ? ': ' + e.message : ''))); };
+      return {post: (m, t) => w.postMessage(m, t || [])};
+    } catch (e) { noWorker = true; }
+  }
+  // Sin Worker: corre en la página principal (la pantalla puede trabarse mientras transcribe)
+  const shim = {postMessage: d => onMsg(d), onmessage: null};
+  new Function('self', src)(shim);
+  return {post: m => shim.onmessage({data: m})};
+}
+function call(msg, transfer){
+  if (!engine) engine = makeEngine();
+  return new Promise((res, rej) => { const id = ++seq; waiters.set(id, {res, rej}); engine.post({...msg, id}, transfer); });
+}
+
+let backend = 'CPU', ready = null, readyKey = '', modelLoading = false, modelErr = '';
+function ensureModel(){
+  const model = $('model').value, accel = $('accel').value, key = model + '|' + accel;
+  if (ready && readyKey === key) return ready;
+  readyKey = key; modelLoading = true; modelErr = ''; $('bar').style.display = 'block'; $('barI').style.width = '0';
+  const p = call({type:'load', model, accel}).then(r => { backend = r.backend; return r; });
+  p.then(() => { if (ready === p) { modelLoading = false; $('bar').style.display = 'none'; } },
+         e => { if (ready === p) { ready = null; modelLoading = false; modelErr = e.message || String(e); $('bar').style.display = 'none'; } });
+  return ready = p;
+}
+
+/* Captura de audio: bloques de 4096 muestras, sin pasar por MediaRecorder */
+const WL = "class P extends AudioWorkletProcessor{constructor(){super();this.b=new Float32Array(4096);this.n=0}process(i){const c=i[0]&&i[0][0];if(c){for(let k=0;k<c.length;k++){this.b[this.n++]=c[k];if(this.n===4096){const o=this.b;this.port.postMessage(o,[o.buffer]);this.b=new Float32Array(4096);this.n=0}}}return true}}registerProcessor('cap',P)";
+async function startCapture(onBlock){
+  const stream = await navigator.mediaDevices.getUserMedia({audio:{channelCount:1, echoCancellation:true, noiseSuppression:true, autoGainControl:true}});
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    if (ctx.resume) await ctx.resume();
+    const src = ctx.createMediaStreamSource(stream);
+    const mute = ctx.createGain(); mute.gain.value = 0; mute.connect(ctx.destination);
+    let node;
+    if (ctx.audioWorklet && window.AudioWorkletNode) {
+      const url = URL.createObjectURL(new Blob([WL], {type:'text/javascript'}));
+      await ctx.audioWorklet.addModule(url); URL.revokeObjectURL(url);
+      node = new AudioWorkletNode(ctx, 'cap', {numberOfInputs:1, numberOfOutputs:1, outputChannelCount:[1]});
+      node.port.onmessage = e => onBlock(e.data);
+    } else {
+      node = ctx.createScriptProcessor(4096, 1, 1);
+      node.onaudioprocess = e => onBlock(new Float32Array(e.inputBuffer.getChannelData(0)));
+    }
+    src.connect(node); node.connect(mute);
+    return {stream, ctx, node, src, rate: ctx.sampleRate};
+  } catch (e) { stream.getTracks().forEach(t => t.stop()); throw e; }
+}
+function stopCapture(c){ try { c.src.disconnect(); c.node.disconnect(); } catch (e) {} c.stream.getTracks().forEach(t => t.stop()); try { c.ctx.close(); } catch (e) {} }
+async function toMono16k(blocks, rate){
+  let n = 0; blocks.forEach(b => n += b.length);
+  const all = new Float32Array(n); let o = 0; blocks.forEach(b => { all.set(b, o); o += b.length; });
+  const off = new OfflineAudioContext(1, Math.max(1, Math.ceil(n * 16000 / rate)), 16000);
+  const buf = off.createBuffer(1, n, rate); buf.copyToChannel(all, 0);
+  const src = off.createBufferSource(); src.buffer = buf; src.connect(off.destination); src.start();
+  return new Float32Array((await off.startRendering()).getChannelData(0));
+}
+
+let cap = null, seg = null, jobs = [], busy = false, outstanding = 0, dead = false, gotText = false, lastMs = 0, t0 = 0, timer = null, chain = Promise.resolve(), wl = null;
+const lockWake = async () => { try { wl = await navigator.wakeLock.request('screen'); } catch (e) {} };
+const unlockWake = () => { try { wl && wl.release(); } catch (e) {} wl = null; };
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && recording && recEng === 'whisper') lockWake(); });
+function lockUI(on){
+  $('model').disabled = on; $('accel').disabled = on;
+  document.querySelectorAll('input[name=eng]').forEach(r => r.disabled = on || (r.value === 'native' && !nativeLocal));
+}
+function refreshStatus(){
+  if (dead) return;
+  const where = backend === 'GPU' ? 'GPU' : 'procesador';
+  if (recording) {
+    const s = Math.floor((Date.now() - t0) / 1000);
+    let x = 'Grabando ' + Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+    if (modelErr) x += ' · no se pudo cargar el modelo (' + modelErr + '). La primera vez hace falta internet.';
+    else if (modelLoading) x += ' · preparando el modelo…';
+    else if (busy) x += ' · transcribiendo en segundo plano (' + where + ')…';
+    setStatus(x);
+  } else if (busy || outstanding > 0) {
+    setStatus(modelLoading ? 'Preparando el modelo…' : 'Terminando de transcribir (' + where + ')… quedan ' + outstanding + ' parte(s).');
+  }
+}
+function maybeDone(){
+  if (recording || busy || outstanding > 0) return;
+  clearInterval(timer); timer = null; lockUI(false); $('rec').disabled = false;
+  if (dead) return;
+  setStatus(gotText ? 'Listo' + (lastMs ? ' (última parte: ' + Math.round(lastMs / 1000) + ' s, ' + (backend === 'GPU' ? 'con la GPU del dispositivo' : 'con el procesador') + ')' : '') + '. Revisá y guardá.' : 'No se detectó voz. Probá hablar más cerca del micrófono.');
+}
+function fail(e){
+  dead = true; jobs.length = 0; outstanding = 0; busy = false;
+  setStatus('No se pudo transcribir: ' + (e.message || e) + '. Si es la primera vez, hace falta internet para bajar el modelo.');
+  maybeDone();
+}
+async function pump(){
+  if (busy || dead) return;
+  const audio = jobs.shift();
+  if (!audio) return maybeDone();
+  busy = true; refreshStatus();
+  try {
+    await ensureModel();
+    const t = Date.now();
+    const r = await call({type:'run', audio}, [audio.buffer]);
+    lastMs = Date.now() - t; backend = r.backend || backend;
+    const c = cleanText(r.text);
+    if (c) { gotText = true; appendMachine(applyDict(c, D)); }
+  } catch (e) { return fail(e); }
+  busy = false; outstanding--; refreshStatus(); pump();
+}
+function onSegment(blocks, rate){
+  if (dead) return;
+  outstanding++;
+  chain = chain.then(() => toMono16k(blocks, rate)).then(a => { if (!dead) { jobs.push(a); pump(); } }).catch(fail);
 }
 async function startWhisper(){
-  stream = await navigator.mediaDevices.getUserMedia({audio:true});
-  chunks = []; mr = new MediaRecorder(stream);
-  mr.ondataavailable = e => e.data.size && chunks.push(e.data);
-  mr.onstop = async () => {
-    stream.getTracks().forEach(t => t.stop());
-    const blob = new Blob(chunks, {type: mr.mimeType});
-    $('rec').disabled = true;
-    try {
-      const m = await loadWhisper();
-      setStatus('Transcribiendo en el dispositivo (' + backend + ')…');
-      const t0 = Date.now();
-      const r = await m(await to16k(blob), {language:'spanish', task:'transcribe', chunk_length_s:30, stride_length_s:5});
-      append(r.text); setStatus('Listo en ' + Math.round((Date.now() - t0) / 1000) + ' s (' + (backend === 'GPU' ? 'con la GPU del dispositivo' : 'con el procesador') + '). Revisá y guardá.');
-    } catch (e) {
-      setStatus('No se pudo transcribir: ' + (e.message || e) + '. Si es la primera vez, hace falta internet para bajar el modelo.');
-    }
-    $('rec').disabled = false; chunks = [];
-  };
-  mr.start(); setStatus('Grabando… (el audio queda solo en memoria y se descarta al terminar)');
-  loadWhisper().catch(() => {});
+  dead = false; jobs = []; busy = false; outstanding = 0; gotText = false; lastMs = 0; modelErr = ''; chain = Promise.resolve();
+  cap = await startCapture(b => seg && seg.push(b));
+  const rate = cap.rate;
+  seg = makeSegmenter(rate, blocks => onSegment(blocks, rate));
+  t0 = Date.now(); lockWake(); lockUI(true); prepareNew();
+  ensureModel().catch(() => {}); // carga el modelo mientras hablás
+  timer = setInterval(refreshStatus, 500); refreshStatus();
+}
+function stopWhisper(){
+  if (cap) { stopCapture(cap); cap = null; }
+  if (seg) { seg.flush(); seg = null; }
+  unlockWake();
+  if (outstanding === 0 && !busy) maybeDone();
+  else { $('rec').disabled = true; refreshStatus(); }
 }
 
 function stopUI(){ recording = false; $('rec').classList.remove('on'); $('rec').textContent = '🎙️ Grabar'; }
 $('rec').onclick = async () => {
   if (!recording) {
     if (!window.isSecureContext || !navigator.mediaDevices) { setStatus('Chrome no permite usar el micrófono desde un archivo abierto así (' + location.protocol + '). Hace falta abrir la página desde una dirección https.'); return; }
+    recEng = eng(); $('rec').disabled = true;
     try {
-      recording = true; $('rec').classList.add('on'); $('rec').textContent = '⏹ Detener';
-      if (eng() === 'native') startNative(); else await startWhisper();
-    } catch (e) { stopUI(); setStatus('No se pudo acceder al micrófono: ' + (e.message || e)); }
+      recording = true;
+      if (recEng === 'native') { startNative(); prepareNew(); } else await startWhisper();
+      $('rec').classList.add('on'); $('rec').textContent = '⏹ Detener';
+    } catch (e) {
+      stopUI(); lockUI(false); clearInterval(timer); timer = null;
+      setStatus('No se pudo acceder al micrófono: ' + (e.message || e));
+    }
+    $('rec').disabled = false;
   } else {
     recording = false; stopUI();
-    if (eng() === 'native') { try { rec.stop(); } catch (e) {} setStatus('Detenido.'); }
-    else if (mr && mr.state !== 'inactive') mr.stop();
+    if (recEng === 'native') { try { rec.stop(); } catch (e) {} setStatus('Detenido.'); }
+    else stopWhisper();
   }
 };
 
-document.querySelectorAll('input[name=eng]').forEach(r => r.onchange = () => setStatus(''));
-renderList();
+/* ---------- Ajustes guardados ---------- */
+const hasOpt = (sel, v) => [...sel.options].some(o => o.value === v);
+function loadCfg(){
+  try {
+    const c = JSON.parse(localStorage.getItem(CKEY) || '{}');
+    if (c.model && hasOpt($('model'), c.model)) $('model').value = c.model;
+    if (c.accel && hasOpt($('accel'), c.accel)) $('accel').value = c.accel;
+    if (c.eng) { const r = document.querySelector('input[name=eng][value=' + c.eng + ']'); if (r && !r.disabled) r.checked = true; }
+    if (typeof c.replace === 'boolean') $('replace').checked = c.replace;
+  } catch (e) {}
+}
+const saveCfg = () => { try { localStorage.setItem(CKEY, JSON.stringify({model:$('model').value, accel:$('accel').value, eng:eng(), replace:$('replace').checked})); } catch (e) {} };
+['model', 'accel', 'replace'].forEach(id => $(id).addEventListener('change', saveCfg));
+document.querySelectorAll('input[name=eng]').forEach(r => r.addEventListener('change', () => { setStatus(''); saveCfg(); }));
+
+loadCfg(); loadDict(); renderList();
 </script>
 </body>
 </html>
