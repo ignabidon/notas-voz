@@ -45,7 +45,7 @@
 </head>
 <body>
 <h1>Notas por voz</h1>
-<div class="sub">El audio no se guarda ni se envía a ningún servidor. Las notas quedan en este dispositivo. · v2</div>
+<div class="sub">El audio no se guarda ni se envía a ningún servidor. Las notas quedan en este dispositivo. · v3</div>
 
 <div class="card">
   <label>Motor de transcripción</label>
@@ -65,6 +65,13 @@
     <option value="auto" style="color:#000" selected>Automática (usa la GPU si puede)</option>
     <option value="cpu" style="color:#000">Solo procesador (si la GPU da errores o texto raro)</option>
   </select>
+  <label for="mic" style="margin-top:10px">Micrófono</label>
+  <select id="mic">
+    <option value="std" style="color:#000" selected>Con filtros del navegador (como hasta ahora)</option>
+    <option value="agc" style="color:#000">Solo volumen automático</option>
+    <option value="raw" style="color:#000">Natural, sin filtros</option>
+  </select>
+  <div class="warn" style="margin-top:4px">Para elegir: leé el mismo párrafo con cada opción y compará errores. Cerca de la boca y en un lugar callado ayuda más que cualquier ajuste.</div>
   <div class="bar" id="bar"><i id="barI"></i></div>
 </div>
 
@@ -74,6 +81,8 @@
     <span>Al grabar, empezar de cero: borra el texto anterior (se puede deshacer). Si lo destildás, lo nuevo se agrega al final.</span></label>
   <div id="status"></div>
   <div id="interim"></div>
+  <div class="bar" id="lv"><i id="lvI"></i></div>
+  <div class="warn" id="lvTxt"></div>
 </div>
 
 <div class="card">
@@ -301,7 +310,7 @@ function makeSegmenter(rate, emit, o) {
    Estado general
    ==================================================================== */
 const $ = id => document.getElementById(id);
-const KEY = 'notasvoz.v1', DKEY = 'notasvoz.dict.v1', CKEY = 'notasvoz.cfg.v1';
+const KEY = 'notasvoz.v1', DKEY = 'notasvoz.dict.v1', CKEY = 'notasvoz.cfg.v1', DRAFT = 'notasvoz.draft.v1', UNDO = 'notasvoz.undo.v1';
 let notes = [], cur = null, tags = [], activeTag = null, anonBackup = null, baseline = '', clearBackup = null;
 try { notes = JSON.parse(localStorage.getItem(KEY) || '[]'); } catch (e) { notes = []; }
 const setStatus = s => $('status').textContent = s;
@@ -326,7 +335,7 @@ function renderList(){
     const s = document.createElement('span'); s.textContent = n.title || 'Sin título';
     const sm = document.createElement('small'); sm.textContent = fmt(n.ts) + ((n.tags || []).length ? ' · ' + n.tags.join(', ') : '');
     const o = document.createElement('button'); o.textContent = 'Abrir';
-    o.onclick = () => { cur = n.id; $('title').value = n.title; $('text').value = n.text; baseline = n.text; tags = (n.tags || []).slice(); renderChips(); resetEdit(); window.scrollTo({top:0, behavior:'smooth'}); };
+    o.onclick = () => { if (isUnsaved()) { stash(); flash('Tenías texto sin guardar: se recupera con «Deshacer borrado».'); } cur = n.id; $('title').value = n.title; $('text').value = n.text; baseline = n.text; tags = (n.tags || []).slice(); renderChips(); resetEdit(); window.scrollTo({top:0, behavior:'smooth'}); };
     const x = document.createElement('button'); x.textContent = '✕';
     x.onclick = () => { if (confirm('¿Borrar esta nota?')) { notes = notes.filter(m => m.id !== n.id); if (cur === n.id) cur = null; persist(); renderList(); } };
     d.append(s, sm, o, x); l.append(d);
@@ -341,7 +350,10 @@ $('save').onclick = () => {
   showSuggestions(suggest(baseline, $('text').value, D.rules.map(r => r.a.toLowerCase())));
   baseline = $('text').value;
 };
-$('newn').onclick = () => { cur = null; $('title').value = ''; $('text').value = ''; baseline = ''; tags = []; renderChips(); resetEdit(); flash(''); };
+$('newn').onclick = () => {
+  if ($('text').value || $('title').value || tags.length) { doClear(false); flash('Nota nueva. Lo anterior se recupera con «Deshacer borrado».'); }
+  else { cur = null; baseline = ''; resetEdit(); flash(''); }
+};
 
 /* ---------- Seleccionar, copiar, borrar ---------- */
 $('selAll').onclick = () => { const t = $('text'); t.focus(); t.select(); try { t.setSelectionRange(0, t.value.length); } catch (e) {} };
@@ -351,9 +363,15 @@ $('copyAll').onclick = async () => {
   catch (e) { t.focus(); t.select(); try { document.execCommand('copy'); } catch (e2) { return flash('No se pudo copiar. Usá Seleccionar todo y copiá a mano.'); } }
   flash('Copiado (' + nWords(t.value) + ' palabras).');
 };
+function persistUndo(){ try { if (clearBackup) localStorage.setItem(UNDO, JSON.stringify(clearBackup)); else localStorage.removeItem(UNDO); } catch (e) {} }
+function stash(){
+  clearBackup = {title: $('title').value, text: $('text').value, tags: tags.slice(), cur, baseline};
+  persistUndo(); $('undoClear').style.display = '';
+}
+function isUnsaved(){ const t = $('text').value; if (!t.trim()) return false; const n = notes.find(m => m.id === cur); return !n || n.text !== t; }
 function doClear(auto){
   if (!$('text').value && !$('title').value && !tags.length) return;
-  clearBackup = {title: $('title').value, text: $('text').value, tags: tags.slice(), cur, baseline};
+  stash();
   cur = null; $('title').value = ''; $('text').value = ''; baseline = ''; tags = []; renderChips(); resetEdit();
   $('undoClear').style.display = '';
   flash(auto ? 'Se borró el texto anterior. Podés deshacerlo.' : 'Texto borrado. Podés deshacerlo.');
@@ -361,9 +379,12 @@ function doClear(auto){
 $('clear').onclick = () => doClear(false);
 $('undoClear').onclick = () => {
   if (!clearBackup) return;
-  const b = clearBackup; clearBackup = null;
-  cur = b.cur; $('title').value = b.title; $('text').value = b.text; baseline = b.baseline; tags = b.tags; renderChips();
-  $('undoClear').style.display = 'none'; flash('Recuperado.');
+  const b = clearBackup;
+  const had = ($('text').value.trim() || $('title').value.trim()) ? {title: $('title').value, text: $('text').value, tags: tags.slice(), cur, baseline} : null;
+  cur = b.cur; $('title').value = b.title; $('text').value = b.text; baseline = b.baseline; tags = b.tags; renderChips(); resetEdit();
+  clearBackup = had; persistUndo();
+  $('undoClear').style.display = had ? '' : 'none';
+  flash(had ? 'Recuperado. Lo que había quedó de respaldo: tocá otra vez para volver a eso.' : 'Recuperado.');
 };
 
 /* ---------- Etiquetas por tema (cálculo local) ---------- */
@@ -560,7 +581,7 @@ function workerBody(){
   let asr = null, key = '', be = 'CPU', lib = null, model = '';
   const say = m => self.postMessage(m);
   async function getLib(){
-    if (!lib) { lib = await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3'); lib.env.allowLocalModels = false; }
+    if (!lib) { lib = await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1'); lib.env.allowLocalModels = false; }
     return lib;
   }
   async function build(m, gpu){
@@ -639,7 +660,7 @@ function ensureModel(){
 /* Captura de audio: bloques de 4096 muestras, sin pasar por MediaRecorder */
 const WL = "class P extends AudioWorkletProcessor{constructor(){super();this.b=new Float32Array(4096);this.n=0}process(i){const c=i[0]&&i[0][0];if(c){for(let k=0;k<c.length;k++){this.b[this.n++]=c[k];if(this.n===4096){const o=this.b;this.port.postMessage(o,[o.buffer]);this.b=new Float32Array(4096);this.n=0}}}return true}}registerProcessor('cap',P)";
 async function startCapture(onBlock){
-  const stream = await navigator.mediaDevices.getUserMedia({audio:{channelCount:1, echoCancellation:true, noiseSuppression:true, autoGainControl:true}});
+  const stream = await navigator.mediaDevices.getUserMedia({audio:{channelCount:1, echoCancellation: $('mic').value === 'std', noiseSuppression: $('mic').value === 'std', autoGainControl: $('mic').value !== 'raw'}});
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
     if (ctx.resume) await ctx.resume();
@@ -669,12 +690,21 @@ async function toMono16k(blocks, rate){
   return new Float32Array((await off.startRendering()).getChannelData(0));
 }
 
+let lvT = 0, clipUntil = 0;
+function level(b){
+  let s = 0, pk = 0;
+  for (let i = 0; i < b.length; i++) { const v = Math.abs(b[i]); s += v * v; if (v > pk) pk = v; }
+  const now = Date.now(); if (pk >= 0.99) clipUntil = now + 2500;
+  if (now - lvT < 100) return; lvT = now;
+  $('lvI').style.width = Math.min(100, Math.round(Math.sqrt(Math.sqrt(s / b.length)) * 160)) + '%';
+  $('lvTxt').textContent = now < clipUntil ? 'El sonido se está saturando: alejá un poco el micrófono.' : '';
+}
 let cap = null, seg = null, jobs = [], busy = false, outstanding = 0, dead = false, gotText = false, lastMs = 0, t0 = 0, timer = null, chain = Promise.resolve(), wl = null;
 const lockWake = async () => { try { wl = await navigator.wakeLock.request('screen'); } catch (e) {} };
 const unlockWake = () => { try { wl && wl.release(); } catch (e) {} wl = null; };
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && recording && recEng === 'whisper') lockWake(); });
 function lockUI(on){
-  $('model').disabled = on; $('accel').disabled = on;
+  $('model').disabled = on; $('accel').disabled = on; $('mic').disabled = on;
   document.querySelectorAll('input[name=eng]').forEach(r => r.disabled = on || (r.value === 'native' && !nativeLocal));
 }
 function refreshStatus(){
@@ -724,10 +754,10 @@ function onSegment(blocks, rate){
 }
 async function startWhisper(){
   dead = false; jobs = []; busy = false; outstanding = 0; gotText = false; lastMs = 0; modelErr = ''; chain = Promise.resolve();
-  cap = await startCapture(b => seg && seg.push(b));
+  cap = await startCapture(b => { level(b); if (seg) seg.push(b); });
   const rate = cap.rate;
   seg = makeSegmenter(rate, blocks => onSegment(blocks, rate));
-  t0 = Date.now(); lockWake(); lockUI(true); prepareNew();
+  t0 = Date.now(); lockWake(); lockUI(true); prepareNew(); $('lv').style.display = 'block';
   ensureModel().catch(() => {}); // carga el modelo mientras hablás
   timer = setInterval(refreshStatus, 500); refreshStatus();
 }
@@ -739,7 +769,7 @@ function stopWhisper(){
   else { $('rec').disabled = true; refreshStatus(); }
 }
 
-function stopUI(){ recording = false; $('rec').classList.remove('on'); $('rec').textContent = '🎙️ Grabar'; }
+function stopUI(){ $('lv').style.display = 'none'; $('lvTxt').textContent = ''; recording = false; $('rec').classList.remove('on'); $('rec').textContent = '🎙️ Grabar'; }
 $('rec').onclick = async () => {
   if (!recording) {
     if (!window.isSecureContext || !navigator.mediaDevices) { setStatus('Chrome no permite usar el micrófono desde un archivo abierto así (' + location.protocol + '). Hace falta abrir la página desde una dirección https.'); return; }
@@ -767,15 +797,36 @@ function loadCfg(){
     const c = JSON.parse(localStorage.getItem(CKEY) || '{}');
     if (c.model && hasOpt($('model'), c.model)) $('model').value = c.model;
     if (c.accel && hasOpt($('accel'), c.accel)) $('accel').value = c.accel;
+    if (c.mic && hasOpt($('mic'), c.mic)) $('mic').value = c.mic;
     if (c.eng) { const r = document.querySelector('input[name=eng][value=' + c.eng + ']'); if (r && !r.disabled) r.checked = true; }
     if (typeof c.replace === 'boolean') $('replace').checked = c.replace;
   } catch (e) {}
 }
-const saveCfg = () => { try { localStorage.setItem(CKEY, JSON.stringify({model:$('model').value, accel:$('accel').value, eng:eng(), replace:$('replace').checked})); } catch (e) {} };
-['model', 'accel', 'replace'].forEach(id => $(id).addEventListener('change', saveCfg));
+const saveCfg = () => { try { localStorage.setItem(CKEY, JSON.stringify({model:$('model').value, accel:$('accel').value, mic:$('mic').value, eng:eng(), replace:$('replace').checked})); } catch (e) {} };
+['model', 'accel', 'mic', 'replace'].forEach(id => $(id).addEventListener('change', saveCfg));
 document.querySelectorAll('input[name=eng]').forEach(r => r.addEventListener('change', () => { setStatus(''); saveCfg(); }));
 
-loadCfg(); loadDict(); renderList();
+/* ---------- Borrador autoguardado: sobrevive a recargas y cierres ---------- */
+let lastDraft = '';
+const snap = () => JSON.stringify({title: $('title').value, text: $('text').value, tags, cur, baseline});
+function saveDraft(){ const x = snap(); if (x === lastDraft) return; lastDraft = x; try { localStorage.setItem(DRAFT, x); } catch (e) {} }
+function restoreDraft(){
+  try {
+    const d = JSON.parse(localStorage.getItem(DRAFT) || 'null');
+    if (d && ((d.text || '').trim() || (d.title || '').trim())) {
+      cur = d.cur || null; $('title').value = d.title || ''; $('text').value = d.text || ''; baseline = d.baseline || ''; tags = d.tags || [];
+      renderChips(); if ((d.text || '').trim()) flash('Se recuperó el texto de la última vez.');
+    }
+    const u = JSON.parse(localStorage.getItem(UNDO) || 'null');
+    if (u) { clearBackup = u; $('undoClear').style.display = ''; }
+  } catch (e) {}
+  lastDraft = snap();
+}
+setInterval(saveDraft, 1500);
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') saveDraft(); });
+window.addEventListener('pagehide', saveDraft);
+
+loadCfg(); loadDict(); renderList(); restoreDraft();
 </script>
 </body>
 </html>
