@@ -1,5 +1,19 @@
 # Registro de cambios — Grabador de voz Delta
 
+## Delta 02 · Guardar nota en archivo TXT — 15 de noviembre de 2026
+
+**Objetivo:** que el botón principal «Guardar .txt» solicite la descarga de la transcripción como archivo de texto en el dispositivo (en la ubicación que use Brave para las descargas), sin enviar contenido a GitHub.
+
+- Se reutiliza la exportación TXT, con título y texto; los archivos se nombran según el título o «nota».
+- El guardado local previo permanece como respaldo; no se borra, migra ni limpia el contenido del navegador.
+- Si falla el guardado local se avisa, en vez de asegurar que todo se guardó.
+- El mensaje de descarga dice «solicitada»: el navegador decide si guarda el archivo y dónde.
+- Se agregan dos pruebas automáticas con texto ficticio, sin información personal.
+- **Validación:** CI de GitHub Actions para la rama y prueba real de descarga/apertura en Brave Android. Esta última sigue pendiente.
+
+**Limitación intencional:** la lista de notas guardadas en el navegador sigue oculta y la descarga no es una copia integral de ajustes o audios. En esta etapa se cambió solo el comportamiento del botón Guardar.
+
+
 ## Delta 01 · diagnósticos v1 — 15 de noviembre de 2026
 
 **Objetivo:** poder averiguar la causa de los números y errores vistos al grabar, **sin cambiar cómo se graba ni cómo se transcribe**. No se tocó el motor Whisper ni la lógica de corte del audio.

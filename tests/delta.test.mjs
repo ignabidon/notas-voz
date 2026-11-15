@@ -127,3 +127,26 @@ test('diagnósticos v2: motivo de la placa de video, hilos y duración de pausas
   for (const s of ['WebGPU sin adaptador', 'no ofrece WebGPU', 'hilos de cálculo del procesador', 'página aislada', 'estuvo en pausa', 'diagnósticos v2'])
     assert.ok(html.includes(s), 'falta ' + s);
 });
+
+test('Guardar .txt solicita una descarga sin perder el guardado local', () => {
+  const handler = html.match(/\$\('save'\)\.onclick = \(\) => \{([\s\S]*?)\n\};/);
+  assert.ok(handler, 'falta acción de Guardar nota');
+  assert.match(handler[1], /const savedLocally = persist\(\)/);
+  assert.match(handler[1], /download\(makeTxt\(\)\)/);
+  assert.match(html, /<span>Guardar \.txt<\/span>/);
+  assert.doesNotMatch(handler[1], /fetch\(|XMLHttpRequest|sendBeacon\(/);
+});
+
+test('el archivo de texto contiene título y transcripción ficticios', () => {
+  const match = html.match(/function makeTxt\(\)\{([\s\S]*?)\n\}/);
+  assert.ok(match, 'falta constructor del archivo');
+  class FakeFile {
+    constructor(parts, name, options) { Object.assign(this, {parts, name, type: options.type}); }
+  }
+  const $ = id => ({value: id === 'title' ? 'Nota de prueba' : 'Texto ficticio de verificación.'});
+  const build = new Function('$', 'fname', 'File', match[0] + '; return makeTxt;')($, ext => 'Nota_de_prueba.' + ext, FakeFile);
+  const file = build();
+  assert.equal(file.name, 'Nota_de_prueba.txt');
+  assert.equal(file.parts.join(''), 'Nota de prueba\n\nTexto ficticio de verificación.');
+  assert.match(file.type, /^text\/plain/);
+});
