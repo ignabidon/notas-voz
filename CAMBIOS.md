@@ -1,5 +1,17 @@
 # Registro de cambios — Grabador de voz Delta
 
+## Delta 04 · Recuperar el último audio anterior — 15 de noviembre de 2026
+
+**Objetivo:** permitir deshacer el último reemplazo accidental sin crear una biblioteca permanente de grabaciones.
+
+- Se conserva un audio principal y **una sola copia temporal anterior** para recuperarlo. Cada grabación nueva reemplaza la copia temporal más antigua.
+- El audio anterior **no se borra antes de solicitar el micrófono**; se desplaza a recuperación en una transacción IndexedDB cuando se guarda el primer fragmento del nuevo audio. Así, si la captura falla, se conserva lo previo.
+- El botón «Recuperar audio anterior» intercambia las referencias principal y anterior sin duplicar los archivos; también permite revertir el intercambio.
+- «Borrar audio» elimina principal y temporal con aviso claro. La descarga TXT, Whisper, dictado local y claves históricas permanecen sin cambios.
+- Se agregan pruebas automáticas de rotación, recuperación, primeras partes y ausencia de borrado prematuro. La validación en Motorola con audios ficticios todavía es necesaria.
+- **Límites:** solo sirve para el último reemplazo; los datos todavía dependen de IndexedDB y no tienen cifrado. No se realizó limpieza automática del navegador ni migración.
+
+
 ## Delta 03 · Preparación y diagnóstico del dictado local — 15 de noviembre de 2026
 
 **Objetivo:** evitar que el modo «Dictado del navegador» se active y se detenga sin información cuando falta el paquete de idioma o hay errores del navegador.
