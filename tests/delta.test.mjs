@@ -153,8 +153,8 @@ test('el archivo de texto contiene título y transcripción ficticios', () => {
 });
 
 test('dictado local: consulta idioma español sin habilitar servicios remotos', () => {
-  assert.match(html, /SR\.available\(\{langs: \['es-AR'\], processLocally: true\}\)/);
-  assert.match(html, /SR\.install\(\{langs: \['es-AR'\], processLocally: true\}\)/);
+  assert.match(html, /SR\.available\(\{langs: \[lang\], processLocally: true\}\)/);
+  assert.match(html, /SR\.install\(\{langs: \[candidate.lang\], processLocally: true\}\)/);
   assert.match(html, /rec\.processLocally = true/);
   assert.doesNotMatch(html, /rec\.processLocally = false/);
   for (const id of ['nativeSetup', 'nativePrepare', 'nativeNote']) assert.ok(ids.includes(id), 'falta #'+id);
@@ -188,7 +188,7 @@ test('dictado local: detención inmediata deja mensaje y no reinicia sin límite
   assert.match(html, /Date\.now\(\) - nativeStartedAt < 1200/);
   assert.match(html, /El navegador detuvo el dictado inmediatamente/);
   assert.match(html, /rec\.onerror = e => \{/);
-  assert.match(html, /else if \(e\.error === 'no-speech'\)/);
+  assert.match(html, /'no-speech':'No se detectó voz/);
   assert.match(html, /r\.disabled = on \|\| \(r\.value === 'native' && !nativeReady\)/);
 });
 
@@ -753,4 +753,128 @@ test('captura: plazos de AudioContext y Worklet, cierre del grabador antes de co
   const stop=html.slice(html.indexOf('function stopWhisper(){'),html.indexOf('function cancelProcessing(){'));
   assert.ok(stop.indexOf('mr.stop()')<stop.indexOf('stopCapture(cap)'));
   assert.match(html,/audioMime = mr.mimeType \|\| mime/);
+});
+
+// Adaptador nativo con eventos y temporizadores controlados: no requiere micrófono ni envía voz.
+function nativeHarness(options = {}){
+  const nodes = {}, timers = new Map(), instances = [], calls = [], state = {prepare:0,locked:false,status:''};
+  let next=0;
+  const node = id => nodes[id] ||= {textContent:'',value:'texto previo ficticio',disabled:false,hidden:false,checked:false,style:{},classList:{add(){},remove(){},toggle(){}}};
+  const nativeRadio=node('nativeRadio'), whisperRadio=node('whisperRadio');
+  class Recognition {
+    constructor(){if(options.constructError)throw options.constructError;instances.push(this);}
+    start(){calls.push(['start']);if(options.startError)throw options.startError;}
+    stop(){calls.push(['stop']);if(options.stopError)throw options.stopError;}
+    abort(){calls.push(['abort']);}
+  }
+  if(!options.noLocal) Object.defineProperty(Recognition.prototype,'processLocally',{value:false,writable:true});
+  if(!options.noAvailable) Recognition.available = async opts => {
+    calls.push(['available',opts]);
+    if(options.availableError)throw options.availableError;
+    if(options.hangAvailable)return new Promise(()=>{});
+    return (options.states || {'es-AR':'available'})[opts.langs[0]] || 'unavailable';
+  };
+  Recognition.install = async opts => {calls.push(['install',opts]);return options.installed !== false;};
+  const win={isSecureContext:options.secure!==false};
+  if(!options.noAPI) win[options.prefixed?'webkitSpeechRecognition':'SpeechRecognition']=Recognition;
+  let code=html.slice(html.indexOf('/* Dictado del navegador:'),html.indexOf('/* ---------- Whisper local:'));
+  code=code.replace('\ncheckNativeAvailability();\n','\nconst initialNativeCheck = checkNativeAvailability();\n');
+  const api=new Function('window','document','$','setTimeout','clearTimeout','confirm','state',`
+    let recording=false,paused=false,tRun=0;
+    const cleanText=t=>t,liveAnon=t=>t,applyDict=t=>t,D={};
+    function appendMachine(t){$('text').value += t;}
+    function prepareNew(){state.prepare++;$('text').value='';}
+    function stopUI(){recording=false;paused=false;}
+    function lockUI(on){state.locked=on;}
+    function beginClock(){state.clockStarted=true;}
+    function endClock(){state.clockStopped=true;}
+    function updClock(){} function setCtl(){} function updateDockRecording(){}
+    function setStatus(t){state.status=t;}
+    ${code}
+    return {initial:initialNativeCheck,check:checkNativeAvailability,start:startNative,stop:stopNative,pause:pauseNative,
+      prepare:()=> $('nativePrepare').onclick(),
+      get:()=>({ready:nativeReady,lang:nativeLang,recording,paused,phase:nativeSession?.phase}),note:()=> $('nativeNote').textContent};
+  `)(win,{querySelector:s=>s.includes('whisper')?whisperRadio:nativeRadio},node,
+      (fn,ms)=>{timers.set(++next,{fn,ms});return next;},id=>timers.delete(id),()=>options.confirm!==false,state);
+  return {api,nodes,node,state,calls,instances,timers,nativeRadio,whisperRadio,
+    expire(ms){for(const [id,t] of [...timers])if(t.ms===ms){timers.delete(id);t.fn();}}};
+}
+const nativeResult = (text,final=false) => Object.assign([{transcript:text}],{isFinal:final});
+test('dictado: sin API, sin processLocally o sin consulta no habilita ni inicia micrófono',async()=>{
+  for(const opts of [{noAPI:true},{noLocal:true},{noAvailable:true},{secure:false}]){
+    const h=nativeHarness(opts);await h.api.initial;
+    assert.equal(h.api.get().ready,false);assert.equal(h.nativeRadio.disabled,true);
+    h.api.start();assert.equal(h.instances.length,0);assert.equal(h.state.prepare,0);
+    assert.match(h.state.status,/No se puede iniciar/);
+  }
+});
+test('dictado: consulta solo paquetes locales y prefiere español instalado sobre uno descargable',async()=>{
+  const h=nativeHarness({prefixed:true,states:{'es-AR':'downloadable','es-ES':'available'}});await h.api.initial;
+  assert.equal(h.api.get().lang,'es-ES');assert.equal(h.api.get().ready,true);assert.match(h.api.note(),/acento/);
+  assert.equal(h.calls.filter(c=>c[0]==='install').length,0);
+  for(const [,opts] of h.calls.filter(c=>c[0]==='available'))assert.equal(opts.processLocally,true);
+});
+test('dictado: downloadable/downloading/unavailable no habilitan Grabar; instalación requiere confirmación',async()=>{
+  for(const status of ['downloadable','downloading','unavailable']){
+    const h=nativeHarness({states:{'es-AR':status},confirm:false});await h.api.initial;
+    assert.equal(h.api.get().ready,false);h.api.start();assert.equal(h.instances.length,0);
+    await h.api.prepare();assert.equal(h.calls.filter(c=>c[0]==='install').length,0);
+  }
+  const h=nativeHarness({states:{'es-AR':'downloadable'},installed:false});await h.api.initial;await h.api.prepare();
+  assert.equal(h.calls.find(c=>c[0]==='install')[1].processLocally,true);assert.match(h.api.note(),/install-false/);
+});
+test('dictado: errores de disponibilidad y consultas sin respuesta dejan códigos y opción bloqueada',async()=>{
+  const h=nativeHarness({availableError:Object.assign(Error('política bloqueada'),{name:'SecurityError'})});await h.api.initial;
+  assert.equal(h.api.get().ready,false);assert.match(h.api.note(),/SecurityError: política bloqueada/);
+  const hung=nativeHarness({hangAvailable:true});hung.expire(8000);await hung.api.initial;
+  assert.equal(hung.api.get().ready,false);assert.match(hung.api.note(),/TimeoutError/);assert.equal(hung.timers.size,0);
+});
+test('dictado: espera start real antes de borrar texto o indicar grabación, timeout libera controles',async()=>{
+  const h=nativeHarness();await h.api.initial;h.api.start();
+  assert.equal(h.api.get().recording,false);assert.equal(h.state.prepare,0);assert.equal(h.node('rec').disabled,true);
+  h.expire(20000);assert.equal(h.api.get().phase,undefined);assert.equal(h.node('rec').disabled,false);
+  assert.equal(h.state.locked,false);assert.match(h.state.status,/start-timeout/);assert.equal(h.state.prepare,0);
+});
+test('dictado: muestra provisional en Texto, confirma una sola vez y conserva el último resultado al detener',async()=>{
+  const h=nativeHarness();await h.api.initial;h.api.start();const rec=h.instances[0];rec.onstart();
+  assert.equal(rec.processLocally,true);assert.equal(rec.interimResults,true);assert.equal(h.state.prepare,1);
+  rec.onresult({resultIndex:0,results:[nativeResult('Prueba ficticia')]});
+  assert.match(h.node('nativeInterim').textContent,/Provisional: Prueba ficticia/);assert.equal(h.node('text').value,'');
+  const finals=[nativeResult('Prueba ficticia.',true)];rec.onresult({resultIndex:0,results:finals});rec.onresult({resultIndex:0,results:finals});
+  assert.equal(h.node('text').value,'Prueba ficticia.');
+  h.api.stop();rec.onresult({resultIndex:1,results:[...finals,nativeResult(' Final.',true)]});rec.onend();
+  assert.equal(h.node('text').value,'Prueba ficticia. Final.');assert.equal(h.api.get().recording,false);
+  assert.equal(h.node('nativeInterim').textContent,'');assert.equal(h.timers.size,0);
+  assert.doesNotMatch(h.node('nativeDiag').textContent,/Prueba ficticia|Final\./);
+});
+test('dictado: errores muestran código exacto, end no los tapa y eventos viejos no afectan la sesión siguiente',async()=>{
+  for(const error of ['not-allowed','service-not-allowed','language-not-supported','audio-capture','no-speech','network','aborted']){
+    const h=nativeHarness();await h.api.initial;h.api.start();const r=h.instances[0],end=r.onend;r.onstart();
+    const late=r.onresult;r.onerror({error,message:'detalle técnico ficticio'});const message=h.state.status;end();
+    assert.equal(h.state.status,message);assert.ok(message.includes(error));assert.ok(message.includes('detalle técnico ficticio'));
+    assert.equal(h.state.locked,false);assert.equal(h.node('rec').disabled,false);
+    if(['service-not-allowed','language-not-supported'].includes(error))assert.equal(h.nativeRadio.disabled,true);
+    await h.api.check();h.api.start();h.instances[1].onstart();late({results:[nativeResult('evento viejo',true)]});
+    assert.doesNotMatch(h.node('text').value,/evento viejo/);
+  }
+});
+test('dictado: end inmediato o natural no reinicia en bucle y no borra el texto',async()=>{
+  const h=nativeHarness();await h.api.initial;h.api.start();h.instances[0].onend();
+  assert.match(h.state.status,/end-sin-start/);assert.equal(h.state.prepare,0);assert.equal(h.nativeRadio.disabled,true);
+  assert.equal(h.calls.filter(c=>c[0]==='start').length,1);assert.equal(h.node('rec').disabled,false);
+});
+test('dictado: pausar espera end; reanudar crea sesión nueva sin borrar texto; stop tiene plazo',async()=>{
+  const h=nativeHarness();await h.api.initial;h.api.start();const first=h.instances[0];first.onstart();
+  first.onresult({results:[nativeResult('Inicio.',true)]});h.api.pause(true);
+  h.api.pause(false);assert.equal(h.instances.length,1);first.onend();
+  assert.equal(h.api.get().paused,true);h.api.pause(false);const second=h.instances[1];second.onstart();
+  assert.equal(h.state.prepare,1);assert.equal(h.api.get().paused,false);assert.equal(h.node('text').value,'Inicio.');
+  h.api.stop();h.expire(8000);assert.equal(h.api.get().recording,false);assert.match(h.state.status,/end-timeout/);
+  assert.equal(h.node('text').value,'Inicio.');assert.equal(h.state.locked,false);
+});
+test('dictado: excepciones síncronas de start y stop informan el tipo y liberan controles',async()=>{
+  const h=nativeHarness({startError:Object.assign(Error('modelo ausente'),{name:'NotSupportedError'})});await h.api.initial;h.api.start();
+  assert.match(h.state.status,/NotSupportedError: modelo ausente/);assert.equal(h.node('rec').disabled,false);assert.equal(h.timers.size,0);assert.equal(h.nativeRadio.disabled,true);
+  const s=nativeHarness({stopError:Object.assign(Error('ya terminó'),{name:'InvalidStateError'})});await s.api.initial;s.api.start();s.instances[0].onstart();s.api.stop();
+  assert.match(s.state.status,/InvalidStateError: ya terminó/);assert.equal(s.node('rec').disabled,false);assert.equal(s.timers.size,0);
 });

@@ -30,7 +30,35 @@ Al terminar, fallar o cancelar aparece **Reintentar transcripción del audio en 
 4. Guardá el texto y probá el reintento en memoria: debe completar sin volver a usar el micrófono. Para comprobar recuperación después de una interrupción, iniciá otra transcripción, cancelala y reintentá. Si el modelo ya está en caché, cortar internet puede no causar ningún error.
 5. Repetí los pasos en Brave del Motorola, incluyendo cambiar entre Grabar / Texto / Ajustes mientras graba. Anotá versión del navegador, modelo, duración y etapa del error, sin copiar contenido privado. Si falla, copiá los detalles técnicos.
 
-**Estado de validación:** ver CAMBIOS.md. La prueba física en Firefox de Windows del usuario y en Motorola con este cambio sigue pendiente; no se confirma compatibilidad de esos dispositivos a partir de pruebas simuladas o de Linux.
+**Estado de validación:** ver CAMBIOS.md. El usuario confirmó después de la publicación que Whisper ya funciona en Firefox. Esto no valida por extensión el dictado del navegador ni las demás funciones; las pruebas del entorno Linux se detallan en CAMBIOS.md.
+
+## Dictado del navegador · solo local (15/11/2026)
+
+Whisper sigue recomendado. «Dictado del navegador» usa SpeechRecognition con `processLocally=true`: **no se habilita dictado remoto automáticamente**. El dictado del teclado Android y el permiso del micrófono son funciones distintas; ninguno demuestra que la web pueda usar un motor local.
+
+Delta mantiene esta opción deshabilitada hasta que el navegador confirme un paquete de español **instalado** mediante `available()`. Consulta es-AR, es-ES y es; prefiere es-AR instalado y, si no está, puede usar otro español instalado. El idioma elegido aparece en Ajustes y al iniciar; usar es-ES puede afectar el reconocimiento del acento argentino. Si falta descargarlo y el navegador admite `install()`, aparece «Preparar dictado local». Solo descarga con confirmación. «Volver a comprobar compatibilidad» permite revisar otra vez sin recargar.
+
+| Navegador | Qué esperar del dictado local de Delta |
+| --- | --- |
+| Chrome de escritorio con API local | Candidato, sujeto a plataforma, políticas, permisos y paquete español instalado; la consulta de Delta decide. |
+| Edge de escritorio con función local habilitada | Candidato; la documentación consultada describe Canary/Dev y paquetes como es-ES. No se garantiza en todas las versiones estables. |
+| Firefox de escritorio | Solo si esa versión expone API local y confirma español instalado. Firefox 153/Linux de prueba no ofrece la API; los datos de compatibilidad sitúan soporte más reciente desde 160. Whisper es una opción separada. |
+| Brave Android | No se confirma dictado local en español. Brave documenta una implementación inicial en inglés; la existencia de la API por sí sola no basta. Si no verifica español, Delta lo deshabilita. |
+| Chrome/Firefox Android, Safari | La documentación consultada no declara soporte para el modo local requerido. Delta informa el motivo y mantiene Whisper. Que otro sitio ofrezca reconocimiento remoto no implica compatibilidad local. |
+
+Fuentes consultadas el 15/11/2026: [compatibilidad de SpeechRecognition](https://github.com/mdn/browser-compat-data/blob/main/api/SpeechRecognition.json), [dictado local en Edge](https://learn.microsoft.com/en-us/microsoft-edge/web-platform/speech-recognition-api), [implementación local de Brave](https://github.com/brave/brave-browser/issues/56487). La detección del dispositivo prevalece sobre esta tabla; no se garantiza compatibilidad universal.
+
+### Prueba desde el celular
+
+1. Recargá https://ignabidon.github.io/notas-voz/ sin borrar los datos del sitio. Abrí **Ajustes → Otras opciones → Cómo transcribir**. Ahora dice «Dictado del navegador · solo local».
+2. Si está deshabilitado, leé el motivo y el código entre corchetes. Abrí **Diagnóstico del dictado del navegador** para ver API, paquetes consultados y errores. En ese caso usá Whisper; conceder micrófono no agrega una API o idioma que el navegador no tiene.
+3. Si ofrece Preparar, aceptá la descarga solo si querés probarlo. La opción se habilita únicamente después de verificar el paquete instalado. Si el navegador informa downloading, esperá y volvé a comprobar; Delta no promete que la descarga avance.
+4. Si está disponible, seleccionalo, volvé a Grabar y tocá el botón. Permití el micrófono del sitio y de Brave en Android si se solicitan. Debe aparecer «Escuchando» solo después del evento de inicio. No se borra el editor anterior antes de esa confirmación.
+5. Decí una frase ficticia. En **Texto**, el provisional aparece debajo del editor; las frases confirmadas se agregan al editor. El navegador puede no emitir provisionales, aunque Delta los solicite.
+6. Probá Pausar/Reanudar y Detener. El cierre espera resultados finales hasta 8 segundos y no reinicia en bucle. Si el navegador termina por su cuenta, hay que volver a tocar Grabar; ante cierre inmediato vuelve a exigir comprobar compatibilidad.
+7. Ante un error, conservá el código (por ejemplo `not-allowed`, `service-not-allowed`, `language-not-supported`, `audio-capture`, `no-speech`, `network`, o el nombre de la excepción). El diagnóstico no incluye transcripción ni audio. El inicio tiene un plazo de 20 segundos, consultas de disponibilidad 8 segundos y descarga solicitada 5 minutos; el navegador puede continuar descargando después de un plazo agotado.
+
+**Verificación:** pruebas automáticas y de interfaz con API simulada; bloqueo real de API ausente en Firefox 153/Linux. No se probó dictado real con voz en Brave/Android, Chrome, Edge o Firefox 160. No se puede confirmar la causa exacta de tu cierre en el Motorola sin su código de error; se corrigieron falsos positivos de disponibilidad, idioma y manejo de sesiones encontrados en el código.
 
 ## Organización
 

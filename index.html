@@ -11,7 +11,7 @@
 <title>Grabador de voz Delta · Prueba Delta</title>
 <style>
 :root{color-scheme:dark;--bg:#090f20;--bg2:#172139;--card:#101a2e;--ink:#edf3ff;--mut:#a1b0cc;--line:#293852;--acc:#9cbaff;--acc-ink:#0a1836;--acc-soft:#1c3156;--rec:#ff8e9b;--rec-ink:#300c17;--note-bg:#292637;--note-ink:#ded1b8;--bar-l:65%}
-*{box-sizing:border-box}html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;scroll-padding-top:24px}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif;padding:24px max(16px,env(safe-area-inset-right)) 100px max(16px,env(safe-area-inset-left))}button,input,textarea,select{font:inherit}button,summary,a{ -webkit-tap-highlight-color:transparent;touch-action:manipulation}button,summary{cursor:pointer}button:focus-visible,summary:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid #a9c6ff;outline-offset:4px}[hidden]{display:none!important}.wrap{max-width:1060px;margin:auto}.top{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:28px}.brand{display:flex;align-items:center;gap:12px}.logo{width:43px;height:43px;display:grid;place-items:center;border:1px solid #415988;border-radius:14px;color:#bbceff;background:#1a2d51}.logo svg{width:23px;height:23px}h1{font-size:23px;letter-spacing:-1px;line-height:1.1;margin:0}.sub{font-size:12px;color:var(--mut);margin:6px 0 0}.pill{display:flex;align-items:center;gap:6px;font-size:11px;color:#acc0e4}.pill svg{width:14px;height:14px}.layout{display:grid;grid-template-columns:350px minmax(0,1fr);gap:20px;align-items:start}.col{display:contents}.c-rec{grid-column:1;grid-row:1}.c-edit{grid-column:2;grid-row:1 / span 3}.c-set{grid-column:1;grid-row:2}.card{min-width:0;background:var(--card);border:1px solid var(--line);border-radius:24px;padding:22px}h2{font-size:18px;line-height:1.3;letter-spacing:-.4px;margin:0 0 18px}.section-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:16px}.section-heading h2{margin:0}.section-hint{font-size:11px;color:#b6cbf6;background:#203456;border-radius:20px;padding:4px 9px}.eyebrow{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#a6bfe9;margin:0 0 8px}.c-rec{background:radial-gradient(ellipse at 50% 35%,#203c6a 0, #121f39 55%,#101a2e 100%);text-align:center;position:relative}.c-rec h2{font-size:25px;letter-spacing:-.8px;margin-bottom:8px}.rec-caption{color:#b5c4e0;font-size:13px;margin:0 0 15px}.recrow{display:flex;flex-direction:column;align-items:center;gap:18px}button{background:var(--bg2);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:10px 14px;min-height:44px;font-size:13px;font-weight:600;transition:background .15s,transform .15s}button:hover:not(:disabled){background:#263859}button:active:not(:disabled){transform:scale(.98)}button:disabled{opacity:.4;cursor:not-allowed}button.p{background:var(--acc);color:var(--acc-ink);border-color:transparent}button.p:hover:not(:disabled){background:#bed0ff}button.ghost{background:transparent;color:var(--mut)}button.danger:hover:not(:disabled){color:#ffb4c0}#rec{width:130px;height:130px;min-height:130px;border-radius:50%;background:#abc5ff;color:#102349;border:8px solid #314e7c;box-shadow:0 0 0 8px #203759,0 10px 32px #070e2340;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:9px;font-size:16px;margin:12px 0}#rec:hover:not(:disabled){background:#c4d6ff}#rec::before{content:"";width:18px;height:27px;border:2.5px solid currentColor;border-radius:12px}#rec.on{background:var(--rec);color:var(--rec-ink);border-color:#713b58;box-shadow:0 0 0 8px #462c46}#rec.on::before{width:20px;height:20px;border:0;border-radius:5px;background:currentColor}#rec.on.paused{background:#b6b9c8;border-color:#515972;box-shadow:none}.side{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;max-width:300px}#clock{grid-column:1 / -1;font-size:35px;font-weight:400;letter-spacing:3px;line-height:1.2;font-variant-numeric:tabular-nums;margin-bottom:4px}#clock.on{color:#ffb8c3}#pause,#mark{font-size:12px;background:#1c2d49}.mark-help{font-size:11px;color:var(--mut);margin:12px 0 0}.warn,.hint{font-size:12px;color:var(--mut);overflow-wrap:anywhere}.hint{margin-top:6px}.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px}.row>*{min-width:0}.row button{flex-grow:1}label{display:block;color:var(--mut);font-size:12px;font-weight:600;margin-bottom:7px}input[type=text],input[type=number],textarea,select{width:100%;min-width:0;background:#0b1426;color:var(--ink);border:1px solid #30415f;border-radius:12px;padding:12px;font-size:16px}select option{background:var(--bg)}::placeholder{color:#8393b2;opacity:1}textarea{resize:vertical;min-height:200px;line-height:1.7}textarea#text{border:0;background:#0c1528;min-height:245px;padding:16px}.lbl-row>label{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}.tools{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}.tools button{font-size:11px;min-height:36px;padding:7px 9px;border:0;background:#192640}.meta{display:flex;justify-content:space-between;font-size:11px;color:var(--mut);margin-top:9px}#flash{color:var(--acc);font-size:12px;margin-top:8px}#flash:empty{display:none}.privacy-group{border:1px solid #35535d;background:#132a35;border-radius:18px;padding:16px;margin-top:22px}.privacy-group>.gl{color:#b9dedc;font-size:12px;font-weight:650}.studio-anon-actions{margin-top:12px}.studio-anon-secondary{display:flex;gap:8px;margin-top:8px}.studio-anon-secondary button{flex:1;font-size:11px;padding:8px;min-height:40px;background:transparent;border-color:#36525f;color:#c0d6df}#anon{width:100%;min-height:52px;background:#a4dbd2;color:#102c30;font-size:14px;border:0}#anon:hover{background:#c1eee6}.note{display:flex;gap:9px;color:#bac6cc;font-size:11px;line-height:1.5;margin-top:14px}.note svg{width:16px;height:16px;flex:none;margin-top:2px}details{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}summary{font-size:13px;font-weight:600;list-style:none;display:block;min-height:34px;padding:5px 22px 5px 0;position:relative}summary::-webkit-details-marker{display:none}summary::after{content:'+';position:absolute;right:0;top:2px;font-size:20px;font-weight:400;color:var(--mut)}details[open]>summary::after{content:'−'}summary small{display:block;color:var(--mut);font-weight:400;font-size:11px;margin-top:5px}.c-rec>details{text-align:left}.c-rec>details>summary{font-size:11px;color:var(--mut)}details.card{margin-top:0;padding:18px 20px}details.card>.body{padding-top:14px}#studioAnonConfig:not([open]){display:none}.studio-patients{padding:12px;background:#10232d;border:1px solid #35515d;border-radius:12px}.studio-workflow{padding:14px;border:1px solid var(--line);border-radius:14px;background:#162239}.studio-workflow-body{padding-top:14px}.note-details label{margin-top:12px}.tagrow{display:flex;gap:8px;flex-wrap:wrap}.tagrow input{flex:1;width:130px}.tagrow #tagSug{flex-basis:100%}.save-row{margin-top:16px}.group .gl{font-size:12px;margin-top:14px}.eng{display:grid;gap:8px}.eng label{display:flex;gap:10px;padding:12px;border:1px solid var(--line);border-radius:12px;color:var(--ink);font-weight:400}.eng label:has(input:checked){background:var(--acc-soft);border-color:#6689c5}.eng small,.chk small{display:block;font-size:11px;color:var(--mut);font-weight:400;margin-top:4px}.chk{display:flex;gap:10px;margin:16px 0;color:var(--ink);font-size:13px}input[type=checkbox],input[type=radio]{accent-color:var(--acc);width:19px;height:19px;flex:none}.body>label{margin-top:16px}.code-config{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}.code-config label{font-size:10px;min-height:30px}.code-config input,.code-config select{padding:8px;font-size:14px}#pGenerate{width:100%;margin-top:10px}.chip{border-radius:30px;font-size:12px;margin:0 5px 5px 0;min-height:34px;padding:5px 12px}.chip.sel{background:var(--acc);color:var(--acc-ink)}.n{padding:12px 0;border-top:1px solid var(--line)}.n small{display:block;color:var(--mut)}.n button{margin:8px 8px 0 0}.mono{font-family:monospace;font-size:13px;min-height:150px}.abox{border-top:1px solid var(--line);margin-top:16px;padding-top:16px}.two small{display:block;font-size:11px;font-weight:400}.bar{display:none;height:6px;border-radius:10px;background:var(--bg2);margin-top:12px;overflow:hidden}.bar i,.pbar i{display:block;height:100%;width:0;background:var(--acc);transition:width .15s}.pbar{height:7px;border-radius:8px;background:var(--bg2);overflow:hidden}#tp{display:none;margin-top:14px}#tp.on{display:block}#tpTxt,#status,#interim,#lvTxt{font-size:12px;margin-top:10px;color:var(--mut);overflow-wrap:anywhere}#status:empty,#interim:empty{display:none}.processing-timer{font-size:13px;color:var(--acc);margin-top:10px}.cancel-processing{width:100%;margin-top:10px}.cancel-help{font-size:11px}#busy{display:none;background:var(--note-bg);color:var(--note-ink);padding:10px;border-radius:10px;font-size:12px;margin-bottom:10px}#busy.on{display:block}footer{font-size:11px;color:var(--mut);text-align:center;margin-top:25px}.studio-nav{position:fixed;bottom:max(12px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);width:min(400px,calc(100% - 32px));display:flex;justify-content:space-around;padding:8px;background:#17243bf5;border:1px solid #354765;box-shadow:0 8px 30px #0007;border-radius:20px;z-index:5;backdrop-filter:blur(16px)}.studio-nav a{display:flex;align-items:center;justify-content:center;gap:7px;flex:1;padding:9px 8px;color:#c6d5ef;font-size:12px;text-decoration:none;border-radius:12px}.studio-nav a:hover{background:#2a3c5d}.studio-nav svg{width:17px;height:17px}
+*{box-sizing:border-box}html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;scroll-padding-top:24px}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif;padding:24px max(16px,env(safe-area-inset-right)) 100px max(16px,env(safe-area-inset-left))}button,input,textarea,select{font:inherit}button,summary,a{ -webkit-tap-highlight-color:transparent;touch-action:manipulation}button,summary{cursor:pointer}button:focus-visible,summary:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid #a9c6ff;outline-offset:4px}[hidden]{display:none!important}.wrap{max-width:1060px;margin:auto}.top{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:28px}.brand{display:flex;align-items:center;gap:12px}.logo{width:43px;height:43px;display:grid;place-items:center;border:1px solid #415988;border-radius:14px;color:#bbceff;background:#1a2d51}.logo svg{width:23px;height:23px}h1{font-size:23px;letter-spacing:-1px;line-height:1.1;margin:0}.sub{font-size:12px;color:var(--mut);margin:6px 0 0}.pill{display:flex;align-items:center;gap:6px;font-size:11px;color:#acc0e4}.pill svg{width:14px;height:14px}.layout{display:grid;grid-template-columns:350px minmax(0,1fr);gap:20px;align-items:start}.col{display:contents}.c-rec{grid-column:1;grid-row:1}.c-edit{grid-column:2;grid-row:1 / span 3}.c-set{grid-column:1;grid-row:2}.card{min-width:0;background:var(--card);border:1px solid var(--line);border-radius:24px;padding:22px}h2{font-size:18px;line-height:1.3;letter-spacing:-.4px;margin:0 0 18px}.section-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:16px}.section-heading h2{margin:0}.section-hint{font-size:11px;color:#b6cbf6;background:#203456;border-radius:20px;padding:4px 9px}.eyebrow{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#a6bfe9;margin:0 0 8px}.c-rec{background:radial-gradient(ellipse at 50% 35%,#203c6a 0, #121f39 55%,#101a2e 100%);text-align:center;position:relative}.c-rec h2{font-size:25px;letter-spacing:-.8px;margin-bottom:8px}.rec-caption{color:#b5c4e0;font-size:13px;margin:0 0 15px}.recrow{display:flex;flex-direction:column;align-items:center;gap:18px}button{background:var(--bg2);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:10px 14px;min-height:44px;font-size:13px;font-weight:600;transition:background .15s,transform .15s}button:hover:not(:disabled){background:#263859}button:active:not(:disabled){transform:scale(.98)}button:disabled{opacity:.4;cursor:not-allowed}button.p{background:var(--acc);color:var(--acc-ink);border-color:transparent}button.p:hover:not(:disabled){background:#bed0ff}button.ghost{background:transparent;color:var(--mut)}button.danger:hover:not(:disabled){color:#ffb4c0}#rec{width:130px;height:130px;min-height:130px;border-radius:50%;background:#abc5ff;color:#102349;border:8px solid #314e7c;box-shadow:0 0 0 8px #203759,0 10px 32px #070e2340;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:9px;font-size:16px;margin:12px 0}#rec:hover:not(:disabled){background:#c4d6ff}#rec::before{content:"";width:18px;height:27px;border:2.5px solid currentColor;border-radius:12px}#rec.on{background:var(--rec);color:var(--rec-ink);border-color:#713b58;box-shadow:0 0 0 8px #462c46}#rec.on::before{width:20px;height:20px;border:0;border-radius:5px;background:currentColor}#rec.on.paused{background:#b6b9c8;border-color:#515972;box-shadow:none}.side{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;max-width:300px}#clock{grid-column:1 / -1;font-size:35px;font-weight:400;letter-spacing:3px;line-height:1.2;font-variant-numeric:tabular-nums;margin-bottom:4px}#clock.on{color:#ffb8c3}#pause,#mark{font-size:12px;background:#1c2d49}.mark-help{font-size:11px;color:var(--mut);margin:12px 0 0}.warn,.hint{font-size:12px;color:var(--mut);overflow-wrap:anywhere}.hint{margin-top:6px}.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px}.row>*{min-width:0}.row button{flex-grow:1}label{display:block;color:var(--mut);font-size:12px;font-weight:600;margin-bottom:7px}input[type=text],input[type=number],textarea,select{width:100%;min-width:0;background:#0b1426;color:var(--ink);border:1px solid #30415f;border-radius:12px;padding:12px;font-size:16px}select option{background:var(--bg)}::placeholder{color:#8393b2;opacity:1}textarea{resize:vertical;min-height:200px;line-height:1.7}textarea#text{border:0;background:#0c1528;min-height:245px;padding:16px}.lbl-row>label{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}.tools{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}.tools button{font-size:11px;min-height:36px;padding:7px 9px;border:0;background:#192640}.meta{display:flex;justify-content:space-between;font-size:11px;color:var(--mut);margin-top:9px}#flash{color:var(--acc);font-size:12px;margin-top:8px}#flash:empty{display:none}.privacy-group{border:1px solid #35535d;background:#132a35;border-radius:18px;padding:16px;margin-top:22px}.privacy-group>.gl{color:#b9dedc;font-size:12px;font-weight:650}.studio-anon-actions{margin-top:12px}.studio-anon-secondary{display:flex;gap:8px;margin-top:8px}.studio-anon-secondary button{flex:1;font-size:11px;padding:8px;min-height:40px;background:transparent;border-color:#36525f;color:#c0d6df}#anon{width:100%;min-height:52px;background:#a4dbd2;color:#102c30;font-size:14px;border:0}#anon:hover{background:#c1eee6}.note{display:flex;gap:9px;color:#bac6cc;font-size:11px;line-height:1.5;margin-top:14px}.note svg{width:16px;height:16px;flex:none;margin-top:2px}details{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}summary{font-size:13px;font-weight:600;list-style:none;display:block;min-height:34px;padding:5px 22px 5px 0;position:relative}summary::-webkit-details-marker{display:none}summary::after{content:'+';position:absolute;right:0;top:2px;font-size:20px;font-weight:400;color:var(--mut)}details[open]>summary::after{content:'−'}summary small{display:block;color:var(--mut);font-weight:400;font-size:11px;margin-top:5px}.c-rec>details{text-align:left}.c-rec>details>summary{font-size:11px;color:var(--mut)}details.card{margin-top:0;padding:18px 20px}details.card>.body{padding-top:14px}#studioAnonConfig:not([open]){display:none}.studio-patients{padding:12px;background:#10232d;border:1px solid #35515d;border-radius:12px}.studio-workflow{padding:14px;border:1px solid var(--line);border-radius:14px;background:#162239}.studio-workflow-body{padding-top:14px}.note-details label{margin-top:12px}.tagrow{display:flex;gap:8px;flex-wrap:wrap}.tagrow input{flex:1;width:130px}.tagrow #tagSug{flex-basis:100%}.save-row{margin-top:16px}.group .gl{font-size:12px;margin-top:14px}.eng{display:grid;gap:8px}.eng label{display:flex;gap:10px;padding:12px;border:1px solid var(--line);border-radius:12px;color:var(--ink);font-weight:400}.eng label:has(input:checked){background:var(--acc-soft);border-color:#6689c5}.eng small,.chk small{display:block;font-size:11px;color:var(--mut);font-weight:400;margin-top:4px}.chk{display:flex;gap:10px;margin:16px 0;color:var(--ink);font-size:13px}input[type=checkbox],input[type=radio]{accent-color:var(--acc);width:19px;height:19px;flex:none}.body>label{margin-top:16px}.code-config{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}.code-config label{font-size:10px;min-height:30px}.code-config input,.code-config select{padding:8px;font-size:14px}#pGenerate{width:100%;margin-top:10px}.chip{border-radius:30px;font-size:12px;margin:0 5px 5px 0;min-height:34px;padding:5px 12px}.chip.sel{background:var(--acc);color:var(--acc-ink)}.n{padding:12px 0;border-top:1px solid var(--line)}.n small{display:block;color:var(--mut)}.n button{margin:8px 8px 0 0}.mono{font-family:monospace;font-size:13px;min-height:150px}.abox{border-top:1px solid var(--line);margin-top:16px;padding-top:16px}.two small{display:block;font-size:11px;font-weight:400}.bar{display:none;height:6px;border-radius:10px;background:var(--bg2);margin-top:12px;overflow:hidden}.bar i,.pbar i{display:block;height:100%;width:0;background:var(--acc);transition:width .15s}.pbar{height:7px;border-radius:8px;background:var(--bg2);overflow:hidden}#tp{display:none;margin-top:14px}#tp.on{display:block}#tpTxt,#status,#interim,#lvTxt{font-size:12px;margin-top:10px;color:var(--mut);overflow-wrap:anywhere}#status:empty,#interim:empty,#nativeInterim:empty{display:none}.processing-timer{font-size:13px;color:var(--acc);margin-top:10px}.cancel-processing{width:100%;margin-top:10px}.cancel-help{font-size:11px}#busy{display:none;background:var(--note-bg);color:var(--note-ink);padding:10px;border-radius:10px;font-size:12px;margin-bottom:10px}#busy.on{display:block}footer{font-size:11px;color:var(--mut);text-align:center;margin-top:25px}.studio-nav{position:fixed;bottom:max(12px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);width:min(400px,calc(100% - 32px));display:flex;justify-content:space-around;padding:8px;background:#17243bf5;border:1px solid #354765;box-shadow:0 8px 30px #0007;border-radius:20px;z-index:5;backdrop-filter:blur(16px)}.studio-nav a{display:flex;align-items:center;justify-content:center;gap:7px;flex:1;padding:9px 8px;color:#c6d5ef;font-size:12px;text-decoration:none;border-radius:12px}.studio-nav a:hover{background:#2a3c5d}.studio-nav svg{width:17px;height:17px}
 @media(max-width:760px){body{padding-top:20px}.top{align-items:flex-start;margin-bottom:22px;gap:8px}.pill{font-size:0;padding-top:8px}.pill svg{width:17px;height:17px}.layout{display:flex;flex-direction:column;gap:16px}.card{width:100%;padding:19px;border-radius:22px}.c-rec{order:1}.c-edit{order:2}.c-set{order:3}.c-notes{order:4}.c-rec h2{font-size:24px}.recrow{gap:10px}#rec{width:118px;height:118px;min-height:118px;margin:10px 0}.rec-caption{margin-bottom:10px}#clock{font-size:30px}.mark-help{margin-top:10px}.c-rec>details{margin-top:12px;padding-top:8px}.tools button{flex:1}textarea#text{min-height:230px}.studio-anon-secondary{flex-wrap:wrap}.code-config{gap:5px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{transition:none!important}}
 
@@ -479,10 +479,12 @@ body.delta-transcribing.delta-recording{padding-bottom:calc(400px + env(safe-are
       <div class="eng">
         <label><input type="radio" name="eng" value="whisper" checked>
           <span><strong>Whisper</strong> (recomendado)<small>Transcribe en el celular. La primera vez descarga el modelo.</small></span></label>
-        <label id="lblNative"><input type="radio" name="eng" value="native">
-          <span><strong>Dictado del navegador</strong><small id="nativeNote">El texto aparece en vivo, mientras hablás.</small></span></label>
+        <label id="lblNative"><input type="radio" name="eng" value="native" disabled>
+          <span><strong>Dictado del navegador · solo local</strong><small id="nativeNote" role="status">Comprobando compatibilidad local…</small></span></label>
       </div>
       <div id="nativeSetup" class="row" hidden><button id="nativePrepare" type="button">Preparar dictado local en español</button></div>
+
+      <details class="settings-inner"><summary>Diagnóstico del dictado del navegador</summary><pre id="nativeDiag" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre></details>
 
       <label class="chk"><input type="checkbox" id="replace" checked><span><b>Empezar de cero al grabar</b><small>Podés deshacer el borrado. Si lo desactivás, lo nuevo se suma al final.</small></span></label>
       </div></details>
@@ -524,6 +526,7 @@ body.delta-transcribing.delta-recording{padding-bottom:calc(400px + env(safe-are
       <textarea aria-describedby="selectionHelp" id="text" placeholder="Acá va a aparecer lo que digas…"></textarea>
       <button type="button" id="quickCorrect" aria-haspopup="dialog" hidden>Corregir palabra</button>
     </div>
+    <div id="nativeInterim" role="status" aria-live="polite" class="hint"></div>
     <div class="meta"><span id="wc">0 palabras</span><span id="cc"></span></div>
 
     <div id="learn"></div>
@@ -1485,12 +1488,28 @@ function prepareNew(){
   baseline = $('text').value; resetEdit();
 }
 
-/* Dictado del navegador: nunca permitir que envíe voz a un servicio remoto. */
+/* Dictado del navegador: solo local, verificado antes de habilitar la opción. */
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-const nativeLocal = !!(SR && 'processLocally' in SR.prototype);
+const nativeLocal = !!(SR && SR.prototype && 'processLocally' in SR.prototype);
 const nativeRadio = document.querySelector('input[name=eng][value=native]');
 const nativeSetup = $('nativeSetup');
-let nativeReady = false;
+const NATIVE_LANGS = ['es-AR', 'es-ES', 'es'];
+let nativeReady = false, nativeLang = '', nativeCandidate = null, nativeCheckId = 0;
+let rec = null, nativeSession = null, nativeStartedAt = 0, nativeLines = [];
+function nativeDiag(detail){
+  nativeLines.push(detail); nativeLines = nativeLines.slice(-60);
+  $('nativeDiag').textContent = nativeLines.join('\n');
+}
+function nativeTechnical(e){
+  // Solo excepciones/eventos técnicos, nunca resultados, transcripciones o audio.
+  return [e && (e.error || e.name), e && e.message].filter(Boolean).join(': ').slice(0, 500) || 'sin código del navegador';
+}
+function nativeDeadline(task, ms, stage){
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(Object.assign(new Error(stage), {name:'TimeoutError'})), ms);
+    Promise.resolve(task).then(resolve, reject).finally(() => clearTimeout(timer));
+  });
+}
 function setNativeAvailability(ready, detail, canPrepare) {
   nativeReady = ready;
   nativeRadio.disabled = !ready;
@@ -1500,82 +1519,196 @@ function setNativeAvailability(ready, detail, canPrepare) {
   if (!ready && nativeRadio.checked) document.querySelector('input[name=eng][value=whisper]').checked = true;
 }
 async function checkNativeAvailability() {
-  if (!nativeLocal) {
-    setNativeAvailability(false, 'Este navegador no ofrece dictado local verificado. Usá Whisper: no se activará el dictado en línea.', false);
-    return;
+  if (recording || nativeSession) return;
+  const checkId = ++nativeCheckId;
+  nativeCandidate = null; nativeLang = '';
+  const unavailable = (code, detail) => {
+    nativeDiag('Disponibilidad: ' + code);
+    setNativeAvailability(false, detail + ' [' + code + ']. Usá Whisper (recomendado). No se activará dictado en línea.', !!SR);
+    $('nativePrepare').textContent = 'Volver a comprobar compatibilidad';
+  };
+  if (!window.isSecureContext) return unavailable('insecure-context', 'El dictado necesita HTTPS');
+  if (!SR) return unavailable('SpeechRecognition-ausente', 'Este navegador no ofrece reconocimiento de voz para esta página');
+  if (!nativeLocal) return unavailable('processLocally-ausente', 'Este navegador no permite exigir dictado local. Tener micrófono o dictado del teclado no garantiza esta función web');
+  if (typeof SR.available !== 'function') return unavailable('available-ausente', 'No se puede verificar un paquete local de español');
+  setNativeAvailability(false, 'Comprobando paquetes locales de español…', false);
+  const states = await Promise.all(NATIVE_LANGS.map(async lang => {
+    try {
+      const state = await nativeDeadline(SR.available({langs: [lang], processLocally: true}), 8000, 'consulta ' + lang);
+      nativeDiag('Paquete ' + lang + ': ' + state);
+      return {lang, state};
+    } catch (e) {
+      const error = nativeTechnical(e); nativeDiag('Consulta ' + lang + ': ' + error);
+      return {lang, state:'error', error};
+    }
+  }));
+  if (checkId !== nativeCheckId) return;
+  const found = states.find(s => s.state === 'available') || states.find(s => s.state === 'downloading') || states.find(s => s.state === 'downloadable');
+  if (!found) {
+    const errors = states.filter(s => s.error).map(s => s.lang + ': ' + s.error).join('; ');
+    return unavailable(errors ? 'consulta-fallida' : 'español-local-no-disponible', errors || 'El navegador no ofrece paquetes locales es-AR, es-ES ni es');
   }
-  if (typeof SR.available !== 'function') {
-    // Navegadores antiguos pueden tener processLocally sin un método de consulta.
-    setNativeAvailability(true, 'El navegador declara procesamiento local, pero no permite comprobar si tiene español instalado. Si falla, usá Whisper.', false);
-    return;
-  }
-  setNativeAvailability(false, 'Comprobando si el navegador tiene español disponible sin conexión…', false);
-  try {
-    const state = await SR.available({langs: ['es-AR'], processLocally: true});
-    if (state === 'available') setNativeAvailability(true, 'Dictado local en español disponible. El audio no se enviará a un servicio externo.', false);
-    else if (state === 'downloadable') {
-      setNativeAvailability(false, 'Falta instalar el paquete de español para dictar sin internet. Tocá «Preparar dictado local».', typeof SR.install === 'function');
-      $('nativePrepare').textContent = 'Preparar dictado local en español';
-    } else if (state === 'downloading') {
-      setNativeAvailability(false, 'El navegador todavía está descargando español. Tocá «Volver a comprobar» más tarde.', true);
-      $('nativePrepare').textContent = 'Volver a comprobar';
-    } else setNativeAvailability(false, 'Este navegador no dispone del paquete local de español (es-AR). Seguí usando Whisper.', false);
-  } catch (e) {
-    setNativeAvailability(false, 'No se pudo comprobar el dictado local: ' + (e.message || e) + '. Usá Whisper.', false);
-  }
+  nativeLang = found.lang; nativeCandidate = found;
+  const regional = nativeLang === 'es-AR' ? '' : ' Se usará ' + nativeLang + ' porque no se verificó es-AR instalado; el reconocimiento puede variar con el acento.';
+  if (found.state === 'available') setNativeAvailability(true, 'Dictado local disponible (' + nativeLang + '). Texto en vivo; requiere permiso de micrófono.' + regional, true);
+  else if (found.state === 'downloading') setNativeAvailability(false, 'El navegador informa que está descargando ' + nativeLang + '. No se puede dictar todavía; volvé a comprobar.', true);
+  else setNativeAvailability(false, 'Falta descargar el paquete local ' + nativeLang + (typeof SR.install === 'function' ? '. Tocá Preparar dictado local.' : '. Este navegador no ofrece install().'), true);
+  $('nativePrepare').textContent = found.state === 'downloadable' && typeof SR.install === 'function' ? 'Preparar dictado local (' + nativeLang + ')' : 'Volver a comprobar compatibilidad';
 }
 $('nativePrepare').onclick = async () => {
-  const b = $('nativePrepare');
+  if (recording || nativeSession) return;
+  const b = $('nativePrepare'), candidate = nativeCandidate;
   b.disabled = true;
   try {
-    const state = await SR.available({langs: ['es-AR'], processLocally: true});
-    if (state === 'downloadable') {
-      if (typeof SR.install !== 'function') { setStatus('Este navegador no puede instalar el paquete de español.'); return; }
-      if (!confirm('El navegador descargará el paquete de español para dictar sin enviar la voz a internet. ¿Continuar?')) return;
-      setStatus('Descargando el paquete de español dentro del navegador…');
-      const installed = await SR.install({langs: ['es-AR'], processLocally: true});
-      if (!installed) { setStatus('No se pudo instalar el paquete de español. Seguí usando Whisper.'); return; }
+    if (candidate && candidate.state === 'downloadable' && typeof SR.install === 'function') {
+      if (!confirm('El navegador descargará el paquete local ' + candidate.lang + ' para dictar sin enviar la voz a internet. ¿Continuar?')) return;
+      const checkId = ++nativeCheckId;
+      setNativeAvailability(false, 'Descargando el paquete local ' + candidate.lang + '…', true);
+      nativeDiag('Instalación solicitada: ' + candidate.lang);
+      const installed = await nativeDeadline(SR.install({langs: [candidate.lang], processLocally: true}), 300000, 'instalación ' + candidate.lang);
+      if (checkId !== nativeCheckId) return;
+      nativeDiag('Instalación: ' + (installed ? 'confirmada por el navegador' : 'install() devolvió false'));
+      if (!installed) {
+        setNativeAvailability(false, 'El navegador no instaló el paquete [install-false]. Podés volver a comprobar o usar Whisper.', true);
+        nativeCandidate = null; b.textContent = 'Volver a comprobar compatibilidad'; return;
+      }
     }
     await checkNativeAvailability();
   } catch (e) {
-    setStatus('No se pudo preparar el dictado local (' + (e.message || e) + '). Seguí usando Whisper.');
+    const detail = nativeTechnical(e); nativeDiag('Preparación: ' + detail);
+    nativeCandidate = null;
+    setNativeAvailability(false, 'No se pudo preparar el dictado local [' + detail + ']. Usá Whisper o volvé a comprobar.', true);
+    b.textContent = 'Volver a comprobar compatibilidad';
   } finally { b.disabled = false; }
 };
 checkNativeAvailability();
-let rec = null, nativeStartedAt = 0;
-function startNative(){
-  if (!nativeReady) throw new Error('El dictado local todavía no está disponible. Revisá los ajustes o elegí Whisper.');
-  rec = new SR(); rec.lang = 'es-AR'; rec.continuous = true; rec.interimResults = true; rec.processLocally = true;
-  rec.onresult = e => {
-    let interim = '';
-    for (let i = e.resultIndex; i < e.results.length; i++) {
-      if (e.results[i].isFinal) { const c = cleanText(e.results[i][0].transcript); if (c) appendMachine(liveAnon(applyDict(c, D))); } else interim += e.results[i][0].transcript;
+function setNativeInterim(text){
+  $('interim').textContent = text;
+  $('nativeInterim').textContent = text ? 'Provisional: ' + text : '';
+}
+function nativeErrorMessage(e){
+  const hints = {
+    'not-allowed':'No se permitió usar el micrófono. Revisá el permiso del sitio y el permiso de micrófono del navegador en Android.',
+    'service-not-allowed':'El navegador o una política del dispositivo no permite este servicio local.',
+    'language-not-supported':'El motor no admite el paquete local seleccionado. Volvé a comprobar compatibilidad en Ajustes.',
+    'audio-capture':'No se pudo capturar el micrófono. Comprobá que esté disponible y que otra aplicación no lo esté usando.',
+    'no-speech':'No se detectó voz. Podés iniciar otra sesión.',
+    'network':'El motor local informó un error de red. No se cambiará a un servicio remoto.',
+    'aborted':'El navegador interrumpió el reconocimiento.'
+  };
+  return (hints[e.error] || 'Falló el reconocimiento del navegador.') + ' [' + nativeTechnical(e) + ']';
+}
+function finishNative(session, detail, abort = false){
+  if (nativeSession !== session) return;
+  clearTimeout(session.startTimer); clearTimeout(session.endTimer);
+  session.rec.onstart = session.rec.onresult = session.rec.onerror = session.rec.onend = null;
+  nativeSession = null; rec = null;
+  if (abort) { try { session.rec.abort(); } catch (e) { nativeDiag('abort: ' + nativeTechnical(e)); } }
+  setNativeInterim('');
+  if (session.phase === 'pausing' && !abort) {
+    paused = true; $('pause').disabled = false;
+    $('pause').textContent = 'Reanudar'; updateDockRecording();
+    setStatus('Dictado en pausa. El texto confirmado se conserva.'); return;
+  }
+  stopUI(); lockUI(false); $('rec').disabled = false;
+  setStatus(detail); nativeDiag(detail);
+}
+function startNative(resume = false){
+  if (nativeSession) return;
+  if (!nativeReady || !nativeLang) {
+    $('rec').disabled = false;
+    setStatus('No se puede iniciar Dictado del navegador: ' + $('nativeNote').textContent); return;
+  }
+  let session;
+  try {
+    rec = new SR(); rec.lang = nativeLang; rec.continuous = true; rec.interimResults = true; rec.processLocally = true;
+    if (rec.processLocally !== true) throw Object.assign(new Error('El navegador no aceptó processLocally=true'), {name:'NotSupportedError'});
+    session = {rec, phase:'starting', started:false, finalIndexes:new Set()}; nativeSession = session;
+    lockUI(true); $('rec').disabled = true; $('pause').disabled = true;
+    setNativeInterim('');
+    nativeDiag('Inicio solicitado: ' + nativeLang + ', processLocally=true');
+    setStatus('Solicitando dictado local (' + nativeLang + '). Si aparece el permiso de micrófono, elegí Permitir.');
+    rec.onstart = () => {
+      if (nativeSession !== session || session.phase !== 'starting') return;
+      clearTimeout(session.startTimer); session.started = true; session.phase = 'listening'; nativeStartedAt = Date.now();
+      if (!resume) { prepareNew(); recording = true; beginClock(); }
+      else { recording = true; paused = false; tRun = Date.now(); updClock(); }
+      $('rec').classList.add('on'); $('rec').classList.remove('paused'); $('rec').textContent = 'Detener'; $('rec').disabled = false;
+      $('pause').textContent = 'Pausar'; $('pause').classList.remove('p');
+      setCtl(true); updateDockRecording();
+      setStatus('Escuchando… dictado local ' + nativeLang + '. Los resultados aparecen en Texto; puede haber texto provisional.'); nativeDiag('Evento start recibido');
+    };
+    rec.onresult = e => {
+      if (nativeSession !== session || !session.started) return;
+      let interim = '';
+      for (let i = 0; i < e.results.length; i++) {
+        const result = e.results[i];
+        if (result.isFinal && !session.finalIndexes.has(i)) {
+          session.finalIndexes.add(i);
+          const c = cleanText(result[0].transcript); if (c) appendMachine(liveAnon(applyDict(c, D)));
+        } else if (!result.isFinal) interim += result[0].transcript + ' ';
+      }
+      setNativeInterim(interim.trim());
+    };
+    rec.onerror = e => {
+      if (nativeSession !== session) return;
+      if (e.error === 'aborted' && ['pausing','stopping'].includes(session.phase)) { nativeDiag('aborted durante cierre solicitado'); return; }
+      const message = nativeErrorMessage(e);
+      if (['language-not-supported','service-not-allowed'].includes(e.error)) {
+        nativeCandidate = null;
+        setNativeAvailability(false, message + ' Usá Whisper o volvé a comprobar.', true);
+        $('nativePrepare').textContent = 'Volver a comprobar compatibilidad';
+      }
+      finishNative(session, message, true);
+    };
+    rec.onend = () => {
+      if (nativeSession !== session) return;
+      const early = !session.started || Date.now() - nativeStartedAt < 1200;
+      const detail = session.phase === 'stopping' ? 'Dictado detenido. Se conservaron los resultados finales recibidos.'
+        : early ? 'El navegador detuvo el dictado inmediatamente [' + (session.started ? 'end-inmediato' : 'end-sin-start') + ']. No informó un código de error; comprobá compatibilidad y permisos en Ajustes.'
+        : 'El navegador terminó la sesión de dictado [end]. El texto confirmado se conserva. Tocá Grabar para continuar.';
+      if (early && !['pausing','stopping'].includes(session.phase)) {
+        nativeCandidate = null; setNativeAvailability(false, detail + ' Volvé a comprobar antes de intentarlo otra vez.', true);
+        $('nativePrepare').textContent = 'Volver a comprobar compatibilidad';
+      }
+      finishNative(session, detail);
+    };
+    session.startTimer = setTimeout(() => finishNative(session, 'El navegador no confirmó el inicio del dictado [start-timeout, 20 s]. Revisá el permiso de micrófono y la compatibilidad local.', true), 20000);
+    rec.start();
+  } catch (e) {
+    const detail = 'No se pudo iniciar el dictado local [' + nativeTechnical(e) + '].';
+    if (['NotSupportedError','SecurityError'].includes(e.name)) {
+      nativeCandidate = null; setNativeAvailability(false, detail + ' Volvé a comprobar compatibilidad.', true);
+      $('nativePrepare').textContent = 'Volver a comprobar compatibilidad';
     }
-    $('interim').textContent = interim;
-  };
-  rec.onerror = e => {
-    if (e.error === 'aborted' && (!recording || paused)) return;
-    stopUI(); 
-    if (e.error === 'language-not-supported') setStatus('No está instalado el idioma español para dictar localmente. Revisá Ajustes o elegí Whisper.');
-    else if (e.error === 'not-allowed' || e.error === 'service-not-allowed') setStatus('El navegador no permitió el dictado. Comprobá los permisos del micrófono o usá Whisper.');
-    else if (e.error === 'no-speech') setStatus('El dictado se detuvo porque no detectó voz. Volvé a intentarlo o usá Whisper.');
-    else setStatus('El dictado del navegador se detuvo (' + (e.error || 'sin detalle') + '). Probá con Whisper.');
-  };
-  const me = rec;
-  rec.onend = () => {
-    if (rec !== me) return;
-    if (!recording || paused) { $('interim').textContent = ''; return; }
-    if (Date.now() - nativeStartedAt < 1200) {
-      stopUI();
-      setStatus('El navegador detuvo el dictado inmediatamente. Puede faltarle el paquete de español; comprobá Ajustes o usá Whisper.');
-      return;
-    }
-    try { nativeStartedAt = Date.now(); me.start(); }
-    catch (e) { stopUI(); setStatus('No se pudo reanudar el dictado del navegador. Usá Whisper.'); }
-  };
-  nativeStartedAt = Date.now();
-  rec.start();
-  setStatus('Escuchando… (dictado local en este dispositivo)');
+    if (session) finishNative(session, detail, true);
+    else { rec = null; stopUI(); lockUI(false); $('rec').disabled = false; setStatus(detail); nativeDiag(detail); }
+  }
+}
+function stopNative(reason = 'stop'){
+  const session = nativeSession;
+  if (!session) { stopUI(); lockUI(false); $('rec').disabled = false; setStatus('Dictado detenido.'); return; }
+  const alreadyClosing = ['pausing','stopping'].includes(session.phase);
+  session.phase = reason === 'pause' ? 'pausing' : 'stopping';
+  clearTimeout(session.startTimer); endClock();
+  $('pause').disabled = true;
+  if (reason !== 'pause') $('rec').disabled = true;
+  setStatus(reason === 'pause' ? 'Pausando el dictado; esperando el texto final…' : 'Finalizando el dictado; esperando el texto final…');
+  if (alreadyClosing) return;
+  session.endTimer = setTimeout(() => finishNative(session, 'El navegador no confirmó el cierre [end-timeout, 8 s]. Se conserva el texto ya confirmado; el provisional puede no haberse completado.', true), 8000);
+  try { session.rec.stop(); }
+  catch (e) { finishNative(session, 'No se pudo detener el dictado [' + nativeTechnical(e) + '].', true); }
+}
+function pauseNative(p){
+  if (p) {
+    if (!nativeSession || nativeSession.phase !== 'listening') return;
+    paused = true; stopNative('pause');
+    if (!recording) return;
+    $('pause').textContent = 'Reanudar'; $('pause').classList.add('p'); $('rec').classList.add('paused'); updClock();
+  } else {
+    if (nativeSession) return;
+    startNative(true);
+  }
 }
 
 /* ---------- Whisper local: motor en segundo plano (Worker) ---------- */
@@ -2050,6 +2183,7 @@ function setCtl(on){
 }
 function setPaused(p){
   if (!recording || p === paused) return;
+  if (recEng === 'native') { pauseNative(p); return; }
   paused = p;
   if (p) endClock(); else tRun = Date.now();
   if (recEng === 'whisper') {
@@ -2058,8 +2192,7 @@ function setPaused(p){
     if (p) { if (seg) seg.flush(); $('lvI').style.width = '0'; $('lvTxt').textContent = ''; } // lo grabado hasta acá se transcribe mientras estás en pausa
     if (p) checkpointRecordedAudio('pausa');
     if (mr && mr.state !== 'inactive') { try { p ? mr.pause() : mr.resume(); } catch (e) {} }
-  } else if (p) { try { rec.stop(); } catch (e) {} $('interim').textContent = ''; setStatus('Grabación en pausa'); }
-  else setTimeout(() => { if (recording && !paused) startNative(); }, 250);
+  }
   $('pause').textContent = p ? 'Reanudar' : 'Pausar'; $('pause').classList.toggle('p', p); $('rec').classList.toggle('paused', p);
   updClock(); if (recEng === 'whisper') { refreshStatus(); updProgress(); }
 }
@@ -2381,8 +2514,9 @@ $('rec').onclick = async () => {
       audioOk = r === 'ok';
     }
     try {
+      if (recEng === 'native') { startNative(); return; }
       recording = true;
-      if (recEng === 'native') { startNative(); prepareNew(); } else await startWhisper();
+      await startWhisper();
       $('rec').classList.add('on'); $('rec').textContent = 'Detener'; beginClock(); setCtl(true); updateDockRecording();
     } catch (e) {
       stopUI(); lockUI(false); clearInterval(timer); timer = null;
@@ -2392,9 +2526,9 @@ $('rec').onclick = async () => {
     updateDockRecording();
   } else {
     if (elapsedMs() > 60000 && !confirm('¿Detener la grabación? Lleva ' + fmtClock(elapsedMs()) + '.')) return;
+    if (recEng === 'native') { stopNative(); return; }
     recording = false; stopUI();
-    if (recEng === 'native') { try { rec.stop(); } catch (e) {} setStatus('Detenido.'); }
-    else stopWhisper();
+    stopWhisper();
   }
 };
 

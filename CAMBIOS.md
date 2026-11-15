@@ -1,5 +1,36 @@
 # Registro de cambios — Grabador de voz Delta
 
+## Delta 11 · Dictado del navegador: disponibilidad y sesiones — 15/11/2026
+
+**Base:** `a3e44551a7510dcc1fa2d101ff4f40d3fa69428e`, rama `fix/native-dictation`. Alcance limitado al dictado del navegador; misma URL y sin migraciones, dependencias, telemetría ni servicios nuevos.
+
+**Confirmación recibida del usuario:** Whisper ya funciona en Firefox. El usuario también indica que Whisper funciona desde su celular. No extrapolar estas confirmaciones al dictado del navegador ni a todas las funciones de Delta.
+
+### Hallazgos
+
+- Se permitía dictar con `processLocally` aunque faltara `available()`; eso no verificaba que hubiera un servicio/idioma local operativo. La existencia de SpeechRecognition no garantiza soporte local: algunos navegadores ofrecen solo un servicio remoto, o una superficie de API sin motor utilizable.
+- Se pedía exclusivamente es-AR. Motores que documentan español local como es-ES podían rechazar el idioma argentino. No se obtuvo un error real del Motorola: estos son fallos identificados en implementación, no una causa física demostrada del cierre reportado.
+- Se mostraba Escuchando, se borraba el editor y se activaba el cronómetro inmediatamente al llamar start(), antes de onstart. La pausa/reanudación usaba 250 ms arbitrarios; podía iniciar otra sesión antes de que terminara la anterior. Algunos errores no preservaban mensaje técnico y onend intentaba reinicios automáticos.
+- Compatibilidad actual contrastada con fuentes primarias: [MDN Browser Compat Data](https://github.com/mdn/browser-compat-data/blob/main/api/SpeechRecognition.json), [Edge local](https://learn.microsoft.com/en-us/microsoft-edge/web-platform/speech-recognition-api), [Brave: implementación inicial solo inglés](https://github.com/brave/brave-browser/issues/56487), [idiomas locales según agente](https://github.com/WebAudio/web-speech-api/blob/main/explainers/on-device-speech-recognition.md), [errores de reconocimiento](https://developer.mozilla.org/en-US/docs/Web/API/SpeechRecognition/error_event). Android no debe darse por compatible con modo local por compartir Chromium o tener dictado del teclado; Edge documenta canales/configuración específicos y Firefox desktop soporte según versión. Consultar README y, sobre todo, el resultado real de available().
+
+### Corrección
+
+- Opción «Dictado del navegador · solo local», deshabilitada desde el HTML y habilitada solo con API local y `available()` que confirme un idioma instalado. Consulta es-AR/es-ES/es en paralelo con plazo; prioriza un español instalado y muestra cuál se usará. El acento puede afectar precisión si se usa es-ES. Nunca se cambia a reconocimiento remoto.
+- Preparación explícita del paquete e instalación solo con confirmación, con estados downloadable/downloading/unavailable y errores visibles. No se afirma que la descarga del navegador avance por estar en downloading. Reconsulta accesible; no se habilita con un paquete ausente ni con consultas fallidas.
+- Máquina de sesión nativa: starting/listening/pausing/stopping. Solo onstart confirma grabación y prepara editor. Resultados finales sin duplicados; provisional visible en Grabar y Texto. Stop/pause esperan los últimos finales y onend; reanudar crea una instancia nueva después del cierre sin borrar texto ni reiniciar el cronómetro acumulado. Natural end no reinicia en bucle; cierre inmediato exige reconsulta.
+- Errores muestran código original y mensaje técnico si existe; las excepciones síncronas conservan nombre/mensaje. onend y eventos tardíos no tapan errores ni escriben sobre sesiones nuevas. Permisos de micrófono se solicitan mediante el propio motor, sin abrir otra captura paralela para probarlos; se explican permisos del sitio y del navegador en Android.
+- Plazos propios: disponibilidad 8 s, inicio 20 s, cierre 8 s, instalación 5 min. Al fallar se liberan controles y se conserva el texto confirmado. Una instalación puede continuar dentro del navegador aunque Delta agote su espera. Diagnóstico separado (60 líneas máximo), sin texto reconocido ni audio y sin nuevos console.log.
+- **Whisper:** comparación de fuente confirmó que su motor, captura, remuestreo, Worker, cola, cancelación y reintento permanecen idénticos al commit base. Solo cambian las ramas nativas de los controles compartidos Grabar/Pausar/Detener.
+
+### Verificación
+
+- **Código:** documentado en esta rama; fusión, CI y publicación se informan separadamente al entregar.
+- **Automática local:** `node --test tests/delta.test.mjs`: **71/71 aprobadas**, incluido todo el conjunto de Whisper; `git diff --check` correcto. Pruebas nuevas: API ausente/incompleta, consulta local, preferencia es-ES instalado frente a es-AR descargable, paquetes y consentimiento, errores/plazos, onstart antes de borrar, provisional, finales tardíos/sin duplicados, error que onend no tapa, eventos viejos, pausa/reanudación y excepciones de start/stop.
+- **Navegador real:** Firefox 153/Linux confirmó ausencia de SpeechRecognition y la opción quedó bloqueada con motivo técnico claro. Prueba de interfaz completa en ese navegador con API inyectada/simulada: navegación Ajustes/Grabar/Texto, inicio confirmado, provisional visible en Texto, pausa/reanudación, final recibido al detener, permiso not-allowed y controles recuperados; diagnóstico sin las frases ficticias. Esto comprueba integración/UI, no un motor de reconocimiento real.
+- **Límites del entorno:** Chromium local no inició por restricciones de sockets del sistema. No se eludieron permisos; se usó Firefox para la integración simulada. Sin Brave Android, Chrome/Edge reales ni Firefox 160 con voz física; no se certifica reconocimiento nativo en ninguno de ellos.
+- **Prueba del usuario pendiente:** seguir README → Dictado del navegador → Prueba desde el celular. Si la opción está deshabilitada por API/idioma ausente, ese es el comportamiento esperado: usar Whisper. Si está habilitada, probar voz ficticia, provisionales en Texto, pausa, reanudación y final; ante fallo informar código y diagnóstico nativo, sin notas privadas.
+
+
 ## Delta 11 · corrección Firefox, plazos y reintento — 15/11/2026
 
 **Alcance:** únicamente el bloqueo de Whisper y la recuperación del audio. Base de trabajo: `123ec9ba7085745c850b2457930e62030ae8e0bb`. No se cambian la URL, las claves de almacenamiento ni las ramas de respaldo.

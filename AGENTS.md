@@ -63,4 +63,13 @@ En una etapa anterior de Gamma se observaron números o errores en la transcripc
 - No restaurar el fallback de inferencia en el hilo principal: un cálculo síncrono allí impide garantizar cancelación y temporizadores. Si falla el Worker, informar y permitir reintentar en un Worker nuevo.
 - Cada petición load/run tiene límite absoluto de 5 minutos; no renovarlo por progreso de descarga. Remuestreo/lectura/decodificación tienen plazos propios. Respuestas tardías no deben modificar una sesión nueva (`processingEpoch`).
 - `retryAudio` es temporal, solo partes con voz, límite 32 MB sin copias parciales ofrecidas como completas. Se vacía al comenzar otra grabación. La retranscripción de archivos usa el archivo persistido, no una caché parcial. No cambiar claves de IndexedDB/localStorage.
-- Suite: 61 pruebas. Ver CAMBIOS.md para ejecución de navegador y límites. Validación física Motorola y Firefox Windows pendiente.
+- Suite: 61 pruebas. Ver CAMBIOS.md para ejecución de navegador y límites. El usuario confirmó posteriormente que Whisper ya funciona en Firefox (15/11/2026). No extrapolar esa confirmación al dictado del navegador ni a funciones nuevas.
+
+## Dictado del navegador — 15/11/2026
+
+- Mantener solo local y Whisper recomendado. No quitar `processLocally=true` para hacer funcionar un servicio remoto sin autorización expresa. No confundir el dictado del teclado Android con esta API web.
+- No habilitar con solo constructor/prototype: exigir `available()` y paquete español instalado. Consultar es-AR/es-ES/es; informar la variante elegida. No prometer soporte por nombre de navegador ni atribuir una causa exacta al Motorola sin diagnóstico.
+- `nativeSession` controla inicio, escucha, cierre y pausa. No marcar grabación ni borrar texto antes de onstart. Aceptar finales durante stop/pause; esperar onend antes de reanudar; no reiniciar automáticamente al terminar. Ignorar eventos de instancias anteriores.
+- Plazos nativos separados de Whisper: consulta 8 s, inicio 20 s, cierre 8 s, instalación 5 min. No ocultar el código/error original. Diagnósticos nativos en nativeDiag (máximo 60 líneas), sin transcripciones/audio. Provisional en nativeInterim de Texto y en interim de Grabar.
+- Motor, captura, Worker y cola de Whisper idénticos a `a3e44551a7510dcc1fa2d101ff4f40d3fa69428e`. Solo se ajustan las ramas nativas de los controles compartidos.
+- 71 pruebas locales aprobadas, interfaz con API simulada y bloqueo real de API ausente en Firefox 153/Linux. Chrome no inició en este entorno por restricciones del sistema; ningún dictado nativo real con micrófono físico o Android validado. Ver README y CAMBIOS antes de continuar.
