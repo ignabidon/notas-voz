@@ -4,7 +4,7 @@
 
 Esta es la **única versión web activa** del repositorio, derivada de Gamma Studio Diseño 07 (15 de noviembre de 2026). Está pensada para Android/Brave.
 
-> **Prueba Delta 01 — experimental.** El código se revisó estáticamente; la grabación y transcripción todavía deben validarse en el Motorola G56 5G. No usar datos reales de pacientes.
+> **Prueba Delta 07 — experimental.** El código se revisó estáticamente; la grabación y transcripción todavía deben validarse en el Motorola G56 5G. No usar datos reales de pacientes.
 
 ## Funciones
 - Grabación de voz, cronómetro, pausa/reanudación, marcas y detención.
@@ -37,6 +37,14 @@ La URL del repositorio permanece como **ignabidon/notas-voz** para no cambiar lo
 Al tocar **Guardar .txt** se solicita al navegador descargar un archivo de texto con el título y la transcripción actual. En Android, buscá el archivo en **Descargas de Brave** o en la carpeta de descargas configurada en el dispositivo. El navegador puede consultar dónde guardarlo. La aplicación no puede comprobar desde la página que el archivo terminó de guardarse: abrí el archivo para verificarlo.
 
 Este botón también conserva la copia local anterior como respaldo; no borra ni migra contenido. La lista interna de notas guardadas sigue oculta en este cambio. La descarga TXT es únicamente de la nota actual; no incluye audio, diccionario, claves o ajustes. No usar información sensible real antes de validar el proceso.
+
+## Diseño cómodo para una mano (Delta 07)
+
+La interfaz móvil de Delta ahora utiliza textos y controles más grandes, mayor contraste y explicaciones breves. En teléfonos, la barra fija queda pegada al borde inferior del dispositivo y permite **Grabar**, **Anonimizar** y **Guardar .txt** sin estirar el pulgar hasta arriba. Durante una grabación se reemplaza por **Pausar/Reanudar** y **Detener**, igual que antes. Los controles principales no se duplican funcionalmente: los botones inferiores accionan los mismos comandos de Delta.
+
+En la navegación inferior aparecen **Grabar**, **Texto**, **Ajustes** y **Privacidad**. Privacidad abre directamente la sección «Privacidad y datos guardados» aunque Ajustes esté cerrado. También se movió esa sección al principio de Ajustes. Las opciones avanzadas y los detalles técnicos siguen disponibles cuando los necesitás, y las advertencias sobre información sensible se conservan.
+
+La revisión es visual y de navegación: no cambia el reconocimiento de voz, el segmentador, la persistencia de audio y notas, los modelos ni el cifrado. Se validan las rutas mediante pruebas automáticas; todavía hace falta comprobar legibilidad, desplazamiento y alcance del pulgar en Brave Android, con datos ficticios.
 
 ## Privacidad del texto y limpieza optativa (Delta 06a)
 
