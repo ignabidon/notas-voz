@@ -1,5 +1,18 @@
 # Registro de cambios — Grabador de voz Delta
 
+## Entrega a otras IA · Estado consolidado — 15 de noviembre de 2026
+
+**Alcance de esta entrada:** documentación de continuidad, sin cambios de funcionamiento.
+
+- **Código de referencia:** rama `main`, aplicación única `index.html`, etapa **Delta 11**. GitHub Pages: https://ignabidon.github.io/notas-voz/. Cada IA debe comprobar el último commit de `main` antes de editar.
+- **Documentos para leer en orden:** `AGENTS.md` (reglas y pendientes), `README.md` (arquitectura y uso), `CAMBIOS.md` (decisiones cronológicas); `CLAUDE.md` remite a estas reglas para Claude.
+- **Verificado:** 53/53 tests automáticos de Delta 11; ejecución de publicación Pages finalizada con éxito. El usuario confirmó anteriormente grabación, TXT, recuperar el último audio, grabación larga y rediseño Delta 08.
+- **Pendiente de prueba física:** las nuevas acciones de Delta 11 —guardar el audio con botón visible, compartir texto en Brave, copiar y seleccionar desde Texto—. **No presentarlas como confirmadas por el usuario.**
+- **Lentitud observada:** 1:10 de audio con Whisper Small requirió ~2:10 de transcripción; evitar atribución sin comparar contra Base con el mismo audio.
+- **Riesgo de información sensible:** texto, audios locales y descargas sin cifrado; evitar pacientes reales. La anonimización requiere revisión.
+- **Normas para evitar pisar trabajo:** partir del `main` vigente; rama de trabajo específica; ediciones mínimas; conservar respaldos y claves históricas `gamma`; tests y CI antes de fusionar; actualizar CAMBIOS.md y separar claramente pruebas automatizadas de pruebas en Motorola.
+
+
 ## Delta 11 · Descarga de audio y acciones de texto accesibles — 15 de noviembre de 2026
 
 - En Grabar aparece «Conservar también el audio», sincronizado con Ajustes → Audio. Debe activarse antes de comenzar. El botón «Guardar audio» descarga el audio guardado en Brave, reutilizando la función existente y respetando el bloqueo durante captura y transcripción.
