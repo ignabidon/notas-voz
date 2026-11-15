@@ -263,3 +263,52 @@ test('audio: antes de grabar no destruye el anterior', async () => {
   assert.match(html, /id="aUndoAudio"/);
   assert.match(html, /id="audioUndoRow"/);
 });
+
+
+test('Delta 05: los avisos de grabación larga no requieren el contenido de las notas', () => {
+  const found = html.match(/function captureHealthWarning\([\s\S]*?\n\}/);
+  assert.ok(found, 'falta evaluación de salud de grabación');
+  const warn = new Function(found[0] + '; return captureHealthWarning;')();
+  assert.equal(warn(false, false, 10000, 1000, 9, true, true), '');
+  assert.equal(warn(true, true, 10000, 1000, 9, true, true), '');
+  assert.match(warn(true, false, 10000, 2000, 0, false, false), /micrófono/);
+  assert.equal(warn(true, false, 10000, 4000, 0, false, false), '');
+  assert.match(warn(true, false, 10000, 9950, 6, false, true), /6 fragmentos pendientes/);
+  assert.match(warn(true, false, 10000, 9950, 0, true, true), /dejó de guardar el audio/);
+  assert.equal(warn(true, false, 10000, 9950, 0, true, false), '');
+  assert.match(html, /id="captureWarning"/);
+});
+
+test('Delta 05: un corte preventivo solicita los datos sin borrar ni parar audio', () => {
+  const found = html.match(/function checkpointRecordedAudio\(reason\)\{[\s\S]*?\n\}/);
+  assert.ok(found, 'falta checkpoint de MediaRecorder');
+  const notes = [];
+  const recorder = {state:'recording', calls:0, requestData(){this.calls++;}};
+  const checkpoint = new Function('recorder','notes',
+    'let mr=recorder; const logDiag = s => notes.push(s); '+found[0]+'; return {checkpointRecordedAudio,setRecorder:r=>mr=r};')(recorder, notes);
+  assert.equal(checkpoint.checkpointRecordedAudio('pausa'), true);
+  assert.equal(recorder.calls,1);
+  assert.match(notes[0], /pausa/);
+  recorder.state='inactive';
+  assert.equal(checkpoint.checkpointRecordedAudio('pausa'), false);
+  assert.equal(recorder.calls,1);
+  checkpoint.setRecorder({state:'recording',requestData(){throw Error('ficticio')}});
+  assert.equal(checkpoint.checkpointRecordedAudio('segundo plano'), false);
+  assert.match(notes.at(-1), /no pudo solicitar/);
+  assert.doesNotMatch(found[0], /audioClear\(|\.stop\(/);
+});
+
+test('Delta 05: identifica errores y finales inesperados del grabador', () => {
+  assert.match(html, /recorder\.onerror = e => \{/);
+  assert.match(html, /se intentará conservar lo recibido/);
+  const m = html.match(/recorder\.onerror = e => \{([\s\S]*?)\n  \};/);
+  assert.ok(m, 'falta handler de error');
+  assert.doesNotMatch(m[1], /audioSaveFailed = true|audioErr\(/);
+  assert.match(html, /recorder\._deltaStopRequested = false/);
+  assert.match(html, /mr\._deltaStopRequested = true; mr\.stop\(\)/);
+  assert.match(html, /complete: !!expected/);
+  assert.match(html, /checkpointRecordedAudio\('pausa'\)/);
+  assert.match(html, /checkpointRecordedAudio\('marca'\)/);
+  assert.match(html, /checkpointRecordedAudio\('segundo plano'\)/);
+  assert.match(html, /lastMicBlockAt = Date\.now\(\)/);
+});
