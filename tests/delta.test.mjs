@@ -10,7 +10,7 @@ const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map(m => m[1]);
 test('título y punto único de entrada', () => {
   assert.match(html, /<title>Grabador de voz Delta/);
   assert.match(html, /<h1>Grabador de voz Delta<\/h1>/);
-  assert.match(html, /Prueba Delta 01/);
+  assert.match(html, /Prueba de diseño 07/);
 });
 
 test('los scripts se pueden analizar', () => {
