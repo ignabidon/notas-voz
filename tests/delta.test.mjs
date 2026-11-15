@@ -46,3 +46,80 @@ test('se mantienen las claves del almacenamiento', () => {
 test('funciones esenciales sin quitar', () => {
   for (const func of ['function startWhisper(','function stopWhisper(','function setPaused(','function anonymize(','function saveDraft(','function updateDockRecording(']) assert.ok(html.includes(func), 'falta '+func);
 });
+
+/* ---- Pruebas de diagnóstico (Delta 01, diagnósticos v1) ---- */
+const pure = (() => {
+  const m = html.match(/\/\*PURE-START\*\/([\s\S]*?)\/\*PURE-END\*\//);
+  return new Function(m[1] + ';return {makeSegmenter, analyzeText};')();
+})();
+const RATE = 48000;
+const block = amp => new Float32Array(4096).fill(amp);          // bloque de ~85 ms con volumen constante
+const push = (sg, amp, n) => { for (let i = 0; i < n; i++) sg.push(block(amp)); };
+const run = (fn) => {
+  const parts = [], skipped = [];
+  const sg = pure.makeSegmenter(RATE, (blocks, info) => parts.push({blocks, info}), {onSkip: i => skipped.push(i)});
+  fn(sg); sg.flush();
+  return {parts, skipped};
+};
+
+test('segmentador: solo silencio no se envía a Whisper y queda anotado', () => {
+  const {parts, skipped} = run(sg => push(sg, 0.001, 100));
+  assert.equal(parts.length, 0);
+  assert.equal(skipped.length, 1);
+  assert.equal(skipped[0].voiceSec, 0);
+});
+
+test('segmentador: la voz se envía con su resumen', () => {
+  const {parts, skipped} = run(sg => push(sg, 0.1, 36));
+  assert.equal(skipped.length, 0);
+  assert.equal(parts.length, 1);
+  const i = parts[0].info;
+  assert.equal(i.why, 'manual');
+  assert.equal(i.blocks, 36);
+  assert.ok(Math.abs(i.voiceSec - 36 * 4096 / RATE) < 1e-6);
+  assert.ok(Math.abs(i.maxRms - 0.1) < 1e-4);
+});
+
+test('segmentador: un silencio largo se comprime', () => {
+  const {parts} = run(sg => { push(sg, 0.1, 36); push(sg, 0.001, 59); push(sg, 0.1, 36); });
+  assert.equal(parts.length, 1);
+  assert.equal(parts[0].blocks.length, 36 + 9 + 36);   // 0,8 s de silencio como máximo
+});
+
+test('segmentador: una grabación larga se corta sin perder audio con voz', () => {
+  const {parts} = run(sg => push(sg, 0.1, 469));         // ~40 s seguidos
+  assert.ok(parts.length >= 2);
+  assert.equal(parts.reduce((s, p) => s + p.blocks.length, 0), 469);
+  parts.forEach(p => assert.ok(p.blocks.length <= 340, 'parte de más de 29 s'));
+  assert.equal(parts[0].info.why, 'limite');
+});
+
+test('segmentador: un golpecito corto no cuenta como voz', () => {
+  const {parts, skipped} = run(sg => { push(sg, 0.001, 20); push(sg, 0.2, 2); push(sg, 0.001, 5); });
+  assert.equal(parts.length, 0);
+  assert.equal(skipped.length, 1);
+});
+
+test('analizador de texto: frases normales no se marcan', () => {
+  const a = pure.analyzeText('El paciente llegó a las 10 con dos hijos y refiere dolor de cabeza desde ayer.');
+  assert.equal(a.loop, false);
+  assert.equal(a.mostlyNumbers, false);
+  assert.ok(a.digits >= 2);
+});
+
+test('analizador de texto: detecta repeticiones y números', () => {
+  assert.equal(pure.analyzeText('1 1 1 1 1 1 1').loop, true);
+  assert.equal(pure.analyzeText('1 2 3 4 5 6').mostlyNumbers, true);
+  assert.equal(pure.analyzeText('gracias por ver el video gracias por ver el video gracias por ver el video').loop, true);
+  assert.equal(pure.analyzeText('').loop, false);
+});
+
+test('analizador de texto: solo devuelve números y marcas, nunca el texto', () => {
+  const a = pure.analyzeText('Palabras de ejemplo ficticio 123');
+  Object.values(a).forEach(v => assert.notEqual(typeof v, 'string'));
+});
+
+test('diagnósticos: errores con etapa y errores inesperados', () => {
+  for (const s of ["addEventListener('error'", "addEventListener('unhandledrejection'", "type:'note'", 'stage', 'analyzeText(c)', 'onSkip: skipDiag', 'audio recibido del micrófono'])
+    assert.ok(html.includes(s), 'falta ' + s);
+});

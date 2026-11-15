@@ -493,9 +493,16 @@ function makeSegmenter(rate, emit, o) {
   const cap = Math.round((o.capSil || 0.8) / d), look = Math.round(2.5 / d), keepN = Math.ceil(0.25 / d), floorN = Math.round(8 / d);
   let seg = [], silRun = 0; const ring = [];
   const rms = b => { let s = 0; for (let i = 0; i < b.length; i++) s += b[i] * b[i]; return Math.sqrt(s / b.length); };
-  function out(n) {
+  /* Además de las partes de audio, entrega un resumen (info) para los diagnósticos:
+     por qué se cortó, cuánta voz había, volumen máximo y ruido de fondo. No contiene audio ni texto. */
+  function out(n, why) {
     const a = seg.slice(0, n); seg = seg.slice(n);
-    if (a.reduce((c, x) => c + (x.s ? 0 : 1), 0) >= keepN) emit(a.map(x => x.d));
+    if (!a.length) return;
+    const voiced = a.reduce((c, x) => c + (x.s ? 0 : 1), 0);
+    const info = {why, blocks: a.length, sec: a.length * d, voiceSec: voiced * d,
+      maxRms: a.reduce((m, x) => Math.max(m, x.r), 0), noise: ring.length ? Math.min.apply(null, ring) : 0};
+    if (voiced >= keepN) emit(a.map(x => x.d), info);
+    else if (o.onSkip) o.onSkip(info);
   }
   return {
     push(b) {
@@ -503,16 +510,32 @@ function makeSegmenter(rate, emit, o) {
       const thr = Math.min(0.015, Math.max(0.004, 2.5 * Math.min.apply(null, ring)));
       const s = r < thr;
       silRun = s ? silRun + 1 : 0;
-      if (s && silRun > cap) { if (seg.length >= minEff) out(seg.length); return; }
+      if (s && silRun > cap) { if (seg.length >= minEff) out(seg.length, 'silencio'); return; }
       seg.push({d: b, r, s});
       if (seg.length >= maxEff) {
         let k = seg.length - 1, best = Infinity;
         for (let i = Math.max(0, seg.length - look); i < seg.length; i++) if (seg[i].r < best) { best = seg[i].r; k = i; }
-        out(k + 1);
+        out(k + 1, 'limite');
       }
     },
-    flush() { out(seg.length); }
+    flush() { out(seg.length, 'manual'); }
   };
+}
+
+/* Describe un texto transcripto sin guardar su contenido: cantidad de palabras y cifras,
+   la repetición más larga de una misma palabra y si parece un «bucle» de Whisper o casi solo números. */
+function analyzeText(t) {
+  const tok = String(t || '').toLowerCase().split(/\s+/).map(w => w.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, '')).filter(Boolean);
+  const n = tok.length;
+  let digits = 0, numTokens = 0, run = 1, maxRepeat = n ? 1 : 0;
+  tok.forEach((w, i) => {
+    const dg = (w.match(/\d/g) || []).length; digits += dg; if (dg) numTokens++;
+    if (i && w === tok[i - 1]) { run++; if (run > maxRepeat) maxRepeat = run; } else run = 1;
+  });
+  const distinct = new Set(tok).size;
+  return {words: n, digits, numTokens, maxRepeat, distinct,
+    loop: maxRepeat >= 4 || (n >= 8 && distinct / n < 0.35),
+    mostlyNumbers: n >= 3 && numTokens / n >= 0.5};
 }
 /* ---- Anonimización por listas ----
    NAMES_OK: nombres y apellidos comunes que no son palabras corrientes: se ocultan en cualquier posición.
@@ -1093,14 +1116,17 @@ function startNative(){
 
 /* ---------- Whisper local: motor en segundo plano (Worker) ---------- */
 function workerBody(){
-  let asr = null, key = '', be = 'CPU', lib = null, model = '';
+  let asr = null, key = '', be = 'CPU', lib = null, model = '', stage = '';
   const say = m => self.postMessage(m);
+  const note = t => say({type:'note', text:t});
   async function getLib(){
+    stage = 'descarga de la librería';
     if (!lib) { lib = await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1'); lib.env.allowLocalModels = false; }
     return lib;
   }
   async function build(m, gpu){
     const { pipeline } = await getLib();
+    stage = 'preparación del modelo';
     const progress_callback = p => { if (p.status === 'progress' && p.progress != null) say({type:'progress', progress:p.progress}); };
     if (gpu) return pipeline('automatic-speech-recognition', m, { device: 'webgpu', dtype: { encoder_model: 'fp32', decoder_model_merged: 'q4' }, progress_callback });
     return pipeline('automatic-speech-recognition', m, { progress_callback });
@@ -1111,7 +1137,7 @@ function workerBody(){
     asr = null; be = 'CPU'; model = m;
     if (accel !== 'cpu') {
       try { if (self.navigator && navigator.gpu && await navigator.gpu.requestAdapter()) { asr = await build(m, true); be = 'GPU'; } }
-      catch (e) { asr = null; }
+      catch (e) { asr = null; note('La placa de video no se pudo usar (' + String(e && e.message || e) + '): se usa el procesador.'); }
     }
     if (!asr) asr = await build(m, false);
     key = k;
@@ -1122,23 +1148,27 @@ function workerBody(){
       else if (m.type === 'run') {
         const opt = {language:'spanish', task:'transcribe'};
         let r;
+        stage = 'transcripción';
         try { r = await asr(m.audio, opt); }
         catch (e) {
           if (be !== 'GPU') throw e;
+          note('La placa de video falló al transcribir (' + String(e && e.message || e) + '): sigue con el procesador.');
           asr = await build(model, false); be = 'CPU'; // la GPU falló: sigue con el procesador
+          stage = 'transcripción';
           r = await asr(m.audio, opt);
         }
         say({type:'result', id:m.id, text:r.text, backend:be});
       }
-    } catch (err) { say({type:'error', id:m.id, message:String(err && err.message || err)}); }
+    } catch (err) { say({type:'error', id:m.id, message:String(err && err.message || err), stage}); }
   };
 }
 let engine = null, noWorker = false, seq = 0; const waiters = new Map();
 function onMsg(m){
   if (m.type === 'progress') { $('barI').style.width = m.progress.toFixed(0) + '%'; return; }
+  if (m.type === 'note') { logDiag(m.text); return; }
   const w = waiters.get(m.id); if (!w) return;
   waiters.delete(m.id);
-  if (m.type === 'error') w.rej(new Error(m.message)); else w.res(m);
+  if (m.type === 'error') w.rej(Object.assign(new Error(m.message), {stage: m.stage || ''})); else w.res(m);
 }
 function failAll(err){ const a = [...waiters.values()]; waiters.clear(); a.forEach(w => w.rej(err)); }
 function makeEngine(){
@@ -1147,7 +1177,7 @@ function makeEngine(){
     try {
       const w = new Worker(URL.createObjectURL(new Blob([src], {type:'text/javascript'})), {type:'module'});
       w.onmessage = e => onMsg(e.data);
-      w.onerror = e => { if (e.preventDefault) e.preventDefault(); noWorker = true; engine = null; ready = null; failAll(new Error('el motor en segundo plano falló' + (e.message ? ': ' + e.message : ''))); };
+      w.onerror = e => { if (e.preventDefault) e.preventDefault(); logDiag('El motor en segundo plano se cerró con un error' + (e.message ? ': ' + e.message : '') + '. La próxima vez correrá en la página principal.'); noWorker = true; engine = null; ready = null; failAll(new Error('el motor en segundo plano falló' + (e.message ? ': ' + e.message : ''))); };
       return {post: (m, t) => w.postMessage(m, t || []), terminate: () => { w.terminate(); }};
     } catch (e) { noWorker = true; }
   }
@@ -1168,7 +1198,7 @@ function ensureModel(){
   readyKey = key; modelLoading = true; modelErr = ''; $('bar').style.display = 'block'; $('barI').style.width = '0';
   const p = call({type:'load', model, accel}).then(r => { backend = r.backend; return r; });
   p.then(() => { if (ready === p) { modelLoading = false; $('bar').style.display = 'none'; } },
-         e => { if (ready === p) { ready = null; modelLoading = false; modelErr = e.message || String(e); $('bar').style.display = 'none'; } });
+         e => { if (ready === p) { ready = null; modelLoading = false; modelErr = e.message || String(e); $('bar').style.display = 'none'; logDiag('No se pudo preparar el modelo' + (e.stage ? ' (etapa: ' + e.stage + ')' : '') + ': ' + modelErr); } });
   return ready = p;
 }
 
@@ -1205,10 +1235,16 @@ async function toMono16k(blocks, rate){
   return new Float32Array((await off.startRendering()).getChannelData(0));
 }
 
+const BUILD = 'Delta 01 · diagnósticos v1';
+const WHY = {silencio: 'pausa en el habla', limite: 'límite de ~29 s', manual: 'pausa, marca o fin'};
+let capBlocks = 0, capRate = 48000, oddParts = 0;
 let lvT = 0, clipUntil = 0, failedParts = 0, warnParts = 0, segN = 0, diagLines = [], totalSec = 0, doneSec = 0, procMs = 0, procSec = 0;
 let paused = false, tAcc = 0, tRun = 0, clockT = null, markT = null, feeding = false, feed = {pos: 0, len: 0, done: 0};
 let mr = null, audioOk = false, audioSid = '', audioN = 0, audioBytes = 0, audioQ = Promise.resolve(), audioMime = '', audioTs = 0, audioWarned = false;
 function logDiag(x){ diagLines.push(x); $('diag').textContent = diagLines.join('\n'); }
+/* Errores inesperados de la página: se anotan en los detalles técnicos (solo el mensaje, nunca el contenido de las notas) */
+window.addEventListener('error', e => { try { logDiag('Error inesperado de la página: ' + (e.message || 'sin detalle') + (e.lineno ? ' (línea ' + e.lineno + ')' : '')); } catch (x) {} });
+window.addEventListener('unhandledrejection', e => { try { logDiag('Error inesperado (tarea sin terminar): ' + String((e.reason && e.reason.message) || e.reason || 'sin detalle')); } catch (x) {} });
 $('copyDiag').onclick = async () => {
   const x = $('diag').textContent; if (!x) return flash('Todavía no hay detalles.');
   try { await navigator.clipboard.writeText(x); flash('Detalles copiados.'); } catch (e) { flash('No se pudieron copiar los detalles.'); }
@@ -1283,10 +1319,12 @@ function maybeDone(){
   if (dead) return;
   if (failedParts) { setStatus('Terminó, pero ' + failedParts + ' parte(s) del audio no se pudieron transcribir: buscá «⚠ falta una parte» en el texto.'); return; }
   if (warnParts) { setStatus('Terminó, pero ' + warnParts + ' parte(s) dieron muy poco texto para su duración: puede faltar algo. Mirá los detalles técnicos de la grabación.'); return; }
+  if (oddParts) { setStatus('Terminó, pero ' + oddParts + ' parte(s) tienen texto repetitivo o casi solo números: revisalo con cuidado. Mirá los detalles técnicos de la grabación.'); return; }
   setStatus(gotText ? 'Transcripción completa. Revisá el texto antes de copiar o guardar.' : 'No se detectó voz. Probá hablar más cerca del micrófono.');
 }
 function fail(e){
   dead = true; jobs.length = 0; outstanding = 0; busy = false;
+  logDiag('Se detuvo la transcripción de esta grabación' + (e && e.stage ? ' (etapa: ' + e.stage + ')' : '') + '. El audio guardado se puede transcribir de nuevo.');
   setStatus('No se pudo transcribir: ' + (e.message || e) + '. Si es la primera vez, hace falta internet para descargar lo necesario.');
   maybeDone();
 }
@@ -1307,7 +1345,7 @@ async function pump(){
       const r = await call({type:'run', audio: copy}, [copy.buffer]);
       if (epoch !== processingEpoch || dead) return;
       ms = Date.now() - t; lastMs = ms; backend = r.backend || backend; c = cleanText(r.text); err = ''; break;
-    } catch (e) { if (epoch !== processingEpoch || dead) return; err = e.message || String(e); logDiag('#' + n + ' intento ' + k + ' falló: ' + err); }
+    } catch (e) { if (epoch !== processingEpoch || dead) return; err = e.message || String(e); logDiag('#' + n + ' intento ' + k + ' falló' + (e.stage ? ' (etapa: ' + e.stage + ')' : '') + ': ' + err); }
   }
   if (epoch !== processingEpoch || dead) return;
   const where = backend === 'GPU' ? 'placa de video' : 'procesador';
@@ -1317,24 +1355,30 @@ async function pump(){
     logDiag('#' + n + ' · ' + sec.toFixed(1) + ' s de audio · ERROR');
   } else {
     const words = nWords(c), low = sec >= 10 && words / sec < 0.8;
+    const an = analyzeText(c), odd = an.loop || an.mostlyNumbers, inf = job.info;
     if (c) { gotText = true; appendMachine(liveAnon(applyDict(c, D))); }
     if (low) warnParts++;
-    logDiag('#' + n + ' · ' + sec.toFixed(1) + ' s de audio · ' + (ms / 1000).toFixed(1) + ' s procesando (' + where + ') · ' + words + ' palabras' + (low ? ' ⚠ poco texto para la duración' : (!c ? ' (sin texto)' : '')));
+    if (odd) oddParts++;
+    const det = inf ? ' · voz ' + inf.voiceSec.toFixed(1) + ' s · volumen máx ' + inf.maxRms.toFixed(3) + ' · ruido ' + inf.noise.toFixed(3) + ' · corte: ' + (WHY[inf.why] || inf.why) : '';
+    logDiag('#' + n + ' · ' + sec.toFixed(1) + ' s de audio' + det + ' · ' + (ms / 1000).toFixed(1) + ' s procesando (' + where + ') · ' + words + ' palabras' + (an.digits ? ' · cifras: ' + an.digits : '') + (low ? ' ⚠ poco texto para la duración' : (!c ? ' (sin texto)' : '')) + (an.loop ? ' ⚠ texto repetitivo' : '') + (an.mostlyNumbers ? ' ⚠ casi solo números' : ''));
   }
   busy = false; outstanding--; doneSec += job.sec || 0; if (job.pos) feed.done = job.pos; if (!err && ms) { procMs += ms; procSec += sec; } refreshStatus(); pump();
 }
-function onSegment(blocks, rate){
+const skipDiag = info => logDiag('Parte descartada sin voz: ' + info.sec.toFixed(1) + ' s · volumen máx ' + info.maxRms.toFixed(3) + ' · ruido ' + info.noise.toFixed(3) + ' · corte: ' + (WHY[info.why] || info.why));
+function onSegment(blocks, rate, info){
   if (dead) return;
   outstanding++;
   const secs = blocks.length * 4096 / rate, pos = feed.pos; totalSec += secs;
-  chain = chain.then(() => toMono16k(blocks, rate)).then(a => { if (!dead) { jobs.push({a, sec: secs, pos}); pump(); } }).catch(e => { failedParts++; outstanding--; doneSec += secs; appendMachine('[⚠ falta una parte del audio: no se pudo preparar]'); logDiag('Parte sin preparar: ' + (e.message || e)); pump(); });
+  chain = chain.then(() => toMono16k(blocks, rate)).then(a => { if (!dead) { jobs.push({a, sec: secs, pos, info}); pump(); } }).catch(e => { failedParts++; outstanding--; doneSec += secs; appendMachine('[⚠ falta una parte del audio: no se pudo preparar]'); logDiag('Parte sin preparar: ' + (e.message || e)); pump(); });
 }
 async function startWhisper(){
   resetPipeline();
-  cap = await startCapture(b => { if (paused) return; level(b); if (seg) seg.push(b); });
-  const rate = cap.rate;
+  capBlocks = 0;
+  cap = await startCapture(b => { capBlocks++; if (paused) return; level(b); if (seg) seg.push(b); });
+  const rate = cap.rate; capRate = rate;
   logDiag('Modelo ' + $('model').value.replace('Xenova/', '') + ' · aceleración ' + $('accel').value + ' · micrófono ' + $('mic').value + ' · ' + rate + ' Hz');
-  seg = makeSegmenter(rate, blocks => onSegment(blocks, rate));
+  logDiag(BUILD + ' · ' + ((navigator.userAgent.match(/(?:Chrome|Firefox|Version)\/[\d.]+/) || ['navegador ?'])[0]) + ' · núcleos ' + (navigator.hardwareConcurrency || '?') + ' · memoria ' + (navigator.deviceMemory ? '≥' + navigator.deviceMemory + ' GB' : '?') + ' · WebGPU ' + (navigator.gpu ? 'sí' : 'no') + ' · captura ' + (window.AudioWorkletNode ? 'AudioWorklet' : 'ScriptProcessor') + (noWorker ? ' · sin Worker' : ''));
+  seg = makeSegmenter(rate, (blocks, info) => onSegment(blocks, rate, info), {onSkip: skipDiag});
   startAudioSave(cap.stream); lockWake(); lockUI(true); prepareNew(); $('lv').style.display = 'block';
   ensureModel().catch(() => {}); // carga el modelo mientras hablás
   timer = setInterval(refreshStatus, 500); refreshStatus();
@@ -1343,7 +1387,7 @@ function stopWhisper(){
   if (cap) { stopCapture(cap); cap = null; }
   if (seg) { seg.flush(); seg = null; }
   if (mr && mr.state !== 'inactive') { try { mr.stop(); } catch (e) {} }
-  logDiag('Fin de la grabación a los ' + Math.floor(elapsedMs() / 1000) + ' s · partes pendientes: ' + outstanding);
+  logDiag('Fin de la grabación a los ' + Math.floor(elapsedMs() / 1000) + ' s · partes pendientes: ' + outstanding + ' · audio recibido del micrófono: ' + Math.round(capBlocks * 4096 / capRate) + ' s');
   unlockWake();
   if (outstanding === 0 && !busy) maybeDone();
   else { $('rec').disabled = true; refreshStatus(); }
@@ -1384,7 +1428,7 @@ function cancelProcessing(){
 $('cancelProcessing').onclick = cancelProcessing;
 function resetPipeline(){
   processingEpoch++;
-  dead = false; jobs = []; busy = false; outstanding = 0; gotText = false; lastMs = 0; modelErr = ''; chain = Promise.resolve(); failedParts = 0; warnParts = 0; segN = 0; diagLines = []; totalSec = 0; doneSec = 0; procMs = 0; procSec = 0; $('diag').textContent = '';
+  dead = false; jobs = []; busy = false; outstanding = 0; gotText = false; lastMs = 0; modelErr = ''; chain = Promise.resolve(); failedParts = 0; warnParts = 0; oddParts = 0; segN = 0; diagLines = []; totalSec = 0; doneSec = 0; procMs = 0; procSec = 0; $('diag').textContent = '';
   feed = {pos: 0, len: 0, done: 0};
 }
 
@@ -1418,6 +1462,7 @@ function setPaused(p){
   paused = p;
   if (p) endClock(); else tRun = Date.now();
   if (recEng === 'whisper') {
+    logDiag((p ? 'Pausa' : 'Reanudación') + ' a los ' + Math.floor(elapsedMs() / 1000) + ' s');
     if (p) { if (seg) seg.flush(); $('lvI').style.width = '0'; $('lvTxt').textContent = ''; } // lo grabado hasta acá se transcribe mientras estás en pausa
     if (mr && mr.state !== 'inactive') { try { p ? mr.pause() : mr.resume(); } catch (e) {} }
   } else if (p) { try { rec.stop(); } catch (e) {} $('interim').textContent = ''; setStatus('Grabación en pausa'); }
@@ -1597,7 +1642,7 @@ async function transcribeSaved(){
   resetPipeline();
   const epoch = processingEpoch;
   feed.len = pcm.length; prepareNew(); lockWake();
-  const rate = 16000, sg = makeSegmenter(rate, blocks => onSegment(blocks, rate));
+  const rate = 16000, sg = makeSegmenter(rate, (blocks, info) => onSegment(blocks, rate, info), {onSkip: skipDiag});
   logDiag('Transcribiendo el audio guardado · ' + fmtClock(m.ms) + ' · modelo ' + $('model').value.replace('Xenova/', ''));
   ensureModel().catch(() => {});
   timer = setInterval(refreshStatus, 500); refreshStatus();
