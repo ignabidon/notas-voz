@@ -269,7 +269,7 @@ function startNative(){
 }
 
 /* Whisper local */
-let asr = null, asrModel = null, loading = null, loadingModel = null, mr = null, chunks = [], stream = null;
+let backend = 'CPU', asr = null, asrModel = null, loading = null, loadingModel = null, mr = null, chunks = [], stream = null;
 async function loadWhisper(){
   const model = $('model').value;
   if (asr && asrModel === model) return asr;
@@ -280,9 +280,15 @@ async function loadWhisper(){
     $('bar').style.display = 'block';
     const { pipeline, env } = await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3');
     env.allowLocalModels = false;
-    asr = await pipeline('automatic-speech-recognition', model, {
-      progress_callback: p => { if (p.status === 'progress' && p.progress != null) $('barI').style.width = p.progress.toFixed(0) + '%'; }
-    });
+    const progress_callback = p => { if (p.status === 'progress' && p.progress != null) $('barI').style.width = p.progress.toFixed(0) + '%'; };
+    asr = null; backend = 'CPU';
+    try {
+      if (navigator.gpu && await navigator.gpu.requestAdapter()) {
+        asr = await pipeline('automatic-speech-recognition', model, { device: 'webgpu', dtype: { encoder_model: 'fp32', decoder_model_merged: 'q4' }, progress_callback });
+        backend = 'GPU';
+      }
+    } catch (e) { asr = null; }
+    if (!asr) asr = await pipeline('automatic-speech-recognition', model, { progress_callback });
     asrModel = model;
     $('bar').style.display = 'none';
     return asr;
@@ -306,9 +312,10 @@ async function startWhisper(){
     $('rec').disabled = true;
     try {
       const m = await loadWhisper();
-      setStatus('Transcribiendo en el dispositivo…');
+      setStatus('Transcribiendo en el dispositivo (' + backend + ')…');
+      const t0 = Date.now();
       const r = await m(await to16k(blob), {language:'spanish', task:'transcribe', chunk_length_s:30, stride_length_s:5});
-      append(r.text); setStatus('Listo. Revisá y guardá.');
+      append(r.text); setStatus('Listo en ' + Math.round((Date.now() - t0) / 1000) + ' s (' + (backend === 'GPU' ? 'con la GPU del dispositivo' : 'con el procesador') + '). Revisá y guardá.');
     } catch (e) {
       setStatus('No se pudo transcribir: ' + (e.message || e) + '. Si es la primera vez, hace falta internet para bajar el modelo.');
     }
