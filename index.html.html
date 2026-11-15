@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Notas por voz (local)</title>
+<style>
+  :root{--bg:#f6f5f1;--card:#fff;--ink:#1f2328;--mut:#6b7177;--acc:#2f5d8a;--rec:#c0392b;--line:#e1ded6}
+  @media (prefers-color-scheme:dark){:root{--bg:#16181b;--card:#1f2226;--ink:#e8e6e1;--mut:#9aa0a6;--acc:#7fb0e0;--rec:#e5604f;--line:#33373c}}
+  *{box-sizing:border-box}
+  body{margin:0;font:16px/1.45 system-ui,sans-serif;background:var(--bg);color:var(--ink);padding:14px;max-width:640px;margin-inline:auto}
+  h1{font-size:19px;margin:4px 0 2px}
+  .sub{color:var(--mut);font-size:13px;margin-bottom:12px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px}
+  label{font-size:13px;color:var(--mut);display:block;margin-bottom:4px}
+  input[type=text],textarea{width:100%;font:inherit;color:inherit;background:transparent;border:1px solid var(--line);border-radius:8px;padding:9px}
+  textarea{min-height:200px;resize:vertical}
+  .eng{display:flex;flex-direction:column;gap:6px;font-size:14px}
+  .eng label{display:flex;gap:8px;align-items:flex-start;color:var(--ink);font-size:14px;margin:0}
+  .eng small{color:var(--mut);display:block}
+  button{font:inherit;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:9px 12px;border-radius:8px}
+  button.p{background:var(--acc);color:#fff;border-color:var(--acc)}
+  .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  #rec{width:100%;padding:16px;font-size:17px;font-weight:600;background:var(--acc);color:#fff;border:0;border-radius:12px}
+  #rec.on{background:var(--rec)}
+  #rec:disabled{opacity:.5}
+  #status{font-size:13px;color:var(--mut);margin-top:8px;min-height:18px}
+  #interim{color:var(--mut);font-style:italic;font-size:14px;min-height:18px;margin-top:6px}
+  .bar{height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin-top:6px;display:none}
+  .bar i{display:block;height:100%;width:0;background:var(--acc)}
+  .n{display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-top:1px solid var(--line);align-items:center}
+  .n:first-child{border-top:0}
+  .n span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+  .n small{color:var(--mut)}
+  .warn{font-size:12px;color:var(--mut)}
+  .chip{padding:4px 10px;margin:0 6px 6px 0;border-radius:999px;font-size:13px}
+  .chip.sel{background:var(--acc);color:#fff;border-color:var(--acc)}
+  details{margin-top:10px;font-size:14px}
+  summary{color:var(--mut);font-size:13px}
+</style>
+</head>
+<body>
+<h1>Notas por voz</h1>
+<div class="sub">El audio no se guarda ni se envía a ningún servidor. Las notas quedan en este dispositivo.</div>
+
+<div class="card">
+  <label>Motor de transcripción</label>
+  <div class="eng">
+    <label><input type="radio" name="eng" value="whisper" checked>
+      <span>Whisper local<small>Corre en el dispositivo. La primera vez descarga el modelo y después funciona sin conexión. Transcribe al terminar de grabar.</small></span></label>
+    <label id="lblNative"><input type="radio" name="eng" value="native">
+      <span>Dictado del navegador (local)<small id="nativeNote">En vivo, mientras hablás.</small></span></label>
+  </div>
+  <label for="model" style="margin-top:10px">Precisión de Whisper</label>
+  <select id="model" style="width:100%;font:inherit;color:inherit;background:transparent;border:1px solid var(--line);border-radius:8px;padding:9px">
+    <option value="Xenova/whisper-base" style="color:#000">Rápida (~75 MB)</option>
+    <option value="Xenova/whisper-small" style="color:#000" selected>Mejor (~250 MB, más lenta)</option>
+  </select>
+  <div class="bar" id="bar"><i id="barI"></i></div>
+</div>
+
+<div class="card">
+  <button id="rec">🎙️ Grabar</button>
+  <div id="status"></div>
+  <div id="interim"></div>
+</div>
+
+<div class="card">
+  <label for="title">Título</label>
+  <input type="text" id="title" placeholder="Ej.: Clase 4to año – 14/11">
+  <label for="text" style="margin-top:10px">Texto (podés editarlo)</label>
+  <textarea id="text" placeholder="Acá aparece la transcripción…"></textarea>
+  <label style="margin-top:10px">Etiquetas</label>
+  <div id="chips"></div>
+  <div class="row" style="margin-top:0">
+    <input type="text" id="tagIn" placeholder="Agregar etiqueta" style="flex:1;min-width:120px">
+    <button id="tagAdd">+</button>
+    <button id="tagSug">Sugerir por tema</button>
+  </div>
+  <div class="row">
+    <button class="p" id="save">Guardar</button>
+    <button id="anon">Anonimizar</button>
+    <button id="newn">Nueva</button>
+    <button id="doc">Exportar a Word</button>
+    <button id="txt">TXT</button>
+    <button id="copy">Copiar</button>
+    <button id="share" style="display:none">Compartir</button>
+  </div>
+  <details>
+    <summary>Ajustes de anonimización</summary>
+    <label style="margin-top:8px">Ocultar además estas palabras (separadas por coma)</label>
+    <input type="text" id="hideX" placeholder="Ej.: nombre de una escuela, apodo">
+    <label style="margin-top:8px">No ocultar nunca estas palabras</label>
+    <input type="text" id="keepX" placeholder="Ej.: Freud, Winnicott">
+    <div class="row"><button id="undo" disabled>Deshacer anonimizado</button></div>
+  </details>
+  <div class="warn" id="anonRes" style="margin-top:8px"></div>
+  <div class="warn" style="margin-top:8px">La anonimización es automática y puede fallar: revisá siempre el texto antes de guardarlo o exportarlo.</div>
+</div>
+
+<div class="card">
+  <label>Notas guardadas</label>
+  <div id="filt"></div>
+  <div id="list"></div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const KEY = 'notasvoz.v1';
+let notes = [], cur = null;
+try { notes = JSON.parse(localStorage.getItem(KEY) || '[]'); } catch (e) { notes = []; }
+const persist = () => { try { localStorage.setItem(KEY, JSON.stringify(notes)); } catch (e) { setStatus('No se pudo guardar en este navegador.'); } };
+const setStatus = s => $('status').textContent = s;
+
+/* ---------- Notas ---------- */
+function fmt(ts){ return new Date(ts).toLocaleString('es-AR', {dateStyle:'short', timeStyle:'short'}); }
+function renderList(){
+  const l = $('list'); l.innerHTML = '';
+  const f = $('filt'); f.innerHTML = '';
+  const all = [...new Set(notes.flatMap(n => n.tags || []))].sort();
+  if (activeTag && !all.includes(activeTag)) activeTag = null;
+  all.forEach(t => { const b = document.createElement('button'); b.className = 'chip' + (t === activeTag ? ' sel' : ''); b.textContent = t; b.onclick = () => { activeTag = activeTag === t ? null : t; renderList(); }; f.append(b); });
+  const shown = notes.filter(n => !activeTag || (n.tags || []).includes(activeTag));
+  if (!shown.length) { l.innerHTML = '<div class="warn">' + (notes.length ? 'Ninguna nota con esa etiqueta.' : 'Todavía no hay notas.') + '</div>'; return; }
+  shown.slice().sort((a,b)=>b.ts-a.ts).forEach(n => {
+    const d = document.createElement('div'); d.className = 'n';
+    const s = document.createElement('span'); s.textContent = n.title || 'Sin título';
+    const sm = document.createElement('small'); sm.textContent = fmt(n.ts) + ((n.tags || []).length ? ' · ' + n.tags.join(', ') : '');
+    const o = document.createElement('button'); o.textContent = 'Abrir';
+    o.onclick = () => { cur = n.id; $('title').value = n.title; $('text').value = n.text; tags = (n.tags || []).slice(); renderChips(); anonBackup = null; $('undo').disabled = true; $('anonRes').textContent = ''; window.scrollTo({top:0, behavior:'smooth'}); };
+    const x = document.createElement('button'); x.textContent = '✕';
+    x.onclick = () => { if (confirm('¿Borrar esta nota?')) { notes = notes.filter(m => m.id !== n.id); if (cur === n.id) cur = null; persist(); renderList(); } };
+    d.append(s, sm, o, x); l.append(d);
+  });
+}
+$('save').onclick = () => {
+  const text = $('text').value.trim(); if (!text) return setStatus('No hay texto para guardar.');
+  let n = notes.find(m => m.id === cur);
+  if (!n) { n = {id: Date.now().toString(36)}; notes.push(n); cur = n.id; }
+  n.title = $('title').value.trim() || ('Nota ' + fmt(Date.now())); n.text = $('text').value; n.tags = tags.slice(); n.ts = Date.now();
+  persist(); renderList(); setStatus('Guardada.');
+};
+$('newn').onclick = () => { cur = null; $('title').value = ''; $('text').value = ''; tags = []; renderChips(); anonBackup = null; $('undo').disabled = true; $('anonRes').textContent = ''; setStatus(''); };
+
+/* ---------- Etiquetas por tema (cálculo local) ---------- */
+let tags = [], activeTag = null, anonBackup = null;
+const norm = s => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+function renderChips(){
+  const c = $('chips'); c.innerHTML = '';
+  tags.forEach(t => { const b = document.createElement('button'); b.className = 'chip'; b.textContent = t + ' ✕'; b.onclick = () => { tags = tags.filter(x => x !== t); renderChips(); }; c.append(b); });
+}
+function addTag(t){ t = t.trim().toLowerCase(); if (t && !tags.includes(t)) { tags.push(t); renderChips(); } }
+$('tagAdd').onclick = () => { addTag($('tagIn').value); $('tagIn').value = ''; };
+$('tagIn').addEventListener('keydown', e => { if (e.key === 'Enter') { addTag($('tagIn').value); $('tagIn').value = ''; } });
+const STOP = new Set(('porque entonces también cuando donde tiene tienen tenía tengo puede pueden podría sobre desde hasta entre cada todo todos todas nada algo bueno mucho muchos mucha muchas ahora después antes siempre nunca quiere quería dijo dice decir están estar estaba estaban fueron hemos cosas cosa bien otro otra otros otras mismo misma tiempo parte vamos vemos veces sería según ellos ellas nosotros ustedes aunque mientras además tanto tanta claro quizás digamos semana hacer hace hacía había haber hubo estos estas esto esta ese esa eso aquel pero como para sino cuál cuáles quién quiénes cuánto entonces después tampoco todavía durante hacia contra desde pues luego aquí allí acá allá mejor peor menos demás cualquier ninguna ninguno alguna alguno otras tenemos tienen siendo ahí').split(' ').map(norm));
+$('tagSug').onclick = () => {
+  const words = (($('title').value + ' ' + $('text').value).toLowerCase().match(/\p{L}{5,}/gu) || []);
+  const freq = new Map();
+  words.forEach(w => { const k = norm(w); if (STOP.has(k)) return; const e = freq.get(k) || {w, n: 0}; e.n++; freq.set(k, e); });
+  let c = [...freq.values()].sort((a, b) => b.n - a.n);
+  const rep = c.filter(e => e.n >= 2);
+  c = (rep.length ? rep : c).slice(0, 5);
+  if (!c.length) return setStatus('Hace falta más texto para sugerir etiquetas.');
+  c.forEach(e => addTag(e.w)); setStatus('Etiquetas sugeridas. Quitá o agregá las que quieras.');
+};
+
+/* ---------- Anonimizar (reglas locales) ---------- */
+const KEEP = ['lunes','martes','miércoles','jueves','viernes','sábado','domingo','enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre','hoy','ayer','mañana','argentina','buenos','aires','dios','freud','winnicott','klein','lacan','salud','adolescencia','claude','whisper','word'];
+const reEsc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+function anonymize(){
+  const hide = $('hideX').value.split(',').map(s => s.trim()).filter(Boolean);
+  const keep = new Set(KEEP.concat($('keepX').value.split(',')).map(s => norm(s.trim())).filter(Boolean));
+  const ids = new Map(); let np = 0, nOther = 0;
+  const person = text => {
+    const toks = text.split(/\s+/).map(norm);
+    let id = toks.map(t => ids.get(t)).find(Boolean);
+    if (!id) id = '[Persona ' + (++np) + ']';
+    toks.forEach(t => { if (!ids.has(t)) ids.set(t, id); });
+    return id;
+  };
+  const CAP = /(?<![\p{L}\[])\p{Lu}\p{Ll}+(?:[ \t]+\p{Lu}\p{Ll}+)*/gu;
+  const startsSentence = (str, off) => /(^|[.!?¿¡\n:]\s*)$/.test(str.slice(0, off));
+  // Pasada 1: nombres seguros (mayúscula en medio de la oración)
+  const known = new Set();
+  [$('title').value, $('text').value].forEach(src => src.replace(CAP, (m, off, str) => {
+    m.split(/\s+/).forEach((w, i) => { if (!(i === 0 && startsSentence(str, off)) && !keep.has(norm(w))) known.add(norm(w)); });
+    return m;
+  }));
+  hide.forEach(h => h.split(/\s+/).forEach(w => known.add(norm(w))));
+  const run = s => {
+    s = s.replace(/[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g, () => { nOther++; return '[correo]'; });
+    s = s.replace(/\b\d{1,2}\/\d{1,2}\/\d{2,4}\b/g, () => { nOther++; return '[fecha]'; });
+    s = s.replace(/\+?\d[\d\s().-]{5,}\d/g, () => { nOther++; return '[número]'; });
+    hide.forEach(h => { s = s.replace(new RegExp('(?<![\\p{L}\\[])' + reEsc(h) + '(?![\\p{L}])', 'giu'), () => person(h)); });
+    s = s.replace(CAP, (m, off, str) => {
+      const st = startsSentence(str, off);
+      const parts = m.split(/(\s+)/); // palabras y separadores
+      let out = '', group = [];
+      const flush = () => { if (group.length) { out += person(group.join(' ')); group = []; } };
+      let wi = 0;
+      parts.forEach(p => {
+        if (/^\s+$/.test(p)) { if (!group.length) out += p; else group.push(null); return; }
+        const k = norm(p);
+        const isName = !keep.has(k) && (known.has(k) || !(wi === 0 && st));
+        wi++;
+        if (isName) { while (group.length && group[group.length - 1] === null) group.pop(); group.push(p); }
+        else { while (group.length && group[group.length - 1] === null) { group.pop(); out += ' '; } flush(); out += p; }
+      });
+      flush();
+      return out;
+    });
+    return s;
+  };
+  anonBackup = {title: $('title').value, text: $('text').value};
+  $('title').value = run($('title').value); $('text').value = run($('text').value);
+  $('undo').disabled = false;
+  $('anonRes').textContent = 'Se ocultaron ' + np + ' nombre(s) y ' + nOther + ' dato(s) (correo, teléfono, fecha). Revisá el texto: pueden quedar nombres sin detectar (al empezar una oración o en minúscula).';
+}
+$('anon').onclick = () => { if (!$('text').value.trim()) return setStatus('No hay texto para anonimizar.'); anonymize(); };
+$('undo').onclick = () => { if (!anonBackup) return; $('title').value = anonBackup.title; $('text').value = anonBackup.text; anonBackup = null; $('undo').disabled = true; $('anonRes').textContent = 'Se deshizo el anonimizado.'; };
+
+/* ---------- Exportar ---------- */
+const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const fname = ext => (($('title').value.trim() || 'nota').replace(/[^\w\- áéíóúñÁÉÍÓÚÑ]/g,'').trim().replace(/\s+/g,'_') || 'nota') + '.' + ext;
+function makeDoc(){
+  const t = esc($('title').value.trim() || 'Nota'), paras = $('text').value.split(/\n+/).filter(Boolean).map(p => '<p>' + esc(p) + '</p>').join('');
+  const html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>' + t + '</title></head><body style="font-family:Calibri,Arial,sans-serif;font-size:12pt"><h1>' + t + '</h1><p style="color:#666">' + fmt(Date.now()) + (tags.length ? ' · Etiquetas: ' + esc(tags.join(', ')) : '') + '</p>' + paras + '</body></html>';
+  return new File(['﻿' + html], fname('doc'), {type:'application/msword'});
+}
+function download(file){ const a = document.createElement('a'); a.href = URL.createObjectURL(file); a.download = file.name; document.body.append(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href), 4000); }
+$('doc').onclick = () => $('text').value.trim() ? download(makeDoc()) : setStatus('No hay texto para exportar.');
+$('txt').onclick = () => $('text').value.trim() ? download(new File([($('title').value ? $('title').value + '\n\n' : '') + $('text').value], fname('txt'), {type:'text/plain'})) : setStatus('No hay texto para exportar.');
+$('copy').onclick = async () => { try { await navigator.clipboard.writeText($('text').value); setStatus('Copiado.'); } catch (e) { $('text').select(); document.execCommand('copy'); setStatus('Copiado.'); } };
+if (navigator.canShare && navigator.canShare({files:[new File(['x'],'x.txt',{type:'text/plain'})]})) {
+  $('share').style.display = '';
+  $('share').onclick = async () => { if (!$('text').value.trim()) return; try { await navigator.share({files:[makeDoc()], title: $('title').value || 'Nota'}); } catch (e) {} };
+}
+
+/* ---------- Transcripción ---------- */
+const append = t => { t = t.trim(); if (!t) return; const ta = $('text'); ta.value += (ta.value && !/\s$/.test(ta.value) ? ' ' : '') + t; };
+const eng = () => document.querySelector('input[name=eng]:checked').value;
+let recording = false;
+
+/* Dictado del navegador: solo se habilita si puede procesar localmente */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+const nativeLocal = !!(SR && 'processLocally' in SR.prototype);
+if (!nativeLocal) {
+  document.querySelector('input[value=native]').disabled = true;
+  $('lblNative').style.opacity = .55;
+  $('nativeNote').textContent = 'No disponible: este navegador enviaría el audio a la nube, así que lo bloqueé.';
+}
+let rec = null;
+function startNative(){
+  rec = new SR(); rec.lang = 'es-AR'; rec.continuous = true; rec.interimResults = true; rec.processLocally = true;
+  rec.onresult = e => {
+    let interim = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) append(e.results[i][0].transcript); else interim += e.results[i][0].transcript;
+    }
+    $('interim').textContent = interim;
+  };
+  rec.onerror = e => {
+    if (e.error === 'language-not-supported') setStatus('Falta el paquete de idioma local en el navegador. Probá con Whisper local.');
+    else if (e.error !== 'no-speech' && e.error !== 'aborted') setStatus('Error: ' + e.error);
+    if (e.error === 'language-not-supported' || e.error === 'not-allowed') stopUI();
+  };
+  rec.onend = () => { if (recording) { try { rec.start(); } catch (e) {} } else $('interim').textContent = ''; };
+  rec.start(); setStatus('Escuchando (procesamiento local)…');
+}
+
+/* Whisper local */
+let asr = null, asrModel = null, loading = null, loadingModel = null, mr = null, chunks = [], stream = null;
+async function loadWhisper(){
+  const model = $('model').value;
+  if (asr && asrModel === model) return asr;
+  if (loading && loadingModel === model) return loading;
+  loadingModel = model;
+  loading = (async () => {
+    setStatus('Cargando modelo… (solo la primera vez necesita internet)');
+    $('bar').style.display = 'block';
+    const { pipeline, env } = await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3');
+    env.allowLocalModels = false;
+    asr = await pipeline('automatic-speech-recognition', model, {
+      progress_callback: p => { if (p.status === 'progress' && p.progress != null) $('barI').style.width = p.progress.toFixed(0) + '%'; }
+    });
+    asrModel = model;
+    $('bar').style.display = 'none';
+    return asr;
+  })();
+  try { return await loading; } catch (e) { loading = null; $('bar').style.display = 'none'; throw e; }
+}
+async function to16k(blob){
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const audio = await ctx.decodeAudioData(await blob.arrayBuffer()); ctx.close();
+  const off = new OfflineAudioContext(1, Math.max(1, Math.ceil(audio.duration * 16000)), 16000);
+  const src = off.createBufferSource(); src.buffer = audio; src.connect(off.destination); src.start();
+  return (await off.startRendering()).getChannelData(0);
+}
+async function startWhisper(){
+  stream = await navigator.mediaDevices.getUserMedia({audio:true});
+  chunks = []; mr = new MediaRecorder(stream);
+  mr.ondataavailable = e => e.data.size && chunks.push(e.data);
+  mr.onstop = async () => {
+    stream.getTracks().forEach(t => t.stop());
+    const blob = new Blob(chunks, {type: mr.mimeType});
+    $('rec').disabled = true;
+    try {
+      const m = await loadWhisper();
+      setStatus('Transcribiendo en el dispositivo…');
+      const r = await m(await to16k(blob), {language:'spanish', task:'transcribe', chunk_length_s:30, stride_length_s:5});
+      append(r.text); setStatus('Listo. Revisá y guardá.');
+    } catch (e) {
+      setStatus('No se pudo transcribir: ' + (e.message || e) + '. Si es la primera vez, hace falta internet para bajar el modelo.');
+    }
+    $('rec').disabled = false; chunks = [];
+  };
+  mr.start(); setStatus('Grabando… (el audio queda solo en memoria y se descarta al terminar)');
+  loadWhisper().catch(() => {});
+}
+
+function stopUI(){ recording = false; $('rec').classList.remove('on'); $('rec').textContent = '🎙️ Grabar'; }
+$('rec').onclick = async () => {
+  if (!recording) {
+    if (!window.isSecureContext || !navigator.mediaDevices) { setStatus('Chrome no permite usar el micrófono desde un archivo abierto así (' + location.protocol + '). Hace falta abrir la página desde una dirección https.'); return; }
+    try {
+      recording = true; $('rec').classList.add('on'); $('rec').textContent = '⏹ Detener';
+      if (eng() === 'native') startNative(); else await startWhisper();
+    } catch (e) { stopUI(); setStatus('No se pudo acceder al micrófono: ' + (e.message || e)); }
+  } else {
+    recording = false; stopUI();
+    if (eng() === 'native') { try { rec.stop(); } catch (e) {} setStatus('Detenido.'); }
+    else if (mr && mr.state !== 'inactive') mr.stop();
+  }
+};
+
+document.querySelectorAll('input[name=eng]').forEach(r => r.onchange = () => setStatus(''));
+renderList();
+</script>
+</body>
+</html>
