@@ -150,3 +150,43 @@ test('el archivo de texto contiene título y transcripción ficticios', () => {
   assert.equal(file.parts.join(''), 'Nota de prueba\n\nTexto ficticio de verificación.');
   assert.match(file.type, /^text\/plain/);
 });
+
+test('dictado local: consulta idioma español sin habilitar servicios remotos', () => {
+  assert.match(html, /SR\.available\(\{langs: \['es-AR'\], processLocally: true\}\)/);
+  assert.match(html, /SR\.install\(\{langs: \['es-AR'\], processLocally: true\}\)/);
+  assert.match(html, /rec\.processLocally = true/);
+  assert.doesNotMatch(html, /rec\.processLocally = false/);
+  for (const id of ['nativeSetup', 'nativePrepare', 'nativeNote']) assert.ok(ids.includes(id), 'falta #'+id);
+});
+
+test('dictado local: radio deshabilitado sin idioma, conserva Whisper', () => {
+  const match = html.match(/function setNativeAvailability\(ready, detail, canPrepare\) \{[\s\S]*?\n\}/);
+  assert.ok(match, 'falta control de disponibilidad');
+  const nativeRadio = {disabled:false, checked:true};
+  const whisperRadio = {checked:false};
+  const label = {style:{opacity:''}};
+  const note = {textContent:''};
+  const nativeSetup = {hidden:true};
+  const $ = id => id === 'lblNative' ? label : note;
+  const document = {querySelector: () => whisperRadio};
+  const helper = new Function('nativeRadio','nativeSetup','$','document',
+    'let nativeReady=false;\n' + match[0] + '\nreturn {setNativeAvailability, getReady:()=>nativeReady};');
+  const {setNativeAvailability, getReady} = helper(nativeRadio, nativeSetup, $, document);
+  setNativeAvailability(false, 'No está instalado español', true);
+  assert.equal(nativeRadio.disabled, true);
+  assert.equal(nativeSetup.hidden, false);
+  assert.equal(whisperRadio.checked, true);
+  assert.equal(getReady(), false);
+  setNativeAvailability(true, 'Disponible', false);
+  assert.equal(nativeRadio.disabled, false);
+  assert.equal(nativeSetup.hidden, true);
+  assert.equal(getReady(), true);
+});
+
+test('dictado local: detención inmediata deja mensaje y no reinicia sin límite', () => {
+  assert.match(html, /Date\.now\(\) - nativeStartedAt < 1200/);
+  assert.match(html, /El navegador detuvo el dictado inmediatamente/);
+  assert.match(html, /rec\.onerror = e => \{/);
+  assert.match(html, /else if \(e\.error === 'no-speech'\)/);
+  assert.match(html, /r\.disabled = on \|\| \(r\.value === 'native' && !nativeReady\)/);
+});
