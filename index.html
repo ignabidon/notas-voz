@@ -1394,7 +1394,13 @@ async function shareNote() {
     try { await navigator.share(payload); flash('Se cerró la ventana de compartir.'); }
     catch (e) {
       if (e && e.name === 'AbortError') return;
-      flash('No se pudo compartir (' + ((e && e.name) || 'error del navegador') + '). Podés usar Copiar.');
+      try {
+        await navigator.clipboard.writeText(text);
+        flash('Brave no pudo abrir Compartir (' + ((e && e.name) || 'error') + '). Copié el texto para que puedas pegarlo.');
+      } catch (copyError) {
+        $('text').focus(); $('text').select();
+        flash('No se pudo abrir Compartir. Seleccioné el texto para que puedas copiarlo manualmente.');
+      }
     }
     return;
   }
