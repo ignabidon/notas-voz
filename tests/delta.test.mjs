@@ -10,7 +10,7 @@ const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map(m => m[1]);
 test('título y punto único de entrada', () => {
   assert.match(html, /<title>Grabador de voz Delta/);
   assert.match(html, /<h1>Grabador de voz Delta<\/h1>/);
-  assert.match(html, /DELTA 09 · VERSIÓN DE PRUEBA/);
+  assert.match(html, /DELTA 10 · VERSIÓN DE PRUEBA/);
 });
 
 test('los scripts se pueden analizar', () => {
@@ -532,4 +532,49 @@ test('Delta 09: todos los íconos del menú tienen el mismo grosor y Ajustes usa
   assert.match(nav[0],/data-delta-view="grabacion"/);
   assert.match(nav[0],/data-delta-view="transcripcion"/);
   assert.match(nav[0],/data-delta-view="ajustes"/);
+});
+
+
+test('Delta 10: indicador fijo reemplaza los mensajes anteriores durante la transcripción', () => {
+  for (const selector of ['#status','#processingTimer','#cancelProcessing','#cancelNote','#tp','#busy','#interim']) {
+    assert.match(html, new RegExp('body\\.delta-transcribing '+selector));
+  }
+  assert.match(html,/body\.delta-transcribing #interim\{display:none!important\}/);
+  assert.match(html,/id="transcriptionDock"/);
+  assert.match(html,/id="transcriptionDockCancel"/);
+  assert.match(html,/body\.delta-transcribing\{padding-bottom:/);
+  assert.match(html,/body\.delta-transcribing\.delta-recording\{padding-bottom:/);
+  assert.doesNotMatch(html,/delta-transcribing:has\(/);
+});
+
+test('Delta 10: conserva advertencias de errores y mensajes finales', () => {
+  assert.doesNotMatch(html,/body\.delta-transcribing #captureWarning/);
+  assert.doesNotMatch(html,/body\.delta-transcribing #audioMsg/);
+  assert.match(html,/setStatus\(gotText \? 'Transcripción completa/);
+  assert.match(html,/setStatus\('No se pudo transcribir:/);
+  assert.match(html,/if \(!state\.active\) return;/);
+  assert.match(html,/document\.body\.classList\.toggle\('delta-transcribing', state\.active\)/);
+  assert.match(html,/refreshTranscriptionDock\(\);\s+setStatus\('Procesamiento cancelado/);
+});
+
+test('Delta 10: no repite escrituras innecesarias en el panel cada medio segundo', () => {
+  const m=html.match(/function refreshTranscriptionDock\(\)\{[\s\S]*?\n\}/);
+  assert.ok(m);
+  assert.match(m[0],/if \(el\.textContent !== value\) el\.textContent = value/);
+  assert.match(m[0],/if \(\$\('transcriptionDockBarFill'\)\.style\.width !== width\)/);
+  assert.match(m[0],/if \(cancel\.hidden === state\.cancel\)/);
+  assert.match(m[0],/if \(dock\.hidden === state\.active\)/);
+  assert.match(m[0],/getAttribute\('aria-valuenow'\) !== String\(state\.progress\)/);
+  assert.match(m[0],/classList\.toggle\('delta-recording', state\.active && recording\)/);
+  assert.match(html,/function updProgress\(\)/);
+  assert.match(html,/refreshTranscriptionDock\(\)/);
+});
+
+test('Delta 10: no cambia configuración del modelo ni el motor de Whisper', () => {
+  assert.match(html,/const MODEL_HELP = \{/);
+  assert.match(html,/'Xenova\/whisper-small': 'Small: prioriza la precisión/);
+  assert.match(html,/else if \(!c\.model && matchMedia\('\(pointer:coarse\)'\)\.matches\) \$\('model'\)\.value = 'Xenova\/whisper-base'/);
+  assert.match(html,/function startWhisper\(\)/);
+  assert.match(html,/const WL = "class P extends AudioWorkletProcessor/);
+  assert.match(html,/processingStartedAt = 0/);
 });
