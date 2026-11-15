@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#f3f0e8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#121518" media="(prefers-color-scheme: dark)">
 <title>Notas por voz</title>
 <style>
   :root{
@@ -34,7 +36,7 @@
   .brand{display:flex;align-items:center;gap:14px;min-width:0}
   .logo{flex:none;width:46px;height:46px;border-radius:14px;background:var(--acc);color:var(--acc-ink);display:grid;place-items:center;box-shadow:var(--shadow)}
   .logo svg{width:24px;height:24px}
-  h1{font:600 27px/1.15 var(--serif);margin:0;letter-spacing:-.01em}
+  h1{font:800 24px/1.1 "Segoe UI",Roboto,system-ui,sans-serif;margin:0;letter-spacing:.09em;text-transform:uppercase}
   .sub{color:var(--mut);font-size:14px;margin:3px 0 0;max-width:46ch}
   .pill{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:500;color:var(--acc);background:var(--acc-soft);border-radius:999px;padding:6px 12px 6px 10px}
   .pill svg{width:15px;height:15px;flex:none}
@@ -92,21 +94,23 @@
   button:disabled{opacity:.45;cursor:not-allowed}
   .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
 
-  /* Botón grande de grabar */
-  #rec{width:100%;min-height:68px;padding:16px;font-size:19px;font-weight:600;letter-spacing:.01em;border:0;border-radius:18px;
-    background:var(--acc);color:var(--acc-ink);display:flex;align-items:center;justify-content:center;gap:12px;
-    box-shadow:0 8px 20px -10px var(--acc)}
-  #rec:hover:not(:disabled){background:var(--acc);filter:brightness(1.1)}
-  #rec::before{content:"";width:16px;height:16px;border-radius:50%;background:currentColor;transition:border-radius .15s}
-  #rec.on,#rec.on:hover:not(:disabled){background:var(--rec);color:var(--rec-ink);box-shadow:0 8px 20px -10px var(--rec);animation:pulso 1.8s ease-out infinite}
-  #rec.on::before{border-radius:4px;width:14px;height:14px}
-  @keyframes pulso{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--rec) 45%,transparent)}70%,100%{box-shadow:0 0 0 14px transparent}}
+  /* Botón grande de grabar: cuadrado redondeado */
+  #rec{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+    width:min(62vw,230px);aspect-ratio:1/1;min-height:0;margin:4px auto 0;padding:16px;
+    font-size:22px;font-weight:700;letter-spacing:.02em;border:0;border-radius:38px;
+    background:var(--acc);color:var(--acc-ink);box-shadow:0 16px 30px -16px var(--acc)}
+  #rec:hover:not(:disabled){background:var(--acc);filter:brightness(1.08)}
+  #rec::before{content:"";width:36px;height:36px;border-radius:50%;background:currentColor;transition:border-radius .15s,width .15s,height .15s}
+  #rec.on,#rec.on:hover:not(:disabled){background:var(--rec);color:var(--rec-ink);box-shadow:0 16px 30px -16px var(--rec);animation:pulso 1.8s ease-out infinite}
+  #rec.on::before{border-radius:9px;width:30px;height:30px}
+  @keyframes pulso{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--rec) 45%,transparent)}70%,100%{box-shadow:0 0 0 18px transparent}}
   @media (prefers-reduced-motion:reduce){#rec.on{animation:none}}
   #rec:disabled{opacity:.55}
 
   /* ---------- Estado, nivel y avance ---------- */
   #status{font-size:14px;color:var(--mut);margin-top:12px;overflow-wrap:anywhere}
   #status:empty{margin:0}
+  #status,#interim,#lvTxt{text-align:center}
   #interim{color:var(--mut);font-style:italic;font-size:14.5px;min-height:0;margin-top:4px}
   .bar{height:8px;background:var(--bg2);border-radius:99px;overflow:hidden;margin-top:12px;display:none}
   .bar i{display:block;height:100%;width:0;background:var(--acc);border-radius:99px;transition:width .12s}
@@ -114,6 +118,15 @@
   .warn{font-size:13px;color:var(--mut)}
   #lvTxt{margin-top:6px;color:var(--rec);font-weight:500}
   #flash{min-height:20px;margin-top:8px;color:var(--acc);font-weight:500}
+
+  /* Avance de la transcripción y contador */
+  #tp{display:none;margin-top:14px}
+  #tp.on{display:block}
+  #tpTxt{font-size:13.5px;color:var(--mut);text-align:center;margin-bottom:7px;font-variant-numeric:tabular-nums}
+  .pbar{height:10px;background:var(--bg2);border-radius:99px;overflow:hidden}
+  .pbar i{display:block;height:100%;width:0;border-radius:99px;background:var(--acc);transition:width .45s ease}
+  .meta{display:flex;justify-content:space-between;gap:10px;font-size:13px;color:var(--mut);margin-top:8px}
+  #wc{font-variant-numeric:tabular-nums;font-weight:500}
 
   /* ---------- Plegables ---------- */
   details{margin-top:16px;padding-top:12px;border-top:1px solid var(--line);font-size:14px}
@@ -159,12 +172,49 @@
 
   footer{margin:26px 2px 0;font-size:12.5px;color:var(--mut);text-align:center}
 
-  @media (max-width:520px){
-    body{padding:14px 10px 32px}
-    .card{padding:15px;border-radius:16px}
-    h1{font-size:24px}
-    details.card>summary{padding:14px 15px}
-    details.card>.body{padding:0 15px 15px}
+  html{-webkit-tap-highlight-color:transparent}
+  button,summary,label{touch-action:manipulation}
+  body{padding-left:max(14px,env(safe-area-inset-left));padding-right:max(14px,env(safe-area-inset-right));padding-bottom:calc(36px + env(safe-area-inset-bottom))}
+
+  @media (max-width:640px){
+    body{padding-top:14px;padding-left:max(10px,env(safe-area-inset-left));padding-right:max(10px,env(safe-area-inset-right))}
+    .top{margin-bottom:12px;gap:10px}
+    .logo{width:42px;height:42px;border-radius:13px}
+    h1{font-size:21px}
+    .sub{font-size:13.5px}
+    .pill{font-size:12.5px}
+    .card{padding:16px;border-radius:20px}
+    h2{margin-bottom:12px}
+    /* Botones cómodos para el pulgar */
+    button{min-height:48px;font-size:15px;border-radius:13px}
+    input[type=text],select{min-height:48px}
+    textarea{min-height:240px}
+    input[type=radio],input[type=checkbox]{width:22px;height:22px}
+    .chk{margin-top:18px;gap:12px}
+    .eng label{padding:14px}
+    /* Barra de herramientas del texto: 3 botones parejos */
+    .lbl-row{display:block;margin-top:16px}
+    .lbl-row label{margin-bottom:8px}
+    .tools{display:grid;grid-template-columns:1.45fr 1.15fr .8fr;gap:8px}
+    .tools button{min-height:44px;padding:6px 4px;font-size:13.5px;white-space:nowrap;background:var(--bg);border-color:var(--line)}
+    .tools button#undoClear{grid-column:1 / -1}
+    /* Acciones: botones a lo ancho */
+    .save-row{display:grid;grid-template-columns:1.4fr 1fr;gap:10px}
+    .save-row button.p{min-height:54px;font-size:16px}
+    .group .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .group .row button{padding-inline:8px}
+    .group .row #share{grid-column:1 / -1}
+    .tagrow{display:grid;grid-template-columns:1fr 52px;gap:8px}
+    .tagrow #tagSug{grid-column:1 / -1}
+    #chips .chip,#filt .chip{min-height:38px;padding:6px 14px}
+    .n{padding:12px 0}
+    .n button{min-height:42px}
+    details.card>summary{padding:16px}
+    details.card>.body{padding:0 16px 16px}
+    summary{padding-block:4px}
+    details>summary{min-height:36px}
+    #applyDict,#voseo{width:100%}
+    #copyDiag{width:100%}
   }
 </style>
 </head>
@@ -193,6 +243,7 @@
     <div class="bar" id="bar"><i id="barI"></i></div>
     <div id="status" role="status" aria-live="polite"></div>
     <div id="interim"></div>
+    <div id="tp" aria-live="off"><div id="tpTxt"></div><div class="pbar" role="progressbar" aria-label="Avance de la transcripción"><i id="tpI"></i></div></div>
     <div class="bar" id="lv"><i id="lvI"></i></div>
     <div class="warn" id="lvTxt"></div>
     <label class="chk"><input type="checkbox" id="replace" checked>
@@ -266,6 +317,7 @@
       </div>
     </div>
     <textarea id="text" placeholder="Acá va a aparecer lo que digas…"></textarea>
+    <div class="meta"><span id="wc">0 palabras</span><span id="cc"></span></div>
     <div id="flash" role="status"></div>
     <div id="learn"></div>
 
@@ -519,7 +571,7 @@ function renderList(){
   shown.slice().sort((a,b)=>b.ts-a.ts).forEach(n => {
     const d = document.createElement('div'); d.className = 'n';
     const s = document.createElement('span'); s.textContent = n.title || 'Sin título';
-    const sm = document.createElement('small'); sm.textContent = fmt(n.ts) + ((n.tags || []).length ? ' · ' + n.tags.join(', ') : '');
+    const sm = document.createElement('small'); sm.textContent = fmt(n.ts) + ' · ' + nWords(n.text || '').toLocaleString('es-AR') + ' palabras' + ((n.tags || []).length ? ' · ' + n.tags.join(', ') : '');
     const o = document.createElement('button'); o.textContent = 'Abrir';
     o.onclick = () => { if (isUnsaved()) { stash(); flash('Tenías texto sin guardar: se recupera con «Deshacer borrado».'); } cur = n.id; $('title').value = n.title; $('text').value = n.text; baseline = n.text; tags = (n.tags || []).slice(); renderChips(); resetEdit(); window.scrollTo({top:0, behavior:'smooth'}); };
     const x = document.createElement('button'); x.textContent = 'Borrar'; x.className = 'ghost danger';
@@ -882,7 +934,7 @@ async function toMono16k(blocks, rate){
   return new Float32Array((await off.startRendering()).getChannelData(0));
 }
 
-let lvT = 0, clipUntil = 0, failedParts = 0, warnParts = 0, segN = 0, diagLines = [];
+let lvT = 0, clipUntil = 0, failedParts = 0, warnParts = 0, segN = 0, diagLines = [], totalSec = 0, doneSec = 0, procMs = 0, procSec = 0;
 function logDiag(x){ diagLines.push(x); $('diag').textContent = diagLines.join('\n'); }
 $('copyDiag').onclick = async () => {
   const x = $('diag').textContent; if (!x) return flash('Todavía no hay detalles.');
@@ -907,8 +959,24 @@ function lockUI(on){
   $('model').disabled = on; $('accel').disabled = on; $('mic').disabled = on;
   document.querySelectorAll('input[name=eng]').forEach(r => r.disabled = on || (r.value === 'native' && !nativeLocal));
 }
+function fmtEta(ms){
+  const s = Math.max(5, Math.round(ms / 5000) * 5);
+  return s < 60 ? 'unos ' + s + ' s' : 'unos ' + Math.ceil(s / 60) + ' min';
+}
+function updProgress(){
+  const tp = $('tp');
+  if (!totalSec || (!recording && outstanding === 0 && !busy)) { tp.classList.remove('on'); return; }
+  const pct = Math.min(100, Math.round(doneSec / totalSec * 100));
+  $('tpI').style.width = pct + '%';
+  let t;
+  if (recording) t = 'Transcribiendo mientras grabás · ' + pct + '% de lo grabado hasta ahora';
+  else if (!procSec) t = modelLoading ? 'Preparando la transcripción…' : 'Empezando a transcribir…';
+  else t = pct + '% · faltan ' + fmtEta((totalSec - doneSec) * (procMs / procSec));
+  $('tpTxt').textContent = t; tp.classList.add('on');
+}
 function refreshStatus(){
   if (dead) return;
+  updProgress();
   const where = backend === 'GPU' ? 'placa de video' : 'procesador';
   if (recording) {
     const s = Math.floor((Date.now() - t0) / 1000);
@@ -922,6 +990,7 @@ function refreshStatus(){
   }
 }
 function maybeDone(){
+  updProgress();
   if (recording || busy || outstanding > 0) return;
   clearInterval(timer); timer = null; lockUI(false); $('rec').disabled = false;
   if (dead) return;
@@ -960,15 +1029,16 @@ async function pump(){
     if (low) warnParts++;
     logDiag('#' + n + ' · ' + sec.toFixed(1) + ' s de audio · ' + (ms / 1000).toFixed(1) + ' s procesando (' + where + ') · ' + words + ' palabras' + (low ? ' ⚠ poco texto para la duración' : (!c ? ' (sin texto)' : '')));
   }
-  busy = false; outstanding--; refreshStatus(); pump();
+  busy = false; outstanding--; doneSec += job.sec || 0; if (!err && ms) { procMs += ms; procSec += sec; } refreshStatus(); pump();
 }
 function onSegment(blocks, rate){
   if (dead) return;
   outstanding++;
-  chain = chain.then(() => toMono16k(blocks, rate)).then(a => { if (!dead) { jobs.push({a}); pump(); } }).catch(e => { failedParts++; outstanding--; appendMachine('[⚠ falta una parte del audio: no se pudo preparar]'); logDiag('Parte sin preparar: ' + (e.message || e)); pump(); });
+  const secs = blocks.length * 4096 / rate; totalSec += secs;
+  chain = chain.then(() => toMono16k(blocks, rate)).then(a => { if (!dead) { jobs.push({a, sec: secs}); pump(); } }).catch(e => { failedParts++; outstanding--; doneSec += secs; appendMachine('[⚠ falta una parte del audio: no se pudo preparar]'); logDiag('Parte sin preparar: ' + (e.message || e)); pump(); });
 }
 async function startWhisper(){
-  dead = false; jobs = []; busy = false; outstanding = 0; gotText = false; lastMs = 0; modelErr = ''; chain = Promise.resolve(); failedParts = 0; warnParts = 0; segN = 0; diagLines = []; $('diag').textContent = '';
+  dead = false; jobs = []; busy = false; outstanding = 0; gotText = false; lastMs = 0; modelErr = ''; chain = Promise.resolve(); failedParts = 0; warnParts = 0; segN = 0; diagLines = []; totalSec = 0; doneSec = 0; procMs = 0; procSec = 0; $('diag').textContent = '';
   cap = await startCapture(b => { level(b); if (seg) seg.push(b); });
   const rate = cap.rate;
   logDiag('Modelo ' + $('model').value.replace('Xenova/', '') + ' · aceleración ' + $('accel').value + ' · micrófono ' + $('mic').value + ' · ' + rate + ' Hz');
@@ -1043,7 +1113,17 @@ setInterval(saveDraft, 1500);
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') saveDraft(); });
 window.addEventListener('pagehide', saveDraft);
 
-loadCfg(); loadDict(); renderList(); restoreDraft();
+let lastWC = null;
+function updWC(){
+  const v = $('text').value;
+  if (v === lastWC) return; lastWC = v;
+  const w = nWords(v);
+  $('wc').textContent = w.toLocaleString('es-AR') + (w === 1 ? ' palabra' : ' palabras');
+  $('cc').textContent = v.length ? v.length.toLocaleString('es-AR') + ' caracteres' : '';
+}
+$('text').addEventListener('input', updWC);
+setInterval(updWC, 300);
+loadCfg(); loadDict(); renderList(); restoreDraft(); updWC();
 </script>
 </body>
 </html>
