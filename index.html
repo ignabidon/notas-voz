@@ -7,7 +7,7 @@
 
 
 <meta name="theme-color" content="#090f20">
-<meta name="studio-design" content="delta-01">
+<meta name="studio-design" content="delta-07">
 <title>Grabador de voz Delta · Prueba Delta</title>
 <style>
 :root{color-scheme:dark;--bg:#090f20;--bg2:#172139;--card:#101a2e;--ink:#edf3ff;--mut:#a1b0cc;--line:#293852;--acc:#9cbaff;--acc-ink:#0a1836;--acc-soft:#1c3156;--rec:#ff8e9b;--rec-ink:#300c17;--note-bg:#292637;--note-ink:#ded1b8;--bar-l:65%}
@@ -64,6 +64,87 @@ html{scroll-padding-bottom:200px}
 #correctionError{color:#ffbdc8;margin-top:12px;font-size:12px}#correctionError:empty{display:none}
 #correctionRuleNotice{color:#dfd4b8;font-size:12px;margin:8px 0}
 @media(max-width:760px){.tools #correctSelection{flex-basis:100%;font-size:13px}}
+
+/* Delta 07 — legibilidad y uso desde el pulgar, preservando los controles originales */
+:root{--bg:#0c1629;--bg2:#213450;--card:#18263e;--ink:#f6f8ff;--mut:#c7d4e8;--line:#415678;--acc:#c0d4ff;--acc-ink:#0d2346;--acc-soft:#263f63}
+body{font-size:16px;line-height:1.55}
+.sub{font-size:15px}
+.card{border-color:var(--line)}
+label,.warn,.hint{font-size:14px;line-height:1.5}
+label{color:#d4e0f2}
+.hint,.warn,.section-hint{color:#c7d4e8}
+summary{min-height:48px;font-size:16px;line-height:1.4;padding:11px 32px 11px 0;color:#f2f6ff}
+summary small{font-size:14px;line-height:1.5;color:#c6d3e6}
+summary::after{top:12px;font-size:23px;color:#d3e1fa}
+button{font-size:15px;min-height:48px}
+button.ghost{color:#d1dff1}
+input[type=text],input[type=number],textarea,select{border-color:#587093;color:#fff;background:#111e33}
+input[type=checkbox],input[type=radio]{width:22px;height:22px}
+.tools{gap:8px}
+.tools button,.tools #correctSelection{font-size:14px;min-height:46px;padding:9px 12px;border:1px solid #425b80}
+textarea#text{font-size:17px;line-height:1.65;background:#111e33;border:1px solid #3d5577}
+.selection-help,.mark-help{font-size:14px;color:#c8d7eb}
+.c-rec{background:linear-gradient(160deg,#203858,#172841 58%,#18263e);border-color:#506a91}
+#status,#audioInfo,#audioMsg{font-size:14px}
+.c-set .body>label{margin-top:14px}
+.privacy-panel{background:#233955;border:1px solid #6386b5;border-radius:16px;padding:12px 15px;margin:0 0 20px}
+.privacy-panel>summary{font-weight:750}
+.privacy-panel .hint{color:#e0e9f7}
+#localTextInfo{font-weight:700}
+#clearLocalTexts{border:1px solid #f1aebb;color:#ffdce2;font-weight:700;min-height:50px}
+.studio-dock{background:#182a44f9;border-color:#6782aa}
+.studio-dock .studio-nav a{font-size:13px;color:#ebf2ff;min-height:48px;gap:5px}
+.studio-dock .studio-nav svg{width:19px;height:19px}
+.studio-dock .studio-nav{border-color:#48607f}
+.studio-dock #flash{font-size:14px;line-height:1.45;color:#f8fbff}
+.dock-actions button{font-size:14px;min-height:58px;line-height:1.25}
+#studioDockStart{background:#c5d8ff;border:1px solid #d7e4ff;color:#102447;font-weight:800}
+#studioDockStart:hover:not(:disabled){background:#dfebff}
+#save{background:#bddece;border-color:#d9f3e6;color:#153a2f}
+#save:hover:not(:disabled){background:#d3f1e3}
+#studioAnonAction{background:#274a55;border-color:#77b7b8}
+@media(max-width:760px){
+  body{font-size:16px;padding:16px max(12px,env(safe-area-inset-right)) calc(200px + env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left))}
+  .top{margin:0 0 16px;align-items:center}
+  h1{font-size:23px;letter-spacing:-.6px}
+  .logo{width:40px;height:40px;flex:none}
+  .sub{margin:3px 0 0;font-size:14px}
+  .pill{display:none}
+  .layout{gap:14px}
+  .card{padding:17px;border-radius:18px}
+  .c-rec h2{font-size:23px}
+  .rec-caption{font-size:15px;margin:0 0 8px}
+  .recrow{gap:8px}
+  #rec{width:122px;height:122px;min-height:122px;margin:8px 0}
+  #clock{font-size:32px}
+  .side{max-width:320px}
+  .side button{min-height:50px}
+  .mark-help{margin:8px 0 0}
+  .c-rec>details>summary{font-size:14px}
+  .c-rec>details{margin-top:14px}
+  .section-heading{margin-bottom:12px}
+  .tools button{flex:1 1 calc(50% - 8px)}
+  textarea#text{min-height:270px}
+  .studio-dock{width:100%;max-width:none;bottom:0;left:0;transform:none;border-radius:20px 20px 0 0;border-left:0;border-right:0;border-bottom:0;padding:10px max(12px,env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));box-shadow:0 -8px 28px #0008}
+  #studioDockNotes{grid-template-columns:1fr 1.18fr 1.28fr;gap:8px}
+  .dock-actions button{font-size:14px;min-height:58px;gap:5px;padding:9px 6px}
+  .dock-actions svg{width:18px;height:18px}
+  .studio-dock .studio-nav{margin-top:8px;padding:7px 0 0;gap:2px}
+  .studio-dock .studio-nav a{padding:8px 2px;min-height:48px;font-size:12.5px}
+  .studio-dock .studio-nav svg{width:17px;height:17px}
+  #studioDockCapture .dock-actions{grid-template-columns:1fr 1.25fr}
+}
+@media(max-width:380px){
+  #studioDockNotes{gap:6px}
+  .dock-actions button{font-size:13px}
+  .dock-actions svg{display:none}
+  .studio-dock .studio-nav a{font-size:12px;gap:3px}
+  .studio-dock .studio-nav svg{width:15px;height:15px}
+}
+@media(min-width:761px){
+  .studio-dock{width:min(540px,calc(100% - 24px))}
+  #studioDockNotes{grid-template-columns:.9fr 1.1fr 1.2fr}
+}
 </style>
 </head>
 <body>
@@ -74,7 +155,7 @@ html{scroll-padding-bottom:200px}
     <span class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7"/></svg></span>
     <div>
       <h1>Grabador de voz Delta</h1>
-      <p class="sub">Prueba Delta · Grabá y transcribí notas. Corregí el texto y anonimizá datos personales.</p>
+      <p class="sub">Grabá, revisá y guardá tus notas.</p>
     </div>
   </div>
   <span class="pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Procesamiento local</span>
@@ -86,7 +167,7 @@ html{scroll-padding-bottom:200px}
 
   <!-- 1 · Grabar -->
   <section class="card c-rec" id="grabacion">
-    <p class="eyebrow">ESPACIO DE GRABACIÓN</p><h2>Una idea. Tu voz.</h2><p class="rec-caption">Grabá, transcribí y dale forma a tu nota.</p>
+    <h2>Grabación</h2><p class="rec-caption">Tocá Grabar para empezar.</p>
     <div class="recrow">
       <button id="rec" type="button">Grabar</button>
       <div class="side">
@@ -95,7 +176,7 @@ html{scroll-padding-bottom:200px}
         <button id="mark" type="button" disabled title="Insertá una marca de tiempo en la transcripción (tecla M)" aria-label="Marcar momento en la transcripción">Marcar momento</button>
       </div>
     </div>
-    <p class="mark-help">«Marcar momento» agrega la hora exacta en el texto, por ejemplo [02:15].</p>
+    <p class="mark-help">Marcar agrega un momento de referencia al texto.</p>
     <div class="warn" id="keepOn" style="display:none;text-align:center;margin-top:12px">Mantené la pantalla encendida y no cambies de app: si no, la grabación puede cortarse.</div>
     <div class="bar" id="bar"><i id="barI"></i></div>
     <div id="status" role="status" aria-live="polite"></div>
@@ -135,12 +216,20 @@ html{scroll-padding-bottom:200px}
 
   <!-- 3 · Ajustes de transcripción -->
   <details class="card c-set" id="ajustes">
-    <summary>Ajustes de transcripción <small>· cómo transcribir, calidad y micrófono</small></summary>
+    <summary>Ajustes <small>Modelo de Whisper, micrófono y opciones</small></summary>
     <div class="body">
+      <details id="localPrivacy" class="privacy-panel">
+        <summary>Privacidad y datos guardados <small>Notas y borradores en Brave</small></summary>
+        <p class="hint">Guardar .txt descarga un archivo, pero también deja una copia del texto en Brave. Además, el borrador se guarda automáticamente. Estas copias no están cifradas.</p>
+        <p class="hint" id="localTextInfo" role="status"></p>
+        <button type="button" id="clearLocalTexts" class="ghost danger">Borrar notas y borradores de Brave</button>
+        <p class="hint">Esta acción irreversible vacía el texto visible y la opción Deshacer. No borra archivos de Descargas, audios, asociaciones, diccionario, modelos ni ajustes.</p>
+        <p class="hint">No garantiza una eliminación segura de los datos. No uses información sensible real hasta contar con una protección adecuada.</p>
+      </details>
       <label>Cómo transcribir</label>
       <div class="eng">
         <label><input type="radio" name="eng" value="whisper" checked>
-          <span><strong>Whisper</strong> (recomendado)<small>Funciona dentro de tu dispositivo. La primera vez descarga un archivo de idioma (hace falta internet); después anda sin conexión. Va transcribiendo mientras hablás, así que al terminar queda poco por esperar.</small></span></label>
+          <span><strong>Whisper</strong> (recomendado)<small>Transcribe en el celular. La primera vez descarga el modelo.</small></span></label>
         <label id="lblNative"><input type="radio" name="eng" value="native">
           <span><strong>Dictado del navegador</strong><small id="nativeNote">El texto aparece en vivo, mientras hablás.</small></span></label>
       </div>
@@ -154,7 +243,7 @@ html{scroll-padding-bottom:200px}
         <option value="Xenova/whisper-small" selected>Small · más precisión, más lento</option>
       </select>
       <div class="hint" id="modelHint" role="status">Small: para mayor precisión. Requiere más memoria y tiempo de procesamiento.</div>
-      <div class="hint">La primera vez se descarga el modelo elegido. Después puede usarse sin conexión si quedó guardado en el navegador. Elegir otro modelo puede requerir una nueva descarga.</div>
+      <div class="hint">Small suele reconocer mejor, pero consume más memoria. Cambiar de modelo puede requerir una descarga.</div>
 
       <label for="accel" style="margin-top:14px">Velocidad de cálculo</label>
       <select id="accel">
@@ -168,10 +257,10 @@ html{scroll-padding-bottom:200px}
         <option value="agc">Solo volumen automático</option>
         <option value="raw">Natural, sin filtros</option>
       </select>
-      <div class="hint">Para elegir, leé el mismo párrafo con cada opción y compará los errores. Hablar cerca del micrófono y en un lugar callado ayuda más que cualquier ajuste.</div>
+      <div class="hint">Para comparar, grabá el mismo párrafo con cada opción.</div>
 
       <label class="chk" style="margin-top:18px"><input type="checkbox" id="saveAudio">
-        <span><b>Guardar el audio de la grabación</b><small>Queda solo en este dispositivo (dentro del navegador), para descargarlo como archivo o recuperar la grabación si se corta. Solo con Whisper. Es tu voz tal cual: no se puede anonimizar, así que borralo cuando ya no lo necesites.</small></span></label>
+        <span><b>Guardar el audio de la grabación</b><small>Permite recuperar o descargar la voz original. No está anonimizada ni cifrada.</small></span></label>
     <details class="studio-dictionary">
       <summary>Corregir palabras frecuentes <small>Opcional · para errores que se repiten</small></summary>
       <p class="hint" id="dictHelp">Escribí qué palabra sale mal y por cuál reemplazarla, una corrección por línea. No hace falta explicar el motivo.</p>
@@ -186,14 +275,7 @@ html{scroll-padding-bottom:200px}
         <button id="voseo">Agregar formas rioplatenses (vos, tenés…)</button>
       </div>
     </details>
-    <details id="localPrivacy">
-      <summary>Privacidad y almacenamiento local <small>Notas y borradores que quedan en Brave</small></summary>
-      <p class="hint">«Guardar .txt» solicita descargar la nota, pero también guarda una copia de texto en este navegador. El borrador se guarda automáticamente. Estas copias no están cifradas.</p>
-      <p class="hint" id="localTextInfo" role="status"></p>
-      <button type="button" id="clearLocalTexts" class="ghost danger">Borrar notas y borradores de Brave</button>
-      <p class="hint">Es una acción irreversible: también vacía el texto actual y su «Deshacer borrado». No elimina los archivos de Descargas, los audios guardados, las asociaciones de personas, el diccionario, los ajustes ni los modelos descargados.</p>
-      <p class="hint">Borrar desde la app no garantiza un borrado seguro del dispositivo o sus copias de seguridad. Evitá notas con datos reales hasta revisar el cifrado y la protección de las descargas.</p>
-    </details>
+
     </div>
   </details>
 
@@ -222,7 +304,7 @@ html{scroll-padding-bottom:200px}
       </div>
     </div>
     <div id="busy" role="status"></div>
-    <p class="hint selection-help" id="selectionHelp">Tocá una palabra para corregirla. También podés mantener presionado y seleccionar una frase; aparecerá un botón de corrección dentro del recuadro.</p>
+    <p class="hint selection-help" id="selectionHelp">Tocá una palabra o seleccioná una frase para corregirla.</p>
     <div class="editor-area">
       <textarea aria-describedby="selectionHelp" id="text" placeholder="Acá va a aparecer lo que digas…"></textarea>
       <button type="button" id="quickCorrect" aria-haspopup="dialog" hidden>Corregir palabra</button>
@@ -314,12 +396,13 @@ html{scroll-padding-bottom:200px}
 
 </main>
 
-<footer>Grabador de voz Delta · Prueba Delta 01<br>Versión experimental · Usá solo datos ficticios</footer>
+<footer>Grabador de voz Delta · Prueba de diseño 07<br>Versión experimental · Usá solo datos ficticios</footer>
 </div>
 
 <aside class="studio-dock" aria-label="Acciones de la nota">
   <div id="flash" role="status" aria-live="polite"></div>
   <div class="dock-actions" id="studioDockNotes">
+    <button type="button" id="studioDockStart" aria-label="Empezar a grabar"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4M8 22h8"/></svg><span>Grabar</span></button>
     <button type="button" id="studioAnonAction" aria-label="Anonimizar transcripción"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3 4 6v6c0 4 8 9 8 9s8-5 8-9V6z"/><path d="m8 12 3 3 5-6"/></svg><span>Anonimizar</span></button>
     <button type="button" class="p" id="save" title="Descarga la nota como archivo .txt en este dispositivo"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 3h12l4 4v14H3V3zM7 3v6h10V3M7 21v-8h10v8"/></svg><span>Guardar .txt</span></button>
   </div>
@@ -333,7 +416,7 @@ html{scroll-padding-bottom:200px}
       <button type="button" id="studioDockStop">Detener grabación</button>
     </div>
   </div>
-<nav class="studio-nav" aria-label="Secciones"><a href="#grabacion"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>Grabar</a><a href="#transcripcion"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5"/></svg>Texto</a><a href="#ajustes" id="studioSettingsLink"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3" fill="#17243b"/><circle cx="15" cy="17" r="3" fill="#17243b"/></svg>Ajustes</a></nav></aside>
+<nav class="studio-nav" aria-label="Secciones"><a href="#grabacion"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>Grabar</a><a href="#transcripcion"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5"/></svg>Texto</a><a href="#ajustes" id="studioSettingsLink"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3" fill="#17243b"/><circle cx="15" cy="17" r="3" fill="#17243b"/></svg>Ajustes</a><a href="#localPrivacy" id="studioPrivacyLink"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>Privacidad</a></nav></aside>
 <dialog id="correctionDialog" aria-labelledby="correctionTitle" aria-describedby="correctionDescription">
   <form id="correctionForm">
     <h2 id="correctionTitle">Corregir selección</h2>
@@ -352,6 +435,15 @@ html{scroll-padding-bottom:200px}
 <script>
 document.addEventListener('DOMContentLoaded',function(){
   document.getElementById('studioSettingsLink').addEventListener('click',()=>{document.getElementById('ajustes').open=true;});
+  document.getElementById('studioPrivacyLink').addEventListener('click',()=>{
+    document.getElementById('ajustes').open=true;
+    document.getElementById('localPrivacy').open=true;
+  });
+  const startAction=document.getElementById('studioDockStart'),startButton=document.getElementById('rec');
+  const syncStart=()=>{startAction.disabled=startButton.disabled;};
+  new MutationObserver(syncStart).observe(startButton,{attributes:true,attributeFilter:['disabled']});
+  syncStart();
+  startAction.addEventListener('click',()=>startButton.click());
   const anonAction=document.getElementById('studioAnonAction'),anonButton=document.getElementById('anon');
   const syncAnon=()=>{anonAction.disabled=anonButton.disabled;};
   new MutationObserver(syncAnon).observe(anonButton,{attributes:true,attributeFilter:['disabled']});
