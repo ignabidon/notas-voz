@@ -99,6 +99,7 @@ html{scroll-padding-bottom:200px}
     <div class="warn" id="keepOn" style="display:none;text-align:center;margin-top:12px">Mantené la pantalla encendida y no cambies de app: si no, la grabación puede cortarse.</div>
     <div class="bar" id="bar"><i id="barI"></i></div>
     <div id="status" role="status" aria-live="polite"></div>
+    <div id="captureWarning" class="warn" role="status" aria-live="polite" hidden></div>
     <div id="processingTimer" class="processing-timer" hidden>Procesando · <span id="processClock">00:00</span></div>
     <button id="cancelProcessing" type="button" class="cancel-processing danger" hidden>Cancelar procesamiento</button>
     <p id="cancelNote" class="warn cancel-help" hidden>Se conservará el texto que ya apareció, pero la transcripción quedará incompleta.</p>
@@ -1327,13 +1328,26 @@ async function toMono16k(blocks, rate){
   return new Float32Array((await off.startRendering()).getChannelData(0));
 }
 
-const BUILD = 'Delta 01 · diagnósticos v2';
+const BUILD = 'Delta 05 · vigilancia de grabaciones largas';
 const WHY = {silencio: 'pausa en el habla', limite: 'límite de ~29 s', manual: 'pausa, marca o fin'};
-let capBlocks = 0, capRate = 48000, oddParts = 0, pauseAt = 0;
+let capBlocks = 0, capRate = 48000, lastMicBlockAt = 0, audioStoppedEarly = false, oddParts = 0, pauseAt = 0;
 let lvT = 0, clipUntil = 0, failedParts = 0, warnParts = 0, segN = 0, diagLines = [], totalSec = 0, doneSec = 0, procMs = 0, procSec = 0;
 let paused = false, tAcc = 0, tRun = 0, clockT = null, markT = null, feeding = false, feed = {pos: 0, len: 0, done: 0};
 let mr = null, audioOk = false, audioSid = '', audioN = 0, audioBytes = 0, audioQ = Promise.resolve(), audioMime = '', audioTs = 0, audioWarned = false, audioSaveFailed = false;
 function logDiag(x){ diagLines.push(x); $('diag').textContent = diagLines.join('\n'); }
+/* Avisos sin transcripciones ni sonido; no detienen ni descartan grabaciones. */
+function captureHealthWarning(isRecording, isPaused, now, lastBlock, queued, audioFailed, audioExpected) {
+  if (!isRecording || isPaused) return '';
+  if (audioFailed && audioExpected) return '⚠ El navegador dejó de guardar el audio. Detené la grabación y descargá lo que se haya conservado.';
+  if (lastBlock && now - lastBlock >= 7000) return '⚠ No llegan muestras del micrófono desde hace más de 7 segundos. Revisá el teléfono; detené si no se recupera.';
+  if (queued >= 6) return '⚠ Whisper tiene ' + queued + ' fragmentos pendientes. Pausá para que alcance a transcribir; la grabación sigue, pero puede consumir mucha memoria.';
+  return '';
+}
+function refreshCaptureWarning() {
+  const t = captureHealthWarning(recording && recEng === 'whisper', paused, Date.now(), lastMicBlockAt, outstanding, audioStoppedEarly, $('saveAudio').checked);
+  $('captureWarning').hidden = !t;
+  $('captureWarning').textContent = t;
+}
 /* Errores inesperados de la página: se anotan en los detalles técnicos (solo el mensaje, nunca el contenido de las notas) */
 window.addEventListener('error', e => { try { logDiag('Error inesperado de la página: ' + (e.message || 'sin detalle') + (e.lineno ? ' (línea ' + e.lineno + ')' : '')); } catch (x) {} });
 window.addEventListener('unhandledrejection', e => { try { logDiag('Error inesperado (tarea sin terminar): ' + String((e.reason && e.reason.message) || e.reason || 'sin detalle')); } catch (x) {} });
@@ -1354,8 +1368,11 @@ let processingStartedAt = 0, processingEpoch = 0;
 const lockWake = async () => { try { wl = await navigator.wakeLock.request('screen'); } catch (e) {} };
 const unlockWake = () => { try { wl && wl.release(); } catch (e) {} wl = null; };
 document.addEventListener('visibilitychange', () => {
-  if (recording && recEng === 'whisper') logDiag('La página pasó a ' + (document.visibilityState === 'visible' ? 'visible' : 'segundo plano') + ' a los ' + Math.floor(elapsedMs() / 1000) + ' s');
-  if (document.visibilityState === 'visible' && recording && recEng === 'whisper') lockWake();
+  if (recording && recEng === 'whisper') {
+    logDiag('La página pasó a ' + (document.visibilityState === 'visible' ? 'visible' : 'segundo plano') + ' a los ' + Math.floor(elapsedMs() / 1000) + ' s');
+    if (document.visibilityState === 'hidden') checkpointRecordedAudio('segundo plano');
+    else lockWake();
+  }
 });
 function lockUI(on){
   $('model').disabled = on; $('accel').disabled = on; $('mic').disabled = on; $('saveAudio').disabled = on;
@@ -1391,6 +1408,7 @@ function updProgress(){
   $('tpTxt').textContent = t; tp.classList.add('on');
 }
 function refreshStatus(){
+  refreshCaptureWarning();
   if (dead) return;
   updProgress();
   const where = backend === 'GPU' ? 'placa de video' : 'procesador';
@@ -1405,6 +1423,7 @@ function refreshStatus(){
   }
 }
 function maybeDone(){
+  refreshCaptureWarning();
   updProgress();
   if (recording || busy || outstanding > 0 || feeding) return;
   clearInterval(timer); timer = null; lockUI(false); $('rec').disabled = false;
@@ -1465,8 +1484,8 @@ function onSegment(blocks, rate, info){
 }
 async function startWhisper(){
   resetPipeline();
-  capBlocks = 0;
-  cap = await startCapture(b => { capBlocks++; if (paused) return; level(b); if (seg) seg.push(b); });
+  capBlocks = 0; lastMicBlockAt = Date.now(); audioStoppedEarly = false;
+  cap = await startCapture(b => { capBlocks++; lastMicBlockAt = Date.now(); if (paused) return; level(b); if (seg) seg.push(b); });
   const rate = cap.rate; capRate = rate;
   logDiag('Modelo ' + $('model').value.replace('Xenova/', '') + ' · aceleración ' + $('accel').value + ' · micrófono ' + $('mic').value + ' · ' + rate + ' Hz');
   logDiag(BUILD + ' · ' + ((navigator.userAgent.match(/(?:Chrome|Firefox|Version)\/[\d.]+/) || ['navegador ?'])[0]) + ' · núcleos ' + (navigator.hardwareConcurrency || '?') + ' · memoria ' + (navigator.deviceMemory ? '≥' + navigator.deviceMemory + ' GB' : '?') + ' · WebGPU ' + (navigator.gpu ? 'sí' : 'no') + ' · captura ' + (window.AudioWorkletNode ? 'AudioWorklet' : 'ScriptProcessor') + (noWorker ? ' · sin Worker' : ''));
@@ -1478,7 +1497,7 @@ async function startWhisper(){
 function stopWhisper(){
   if (cap) { stopCapture(cap); cap = null; }
   if (seg) { seg.flush(); seg = null; }
-  if (mr && mr.state !== 'inactive') { try { mr.stop(); } catch (e) {} }
+  if (mr && mr.state !== 'inactive') { try { mr._deltaStopRequested = true; mr.stop(); } catch (e) {} }
   logDiag('Fin de la grabación a los ' + Math.floor(elapsedMs() / 1000) + ' s · partes pendientes: ' + outstanding + ' · audio recibido del micrófono: ' + Math.round(capBlocks * 4096 / capRate) + ' s');
   unlockWake();
   if (outstanding === 0 && !busy) maybeDone();
@@ -1557,6 +1576,7 @@ function setPaused(p){
     logDiag((p ? 'Pausa' : 'Reanudación') + ' a los ' + Math.floor(elapsedMs() / 1000) + ' s' + (!p && pauseAt ? ' · estuvo en pausa ' + Math.round((Date.now() - pauseAt) / 1000) + ' s' : ''));
     pauseAt = p ? Date.now() : 0;
     if (p) { if (seg) seg.flush(); $('lvI').style.width = '0'; $('lvTxt').textContent = ''; } // lo grabado hasta acá se transcribe mientras estás en pausa
+    if (p) checkpointRecordedAudio('pausa');
     if (mr && mr.state !== 'inactive') { try { p ? mr.pause() : mr.resume(); } catch (e) {} }
   } else if (p) { try { rec.stop(); } catch (e) {} $('interim').textContent = ''; setStatus('Grabación en pausa'); }
   else setTimeout(() => { if (recording && !paused) startNative(); }, 250);
@@ -1650,8 +1670,15 @@ const audioName = ext => fname('x').replace(/\.x$/, '') + '_audio.' + ext;
 function audioErr(e){
   audioSaveFailed = true;
   if (audioWarned) return; audioWarned = true;
-  flash('No se pudo guardar el audio en este navegador (' + ((e && e.message) || e) + '). La transcripción sigue igual.');
-  logDiag('Audio: ' + ((e && e.message) || e));
+  const detail = (e && e.name) || (typeof e === 'string' ? e : 'Error de almacenamiento');
+  flash('No se pudo guardar el audio en este navegador (' + detail + '). La transcripción sigue igual.');
+  logDiag('Audio: error técnico de guardado (' + detail + ')');
+}
+/* Fuerza un fragmento recuperable antes de pausar o enviar Brave al fondo. */
+function checkpointRecordedAudio(reason){
+  if (!mr || mr.state !== 'recording' || typeof mr.requestData !== 'function') return false;
+  try { mr.requestData(); logDiag('Audio: fragmento de respaldo solicitado (' + reason + ')'); return true; }
+  catch (e) { logDiag('Audio: no pudo solicitar fragmento de respaldo (' + reason + ')'); return false; }
 }
 /* Solo avisa: jamás borra el audio anterior antes de comprobar la captura. */
 async function audioSlotOk(){
@@ -1670,7 +1697,9 @@ function startAudioSave(stream){
   catch (e) { mr = null; flash('Este navegador no puede guardar el audio.'); logDiag('Audio: ' + (e.message || e)); return; }
   audioMime = (mr.mimeType || mime || 'audio/webm').split(';')[0];
   audioSid = Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,7); audioN = 0; audioBytes = 0; audioTs = Date.now(); audioQ = Promise.resolve(); audioWarned = false; audioSaveFailed = false;
-  const sid = audioSid, mimeT = audioMime, ts = audioTs;
+  const sid = audioSid, mimeT = audioMime, ts = audioTs, recorder = mr;
+  recorder._deltaStopRequested = false;
+  recorder.onerror = e => { audioStoppedEarly = true; audioErr(e && e.error ? e.error : 'Fallo de MediaRecorder'); refreshCaptureWarning(); };
   mr.ondataavailable = e => {
     if (!e.data || !e.data.size) return;
     const n = audioN++; audioBytes += e.data.size;
@@ -1681,8 +1710,14 @@ function startAudioSave(stream){
       else { await audioPutChunk(sid, n, e.data); await audioPutMeta(meta); }
     }).catch(audioErr);
   };
-  mr.onstop = () => {
-    const meta = {id: 'last', sid, mime: mimeT, ts, ms: elapsedMs(), bytes: audioBytes, complete: true, downloaded: false};
+  recorder.onstop = () => {
+    const expected = recorder._deltaStopRequested;
+    if (!expected) {
+      audioStoppedEarly = true;
+      logDiag('Audio: el grabador del navegador terminó inesperadamente; se conserva lo recibido.');
+      refreshCaptureWarning();
+    }
+    const meta = {id: 'last', sid, mime: mimeT, ts, ms: elapsedMs(), bytes: audioBytes, complete: !!expected, downloaded: false};
     audioQ = audioQ.then(async () => {
       if (audioSaveFailed || !audioN) return;
       await audioPutMeta(meta);
@@ -1815,6 +1850,7 @@ $('studioDockPause').addEventListener('click',()=>$('pause').click());
 $('studioDockStop').addEventListener('click',()=>$('rec').click());
 function stopUI(){
   recording = false; endClock(); paused = false; clearInterval(clockT); clockT = null;
+  $('captureWarning').hidden = true; $('captureWarning').textContent = '';
   $('lv').style.display = 'none'; $('lvTxt').textContent = ''; $('rec').classList.remove('on'); $('rec').textContent = 'Grabar';
   setCtl(false); updClock();
 }
