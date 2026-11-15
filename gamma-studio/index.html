@@ -7,7 +7,7 @@
 
 
 <meta name="theme-color" content="#090f20">
-<meta name="studio-design" content="2026-11-15-v5">
+<meta name="studio-design" content="2026-11-15-v6">
 <title>Notas por voz · Transcripción y anonimización</title>
 <style>
 :root{color-scheme:dark;--bg:#090f20;--bg2:#172139;--card:#101a2e;--ink:#edf3ff;--mut:#a1b0cc;--line:#293852;--acc:#9cbaff;--acc-ink:#0a1836;--acc-soft:#1c3156;--rec:#ff8e9b;--rec-ink:#300c17;--note-bg:#292637;--note-ink:#ded1b8;--bar-l:65%}
@@ -39,6 +39,10 @@ html{scroll-padding-bottom:200px}
 
 .tools #correctSelection{background:#294b70;color:#e1edff;border:1px solid #688bb9;font-size:12px;min-height:44px}
 .selection-help{margin:0 0 10px;font-size:11px}
+.editor-area{position:relative}
+.editor-area textarea#text{display:block;padding-bottom:70px}
+#quickCorrect{position:absolute;right:12px;bottom:12px;max-width:calc(100% - 24px);min-height:46px;z-index:2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;background:#b4cbff;color:#102449;border:1px solid #d0dfff;box-shadow:0 4px 16px #020c2288;font-size:13px}
+#quickCorrect:hover:not(:disabled){background:#d0dfff}
 #correctionDialog{width:min(460px,calc(100% - 24px));max-height:85dvh;overflow:auto;background:#14223a;color:var(--ink);border:1px solid #567197;border-radius:22px;padding:22px;box-shadow:0 24px 70px #0009}
 #correctionDialog::backdrop{background:#050b1bcc;backdrop-filter:blur(3px)}
 #correctionDialog h2{margin:0 0 8px}#correctionDialog label{margin-top:14px}
@@ -186,15 +190,18 @@ html{scroll-padding-bottom:200px}
       <label for="text">Transcripción <span class="opt">(podés editarla)</span></label>
       <div class="tools">
         <button class="ghost" id="selAll">Seleccionar todo</button>
-        <button type="button" id="correctSelection" aria-haspopup="dialog">Corregir selección</button>
+        <button type="button" id="correctSelection" aria-haspopup="dialog">Corregir texto</button>
         <button class="ghost" id="copyAll">Copiar todo</button>
         <button class="ghost danger" id="clear" title="Podés deshacer el borrado">Borrar texto</button>
         <button class="ghost" id="undoClear" style="display:none">Deshacer borrado</button>
       </div>
     </div>
     <div id="busy" role="status"></div>
-    <p class="hint selection-help" id="selectionHelp">Seleccioná una palabra o frase y tocá «Corregir selección».</p>
-    <textarea aria-describedby="selectionHelp" id="text" placeholder="Acá va a aparecer lo que digas…"></textarea>
+    <p class="hint selection-help" id="selectionHelp">Tocá una palabra para corregirla. También podés mantener presionado y seleccionar una frase; aparecerá un botón de corrección dentro del recuadro.</p>
+    <div class="editor-area">
+      <textarea aria-describedby="selectionHelp" id="text" placeholder="Acá va a aparecer lo que digas…"></textarea>
+      <button type="button" id="quickCorrect" aria-haspopup="dialog" hidden>Corregir palabra</button>
+    </div>
     <div class="meta"><span id="wc">0 palabras</span><span id="cc"></span></div>
 
     <div id="learn"></div>
@@ -282,7 +289,7 @@ html{scroll-padding-bottom:200px}
 
 </main>
 
-<footer>Notas por voz · Diseño 05<br>Versión experimental · Usá solo datos ficticios</footer>
+<footer>Notas por voz · Diseño 06<br>Versión experimental · Usá solo datos ficticios</footer>
 </div>
 
 <aside class="studio-dock" aria-label="Acciones de la nota">
@@ -1696,9 +1703,43 @@ function correctionCanRemember(text,start,end){
     && !/[\p{L}\p{N}'’]/u.test(text[start-1]||'') && !/[\p{L}\p{N}'’]/u.test(text[end]||'');
 }
 (()=>{
-  const editor=$('text'),button=$('correctSelection'),dialog=$('correctionDialog');
+  const editor=$('text'),button=$('correctSelection'),quick=$('quickCorrect'),dialog=$('correctionDialog');
   const replacement=$('correctionReplacement'),remember=$('correctionRemember'),error=$('correctionError'),notice=$('correctionRuleNotice');
-  let selection=null;
+  let selection=null,lastChoice=null,lastInputAt=0;
+  // El menú Copiar/Pegar de Android es nativo: el acceso de corrección es un botón propio.
+  function choiceFromEditor(){
+    const text=editor.value;
+    let start=editor.selectionStart,end=editor.selectionEnd;
+    if(start==null||end==null||!text)return null;
+    if(start===end){
+      const word=/[\p{L}\p{N}'’]/u;
+      if(!word.test(text[start]||'')&&!word.test(text[start-1]||''))return null;
+      if(!word.test(text[start]||''))start--;
+      end=start+1;
+      while(start>0&&word.test(text[start-1]))start--;
+      while(end<text.length&&word.test(text[end]))end++;
+    } else {
+      while(start<end&&/\s/.test(text[start]))start++;
+      while(end>start&&/\s/.test(text[end-1]))end--;
+    }
+    if(start===end)return null;
+    return {text,start,end,original:text.slice(start,end)};
+  }
+  function updateQuick(){
+    if(dialog.open||document.activeElement!==editor||Date.now()-lastInputAt<220)return;
+    const chosen=choiceFromEditor();
+    lastChoice=chosen;
+    if(!chosen){quick.hidden=true;return;}
+    const short=chosen.original.replace(/\s+/g,' ');
+    quick.textContent=short.length>24?'Corregir selección':'Corregir «'+short+'»';
+    quick.hidden=false;
+  }
+  function queueQuick(delay){setTimeout(updateQuick,delay);}
+  ['click','mouseup','keyup','select'].forEach(type=>editor.addEventListener(type,()=>queueQuick(0)));
+  editor.addEventListener('touchend',()=>{queueQuick(80);queueQuick(340);},{passive:true});
+  document.addEventListener('selectionchange',()=>{if(document.activeElement===editor)queueQuick(80);});
+  editor.addEventListener('input',()=>{lastInputAt=Date.now();lastChoice=null;quick.hidden=true;});
+  editor.addEventListener('blur',()=>setTimeout(()=>{if(document.activeElement!==editor)quick.hidden=true;},300));
   function updateNotice(){
     if(!selection)return;
     const existing=correctionRuleLines($('dict').value,selection.original);
@@ -1706,24 +1747,28 @@ function correctionCanRemember(text,start,end){
     notice.textContent=existing.length?'Ya hay una corrección para «'+selection.original+'». Al aplicar, la reemplazás por la nueva.':'';
     error.textContent='';
   }
-  button.addEventListener('click',()=>{
-    let start=editor.selectionStart,end=editor.selectionEnd;
-    const text=editor.value;
-    while(start<end&&/\s/.test(text[start]))start++;
-    while(end>start&&/\s/.test(text[end-1]))end--;
-    if(start===end){flash('Primero seleccioná una palabra o frase en la transcripción.');editor.focus();return;}
-    selection={text,start,end,original:text.slice(start,end)};
+  function openCorrection(chosen){
+    if(!chosen||chosen.text!==editor.value){
+      flash('Primero tocá una palabra o seleccioná una frase en la transcripción.');
+      editor.focus();
+      return;
+    }
+    selection=chosen;
+    quick.hidden=true;
     $('correctionOriginal').value=selection.original;
     replacement.value=selection.original;
-    remember.checked=false;remember.disabled=!correctionCanRemember(text,start,end);
+    remember.checked=false;remember.disabled=!correctionCanRemember(chosen.text,chosen.start,chosen.end);
     notice.hidden=!remember.disabled;
     notice.textContent=remember.disabled?'Podés corregir esta selección. Para recordarla, seleccioná palabras completas sin signos de puntuación.':'';
     error.textContent='';
     dialog.showModal();replacement.focus();replacement.select();
-  });
+  }
+  // Guardamos la selección antes de que el botón tome el foco y Android la cierre.
+  quick.addEventListener('click',()=>openCorrection(lastChoice&&lastChoice.text===editor.value?lastChoice:choiceFromEditor()));
+  button.addEventListener('click',()=>openCorrection(lastChoice&&lastChoice.text===editor.value?lastChoice:choiceFromEditor()));
   remember.addEventListener('change',updateNotice);
   $('correctionCancel').addEventListener('click',()=>dialog.close());
-  dialog.addEventListener('close',()=>{button.focus();});
+  dialog.addEventListener('close',()=>{selection=null;lastChoice=null;quick.hidden=true;button.focus();});
   $('correctionForm').addEventListener('submit',event=>{
     event.preventDefault();
     if(!selection)return;
