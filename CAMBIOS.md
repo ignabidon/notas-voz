@@ -1,5 +1,19 @@
 # Registro de cambios — Grabador de voz Delta
 
+## Delta 07 · Rediseño de legibilidad y una sola mano — 15 de noviembre de 2026
+
+**Objetivo:** mejorar lectura y acciones desde el pulgar, evitando información visual innecesaria sin alterar las funciones ya verificadas en Motorola.
+
+- Se elevan los tamaños de texto, etiquetas, advertencias, resúmenes y botones. El editor usa fuente de 17 px; se mejora el contraste de tarjetas, campos y texto secundario.
+- La barra inferior se convierte en el punto de acción habitual: **Grabar / Anonimizar / Guardar .txt**; durante una captura sigue mostrando **Pausar / Detener**. El botón Grabar inferior llama al mismo control de grabación original y sincroniza su estado deshabilitado.
+- Se amplía la navegación inferior a **Grabar / Texto / Ajustes / Privacidad**; este último acceso abre los dos paneles necesarios y salta directamente a los controles de almacenamiento.
+- El panel de privacidad pasa al primer lugar de Ajustes. Se acortan descripciones de grabación, Whisper, micrófono, corrección y audio, manteniendo los avisos indispensables.
+- Se consideran las zonas seguras del dispositivo y los controles de 48 px o más, con adaptación para pantallas estrechas y respetando reducción de movimiento.
+- No se cambian los motores, modelos, grabación, tratamiento de notas, descarga TXT ni persistencia de datos; se agregan pruebas automatizadas de navegación y presentación.
+
+**Validación:** GitHub Actions en la rama y `main`; falta confirmar en Brave Android el alcance del pulgar, lectura y accesos desde una pantalla pequeña. Se conserva el respaldo histórico y no se borra ningún dato del navegador.
+
+
 ## Delta 06a · Visibilidad y limpieza de textos locales — 15 de noviembre de 2026
 
 **Alcance:** seguridad del texto, sin cambios en el audio ni en Whisper.
