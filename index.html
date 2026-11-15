@@ -1699,7 +1699,12 @@ function startAudioSave(stream){
   audioSid = Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,7); audioN = 0; audioBytes = 0; audioTs = Date.now(); audioQ = Promise.resolve(); audioWarned = false; audioSaveFailed = false;
   const sid = audioSid, mimeT = audioMime, ts = audioTs, recorder = mr;
   recorder._deltaStopRequested = false;
-  recorder.onerror = e => { audioStoppedEarly = true; audioErr(e && e.error ? e.error : 'Fallo de MediaRecorder'); refreshCaptureWarning(); };
+  recorder.onerror = e => {
+    // Si el grabador falla, todavía puede entregar un último fragmento: no bloquear su persistencia.
+    audioStoppedEarly = true;
+    logDiag('Audio: el grabador informó un error (' + ((e && e.error && e.error.name) || 'Error del grabador') + '); se intentará conservar lo recibido.');
+    refreshCaptureWarning();
+  };
   mr.ondataavailable = e => {
     if (!e.data || !e.data.size) return;
     const n = audioN++; audioBytes += e.data.size;
