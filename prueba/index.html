@@ -431,7 +431,7 @@ textarea{min-height:240px}
     <div class="group privacy-group">
       <div class="gl">Privacidad · Revisá el texto antes de compartir</div>
       <div class="row" style="margin-top:6px">
-        <button class="p" id="anon">Anonimizar transcripción</button>
+        <button class="p" id="anon" title="Aplicar una sola vez; se puede deshacer">Anonimizar transcripción</button>
         <button id="undo" disabled>Deshacer anonimizado</button>
       </div>
       <div class="warn" id="anonRes" style="margin-top:8px"></div>
@@ -477,7 +477,7 @@ textarea{min-height:240px}
 
 </main>
 
-<footer>Versión de prueba · Usá datos ficticios · La app principal no se modifica</footer>
+<footer>Versión de prueba · Corrección anonimización · Usá datos ficticios</footer>
 </div>
 
 <script>
@@ -758,7 +758,7 @@ const nWords = s => (s.match(WORDS) || []).length;
 
 /* ---------- Notas ---------- */
 function fmt(ts){ return new Date(ts).toLocaleString('es-AR', {dateStyle:'short', timeStyle:'short'}); }
-function resetEdit(){ anonBackup = null; $('undo').disabled = true; $('anonRes').textContent = ''; $('learn').innerHTML = ''; $('susBox').innerHTML = ''; }
+function resetEdit(){ anonBackup = null; $('undo').disabled = true; $('anon').disabled = false; $('anonRes').textContent = ''; $('learn').innerHTML = ''; $('susBox').innerHTML = ''; }
 function renderList(){
   const l = $('list'); l.innerHTML = '';
   const f = $('filt'); f.innerHTML = '';
@@ -854,6 +854,11 @@ $('tagSug').onclick = () => {
 const KEEP = ['lunes','martes','miércoles','jueves','viernes','sábado','domingo','enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre','hoy','ayer','mañana','argentina','buenos','aires','dios','freud','winnicott','klein','lacan','salud','adolescencia','claude','whisper','word','sigmund','melanie','donald','jacques','wilfred','bion','jung','adler','ferenczi','bowlby','spitz','mahler','piaget','aberastury','pichon','riviere','dolto','erikson'];
 const reEsc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 function anonymize(){
+  // No volver a procesar los marcadores [Persona N] ni perder la copia original.
+  if (anonBackup) {
+    $('anonRes').textContent = 'Esta transcripción ya fue anonimizada. Para repetir el proceso, primero tocá «Deshacer anonimizado».';
+    return;
+  }
   const hide = $('hideX').value.split(',').map(s => s.trim()).filter(Boolean);
   const keep = new Set(KEEP.concat($('keepX').value.split(',')).map(s => norm(s.trim())).filter(Boolean));
   const np0 = maxPersona($('title').value + ' ' + $('text').value), S = buildAnon(new Map(), {n: np0});
@@ -892,15 +897,23 @@ function anonymize(){
     });
     return s;
   };
-  anonBackup = {title: $('title').value, text: $('text').value, baseline};
-  $('title').value = run($('title').value); $('text').value = run($('text').value);
+  const original = {title: $('title').value, text: $('text').value, baseline};
+  const anonymizedTitle = run(original.title), anonymizedText = run(original.text);
+  if (anonymizedTitle === original.title && anonymizedText === original.text) {
+    $('anonRes').textContent = 'No se encontraron datos para reemplazar automáticamente. Revisá nombres, lugares y detalles que puedan identificar a alguien.';
+    return;
+  }
+  anonBackup = original; // una sola copia de la transcripción anterior
+  $('title').value = anonymizedTitle; $('text').value = anonymizedText;
   baseline = $('text').value; // para que el diccionario nunca "aprenda" los nombres ocultados
   $('learn').innerHTML = '';
   $('undo').disabled = false;
+  $('anon').disabled = true;
+  updWC(); saveDraft();
   $('anonRes').textContent = 'Se ocultaron ' + (S.np.n - np0) + ' nombre(s)' + (S.stat.t ? ', ' + S.stat.t + ' reemplazo(s) por código' : '') + ' y ' + nOther + ' dato(s) (correo, teléfono, fecha). Revisá el texto: pueden quedar nombres sin detectar.';
   showSuspects(Array.from(S.sus).concat(sentenceStarters($('text').value, S)));
 }
-$('anon').onclick = () => { if (!$('text').value.trim()) return flash('No hay texto para anonimizar.'); anonymize(); };
+$('anon').onclick = () => { if (!$('text').value.trim()) return flash('No hay texto para anonimizar.'); if (!pendingOk()) return; anonymize(); };
 
 /* ---------- Tabla de personas y ocultar nombres en vivo ---------- */
 const PKEY = 'notasvoz.prueba.people.v1';
@@ -1006,7 +1019,18 @@ function anonOk(){
   if (confirm('Ojo: el texto parece tener datos que podrían identificar a alguien (' + left.slice(0, 6).join(', ') + '). ¿Seguir igual? Podés cancelar y usar «Anonimizar».')) { ackTxt = t; return true; }
   return false;
 }
-$('undo').onclick = () => { if (!anonBackup) return; $('title').value = anonBackup.title; $('text').value = anonBackup.text; baseline = anonBackup.baseline; anonBackup = null; $('undo').disabled = true; $('anonRes').textContent = 'Se deshizo el anonimizado.'; };
+$('undo').onclick = () => {
+  if (!anonBackup) return;
+  $('title').value = anonBackup.title;
+  $('text').value = anonBackup.text;
+  baseline = anonBackup.baseline;
+  anonBackup = null;
+  $('undo').disabled = true;
+  $('anon').disabled = false;
+  $('susBox').innerHTML = '';
+  $('anonRes').textContent = 'Se recuperó la versión original. Podés volver a anonimizarla si querés.';
+  updWC(); saveDraft();
+};
 
 /* ---------- Exportar ---------- */
 const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
