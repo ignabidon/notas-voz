@@ -8,8 +8,8 @@ const scripts = [...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)].map(
 const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map(m => m[1]);
 
 test('título y punto único de entrada', () => {
-  assert.match(html, /<title>Grabador de voz Delta/);
-  assert.match(html, /<h1>Grabador de voz Delta<\/h1>/);
+  assert.match(html, /<title>DictaNota · Prueba Delta/);
+  assert.match(html, /<h1>DictaNota<\/h1>/);
   assert.match(html, /DELTA 11 · VERSIÓN DE PRUEBA/);
 });
 

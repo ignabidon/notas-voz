@@ -1,5 +1,14 @@
 # Registro de cambios — Grabador de voz Delta
 
+## DictaNota · identidad visible — 15/11/2026
+
+- Nombre elegido por el usuario: **DictaNota**, en singular. Reemplaza «Grabador de voz Delta» en encabezado, título inicial y dinámico de la pestaña, presentación de Ajustes y nombre accesible de navegación.
+- **Prueba Delta 11** permanece como identificación de desarrollo en el pie y los diagnósticos; el título de la pestaña conserva «Prueba Delta», incluso al grabar o transcribir.
+- Se actualizan referencias de identidad vigentes en README, AGENTS y CLAUDE. Se preserva el historial de nombres/versiones anteriores.
+- Sin renombrar repositorio, URL, rutas, funciones, IDs HTML, claves localStorage/IndexedDB ni datos guardados. Sin cambios en grabación, Whisper, edición, exportación o estilos.
+- Base: `4539aa77679437b703b2666d1ecce2231a5d764d`, rama `chore/dictanota-name`. Verificación: 79/79 pruebas automáticas aprobadas; revisión de textos y título dinámico. Fusión/CI/publicación se informan separadamente al entregar. No se repiten pruebas físicas de audio por tratarse solo de identidad visible.
+
+
 ## Delta 11 · Legibilidad, controles con una mano y teclado — 15/11/2026
 
 **Base:** `e561eb7eb968f15b21aee5aebd188cc69d9164e2`, rama `fix/mobile-ergonomics`. La distribución propuesta se comunicó antes de editar: conservar tres vistas/estilo oscuro, tamaño configurable, controles inferiores y adaptación de espacio/teclado. Se registra que el usuario informó haber probado la versión anterior de feedback de texto; sin detalle de dispositivo/casos y sin extrapolar a esta revisión.
