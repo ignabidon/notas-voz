@@ -312,3 +312,47 @@ test('Delta 05: identifica errores y finales inesperados del grabador', () => {
   assert.match(html, /checkpointRecordedAudio\('segundo plano'\)/);
   assert.match(html, /lastMicBlockAt = Date\.now\(\)/);
 });
+
+
+test('Delta 06a: borrar textos locales deja audios, diccionario y configuración intactos', () => {
+  const match = html.match(/function removeLocalTextKeys\(store, keys\) \{[\s\S]*?\n\}/);
+  assert.ok(match, 'falta utilidad de borrado limitado');
+  const run = new Function(match[0] + '; return removeLocalTextKeys;')();
+  const store = new Map([
+    ['notasvoz.gamma.v1', 'texto ficticio'],
+    ['notasvoz.gamma.draft.v1', 'borrador ficticio'],
+    ['notasvoz.gamma.undo.v1', 'anterior ficticio'],
+    ['notasvoz.gamma.dict.v1', 'palabra de prueba'],
+    ['notasvoz.gamma.people.v1', 'alias ficticio'],
+    ['notasvoz.gamma.cfg.v1', 'configuración'],
+  ]);
+  const local = {removeItem:k => store.delete(k)};
+  assert.equal(run(local, ['notasvoz.gamma.v1','notasvoz.gamma.draft.v1','notasvoz.gamma.undo.v1']), true);
+  assert.equal(store.has('notasvoz.gamma.v1'), false);
+  assert.equal(store.has('notasvoz.gamma.draft.v1'), false);
+  assert.equal(store.has('notasvoz.gamma.undo.v1'), false);
+  assert.equal(store.has('notasvoz.gamma.dict.v1'), true);
+  assert.equal(store.has('notasvoz.gamma.people.v1'), true);
+  assert.equal(store.has('notasvoz.gamma.cfg.v1'), true);
+  assert.equal(run({removeItem(){throw Error('sin permiso')}}, ['x']), false);
+});
+
+test('Delta 06a: la eliminación requiere confirmación y deja fuera el audio', () => {
+  const m = html.match(/\$\('clearLocalTexts'\)\.onclick = \(\) => \{([\s\S]*?)\n\};/);
+  assert.ok(m, 'falta control para borrar textos');
+  assert.match(m[1], /if \(!confirm\(/);
+  assert.match(m[1], /if \(recording \|\| busy \|\| outstanding > 0 \|\| feeding\)/);
+  assert.match(m[1], /removeLocalTextKeys\(localStorage, TEXT_STORAGE_KEYS\)/);
+  assert.match(m[1], /lastDraft = snap\(\)/);
+  assert.doesNotMatch(m[1], /audioClear\(|indexedDB|localStorage\.clear\(/);
+  assert.match(html, /id="localPrivacy"/);
+  assert.match(html, /Estas copias no están cifradas/);
+  assert.match(html, /No elimina los archivos de Descargas/);
+});
+
+test('Delta 06a: jamás se borra automáticamente al iniciar o guardar notas', () => {
+  const calls = html.match(/removeLocalTextKeys\(/g) || [];
+  assert.equal(calls.length, 2, 'la utilidad debe ser definida y usada solo en la acción explícita');
+  assert.match(html, /\$\('clearLocalTexts'\)\.onclick/);
+  assert.match(html, /const TEXT_STORAGE_KEYS = \[KEY, DRAFT, UNDO\]/);
+});

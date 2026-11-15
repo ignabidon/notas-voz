@@ -38,6 +38,18 @@ Al tocar **Guardar .txt** se solicita al navegador descargar un archivo de texto
 
 Este botón también conserva la copia local anterior como respaldo; no borra ni migra contenido. La lista interna de notas guardadas sigue oculta en este cambio. La descarga TXT es únicamente de la nota actual; no incluye audio, diccionario, claves o ajustes. No usar información sensible real antes de validar el proceso.
 
+## Privacidad del texto y limpieza optativa (Delta 06a)
+
+La descarga **Guardar .txt** no está cifrada y el navegador también conserva una copia local. El borrador de trabajo se guarda automáticamente; la opción **Deshacer borrado** puede contener otra copia del texto. Brave puede conservar estos datos aunque se cierre. Tampoco se cifran todavía el audio guardado, las asociaciones de personas o el diccionario. Los archivos TXT/Word descargados quedan fuera del control de la aplicación.
+
+En **Ajustes de transcripción → Privacidad y almacenamiento local** podés consultar la cantidad de notas guardadas y si existen copias de borrador/deshacer, sin mostrar el contenido. El botón **Borrar notas y borradores de Brave** pide confirmación y borra solo los textos de las notas, el borrador y la copia para deshacer, además de vaciar el editor visible. **No borra** audios de IndexedDB, nombres/códigos, diccionario, ajustes, modelos o archivos de Descargas. No se realiza ninguna limpieza automática.
+
+Este borrado no equivale a destrucción segura de datos del dispositivo, y no protege los archivos descargados. No guardar información clínica real hasta que se evalúen cifrado, protección del dispositivo y política de retención.
+
+## Precisión de Whisper: prueba Base contra Small
+
+La aplicación ya ofrece **Whisper Small** en Ajustes. Para comparar con Base, activá «Guardar el audio» y grabá material ficticio. Descargá primero el texto Base como archivo TXT, cambiá a Small y elegí «Transcribir este audio» sobre el audio guardado; el texto del editor puede reemplazarse. Verificá errores en términos técnicos, omisiones de frases, tiempo de procesamiento y posibles avisos de memoria. Si ambos modelos omiten exactamente las mismas frases, conviene revisar el segmentador de pausas antes de instalar modelos más grandes. No se modifica el motor ni se promete mejor precisión sin esa comparación.
+
 ## Grabaciones largas (Delta 05)
 
 Si vas a grabar durante varios minutos, elegí Whisper y activá «Guardar el audio de la grabación» antes de empezar. Mantené la pantalla encendida y preferentemente Brave en primer plano. Delta solicitará guardar fragmentos parciales al pausar, marcar momentos o pasar la página al fondo. Si el micrófono deja de enviar muestras o Whisper tiene muchos fragmentos pendientes, la aplicación mostrará un aviso. En el segundo caso, pausá la grabación para permitir que la transcripción alcance lo ya grabado.

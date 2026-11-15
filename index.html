@@ -186,6 +186,14 @@ html{scroll-padding-bottom:200px}
         <button id="voseo">Agregar formas rioplatenses (vos, tenés…)</button>
       </div>
     </details>
+    <details id="localPrivacy">
+      <summary>Privacidad y almacenamiento local <small>Notas y borradores que quedan en Brave</small></summary>
+      <p class="hint">«Guardar .txt» solicita descargar la nota, pero también guarda una copia de texto en este navegador. El borrador se guarda automáticamente. Estas copias no están cifradas.</p>
+      <p class="hint" id="localTextInfo" role="status"></p>
+      <button type="button" id="clearLocalTexts" class="ghost danger">Borrar notas y borradores de Brave</button>
+      <p class="hint">Es una acción irreversible: también vacía el texto actual y su «Deshacer borrado». No elimina los archivos de Descargas, los audios guardados, las asociaciones de personas, el diccionario, los ajustes ni los modelos descargados.</p>
+      <p class="hint">Borrar desde la app no garantiza un borrado seguro del dispositivo o sus copias de seguridad. Evitá notas con datos reales hasta revisar el cifrado y la protección de las descargas.</p>
+    </details>
     </div>
   </details>
 
@@ -1936,6 +1944,29 @@ function restoreDraft(){
 setInterval(saveDraft, 1500);
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') saveDraft(); });
 window.addEventListener('pagehide', saveDraft);
+
+/* Borrado optativo y limitado a copias de texto; no se eliminan audios ni diccionarios. */
+const TEXT_STORAGE_KEYS = [KEY, DRAFT, UNDO];
+function removeLocalTextKeys(store, keys) {
+  try { for (const k of keys) store.removeItem(k); return true; }
+  catch (e) { return false; }
+}
+function refreshLocalTextInfo() {
+  let draft = false, undo = false;
+  try { draft = localStorage.getItem(DRAFT) !== null; undo = localStorage.getItem(UNDO) !== null; } catch (e) {}
+  $('localTextInfo').textContent = notes.length + ' nota(s) guardada(s) · ' + (draft ? 'borrador almacenado' : 'sin borrador almacenado') + ' · ' + (undo ? 'copia para deshacer almacenada' : 'sin copia para deshacer');
+}
+$('localPrivacy').addEventListener('toggle', () => { if ($('localPrivacy').open) refreshLocalTextInfo(); });
+$('clearLocalTexts').onclick = () => {
+  if (recording || busy || outstanding > 0 || feeding) { flash('Primero detené y terminá de transcribir antes de borrar los textos locales.'); return; }
+  if (!confirm('¿Eliminar las notas y borradores de Brave, incluido el texto visible y la opción de deshacer? No se puede revertir. Las descargas y los audios no se borrarán.')) return;
+  if (!removeLocalTextKeys(localStorage, TEXT_STORAGE_KEYS)) { flash('No se pudieron eliminar todos los textos locales. Revisá la configuración de Brave.'); return; }
+  notes = []; cur = null; tags = []; baseline = ''; clearBackup = null;
+  $('title').value = ''; $('text').value = ''; $('undoClear').style.display = 'none';
+  renderChips(); renderList(); resetEdit(); resetLive();
+  lastDraft = snap(); updWC(); refreshLocalTextInfo();
+  flash('Se borraron las notas y los borradores locales. No se borraron descargas, audios ni configuraciones.');
+};
 
 let lastWC = null;
 function updWC(){
