@@ -1135,11 +1135,25 @@ function workerBody(){
     const k = m + '|' + accel;
     if (asr && key === k) return;
     asr = null; be = 'CPU'; model = m;
-    if (accel !== 'cpu') {
-      try { if (self.navigator && navigator.gpu && await navigator.gpu.requestAdapter()) { asr = await build(m, true); be = 'GPU'; } }
-      catch (e) { asr = null; note('La placa de video no se pudo usar (' + String(e && e.message || e) + '): se usa el procesador.'); }
+    if (accel === 'cpu') note('Placa de video: no se intenta porque elegiste solo procesador.');
+    else {
+      try {
+        const nav = globalThis.navigator;
+        if (!(nav && nav.gpu)) note('Placa de video: el navegador no ofrece WebGPU en el motor en segundo plano; se usa el procesador.');
+        else {
+          const ad = await nav.gpu.requestAdapter();
+          if (!ad) note('Placa de video: WebGPU sin adaptador (el navegador no encontró una placa compatible); se usa el procesador.');
+          else {
+            const ai = ad.info || {};
+            note('Placa de video: adaptador encontrado (' + [ai.vendor, ai.architecture].filter(Boolean).join(' ') + '). Se intenta usarla.');
+            asr = await build(m, true); be = 'GPU';
+          }
+        }
+      }
+      catch (e) { asr = null; note('Placa de video: no se pudo usar (' + String(e && e.message || e) + '); se usa el procesador.'); }
     }
     if (!asr) asr = await build(m, false);
+    try { const wa = lib.env.backends.onnx.wasm; note('Motor: ' + be + ' · hilos de cálculo del procesador: ' + (wa && wa.numThreads) + ' · página aislada (permite varios hilos): ' + (globalThis.crossOriginIsolated ? 'sí' : 'no')); } catch (e) {}
     key = k;
   }
   self.onmessage = async ({data: m}) => {
@@ -1235,9 +1249,9 @@ async function toMono16k(blocks, rate){
   return new Float32Array((await off.startRendering()).getChannelData(0));
 }
 
-const BUILD = 'Delta 01 · diagnósticos v1';
+const BUILD = 'Delta 01 · diagnósticos v2';
 const WHY = {silencio: 'pausa en el habla', limite: 'límite de ~29 s', manual: 'pausa, marca o fin'};
-let capBlocks = 0, capRate = 48000, oddParts = 0;
+let capBlocks = 0, capRate = 48000, oddParts = 0, pauseAt = 0;
 let lvT = 0, clipUntil = 0, failedParts = 0, warnParts = 0, segN = 0, diagLines = [], totalSec = 0, doneSec = 0, procMs = 0, procSec = 0;
 let paused = false, tAcc = 0, tRun = 0, clockT = null, markT = null, feeding = false, feed = {pos: 0, len: 0, done: 0};
 let mr = null, audioOk = false, audioSid = '', audioN = 0, audioBytes = 0, audioQ = Promise.resolve(), audioMime = '', audioTs = 0, audioWarned = false;
@@ -1462,7 +1476,8 @@ function setPaused(p){
   paused = p;
   if (p) endClock(); else tRun = Date.now();
   if (recEng === 'whisper') {
-    logDiag((p ? 'Pausa' : 'Reanudación') + ' a los ' + Math.floor(elapsedMs() / 1000) + ' s');
+    logDiag((p ? 'Pausa' : 'Reanudación') + ' a los ' + Math.floor(elapsedMs() / 1000) + ' s' + (!p && pauseAt ? ' · estuvo en pausa ' + Math.round((Date.now() - pauseAt) / 1000) + ' s' : ''));
+    pauseAt = p ? Date.now() : 0;
     if (p) { if (seg) seg.flush(); $('lvI').style.width = '0'; $('lvTxt').textContent = ''; } // lo grabado hasta acá se transcribe mientras estás en pausa
     if (mr && mr.state !== 'inactive') { try { p ? mr.pause() : mr.resume(); } catch (e) {} }
   } else if (p) { try { rec.stop(); } catch (e) {} $('interim').textContent = ''; setStatus('Grabación en pausa'); }
