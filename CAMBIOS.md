@@ -1,5 +1,36 @@
 # Registro de cambios — Grabador de voz Delta
 
+## Delta 11 · corrección Firefox, plazos y reintento — 15/11/2026
+
+**Alcance:** únicamente el bloqueo de Whisper y la recuperación del audio. Base de trabajo: `123ec9ba7085745c850b2457930e62030ae8e0bb`. No se cambian la URL, las claves de almacenamiento ni las ramas de respaldo.
+
+### Investigación
+
+- La transcripción en vivo NO consume el contenedor de MediaRecorder. Captura PCM con AudioWorklet/ScriptProcessor, segmenta, remuestrea a mono 16 kHz y transfiere una copia Float32Array al Worker. El Worker ejecuta Transformers.js 3.8.1/Whisper local. No hay POST a una API de Whisper: la red descarga librería, WASM y modelos; la respuesta de transcripción es un mensaje local identificado por id.
+- MediaRecorder selecciona un MIME compatible por `isTypeSupported`. Firefox 153/Linux de prueba declaró WebM/Opus y Ogg/Opus, no MP4. El archivo persistido se reconstruye concatenando fragmentos ordenados por claves de seis dígitos; se decodifica completo, no parte por parte.
+- Había promesas sin plazo en las respuestas del Worker, remuestreo y decodificación. Un motor que no respondiera dejaba `outstanding/busy` activos. Los errores de transferencia tampoco limpiaban todos los pendientes. El fallback al hilo principal podía bloquear la interfaz e impedir cancelación/plazos.
+- **No se reprodujo ni se identificó la causa exacta del bloqueo en Firefox Windows del usuario.** La ruta CPU de Firefox es una medida de compatibilidad; no constituye prueba de que WebGPU o el códec fueran la causa. Referencia de hilos WASM/aislamiento y proxy: https://onnxruntime.ai/docs/tutorials/web/env-flags-and-session-options.html . Eventos finales de MediaRecorder: https://developer.mozilla.org/en-US/docs/Web/API/MediaRecorder/dataavailable_event .
+
+### Corrección
+
+- Firefox usa CPU; sin aislamiento, un hilo WASM y sin proxy anidado. Android mantiene la selección anterior de CPU/GPU y la misma versión de librería/modelos.
+- Worker obligatorio para poder interrumpir inferencia: si no puede crearse o falla, se informa y se puede reintentar. Se limpian timers y solicitudes al responder, fallar, cancelar o agotar tiempo; se termina el Worker en fallos estructurales. Reintentar crea otro motor. Se ignoran ids desconocidos y tareas de sesiones anteriores.
+- Plazos absolutos: cargar modelo o transcribir una parte, 5 minutos por petición; activar AudioContext, 10 s; módulo Worklet/remuestreo/lectura, 15 s; decodificación, 30 s. No se reinician los plazos por recibir progreso. Small o descargas lentas pueden agotarlos. Pestañas/sistemas suspendidos pueden retrasar temporizadores.
+- Se conserva el MIME completo del grabador, incluidos códecs; se solicita cerrar MediaRecorder antes de cortar las pistas, para recibir su último fragmento. Los detalles incluyen MIME, cantidades de fragmentos/bytes y etapa, sin audio ni transcripción en los nuevos diagnósticos.
+- Botón de reintento en memoria para la última captura: preserva partes con voz aun si falla el motor, transfiere copias, pide confirmación antes de reemplazar texto y no vuelve a pedir micrófono. No persiste datos nuevos. Límite 32 MB: si se supera se descarta toda la caché temporal y se explica en diagnósticos. Se pierde al recargar/iniciar otra grabación. Para audio largo usar la opción existente Conservar también el audio y Transcribir este audio; retranscribir archivos no ofrece una caché parcial como completa.
+
+### Verificación y límites
+
+- **Código:** cambio en rama `fix/firefox-whisper`; estado de fusión/CI/Pages se comunica por separado en la entrega.
+- **Automática local:** `node --test tests/delta.test.mjs`: **61/61 aprobadas**; `git diff --check` sin errores. Incluye protocolo load/run con id, éxito, timeout, crash, messageerror, respuestas inválidas, cancelación, reintento y limpieza de timers; configuración Firefox/Android simulada; plazos de audio y límite de caché.
+- **Firefox 153.0/Linux headless, Whisper Tiny real/CPU:** descargó y preparó modelo; remuestreo 48→16 kHz correcto. WebM/Opus (108534 bytes) y Ogg/Opus (105128 bytes), 11 s de voz pública, se dividieron en tres fragmentos, guardaron en IndexedDB, reconstruyeron, decodificaron y transcribieron desde la aplicación; ambos entregaron texto, estado «Transcripción completa» e indicador apagado. Fuente pública: https://huggingface.co/datasets/Xenova/transformers.js-docs/resolve/main/jfk.wav ; conversiones locales con FFmpeg. El material es inglés y el pipeline pide español: se comprueba integración, no precisión de una nota en español. No se registró el texto de salida. El navegador de prueba necesitó omitir validación TLS del proxy de este entorno; **no se cambia TLS en la aplicación**.
+- **Recorrido PCM y reintento en Firefox real:** la misma voz pública atravesó segmentación, remuestreo, Worker e inserción en el editor. Apareció el botón de reintento; al usarlo se reinició el motor, volvió a entregar texto y apagó el indicador. En ese reintento el analizador marcó una parte como repetitiva/casi numérica: se conservó el aviso de revisión, no se certifica exactitud lingüística.
+- **Captura física no validada:** AudioContext no activó salida en el entorno headless, por lo que no se afirma que se haya grabado con un micrófono físico. La preparación PCM y el resto del recorrido se prueban por separado con la misma voz pública.
+- **Firefox Windows y Motorola/Brave físicos:** pendientes de prueba por el usuario con este cambio. El éxito previo de Android no demuestra ausencia de regresiones en esta revisión. No se avanzó a otras funciones.
+
+**Prueba manual:** seguir la sección «Corrección de bloqueo en Firefox» del README, con 20–30 s de voz ficticia, Base, pausa/reanudar, detener, cierre del indicador, reproducción del audio, retranscripción guardada y reintento tras cancelar. Repetir en Brave/Motorola cambiando de vistas durante la captura. Si falla, informar navegador/modelo, duración, etapa y detalles técnicos sin notas privadas.
+
+
 ## Entrega a otras IA · Estado consolidado — 15 de noviembre de 2026
 
 **Alcance de esta entrada:** documentación de continuidad, sin cambios de funcionamiento.

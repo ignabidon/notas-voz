@@ -652,3 +652,105 @@ test('Delta 11: Seleccionar, Copiar y Compartir están visibles fuera de anonimi
   assert.match(html, /\$\('selAll'\)\.onclick/);
   assert.match(html, /\$\('share'\)\.onclick/);
 });
+
+// Protocolo real de la página con Worker y relojes controlados, sin modelos ni datos privados.
+function engineHarness(){
+  const start = html.indexOf('let engine = null');
+  const end = html.indexOf('\nlet backend', start);
+  const timers = new Map(), workers = [], nodes = {};
+  let next = 0;
+  class FakeWorker {
+    constructor(){ workers.push(this); }
+    postMessage(m){ this.sent = m; if (this.throwPost) throw Error('DataCloneError'); }
+    terminate(){ this.terminated = true; }
+  }
+  const api = new Function('Worker','URL','Blob','$','setTimeout','clearTimeout','workerBody',
+    html.slice(start,end) + `\nlet ready=null,readyKey='',modelLoading=false;
+    return {call,onMsg,failAll,withDeadline, pending:()=>waiters.size};`)(
+      FakeWorker,{createObjectURL:()=> 'blob:test',revokeObjectURL:()=>{}},Blob,
+      id=>nodes[id] ||= {style:{}},
+      fn=>{timers.set(++next,fn);return next;}, id=>timers.delete(id), ()=>{});
+  return {api,workers,timers, expire(){const [id,fn]=timers.entries().next().value;timers.delete(id);fn();}};
+}
+test('Whisper: ready y result resuelven por id y limpian sus plazos', async()=>{
+  const h=engineHarness(), p=h.api.call({type:'load'}), id=h.workers[0].sent.id;
+  h.api.onMsg({id:id+10,type:'ready',backend:'CPU'});
+  assert.equal(h.api.pending(),1);
+  h.api.onMsg({id,type:'ready',backend:'CPU'});
+  assert.equal((await p).backend,'CPU'); assert.equal(h.timers.size,0);
+  const audio = new Float32Array([0.1,0.2]);
+  const r=h.api.call({type:'run',audio},[audio.buffer]);
+  assert.equal(h.workers[0].sent.audio,audio);
+  h.api.onMsg({id:h.workers[0].sent.id,type:'result',text:'Frase ficticia.',backend:'CPU'});
+  assert.equal((await r).text,'Frase ficticia.'); assert.equal(h.api.pending(),0);
+});
+test('Whisper: timeout termina Worker, rechaza pendientes y permite reintentar', async()=>{
+  const h=engineHarness(), p=h.api.call({type:'load'});
+  const rejected=assert.rejects(p,/Se agotó el tiempo/); h.expire(); await rejected;
+  assert.ok(h.workers[0].terminated); assert.equal(h.api.pending(),0);
+  const retry=h.api.call({type:'load'});
+  assert.equal(h.workers.length,2);
+  h.api.onMsg({id:h.workers[1].sent.id,type:'ready',backend:'CPU'}); await retry;
+  assert.equal(h.timers.size,0);
+});
+test('Whisper: error, respuesta inválida y cancelación liberan solicitudes sin exponer contenido',async()=>{
+  for(const mode of ['error','invalid','cancel','messageerror','crash']){
+    const h=engineHarness(),p=h.api.call({type:'run'}),w=h.workers[0];
+    const rejected=assert.rejects(p,e=>!e.message.includes('SECRETO'));
+    if(mode==='cancel') h.api.failAll(Error('cancelado'));
+    else if(mode==='messageerror') w.onmessageerror();
+    else if(mode==='crash') w.onerror({preventDefault(){}});
+    else h.api.onMsg({id:w.sent.id,type:mode==='error'?'error':'result',message:'SECRETO',text:42});
+    await rejected;assert.equal(h.api.pending(),0);assert.equal(h.timers.size,0);
+  }
+});
+test('audio: decodificación y remuestreo tienen plazos y tareas tardías no se mezclan',async()=>{
+  const h=engineHarness();
+  const p=h.api.withDeadline(new Promise(()=>{}),15,'lectura');
+  const rejected=assert.rejects(p,/lectura/);h.expire();await rejected;
+  assert.match(html,/withDeadline\(off.startRendering\(\), 15000/);
+  assert.match(html,/withDeadline\(new Promise\(\(res, rej\) => ctx.decodeAudioData/);
+  assert.match(html,/!dead && epoch === processingEpoch/);
+});
+test('reintento: conserva muestras originales antes de transferir copias y no exige guardado persistente',()=>{
+  assert.match(html,/retainRetryAudio\(blocks, rate, info\);\n  if \(dead\) return/);
+  assert.match(html,/copy = job.a.slice\(\)/);
+  assert.match(html,/for \(const part of parts\) onSegment\(part.blocks, part.rate, part.info\)/);
+  assert.ok(ids.includes('retryTranscription'));
+});
+test('compatibilidad: Firefox usa CPU y un hilo sin aislamiento; Android conserva aceleración automática',async()=>{
+  const source=html.slice(html.indexOf('function workerBody(){'),html.indexOf('let engine = null'));
+  for(const firefox of [true,false]){
+    const messages=[],options=[];
+    const wasm={numThreads:4,proxy:true};
+    const lib={env:{backends:{onnx:{wasm}}},pipeline:async(task,model,opts)=>{options.push(opts);return async()=>({text:'Prueba ficticia.'});}};
+    const self={postMessage:m=>messages.push(m)};
+    const global={crossOriginIsolated:false,navigator:{userAgent:firefox?'Firefox/153.0':'Chrome/142 Android',gpu:{requestAdapter:async()=>({info:{}})}}};
+    const code=source.replace("import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1')",'Promise.resolve(testLib)');
+    new Function('self','globalThis','testLib',code+';workerBody();')(self,global,lib);
+    await self.onmessage({data:{type:'load',id:1,model:'tiny',accel:'auto'}});
+    assert.equal(messages.at(-1).type,'ready');
+    assert.equal(messages.at(-1).backend,firefox?'CPU':'GPU');
+    assert.equal(wasm.numThreads,firefox?1:4);assert.equal(wasm.proxy,!firefox);
+    await self.onmessage({data:{type:'run',id:2,audio:new Float32Array(1600)}});
+    assert.equal(messages.at(-1).text,'Prueba ficticia.');
+  }
+});
+test('reintento en memoria: límite sin audio parcial y sin copiar el archivo guardado',()=>{
+  const start=html.indexOf('let retryAudio = []'),end=html.indexOf('function refreshRetry()',start);
+  const notes=[];
+  const api=new Function('logDiag',html.slice(start,end)+`;let feeding=false;
+    return {add:retainRetryAudio,clear:clearRetryAudio,state:()=>({length:retryAudio.length,unavailable:retryUnavailable})};`)(s=>notes.push(s));
+  api.add([new Float32Array(4096)],48000,{});assert.equal(api.state().length,1);
+  api.add([{byteLength:33*1024*1024}],48000,{});
+  assert.deepEqual(api.state(),{length:0,unavailable:true});
+  api.add([new Float32Array(4096)],48000,{});assert.equal(api.state().length,0);
+  api.clear();api.add([new Float32Array(4096)],48000,{});assert.equal(api.state().length,1);
+});
+test('captura: plazos de AudioContext y Worklet, cierre del grabador antes de cortar pistas y MIME real',()=>{
+  assert.match(html,/withDeadline\(ctx.resume\(\), 10000/);
+  assert.match(html,/withDeadline\(ctx.audioWorklet.addModule\(url\), 15000/);
+  const stop=html.slice(html.indexOf('function stopWhisper(){'),html.indexOf('function cancelProcessing(){'));
+  assert.ok(stop.indexOf('mr.stop()')<stop.indexOf('stopCapture(cap)'));
+  assert.match(html,/audioMime = mr.mimeType \|\| mime/);
+});

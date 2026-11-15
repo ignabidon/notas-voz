@@ -55,3 +55,12 @@ Son datos vinculados al origen de GitHub Pages, no al nombre de la carpeta. Cual
 ## Nota histórica (no es un fallo vigente confirmado)
 
 En una etapa anterior de Gamma se observaron números o errores en la transcripción sin diagnóstico reproducible. Se conserva el antecedente por contexto, pero **no debe atribuirse a Delta 11** ni tratarse como incidencia actual sin una nueva prueba.
+
+## Corrección Firefox — 15/11/2026
+
+- Mantener Delta 11 y la misma URL. La nueva marca BUILD contiene «corrección Firefox».
+- Firefox fuerza CPU y configura WASM antes de crear sesiones. Android mantiene el backend automático. No se ha demostrado la causa exacta del bloqueo en Firefox/Windows del usuario.
+- No restaurar el fallback de inferencia en el hilo principal: un cálculo síncrono allí impide garantizar cancelación y temporizadores. Si falla el Worker, informar y permitir reintentar en un Worker nuevo.
+- Cada petición load/run tiene límite absoluto de 5 minutos; no renovarlo por progreso de descarga. Remuestreo/lectura/decodificación tienen plazos propios. Respuestas tardías no deben modificar una sesión nueva (`processingEpoch`).
+- `retryAudio` es temporal, solo partes con voz, límite 32 MB sin copias parciales ofrecidas como completas. Se vacía al comenzar otra grabación. La retranscripción de archivos usa el archivo persistido, no una caché parcial. No cambiar claves de IndexedDB/localStorage.
+- Suite: 61 pruebas. Ver CAMBIOS.md para ejecución de navegador y límites. Validación física Motorola y Firefox Windows pendiente.
