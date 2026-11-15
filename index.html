@@ -45,7 +45,7 @@
 </head>
 <body>
 <h1>Notas por voz</h1>
-<div class="sub">El audio no se guarda ni se envía a ningún servidor. Las notas quedan en este dispositivo. · v3</div>
+<div class="sub">El audio no se guarda ni se envía a ningún servidor. Las notas quedan en este dispositivo. · v3.1</div>
 
 <div class="card">
   <label>Motor de transcripción</label>
@@ -83,6 +83,12 @@
   <div id="interim"></div>
   <div class="bar" id="lv"><i id="lvI"></i></div>
   <div class="warn" id="lvTxt"></div>
+  <details>
+    <summary>Registro de la última grabación</summary>
+    <pre id="diag" class="warn" style="white-space:pre-wrap;margin:6px 0"></pre>
+    <div class="warn">No incluye nada de lo que dijiste: solo duraciones, tiempos y errores.</div>
+    <div class="row"><button id="copyDiag">Copiar registro</button></div>
+  </details>
 </div>
 
 <div class="card">
@@ -343,6 +349,7 @@ function renderList(){
 }
 $('save').onclick = () => {
   const text = $('text').value.trim(); if (!text) return flash('No hay texto para guardar.');
+  if (!pendingOk()) return;
   let n = notes.find(m => m.id === cur);
   if (!n) { n = {id: Date.now().toString(36)}; notes.push(n); cur = n.id; }
   n.title = $('title').value.trim() || ('Nota ' + fmt(Date.now())); n.text = $('text').value; n.tags = tags.slice(); n.ts = Date.now();
@@ -357,8 +364,13 @@ $('newn').onclick = () => {
 
 /* ---------- Seleccionar, copiar, borrar ---------- */
 $('selAll').onclick = () => { const t = $('text'); t.focus(); t.select(); try { t.setSelectionRange(0, t.value.length); } catch (e) {} };
+function pendingOk(){
+  if (!recording && !outstanding) return true;
+  return confirm(recording ? 'Todavía estás grabando: el texto está incompleto. ¿Continuar igual?' : 'Todavía faltan ' + outstanding + ' parte(s) por transcribir: el texto está incompleto. ¿Continuar igual?');
+}
 $('copyAll').onclick = async () => {
   const t = $('text'); if (!t.value.trim()) return flash('No hay texto para copiar.');
+  if (!pendingOk()) return;
   try { await navigator.clipboard.writeText(t.value); }
   catch (e) { t.focus(); t.select(); try { document.execCommand('copy'); } catch (e2) { return flash('No se pudo copiar. Usá Seleccionar todo y copiá a mano.'); } }
   flash('Copiado (' + nWords(t.value) + ' palabras).');
@@ -473,11 +485,11 @@ function makeDoc(){
   return new File(['﻿' + html], fname('doc'), {type:'application/msword'});
 }
 function download(file){ const a = document.createElement('a'); a.href = URL.createObjectURL(file); a.download = file.name; document.body.append(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href), 4000); }
-$('doc').onclick = () => $('text').value.trim() ? download(makeDoc()) : flash('No hay texto para exportar.');
-$('txt').onclick = () => $('text').value.trim() ? download(new File([($('title').value ? $('title').value + '\n\n' : '') + $('text').value], fname('txt'), {type:'text/plain'})) : flash('No hay texto para exportar.');
+$('doc').onclick = () => $('text').value.trim() ? (pendingOk() && download(makeDoc())) : flash('No hay texto para exportar.');
+$('txt').onclick = () => $('text').value.trim() ? (pendingOk() && download(new File([($('title').value ? $('title').value + '\n\n' : '') + $('text').value], fname('txt'), {type:'text/plain'}))) : flash('No hay texto para exportar.');
 if (navigator.canShare && navigator.canShare({files:[new File(['x'],'x.txt',{type:'text/plain'})]})) {
   $('share').style.display = '';
-  $('share').onclick = async () => { if (!$('text').value.trim()) return; try { await navigator.share({files:[makeDoc()], title: $('title').value || 'Nota'}); } catch (e) {} };
+  $('share').onclick = async () => { if (!$('text').value.trim() || !pendingOk()) return; try { await navigator.share({files:[makeDoc()], title: $('title').value || 'Nota'}); } catch (e) {} };
 }
 
 /* ====================================================================
@@ -690,7 +702,12 @@ async function toMono16k(blocks, rate){
   return new Float32Array((await off.startRendering()).getChannelData(0));
 }
 
-let lvT = 0, clipUntil = 0;
+let lvT = 0, clipUntil = 0, failedParts = 0, warnParts = 0, segN = 0, diagLines = [];
+function logDiag(x){ diagLines.push(x); $('diag').textContent = diagLines.join('\n'); }
+$('copyDiag').onclick = async () => {
+  const x = $('diag').textContent; if (!x) return flash('Todavía no hay registro.');
+  try { await navigator.clipboard.writeText(x); flash('Registro copiado.'); } catch (e) { flash('No se pudo copiar el registro.'); }
+};
 function level(b){
   let s = 0, pk = 0;
   for (let i = 0; i < b.length; i++) { const v = Math.abs(b[i]); s += v * v; if (v > pk) pk = v; }
@@ -702,7 +719,10 @@ function level(b){
 let cap = null, seg = null, jobs = [], busy = false, outstanding = 0, dead = false, gotText = false, lastMs = 0, t0 = 0, timer = null, chain = Promise.resolve(), wl = null;
 const lockWake = async () => { try { wl = await navigator.wakeLock.request('screen'); } catch (e) {} };
 const unlockWake = () => { try { wl && wl.release(); } catch (e) {} wl = null; };
-document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && recording && recEng === 'whisper') lockWake(); });
+document.addEventListener('visibilitychange', () => {
+  if (recording && recEng === 'whisper') logDiag('La página pasó a ' + (document.visibilityState === 'visible' ? 'visible' : 'segundo plano') + ' a los ' + Math.floor((Date.now() - t0) / 1000) + ' s');
+  if (document.visibilityState === 'visible' && recording && recEng === 'whisper') lockWake();
+});
 function lockUI(on){
   $('model').disabled = on; $('accel').disabled = on; $('mic').disabled = on;
   document.querySelectorAll('input[name=eng]').forEach(r => r.disabled = on || (r.value === 'native' && !nativeLocal));
@@ -725,6 +745,8 @@ function maybeDone(){
   if (recording || busy || outstanding > 0) return;
   clearInterval(timer); timer = null; lockUI(false); $('rec').disabled = false;
   if (dead) return;
+  if (failedParts) { setStatus('Terminó, pero ' + failedParts + ' parte(s) del audio no se pudieron transcribir: buscá «⚠ falta una parte» en el texto.'); return; }
+  if (warnParts) { setStatus('Terminó, pero ' + warnParts + ' parte(s) dieron muy poco texto para su duración: puede faltar algo. Mirá el registro de la grabación.'); return; }
   setStatus(gotText ? 'Listo' + (lastMs ? ' (última parte: ' + Math.round(lastMs / 1000) + ' s, ' + (backend === 'GPU' ? 'con la GPU del dispositivo' : 'con el procesador') + ')' : '') + '. Revisá y guardá.' : 'No se detectó voz. Probá hablar más cerca del micrófono.');
 }
 function fail(e){
@@ -734,28 +756,42 @@ function fail(e){
 }
 async function pump(){
   if (busy || dead) return;
-  const audio = jobs.shift();
-  if (!audio) return maybeDone();
+  const job = jobs.shift();
+  if (!job) return maybeDone();
   busy = true; refreshStatus();
-  try {
-    await ensureModel();
-    const t = Date.now();
-    const r = await call({type:'run', audio}, [audio.buffer]);
-    lastMs = Date.now() - t; backend = r.backend || backend;
-    const c = cleanText(r.text);
+  const n = ++segN, sec = job.a.length / 16000;
+  try { await ensureModel(); } catch (e) { return fail(e); }
+  let c = '', err = '', ms = 0;
+  for (let k = 1; k <= 2; k++) { // un reintento por parte
+    try {
+      const t = Date.now(), copy = job.a.slice();
+      const r = await call({type:'run', audio: copy}, [copy.buffer]);
+      ms = Date.now() - t; lastMs = ms; backend = r.backend || backend; c = cleanText(r.text); err = ''; break;
+    } catch (e) { err = e.message || String(e); logDiag('#' + n + ' intento ' + k + ' falló: ' + err); }
+  }
+  const where = backend === 'GPU' ? 'GPU' : 'procesador';
+  if (err) {
+    failedParts++;
+    appendMachine('[⚠ falta una parte del audio (~' + Math.round(sec) + ' s): no se pudo transcribir]');
+    logDiag('#' + n + ' · ' + sec.toFixed(1) + ' s de audio · ERROR');
+  } else {
+    const words = nWords(c), low = sec >= 10 && words / sec < 0.8;
     if (c) { gotText = true; appendMachine(applyDict(c, D)); }
-  } catch (e) { return fail(e); }
+    if (low) warnParts++;
+    logDiag('#' + n + ' · ' + sec.toFixed(1) + ' s de audio · ' + (ms / 1000).toFixed(1) + ' s procesando (' + where + ') · ' + words + ' palabras' + (low ? ' ⚠ poco texto para la duración' : (!c ? ' (sin texto)' : '')));
+  }
   busy = false; outstanding--; refreshStatus(); pump();
 }
 function onSegment(blocks, rate){
   if (dead) return;
   outstanding++;
-  chain = chain.then(() => toMono16k(blocks, rate)).then(a => { if (!dead) { jobs.push(a); pump(); } }).catch(fail);
+  chain = chain.then(() => toMono16k(blocks, rate)).then(a => { if (!dead) { jobs.push({a}); pump(); } }).catch(e => { failedParts++; outstanding--; appendMachine('[⚠ falta una parte del audio: no se pudo preparar]'); logDiag('Parte sin preparar: ' + (e.message || e)); pump(); });
 }
 async function startWhisper(){
-  dead = false; jobs = []; busy = false; outstanding = 0; gotText = false; lastMs = 0; modelErr = ''; chain = Promise.resolve();
+  dead = false; jobs = []; busy = false; outstanding = 0; gotText = false; lastMs = 0; modelErr = ''; chain = Promise.resolve(); failedParts = 0; warnParts = 0; segN = 0; diagLines = []; $('diag').textContent = '';
   cap = await startCapture(b => { level(b); if (seg) seg.push(b); });
   const rate = cap.rate;
+  logDiag('Modelo ' + $('model').value.replace('Xenova/', '') + ' · aceleración ' + $('accel').value + ' · micrófono ' + $('mic').value + ' · ' + rate + ' Hz');
   seg = makeSegmenter(rate, blocks => onSegment(blocks, rate));
   t0 = Date.now(); lockWake(); lockUI(true); prepareNew(); $('lv').style.display = 'block';
   ensureModel().catch(() => {}); // carga el modelo mientras hablás
@@ -764,6 +800,7 @@ async function startWhisper(){
 function stopWhisper(){
   if (cap) { stopCapture(cap); cap = null; }
   if (seg) { seg.flush(); seg = null; }
+  logDiag('Fin de la grabación a los ' + Math.floor((Date.now() - t0) / 1000) + ' s · partes pendientes: ' + outstanding);
   unlockWake();
   if (outstanding === 0 && !busy) maybeDone();
   else { $('rec').disabled = true; refreshStatus(); }
