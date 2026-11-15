@@ -499,7 +499,7 @@ test('Delta 09: estado único de Whisper incluye trabajo, grabación y fin', () 
 test('Delta 09: la barra es indeterminada cuando no hay estimación fiable', () => {
   assert.match(html,/const hasProgress = recording \? null/);
   assert.match(html,/state\.progress === null \? '' : '≈ '/);
-  assert.match(html,/bar\.classList\.toggle\('indeterminate', state\.progress === null\)/);
+  assert.match(html,/bar\.classList\.toggle\('indeterminate', pending\)/);
   assert.match(html,/bar\.removeAttribute\('aria-valuenow'\)/);
   assert.match(html,/bar\.setAttribute\('aria-valuenow', String\(state\.progress\)\)/);
   assert.match(html,/\.transcription-dock-bar\.indeterminate i\{animation:/);
@@ -511,7 +511,7 @@ test('Delta 09: un mismo ciclo de actualización muestra y oculta el aviso', () 
   assert.match(html,/function maybeDone\(\)\{[\s\S]*?updProgress\(\);/);
   assert.match(html,/processingStartedAt = 0;\s+refreshTranscriptionDock\(\);\s+setStatus\('Procesamiento cancelado/);
   assert.match(html,/\$\('transcriptionDockCancel'\)\.onclick = \(\) => \$\('cancelProcessing'\)\.click\(\)/);
-  assert.match(html,/dock\.hidden = !state\.active/);
+  assert.match(html,/if \(dock\.hidden === state\.active\) dock\.hidden = !state\.active/);
   assert.match(html,/if \(!state\.active\) return/);
   assert.match(html,/recEng === 'whisper'/);
   assert.match(html,/id="cancelProcessing"/);
