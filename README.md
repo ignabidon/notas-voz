@@ -38,6 +38,14 @@ Al tocar **Guardar .txt** se solicita al navegador descargar un archivo de texto
 
 Este botón también conserva la copia local anterior como respaldo; no borra ni migra contenido. La lista interna de notas guardadas sigue oculta en este cambio. La descarga TXT es únicamente de la nota actual; no incluye audio, diccionario, claves o ajustes. No usar información sensible real antes de validar el proceso.
 
+## Audio: un principal y recuperación temporal (Delta 04)
+
+Si activás «Guardar el audio», Delta conserva **un audio principal** y, cuando lo reemplazás, una **única copia temporal del audio anterior**. Al iniciar una nueva grabación, el anterior no se borra anticipadamente: se reemplaza recién cuando el navegador guarda el primer fragmento de audio nuevo. Si falla la captura antes de eso, sigue disponible el anterior.
+
+En «Audio guardado» aparece **Recuperar audio anterior** cuando existe esa copia temporal. El botón intercambia cuál es el audio principal y permite deshacer el cambio. Cuando guardás otra grabación, se descarta la copia más antigua; no es un historial ni una copia de seguridad permanente. La copia temporal sigue ocupando espacio en el navegador. «Borrar audio» elimina tanto el principal como la copia temporal, con confirmación.
+
+Las grabaciones se almacenan en IndexedDB, no en GitHub. La grabación breve puede no producir fragmentos si falla antes de que MediaRecorder entregue audio, y el sistema operativo puede borrar datos del navegador. Descargar el audio sigue siendo la forma de conservarlo fuera de Brave. Probar recuperación únicamente con audios ficticios en Android antes de usar información sensible.
+
 ## Notas y almacenamiento
 
 La web almacena información en localStorage e IndexedDB. Las claves técnicas existentes (algunas llevan el término «gamma») **se conservaron deliberadamente** para no ocultar las notas, ajustes, audio y diccionario guardados en Brave. GitHub Pages usa el mismo origen en la nueva URL raíz. **No borres los datos del sitio en Brave.** Antes de hacer cambios grandes, exportá copias de notas ficticias que quieras conservar.
