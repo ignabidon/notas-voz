@@ -308,7 +308,7 @@ html{scroll-padding-bottom:200px}
   <div id="flash" role="status" aria-live="polite"></div>
   <div class="dock-actions" id="studioDockNotes">
     <button type="button" id="studioAnonAction" aria-label="Anonimizar transcripción"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3 4 6v6c0 4 8 9 8 9s8-5 8-9V6z"/><path d="m8 12 3 3 5-6"/></svg><span>Anonimizar</span></button>
-    <button type="button" class="p" id="save"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 3h12l4 4v14H3V3zM7 3v6h10V3M7 21v-8h10v8"/></svg><span>Guardar nota</span></button>
+    <button type="button" class="p" id="save" title="Descarga la nota como archivo .txt en este dispositivo"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 3h12l4 4v14H3V3zM7 3v6h10V3M7 21v-8h10v8"/></svg><span>Guardar .txt</span></button>
   </div>
   <div id="studioDockCapture" hidden aria-label="Controles fijos de grabación">
     <div class="dock-capture-status" role="status" aria-live="off">
@@ -646,7 +646,7 @@ let notes = [], cur = null, tags = [], activeTag = null, anonBackup = null, base
 try { notes = JSON.parse(localStorage.getItem(KEY) || '[]'); } catch (e) { notes = []; }
 const setStatus = s => $('status').textContent = s;
 let ft; const flash = s => { $('flash').textContent = s; clearTimeout(ft); ft = setTimeout(() => $('flash').textContent = '', 6000); };
-const persist = () => { try { localStorage.setItem(KEY, JSON.stringify(notes)); } catch (e) { flash('No se pudo guardar en este navegador.'); } };
+const persist = () => { try { localStorage.setItem(KEY, JSON.stringify(notes)); return true; } catch (e) { flash('No se pudo guardar en este navegador.'); return false; } };
 const eng = () => document.querySelector('input[name=eng]:checked').value;
 const nWords = s => (s.match(WORDS) || []).length;
 
@@ -678,7 +678,12 @@ $('save').onclick = () => {
   let n = notes.find(m => m.id === cur);
   if (!n) { n = {id: Date.now().toString(36)}; notes.push(n); cur = n.id; }
   n.title = $('title').value.trim() || ('Nota ' + fmt(Date.now())); n.text = $('text').value; n.tags = tags.slice(); n.ts = Date.now();
-  persist(); renderList(); flash('Guardada.');
+  const savedLocally = persist(); renderList();
+  let requestedDownload = false;
+  try { download(makeTxt()); requestedDownload = true; } catch (e) {}
+  flash(requestedDownload
+    ? 'Descarga .txt solicitada. Buscá la nota en Descargas de Brave.' + (savedLocally ? '' : ' No se pudo guardar copia en el navegador.')
+    : 'No se pudo iniciar la descarga .txt.' + (savedLocally ? ' Quedó una copia en Brave.' : ' Copiá el texto antes de salir.'));
   showSuggestions(suggest(baseline, $('text').value, D.rules.map(r => r.a.toLowerCase())));
   baseline = $('text').value;
 };
@@ -1003,6 +1008,10 @@ $('undo').onclick = () => {
 /* ---------- Exportar ---------- */
 const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 const fname = ext => (($('title').value.trim() || 'nota').replace(/[^\w\- áéíóúñÁÉÍÓÚÑ]/g,'').trim().replace(/\s+/g,'_') || 'nota') + '.' + ext;
+function makeTxt(){
+  const title = $('title').value.trim();
+  return new File([(title ? title + '\n\n' : '') + $('text').value], fname('txt'), {type:'text/plain;charset=utf-8'});
+}
 function makeDoc(){
   const t = esc($('title').value.trim() || 'Nota'), paras = $('text').value.split(/\n+/).filter(Boolean).map(p => '<p>' + esc(p) + '</p>').join('');
   const html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>' + t + '</title></head><body style="font-family:Calibri,Arial,sans-serif;font-size:12pt"><h1>' + t + '</h1><p style="color:#666">' + fmt(Date.now()) + (tags.length ? ' · Etiquetas: ' + esc(tags.join(', ')) : '') + '</p>' + paras + '</body></html>';
@@ -1010,7 +1019,7 @@ function makeDoc(){
 }
 function download(file){ const a = document.createElement('a'); a.href = URL.createObjectURL(file); a.download = file.name; document.body.append(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href), 60000); }
 $('doc').onclick = () => $('text').value.trim() ? (pendingOk() && anonOk() && download(makeDoc())) : flash('No hay texto para exportar.');
-$('txt').onclick = () => $('text').value.trim() ? (pendingOk() && anonOk() && download(new File([($('title').value ? $('title').value + '\n\n' : '') + $('text').value], fname('txt'), {type:'text/plain'}))) : flash('No hay texto para exportar.');
+$('txt').onclick = () => $('text').value.trim() ? (pendingOk() && anonOk() && download(makeTxt())) : flash('No hay texto para exportar.');
 if (navigator.canShare && navigator.canShare({files:[new File(['x'],'x.txt',{type:'text/plain'})]})) {
   $('share').style.display = '';
   $('share').onclick = async () => { if (!$('text').value.trim() || !pendingOk() || !anonOk()) return; try { await navigator.share({files:[makeDoc()], title: $('title').value || 'Nota'}); } catch (e) {} };
