@@ -10,7 +10,7 @@ const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map(m => m[1]);
 test('título y punto único de entrada', () => {
   assert.match(html, /<title>Grabador de voz Delta/);
   assert.match(html, /<h1>Grabador de voz Delta<\/h1>/);
-  assert.match(html, /DELTA 10 · VERSIÓN DE PRUEBA/);
+  assert.match(html, /DELTA 11 · VERSIÓN DE PRUEBA/);
 });
 
 test('los scripts se pueden analizar', () => {
@@ -577,4 +577,78 @@ test('Delta 10: no cambia configuración del modelo ni el motor de Whisper', () 
   assert.match(html,/function startWhisper\(\)/);
   assert.match(html,/const WL = "class P extends AudioWorkletProcessor/);
   assert.match(html,/processingStartedAt = 0/);
+});
+
+
+test('Delta 11: guardar audio accesible en Grabar reutiliza audio existente', () => {
+  assert.match(html, /id="recordDownloadAudio"/);
+  assert.match(html, /id="recordSaveAudio"/);
+  assert.match(html, /id="recordAudioHint"/);
+  assert.match(html, /\$\('recordDownloadAudio'\)\.onclick = \(\) => \{/);
+  assert.match(html, /\$\('aDown'\)\.click\(\)/);
+  assert.match(html, /\$\('recordDownloadAudio'\)\.disabled = !m \|\| audioBusy\(\)/);
+  assert.match(html, /refreshAudioBox\(\); \/\/ habilita Guardar audio/);
+  assert.match(html, /audioGetBlob\(m\)/);
+});
+
+test('Delta 11: interruptor de guardar audio sincroniza Ajustes y pantalla Grabar', () => {
+  assert.match(html, /\$\('recordSaveAudio'\)\.addEventListener\('change'/);
+  assert.match(html, /\$\('saveAudio'\)\.checked = \$\('recordSaveAudio'\)\.checked/);
+  assert.match(html, /\$\('saveAudio'\)\.dispatchEvent\(new Event\('change', \{bubbles:true\}\)\)/);
+  assert.match(html, /\$\('saveAudio'\)\.addEventListener\('change'/);
+  assert.match(html, /\$\('recordSaveAudio'\)\.checked = \$\('saveAudio'\)\.checked/);
+  assert.match(html, /loadCfg\(\); \$\('recordSaveAudio'\)\.checked = \$\('saveAudio'\)\.checked/);
+  assert.match(html, /\$\('recordSaveAudio'\)\.disabled = on;/);
+  assert.match(html, /Solo con Whisper|recEng === 'whisper'/);
+});
+
+test('Delta 11: Compartir texto no exige archivo Word ni oculta errores', async () => {
+  const match = html.match(/async function shareNote\(\) \{[\s\S]*?\n\}/);
+  assert.ok(match);
+  assert.match(match[0], /navigator\.share\(payload\)/);
+  assert.doesNotMatch(match[0], /makeDoc\(\)|navigator\.canShare/);
+  assert.match(match[0], /e\.name === 'AbortError'/);
+  assert.match(match[0], /Brave no pudo abrir Compartir/);
+  assert.match(match[0], /navigator\.clipboard\.writeText\(text\)/);
+  assert.match(html, /\$\('share'\)\.onclick = shareNote/);
+  assert.equal((html.match(/id="share"/g) || []).length, 1);
+});
+
+test('Delta 11: Compartir usa Web Share de texto cuando el navegador lo admite', async () => {
+  const match = html.match(/async function shareNote\(\) \{[\s\S]*?\n\}/);
+  assert.ok(match);
+  const shared=[];
+  const nav={share:async payload=>shared.push(payload)};
+  const els={text:{value:'Prueba ficticia para compartir'},title:{value:'Mi nota'}};
+  const fn = new Function('$','navigator','pendingOk','anonOk','flash',
+    match[0]+'; return shareNote;')(
+    id=>els[id],nav,()=>true,()=>true,()=>{});
+  await fn();
+  assert.deepEqual(shared,[{title:'Mi nota',text:'Prueba ficticia para compartir'}]);
+});
+
+test('Delta 11: al faltar Web Share copia el texto y muestra alternativa', async () => {
+  const match = html.match(/async function shareNote\(\) \{[\s\S]*?\n\}/);
+  assert.ok(match);
+  let copied='',feedback='';
+  const els={text:{value:'Texto ficticio'},title:{value:''}};
+  const fn = new Function('$','navigator','pendingOk','anonOk','flash',
+    match[0]+'; return shareNote;')(
+    id=>els[id],{clipboard:{writeText:async t=>{copied=t}}},
+    ()=>true,()=>true,t=>{feedback=t});
+  await fn();
+  assert.equal(copied,'Texto ficticio');
+  assert.match(feedback,/se copió/);
+});
+
+test('Delta 11: Seleccionar, Copiar y Compartir están visibles fuera de anonimización', () => {
+  const area=html.match(/<div class="editor-quick-actions">([\s\S]*?)<\/div>/);
+  assert.ok(area);
+  for(const id of ['correctSelection','copyAll','selAll','share'])
+    assert.match(area[1],new RegExp('id="'+id+'"'));
+  assert.doesNotMatch(area[1], /style="display:none"/);
+  assert.match(html, /\.editor-quick-actions\{grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+  assert.match(html, /\$\('copyAll'\)\.onclick/);
+  assert.match(html, /\$\('selAll'\)\.onclick/);
+  assert.match(html, /\$\('share'\)\.onclick/);
 });
