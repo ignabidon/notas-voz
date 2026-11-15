@@ -1,5 +1,19 @@
 # Registro de cambios — Grabador de voz Delta
 
+## Delta 06a · Visibilidad y limpieza de textos locales — 15 de noviembre de 2026
+
+**Alcance:** seguridad del texto, sin cambios en el audio ni en Whisper.
+
+- Auditado `localStorage`: notas, borrador, deshacer, configuraciones, diccionario y tabla de asociaciones se conservan en el navegador. Audio y recuperación temporal permanecen en IndexedDB; los TXT descargados están fuera de ambos mecanismos.
+- Se muestra un panel en Ajustes que explica la persistencia y falta de cifrado, y muestra únicamente el **número de notas** y existencia de borrador/deshacer; nunca enseña transcripciones en diagnósticos.
+- Nuevo botón optativo **Borrar notas y borradores de Brave**: exige confirmación, rechaza borrado durante grabación/transcripción, elimina exclusivamente las claves históricas de notas/borrador/deshacer y vacía el texto en pantalla sin recrear automáticamente el borrador.
+- **No se borra** audio, modelos, tabla de personas, diccionario, configuración ni archivos descargados; tampoco se realiza limpieza automática, migración o cifrado.
+- **Riesgos pendientes:** contenido local y archivos TXT/Word sin cifrado, dependencias externas para modelos/bibliotecas y limitaciones del borrado lógico. Antes de usar datos reales habrá que definir cifrado, claves y copias de seguridad. No se promete borrado seguro.
+- Verificación automatizada adicional; la prueba real del botón en Brave con datos ficticios está pendiente.
+
+**Modelo Whisper:** Small ya está disponible en Ajustes. Se recomienda comparación controlada del mismo audio con Base y Small (guardar antes la transcripción base), sin modificar todavía el segmentador ni instalar modelos nuevos.
+
+
 ## Delta 05 · Primera etapa de confiabilidad de grabaciones largas — 15 de noviembre de 2026
 
 **Objetivo:** evitar pérdidas silenciosas y facilitar la recuperación de audio cuando Brave retrasa la entrega de datos o Whisper se atrasa; sin alterar los modelos ni los fragmentos usados por Whisper.
