@@ -13,7 +13,7 @@
     --bg:#f3f0e8; --bg2:#ebe6da; --card:#fffdf9; --ink:#23262b; --mut:#656b72; --line:#e2dccf;
     --acc:#3a6860; --acc-ink:#fff; --acc-soft:#e3eeea;
     --rec:#c0503a; --rec-ink:#fff; --rec-soft:#f8e4de;
-    --note-bg:#fbf0d9; --note-ink:#6a4d10;
+    --bar-l:46%; --note-bg:#fbf0d9; --note-ink:#6a4d10;
     --shadow:0 1px 2px rgba(50,40,20,.05),0 10px 24px -14px rgba(50,40,20,.22);
     --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
   }
@@ -21,7 +21,7 @@
     --bg:#121518; --bg2:#1a1e22; --card:#1b1f23; --ink:#e9e6df; --mut:#9ba2a9; --line:#2d3339;
     --acc:#7dbbb0; --acc-ink:#0e1d1a; --acc-soft:#1f322d;
     --rec:#ee7d66; --rec-ink:#2a0f09; --rec-soft:#3a2420;
-    --note-bg:#322a16; --note-ink:#e8d39b;
+    --bar-l:58%; --note-bg:#322a16; --note-ink:#e8d39b;
     --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 24px -14px rgba(0,0,0,.6);
   }}
   *{box-sizing:border-box}
@@ -124,7 +124,12 @@
   #tp.on{display:block}
   #tpTxt{font-size:13.5px;color:var(--mut);text-align:center;margin-bottom:7px;font-variant-numeric:tabular-nums}
   .pbar{height:10px;background:var(--bg2);border-radius:99px;overflow:hidden}
-  .pbar i{display:block;height:100%;width:0;border-radius:99px;background:var(--acc);transition:width .45s ease}
+  .pbar i{display:block;height:100%;width:0;border-radius:99px;background:hsl(var(--h,40) 85% var(--bar-l));transition:width .45s ease,background-color .45s ease}
+  #busy{display:none;align-items:center;gap:10px;background:var(--note-bg);color:var(--note-ink);border-radius:12px;padding:9px 12px;font-size:13.5px;font-weight:500;margin-bottom:8px}
+  #busy.on{display:flex}
+  #busy::before{content:"";flex:none;width:16px;height:16px;border-radius:50%;border:2.5px solid currentColor;border-right-color:transparent;animation:gira .9s linear infinite}
+  @keyframes gira{to{transform:rotate(360deg)}}
+  @media (prefers-reduced-motion:reduce){#busy::before{animation:none}}
   .meta{display:flex;justify-content:space-between;gap:10px;font-size:13px;color:var(--mut);margin-top:8px}
   #wc{font-variant-numeric:tabular-nums;font-weight:500}
 
@@ -316,6 +321,7 @@
         <button class="ghost" id="undoClear" style="display:none">Deshacer borrado</button>
       </div>
     </div>
+    <div id="busy" role="status"></div>
     <textarea id="text" placeholder="Acá va a aparecer lo que digas…"></textarea>
     <div class="meta"><span id="wc">0 palabras</span><span id="cc"></span></div>
     <div id="flash" role="status"></div>
@@ -964,10 +970,14 @@ function fmtEta(ms){
   return s < 60 ? 'unos ' + s + ' s' : 'unos ' + Math.ceil(s / 60) + ' min';
 }
 function updProgress(){
-  const tp = $('tp');
+  const tp = $('tp'), bz = $('busy');
+  const working = recording || busy || outstanding > 0;
+  bz.classList.toggle('on', working && !dead);
+  if (working) bz.textContent = recording ? 'Grabando y transcribiendo: el texto va apareciendo de a poco.' : 'Todavía transcribiendo… esperá a que termine antes de copiar o guardar.';
   if (!totalSec || (!recording && outstanding === 0 && !busy)) { tp.classList.remove('on'); return; }
   const pct = Math.min(100, Math.round(doneSec / totalSec * 100));
   $('tpI').style.width = pct + '%';
+  $('tpI').style.setProperty('--h', Math.round(pct < 60 ? 45 : 45 + (pct - 60) / 40 * 95));
   let t;
   if (recording) t = 'Transcribiendo mientras grabás · ' + pct + '% de lo grabado hasta ahora';
   else if (!procSec) t = modelLoading ? 'Preparando la transcripción…' : 'Empezando a transcribir…';
