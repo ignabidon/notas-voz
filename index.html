@@ -119,6 +119,9 @@ html{scroll-padding-bottom:200px}
         <button id="aTx" type="button">Transcribir este audio</button>
         <button class="ghost danger" id="aDel" type="button">Borrar audio</button>
       </div>
+      <div class="row" id="audioUndoRow" hidden>
+        <button id="aUndoAudio" type="button">Recuperar audio anterior</button>
+      </div>
       <div class="warn" id="audioMsg" style="margin-top:8px"></div>
     </div>
     <details>
@@ -1329,7 +1332,7 @@ const WHY = {silencio: 'pausa en el habla', limite: 'límite de ~29 s', manual: 
 let capBlocks = 0, capRate = 48000, oddParts = 0, pauseAt = 0;
 let lvT = 0, clipUntil = 0, failedParts = 0, warnParts = 0, segN = 0, diagLines = [], totalSec = 0, doneSec = 0, procMs = 0, procSec = 0;
 let paused = false, tAcc = 0, tRun = 0, clockT = null, markT = null, feeding = false, feed = {pos: 0, len: 0, done: 0};
-let mr = null, audioOk = false, audioSid = '', audioN = 0, audioBytes = 0, audioQ = Promise.resolve(), audioMime = '', audioTs = 0, audioWarned = false;
+let mr = null, audioOk = false, audioSid = '', audioN = 0, audioBytes = 0, audioQ = Promise.resolve(), audioMime = '', audioTs = 0, audioWarned = false, audioSaveFailed = false;
 function logDiag(x){ diagLines.push(x); $('diag').textContent = diagLines.join('\n'); }
 /* Errores inesperados de la página: se anotan en los detalles técnicos (solo el mensaje, nunca el contenido de las notas) */
 window.addEventListener('error', e => { try { logDiag('Error inesperado de la página: ' + (e.message || 'sin detalle') + (e.lineno ? ' (línea ' + e.lineno + ')' : '')); } catch (x) {} });
@@ -1607,6 +1610,35 @@ function idbDo(stores, mode, fn){
 const audioPutChunk = (sid, n, b) => idbDo(['chunks'], 'readwrite', t => t.objectStore('chunks').put({k: sid + ':' + String(n).padStart(6, '0'), b}));
 const audioPutMeta = m => idbDo(['meta'], 'readwrite', t => t.objectStore('meta').put(m));
 const audioGetMeta = () => idbDo(['meta'], 'readonly', t => t.objectStore('meta').get('last'));
+const audioGetPrevious = () => idbDo(['meta'], 'readonly', t => t.objectStore('meta').get('previous'));
+/* Mantiene exactamente un audio visible y otro temporal para deshacer la última sustitución. */
+function audioHistoryPlan(current, previous, next) {
+  const keepPrevious = current && current.sid !== next.sid ? {...current, id: 'previous'} : null;
+  const expiredSid = previous && previous.sid !== (keepPrevious && keepPrevious.sid) && previous.sid !== next.sid ? previous.sid : null;
+  return {keepPrevious, expiredSid};
+}
+/* La primera parte se guarda junto con el cambio de audio activo en una sola transacción. */
+async function audioPutFirstChunk(sid, n, b, meta) {
+  const [current, previous] = await Promise.all([audioGetMeta(), audioGetPrevious()]);
+  const plan = audioHistoryPlan(current, previous, meta);
+  return idbDo(['chunks','meta'], 'readwrite', t => {
+    const c = t.objectStore('chunks'), m = t.objectStore('meta');
+    c.put({k: sid + ':' + String(n).padStart(6, '0'), b});
+    if (plan.keepPrevious) m.put(plan.keepPrevious); else m.delete('previous');
+    m.put(meta);
+    if (plan.expiredSid) c.delete(IDBKeyRange.bound(plan.expiredSid + ':', plan.expiredSid + ':￿'));
+  });
+}
+/* No se copian los audios: se intercambia qué grabación figura como principal. */
+async function audioUndoReplace() {
+  const [current, previous] = await Promise.all([audioGetMeta(), audioGetPrevious()]);
+  if (!current || !previous) return false;
+  await idbDo(['meta'], 'readwrite', t => {
+    t.objectStore('meta').put({...previous, id:'last'});
+    t.objectStore('meta').put({...current, id:'previous'});
+  });
+  return true;
+}
 const audioClear = () => idbDo(['chunks', 'meta'], 'readwrite', t => { t.objectStore('chunks').clear(); return t.objectStore('meta').clear(); });
 async function audioGetBlob(m){
   const recs = await idbDo(['chunks'], 'readonly', t => t.objectStore('chunks').getAll(IDBKeyRange.bound(m.sid + ':', m.sid + ':￿')));
@@ -1616,17 +1648,16 @@ const mb = b => (b / 1048576).toFixed(b < 10485760 ? 1 : 0).replace('.', ',') + 
 const audioExt = mime => /mp4/.test(mime || '') ? 'm4a' : /ogg/.test(mime || '') ? 'ogg' : 'webm';
 const audioName = ext => fname('x').replace(/\.x$/, '') + '_audio.' + ext;
 function audioErr(e){
+  audioSaveFailed = true;
   if (audioWarned) return; audioWarned = true;
   flash('No se pudo guardar el audio en este navegador (' + ((e && e.message) || e) + '). La transcripción sigue igual.');
   logDiag('Audio: ' + ((e && e.message) || e));
 }
-/* Antes de grabar: si hay un audio anterior sin descargar, avisa; deja el lugar libre */
+/* Solo avisa: jamás borra el audio anterior antes de comprobar la captura. */
 async function audioSlotOk(){
   try {
     const m = await audioGetMeta();
-    if (m && !m.downloaded && !confirm('Hay un audio guardado de una grabación anterior que todavía no descargaste. Si seguís, se va a reemplazar. ¿Continuar?')) return 'cancel';
-    if (m) await audioClear();
-    $('audioBox').style.display = 'none';
+    if (m && !m.downloaded && !confirm('Tenés un audio anterior sin descargar. Si grabás uno nuevo, el anterior quedará disponible para recuperarlo hasta tu siguiente grabación. ¿Continuar?')) return 'cancel';
     return 'ok';
   } catch (e) { return 'off'; }
 }
@@ -1638,33 +1669,42 @@ function startAudioSave(stream){
   try { mr = new MediaRecorder(stream, Object.assign({audioBitsPerSecond: 32000}, mime ? {mimeType: mime} : {})); }
   catch (e) { mr = null; flash('Este navegador no puede guardar el audio.'); logDiag('Audio: ' + (e.message || e)); return; }
   audioMime = (mr.mimeType || mime || 'audio/webm').split(';')[0];
-  audioSid = Date.now().toString(36); audioN = 0; audioBytes = 0; audioTs = Date.now(); audioQ = Promise.resolve(); audioWarned = false;
+  audioSid = Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,7); audioN = 0; audioBytes = 0; audioTs = Date.now(); audioQ = Promise.resolve(); audioWarned = false; audioSaveFailed = false;
   const sid = audioSid, mimeT = audioMime, ts = audioTs;
   mr.ondataavailable = e => {
     if (!e.data || !e.data.size) return;
     const n = audioN++; audioBytes += e.data.size;
     const meta = {id: 'last', sid, mime: mimeT, ts, ms: elapsedMs(), bytes: audioBytes, complete: false, downloaded: false};
-    audioQ = audioQ.then(() => audioPutChunk(sid, n, e.data)).then(() => audioPutMeta(meta)).catch(audioErr);
+    audioQ = audioQ.then(async () => {
+      if (audioSaveFailed) return;
+      if (n === 0) await audioPutFirstChunk(sid, n, e.data, meta);
+      else { await audioPutChunk(sid, n, e.data); await audioPutMeta(meta); }
+    }).catch(audioErr);
   };
   mr.onstop = () => {
     const meta = {id: 'last', sid, mime: mimeT, ts, ms: elapsedMs(), bytes: audioBytes, complete: true, downloaded: false};
-    audioQ = audioQ.then(() => audioPutMeta(meta)).then(refreshAudioBox).catch(audioErr);
+    audioQ = audioQ.then(async () => {
+      if (audioSaveFailed || !audioN) return;
+      await audioPutMeta(meta);
+    }).then(refreshAudioBox).catch(audioErr);
   };
-  try { mr.start(10000); logDiag('Audio: se guarda en este dispositivo (' + audioMime + ')'); }
+  try { mr.start(10000); $('audioBox').style.display = 'none'; logDiag('Audio: se guarda en este dispositivo (' + audioMime + ')'); }
   catch (e) { mr = null; flash('Este navegador no puede guardar el audio.'); logDiag('Audio: ' + (e.message || e)); }
 }
 async function refreshAudioBox(){
-  const box = $('audioBox'); let m = null;
-  try { m = await audioGetMeta(); } catch (e) {}
+  const box = $('audioBox'); let m = null, previous = null;
+  try { [m, previous] = await Promise.all([audioGetMeta(), audioGetPrevious()]); } catch (e) {}
   if (!m) { box.style.display = 'none'; return; }
-  $('audioInfo').textContent = (m.complete ? '' : 'Quedó una grabación que no llegó a cerrarse (se cortó); se guardó lo grabado hasta ahí. ') + fmtClock(m.ms) + ' · ' + mb(m.bytes) + ' · ' + fmt(m.ts) + (m.downloaded ? ' · ya descargado' : '');
+  $('audioInfo').textContent = (m.complete ? '' : 'Quedó una grabación que no llegó a cerrarse (se cortó); se guardó lo grabado hasta ahí. ') + fmtClock(m.ms) + ' · ' + mb(m.bytes) + ' · ' + fmt(m.ts) + (m.downloaded ? ' · descarga solicitada' : '') + (previous ? ' · Podés recuperar el audio anterior.' : '');
   $('aDownSub').textContent = 'recomendado · .' + audioExt(m.mime);
+  $('audioUndoRow').hidden = !previous;
   box.style.display = '';
 }
-const audioBtns = on => ['aDown', 'aMp3', 'aTx', 'aDel'].forEach(id => $(id).disabled = on);
+const audioBtns = on => ['aDown', 'aMp3', 'aTx', 'aDel', 'aUndoAudio'].forEach(id => $(id).disabled = on);
 const audioBusy = () => recording || busy || outstanding > 0 || feeding;
 const audioMsg = t => $('audioMsg').textContent = t;
 $('aDown').onclick = async () => {
+  if (audioBusy()) return audioMsg('Esperá a que termine la grabación y la transcripción.');
   audioBtns(true);
   try {
     const m = await audioGetMeta(); if (!m) return;
@@ -1675,11 +1715,22 @@ $('aDown').onclick = async () => {
   finally { audioBtns(false); refreshAudioBox(); }
 };
 $('aDel').onclick = async () => {
+  if (audioBusy()) return audioMsg('Esperá a que termine la grabación y la transcripción.');
   let m = null; try { m = await audioGetMeta(); } catch (e) {}
   if (!m) return refreshAudioBox();
-  if (!confirm((m.downloaded ? '' : 'Todavía no lo descargaste. ') + '¿Borrar el audio guardado en este dispositivo? No se puede deshacer.')) return;
+  if (!confirm((m.downloaded ? '' : 'Todavía no lo descargaste. ') + '¿Borrar el audio principal y su copia temporal anterior? No se puede deshacer.')) return;
   try { await audioClear(); audioMsg(''); } catch (e) { audioMsg('No se pudo borrar: ' + (e.message || e)); }
   refreshAudioBox();
+};
+$('aUndoAudio').onclick = async () => {
+  if (audioBusy()) return audioMsg('Esperá a que termine la grabación y la transcripción.');
+  audioBtns(true);
+  try {
+    if (await audioUndoReplace()) audioMsg('Audio anterior recuperado. Podés volver a cambiarlo si fue un error.');
+    else audioMsg('No hay un audio anterior para recuperar.');
+    await refreshAudioBox();
+  } catch (e) { audioMsg('No se pudo recuperar el audio anterior: ' + (e.message || e)); }
+  finally { audioBtns(false); }
 };
 $('aTx').onclick = () => transcribeSaved();
 async function decodePcm(blob, rate){
