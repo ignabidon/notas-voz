@@ -60,6 +60,37 @@ Fuentes consultadas el 15/11/2026: [compatibilidad de SpeechRecognition](https:/
 
 **Verificación:** pruebas automáticas y de interfaz con API simulada; bloqueo real de API ausente en Firefox 153/Linux. No se probó dictado real con voz en Brave/Android, Chrome, Edge o Firefox 160. No se puede confirmar la causa exacta de tu cierre en el Motorola sin su código de error; se corrigieron falsos positivos de disponibilidad, idioma y manejo de sesiones encontrados en el código.
 
+## Texto mientras grabás (15/11/2026)
+
+**Whisper entrega frases por fragmentos, no palabra por palabra.** Delta ya procesa partes mientras sigue grabando. El segmentador conserva bloques de audio hasta un corte por pausa tras unos 20 s acumulados, un límite cercano a 29 s, o una acción manual (Pausar/Marcar/Detener). Comprime silencios: esas cifras no son un plazo máximo de espera del reloj. A eso se suman preparación del modelo y tiempo de procesamiento; en una grabación corta el primer texto puede aparecer después de detener. No se cambian modelo, cortes, parámetros de inferencia ni correcciones para adelantar texto.
+
+En Texto, el campo vacío ahora dice **«Grabando audio… Whisper mostrará el texto por fragmentos; en grabaciones cortas, después de detener»**. Una explicación breve aclara el mecanismo. Son indicaciones de interfaz: no se guardan ni exportan dentro de la nota. Al recibir resultados, se agregan como antes y se conserva el texto previo/las correcciones. Tras detener, el campo y el aviso inferior aclaran que falta procesar audio. Los errores y cancelaciones mantienen su estado y las opciones de recuperación.
+
+El aviso inferior único sigue visible incluso si Whisper está preparado pero todavía está reuniendo el primer fragmento. Indica **«Grabación en curso · Whisper por partes»** o pausa; no promete transcripción «en vivo». Cuando no hay partes por procesar, no muestra una barra de inferencia activa ni un spinner girando. El cronómetro y Pausar/Detener siguen siendo los controles de captura. No hay un segundo motor, ni nuevos temporizadores, ni un procesamiento adicional del audio.
+
+El dictado local del navegador mantiene sus provisionales separados del editor y agrega solo resultados finales, cuando el navegador admite esa función. Sigue deshabilitado si el dispositivo no verifica español local; esta mejora no intenta habilitarlo en el celular del usuario.
+
+### Alternativas evaluadas y recursos
+
+| Alternativa | Alcance y consecuencias |
+| --- | --- |
+| Mantener fragmentos + explicar espera (**implementado**) | Misma cantidad de trabajo de Whisper y mismo mecanismo de calidad. Cambios de texto/estado visual sobre ciclos ya existentes; no se midió consumo de batería. |
+| Emitir tokens de Whisper durante la decodificación | Transformers.js ofrece WhisperTextStreamer. Exigiría ampliar mensajes del Worker y separar/reconciliar un borrador provisional. No evita esperar a que se reúna el fragmento ni prepara antes el modelo. No requiere necesariamente repetir inferencia, pero agrega eventos/actualizaciones y complejidad ante reintentos/cancelaciones. No implementado. |
+| Ventanas más cortas o solapadas, recalculadas continuamente | Puede adelantar borradores, con más procesamiento si se repite audio, consumo y calor potenciales; exige deduplicar/revisar texto. Acortar el contexto puede afectar precisión. Son riesgos de diseño, no mediciones en el Motorola. No implementado. |
+| Provisionales de SpeechRecognition | API pensada para resultados intermedios, pero depende del navegador y su motor/idioma local. No reemplaza a Whisper en dispositivos sin soporte. |
+
+Referencias: [WhisperTextStreamer en Transformers.js 3.8.1](https://huggingface.co/docs/transformers.js/v3.8.1/api/generation/streamers), [interimResults del navegador](https://developer.mozilla.org/en-US/docs/Web/API/SpeechRecognition/interimResults). Ninguna alternativa permite prometer latencia de palabra por palabra en todos los teléfonos.
+
+### Cómo probar
+
+1. Recargá Delta sin borrar datos. Con Whisper y contenido ficticio, empezá a grabar y abrí Texto inmediatamente: el campo puede seguir vacío, pero debe explicar la espera; abajo debe verse «Grabación en curso · Whisper por partes» aunque aún no haya un fragmento preparado.
+2. Grabá 5–10 s y detené. Debe indicar procesamiento y luego mostrar la frase, conservando las advertencias reales si aparecen. El tiempo depende del modelo/dispositivo; no se promete una demora fija.
+3. Probá 45–60 s de habla ficticia continua. Si el dispositivo alcanza a procesar cada parte, aparecerán bloques antes de detener; si procesa más lento, pueden llegar después. Las partes nuevas se suman sin reemplazar las anteriores. No se usa otro modelo para una vista previa.
+4. Probá Pausar/Reanudar y cambiá entre Grabar/Texto/Ajustes. El mensaje debe seguir el estado; solo aparece barra de procesamiento si hay trabajo pendiente o preparación del modelo. No deben entrar palabras como «Grabando audio» en la nota ni en el TXT.
+5. En un navegador que admita dictado local, comprobá provisionales bajo el editor y frases finales sin duplicados. No insistir en esa vía si la opción permanece deshabilitada.
+
+Pruebas automáticas e interfaz en Firefox/Linux con estados simulados satisfactorias. La nueva explicación en el Motorola y con micrófono físico sigue pendiente; Whisper ya había sido confirmado por el usuario, pero eso no valida esta revisión de interfaz ni mide batería.
+
 ## Organización
 
 | Ruta | Para qué sirve |

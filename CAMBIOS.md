@@ -1,5 +1,32 @@
 # Registro de cambios — Grabador de voz Delta
 
+## Delta 11 · Explicar el texto por fragmentos durante la grabación — 15/11/2026
+
+**Base:** `14e8dbe757f0b02a670df3d903ae60bdcedb8cdd`, rama `fix/transcription-feedback`. Revisión técnica y propuesta comunicadas al usuario antes de editar. Se respeta la decisión previa de dejar en pausa el desarrollo del dictado del navegador. Mismos modelos, almacenamiento y URL.
+
+### Evaluación previa
+
+- **Dictado local del navegador:** ya solicita `interimResults=true`, muestra provisional separado y agrega finales sin duplicados. Esa API admite parciales si el motor los entrega. En el celular del usuario está deshabilitada; no se intenta otra habilitación ni se añade dictado remoto.
+- **Whisper de Delta:** ya puede transcribir y agregar partes mientras se sigue grabando, pero el primer resultado necesita reunir un fragmento, prepararlo e inferirlo. Corte por pausa después de ~20 s acumulados, máximo ~29 s de audio segmentado, o flush manual; silencio comprimido y procesamiento impiden prometer tiempo de reloj fijo. Grabaciones breves pueden entregar todo después de Detener.
+- **Streaming de tokens:** [WhisperTextStreamer de Transformers.js 3.8.1](https://huggingface.co/docs/transformers.js/v3.8.1/api/generation/streamers) permitiría ampliar el protocolo Worker/UI y mantener un provisional mientras se decodifica una parte. No implica necesariamente repetir inferencia, pero tampoco elimina la espera de reunir el fragmento. Exige gestión de provisionales, errores/reintentos y más mensajes/renderizados. No se implementa en esta corrección.
+- **Ventanas cortas/solapadas:** requerirían cambiar buffering/segmentación y reconciliación. Repetir inferencia de audio puede aumentar CPU/GPU, memoria, batería y calor; menos contexto puede afectar precisión. No se implementa ni se cambian cortes por requisitos de calidad/estabilidad. Estas consecuencias son evaluación de diseño, no mediciones físicas. [Parciales nativos: MDN](https://developer.mozilla.org/en-US/docs/Web/API/SpeechRecognition/interimResults).
+
+### Solución implementada
+
+- Placeholder explícito en el campo vacío durante captura/procesamiento/pausa, con ayuda accesible sobre cómo llegan los fragmentos. Nunca se escriben esas indicaciones dentro de `textarea.value` ni se guardan como nota. El texto confirmado y editado sigue acumulándose con la función existente.
+- El aviso global único anteriormente desaparecía cuando el modelo estaba listo pero todavía no había ningún trabajo, aunque la captura seguía activa. Ahora permanece durante captura/pausa y dice «Grabación en curso · Whisper por partes»; explica que el texto puede llegar después de detener. Distingue reunir audio de procesar partes. Barra y spinner animado se ocultan/detienen al no haber procesamiento; cronómetro de captura existente conservado.
+- Sin nuevos timers, modelos, inferencias, servicios ni dependencias. Actualizaciones visuales comparan valores y usan ciclos existentes. No se cuantifica ahorro ni consumo de batería. No se ocultan errores de preparación al mantener activo un aviso de grabación: `modelErr` retira el aviso para preservar el error y la ayuda remite a Grabar.
+- Se conservan provisionales del motor nativo sin tocar su reconocimiento. La integración de feedback se limita a presentación.
+
+### Verificación
+
+- **Código:** documentado en la rama; fusión, CI y publicación se comunican por separado al entregar.
+- **Automática local:** `node --test tests/delta.test.mjs`: **75/75 aprobadas**; `git diff --check` correcto. Pruebas de espera inicial, pausa, procesamiento, cancelación/error, mensajes nativos, estado global sin trabajos y render sin escrituras en la nota (setter de value prohibido durante la prueba).
+- **Comparación contra base:** 11 funciones críticas idénticas: makeSegmenter, workerBody, startCapture, stopCapture, toMono16k, ensureModel, pump, onSegment, startWhisper, stopWhisper y appendMachine. Los cambios de interfaz no alteran audio, parámetros de inferencia, cortes ni acumulación final. No se volvió a medir precisión ni velocidad del modelo porque no se cambió su recorrido.
+- **Interfaz Firefox 153/Linux:** anchos 412×915 y 1365×900, con estados de captura/inferencia simulados, verificaron campo vacío explicado, aviso único visible antes del primer fragmento, barra oculta al reunir audio, pausa/reanudación, dos frases acumuladas, procesamiento posterior, final y error de descarga visible. Inspección visual de vista móvil realizada. Flujo completo nativo con API simulada también aprobado (provisional, finales, pausa/reanudación y permiso denegado).
+- **Dispositivos reales:** no hay nueva prueba de micrófono físico, Motorola ni batería. No se afirma que se vean palabras instantáneamente ni que todo teléfono procese más rápido que el audio. Prueba manual detallada en README → Texto mientras grabás.
+
+
 ## Delta 11 · Dictado del navegador: disponibilidad y sesiones — 15/11/2026
 
 **Base:** `a3e44551a7510dcc1fa2d101ff4f40d3fa69428e`, rama `fix/native-dictation`. Alcance limitado al dictado del navegador; misma URL y sin migraciones, dependencias, telemetría ni servicios nuevos.

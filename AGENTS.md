@@ -73,3 +73,11 @@ En una etapa anterior de Gamma se observaron números o errores en la transcripc
 - Plazos nativos separados de Whisper: consulta 8 s, inicio 20 s, cierre 8 s, instalación 5 min. No ocultar el código/error original. Diagnósticos nativos en nativeDiag (máximo 60 líneas), sin transcripciones/audio. Provisional en nativeInterim de Texto y en interim de Grabar.
 - Motor, captura, Worker y cola de Whisper idénticos a `a3e44551a7510dcc1fa2d101ff4f40d3fa69428e`. Solo se ajustan las ramas nativas de los controles compartidos.
 - 71 pruebas locales aprobadas, interfaz con API simulada y bloqueo real de API ausente en Firefox 153/Linux. Chrome no inició en este entorno por restricciones del sistema; ningún dictado nativo real con micrófono físico o Android validado. Ver README y CAMBIOS antes de continuar.
+
+## Texto durante captura — 15/11/2026
+
+- Mantener Whisper por fragmentos; no bajar minSec/maxSec, cambiar modelos, generación o audio para adelantar texto sin nueva evaluación. No confundir streaming de tokens de un fragmento ya reunido con escuchar/transcribir palabra por palabra en tiempo real.
+- `editorFeedbackState`/`refreshEditorFeedback` solo modifican placeholder y ayuda asociada a textarea. Jamás insertar mensajes de interfaz en value/baseline, borradores o exportaciones. Se invocan desde ciclos/eventos existentes, sin timers nuevos.
+- El aviso inferior sigue siendo único. Activo durante captura Whisper aun con cero trabajos; decir «por partes», distinguir pausa y reunir audio de inferencia. Sin barra/spinner animado cuando no hay trabajo. No esconder el estado de error de preparación (`modelErr`). La ayuda junto al editor explica el modo: no duplicar porcentajes/tiempos/cancelación allí.
+- Dictado del navegador queda en pausa de desarrollo, conforme al usuario: no reintentar habilitar motores o servicios remotos. Se conservan provisionales y finales separados cuando una plataforma lo admite.
+- 75 pruebas locales y UI Firefox 153 a anchos 412/1365 con estados simulados; flujo nativo simulado también pasó. No prueba física Motorola ni mediciones de batería. Ver CAMBIOS y README.
