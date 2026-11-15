@@ -274,6 +274,13 @@ textarea{min-height:240px}
  .privacy-group .row{display:grid;grid-template-columns:1fr}
  #rec{width:min(43vw,172px)}
 }
+
+/* Flujo clínico: texto → anonimización → datos y exportación */
+.c-edit .privacy-group{margin-top:16px;margin-bottom:20px}
+.c-edit .note-details{border-top:1px solid var(--line);padding-top:17px;margin-top:10px}
+.c-edit .note-details label{margin-bottom:7px}
+.c-edit .privacy-group #anon{min-height:50px;font-weight:700}
+.c-edit .privacy-group #undo{min-height:44px}
 </style>
 </head>
 <body>
@@ -388,9 +395,6 @@ textarea{min-height:240px}
   <!-- 2 · Texto -->
   <section class="card c-edit">
     <div class="section-heading"><h2>Transcripción</h2><span class="section-hint">Editable</span></div>
-    <label for="title">Título</label>
-    <input type="text" id="title" placeholder="Ej.: Clase 4to año – 14/11">
-
     <div class="lbl-row">
       <label for="text">Transcripción <span class="opt">(podés editarla)</span></label>
       <div class="tools">
@@ -405,28 +409,6 @@ textarea{min-height:240px}
     <div class="meta"><span id="wc">0 palabras</span><span id="cc"></span></div>
     <div id="flash" role="status"></div>
     <div id="learn"></div>
-
-    <label style="margin-top:14px">Etiquetas</label>
-    <div id="chips"></div>
-    <div class="row tagrow">
-      <input type="text" id="tagIn" placeholder="Agregar una etiqueta">
-      <button id="tagAdd" aria-label="Agregar etiqueta">+</button>
-      <button id="tagSug">Sugerir etiquetas</button>
-    </div>
-
-    <div class="row save-row">
-      <button class="p" id="save">Guardar</button>
-      <button id="newn">Nota nueva</button>
-    </div>
-
-    <div class="group export-group">
-      <div class="gl">Exportar</div>
-      <div class="row" style="margin-top:6px">
-        <button id="doc">Exportar a Word</button>
-        <button id="txt">Descargar .txt</button>
-        <button id="share" style="display:none">Compartir</button>
-      </div>
-    </div>
 
     <div class="group privacy-group">
       <div class="gl">Privacidad · Revisá el texto antes de compartir</div>
@@ -461,6 +443,35 @@ textarea{min-height:240px}
       </details>
     </div>
 
+
+    <div class="note-details">
+      <label for="title">Título de la nota <span class="opt">(opcional)</span></label>
+      <input type="text" id="title" placeholder="Ej.: Nota de sesión · 15/11">
+    </div>
+
+    <label style="margin-top:14px">Etiquetas</label>
+    <div id="chips"></div>
+    <div class="row tagrow">
+      <input type="text" id="tagIn" placeholder="Agregar una etiqueta">
+      <button id="tagAdd" aria-label="Agregar etiqueta">+</button>
+      <button id="tagSug">Sugerir etiquetas</button>
+    </div>
+
+    <div class="row save-row">
+      <button class="p" id="save">Guardar</button>
+      <button id="newn">Nota nueva</button>
+    </div>
+
+    <div class="group export-group">
+      <div class="gl">Exportar</div>
+      <div class="row" style="margin-top:6px">
+        <button id="doc">Exportar a Word</button>
+        <button id="txt">Descargar .txt</button>
+        <button id="share" style="display:none">Compartir</button>
+      </div>
+    </div>
+
+
     <details>
       <summary>Mi diccionario <small>· corrige palabras que se escriben mal</small></summary>
       <div class="warn" style="margin:10px 0 8px">Se aplica después de transcribir. Una regla por línea: <b>lo que escribe Whisper =&gt; lo que querés que diga</b>. Una palabra sola (sin =&gt;) sirve para nombres propios y términos técnicos: se corrige si suena parecida. Las líneas que empiezan con # son comentarios. Se guarda en este dispositivo; no pongas nombres de pacientes.</div>
@@ -477,7 +488,7 @@ textarea{min-height:240px}
 
 </main>
 
-<footer>Versión de prueba · Corrección anonimización · Usá datos ficticios</footer>
+<footer>Versión de prueba · Anonimización prioritaria · Usá datos ficticios</footer>
 </div>
 
 <script>
