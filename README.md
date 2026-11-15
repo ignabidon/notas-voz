@@ -2,9 +2,9 @@
 
 **Aplicación oficial:** https://ignabidon.github.io/notas-voz/
 
-Esta es la **única versión web activa** del repositorio, basada en Delta 07 con una nueva navegación Android en Delta 08. Está pensada para Android/Brave.
+Esta es la **única versión web activa** del repositorio. La etapa vigente es **Delta 11**, con navegación Android de tres pantallas (Grabar / Texto / Ajustes), estado global de transcripción y acciones accesibles de audio y texto.
 
-> **Prueba Delta 08 — experimental.** El usuario confirmó grabación, Whisper, guardar TXT, recuperación de audio y Delta 07 en Brave Android. La nueva navegación de tres pantallas requiere otra prueba en el Motorola. No usar datos reales de pacientes.
+> **Prueba Delta 11 — experimental.** El usuario ya probó en Brave Android la grabación, Whisper, descarga TXT, recuperación del audio anterior y funcionamiento general de la interfaz. Las acciones nuevas de Delta 11 —Guardar audio visible, Compartir texto y accesos directos— **todavía necesitan prueba real en el Motorola**. Las 53 pruebas automáticas y la publicación GitHub Pages fueron satisfactorias. No usar datos reales de pacientes.
 
 ## Funciones
 - Grabación de voz, cronómetro, pausa/reanudación, marcas y detención.
