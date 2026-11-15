@@ -299,6 +299,8 @@ footer{color:#7f9a9f;font-size:11px;padding:18px 0;letter-spacing:.4px}
 #transcriptionDockTime{font-size:13px;font-weight:700;color:#d1eee7;font-variant-numeric:tabular-nums}
 #transcriptionDockMessage{font-size:13px;line-height:1.4;color:#d0e5df;margin:6px 0 8px}
 .transcription-dock-bottom{display:flex;justify-content:space-between;gap:12px;align-items:center;font-size:12px;color:#b9d6ce;margin-bottom:6px}
+.transcription-dock.awaiting-audio .transcription-spinner{animation:none;border-color:#a8ead8;background:#a8ead8}
+.transcription-dock-bar[hidden]{display:none}
 .transcription-dock-bar{height:5px;background:#365852;border-radius:99px;overflow:hidden}
 .transcription-dock-bar i{display:block;height:100%;width:0;background:#a8ead8;border-radius:99px;transition:width .3s}
 .transcription-dock-bar.indeterminate i{animation:delta-moving 1.6s ease-in-out infinite}
@@ -522,8 +524,9 @@ body.delta-transcribing.delta-recording{padding-bottom:calc(400px + env(safe-are
     </div>
     <div id="busy" role="status"></div>
     <p class="hint selection-help" id="selectionHelp">Tocá una palabra o seleccioná una frase para corregirla.</p>
+    <p class="hint" id="transcriptionHelp" hidden></p>
     <div class="editor-area">
-      <textarea aria-describedby="selectionHelp" id="text" placeholder="Acá va a aparecer lo que digas…"></textarea>
+      <textarea aria-describedby="selectionHelp transcriptionHelp" id="text" placeholder="Acá aparecerá la transcripción. Con Whisper, el texto llega por fragmentos después de procesarlos."></textarea>
       <button type="button" id="quickCorrect" aria-haspopup="dialog" hidden>Corregir palabra</button>
     </div>
     <div id="nativeInterim" role="status" aria-live="polite" class="hint"></div>
@@ -1625,6 +1628,7 @@ function startNative(resume = false){
     if (rec.processLocally !== true) throw Object.assign(new Error('El navegador no aceptó processLocally=true'), {name:'NotSupportedError'});
     session = {rec, phase:'starting', started:false, finalIndexes:new Set()}; nativeSession = session;
     lockUI(true); $('rec').disabled = true; $('pause').disabled = true;
+    refreshEditorFeedback();
     setNativeInterim('');
     nativeDiag('Inicio solicitado: ' + nativeLang + ', processLocally=true');
     setStatus('Solicitando dictado local (' + nativeLang + '). Si aparece el permiso de micrófono, elegí Permitir.');
@@ -1944,15 +1948,48 @@ function fmtEta(ms){
   const s = Math.max(5, Math.round(ms / 5000) * 5);
   return s < 60 ? 'unos ' + s + ' s' : 'unos ' + Math.ceil(s / 60) + ' min';
 }
+/* Solo presentación: nunca escribe mensajes en el texto de la nota. */
+function editorFeedbackState(whisper, recording, paused, processing, failed, nativePhase){
+  if (whisper && failed) return {
+    placeholder:'La transcripción se detuvo. Revisá el estado en Grabar y las opciones para reintentar.',
+    help:recording ? 'La grabación sigue activa, pero la transcripción se detuvo. Revisá el estado en Grabar y conservá el audio para reintentar.' : 'El texto confirmado se conserva. Revisá el estado en Grabar antes de reintentar.'
+  };
+  if (whisper && recording) return {
+    placeholder:paused ? 'Grabación en pausa. Whisper completa los fragmentos recibidos.' : 'Grabando audio… Whisper mostrará el texto por fragmentos; en grabaciones cortas, después de detener.',
+    help:'Whisper procesa fragmentos, no palabra por palabra. En grabaciones cortas, el texto aparece después de detener.'
+  };
+  if (whisper && processing) return {
+    placeholder:'Procesando el audio… El texto aparecerá al terminar cada fragmento.',
+    help:'El audio se está procesando por partes. Consultá el avance en el aviso inferior; no hace falta volver a grabar.'
+  };
+  if (!whisper && nativePhase === 'starting') return {
+    placeholder:'Esperando que el navegador confirme el inicio del dictado…',
+    help:'Si el navegador solicita permiso de micrófono, elegí Permitir. Todavía no confirmó el inicio.'
+  };
+  if (!whisper && recording) return {
+    placeholder:['pausing','stopping'].includes(nativePhase) ? 'Esperando los últimos resultados del navegador…' : paused ? 'Dictado en pausa. El texto confirmado se conserva.' : 'Escuchando… El navegador puede mostrar texto provisional debajo del editor.',
+    help:'El provisional puede cambiar. Solo las frases confirmadas se agregan al editor, sin reemplazar las anteriores.'
+  };
+  return {placeholder:'Acá aparecerá la transcripción. Con Whisper, el texto llega por fragmentos después de procesarlos.', help:''};
+}
+function refreshEditorFeedback(){
+  const state = editorFeedbackState(recEng === 'whisper', recording, paused, busy || outstanding > 0 || feeding || modelLoading, dead || !!modelErr, nativeSession?.phase);
+  const text = $('text'), help = $('transcriptionHelp');
+  if (text.placeholder !== state.placeholder) text.placeholder = state.placeholder;
+  if (help.textContent !== state.help) help.textContent = state.help;
+  if (help.hidden === !!state.help) help.hidden = !state.help;
+}
+
 /* El mismo estado de Whisper alimenta un único aviso, visible en las tres pantallas. */
-function transcriptionDockState(whisper, recording, busy, outstanding, feeding, loading, dead, progress, cancellable){
-  const active = whisper && !dead && (busy || outstanding > 0 || feeding || loading);
+function transcriptionDockState(whisper, recording, busy, outstanding, feeding, loading, dead, progress, cancellable, isPaused = false){
+  const active = whisper && !dead && (recording || busy || outstanding > 0 || feeding || loading);
   if (!active) return {active:false, cancel:false, progress:null};
   return {
     active:true,
-    title:recording ? 'Whisper está transcribiendo en vivo' : 'Whisper está terminando la transcripción',
-    message:recording ? 'Podés seguir grabando o pasar a Texto.' : 'Esperá mientras se completa la transcripción. Podés revisar el texto.',
-    parts:outstanding > 0 ? outstanding + (outstanding === 1 ? ' parte pendiente' : ' partes pendientes') : loading ? 'Preparando el modelo…' : feeding ? 'Leyendo audio guardado…' : 'Procesando el último fragmento…',
+    title:recording ? (isPaused ? 'Grabación en pausa · Whisper por partes' : 'Grabación en curso · Whisper por partes') : 'Whisper está terminando la transcripción',
+    message:recording ? (isPaused ? 'La captura está en pausa. El texto aparece al procesar cada fragmento; podés reanudar o detener.' : 'Podés seguir grabando. El texto aparece al procesar cada fragmento; en grabaciones cortas, después de detener.') : 'Esperá mientras se completa la transcripción. Podés revisar el texto.',
+    parts:outstanding > 0 ? outstanding + (outstanding === 1 ? ' parte pendiente' : ' partes pendientes') : loading ? 'Preparando el modelo…' : feeding ? 'Leyendo audio guardado…' : recording && !busy ? (isPaused ? 'No hay fragmentos pendientes.' : 'Reuniendo audio para el próximo fragmento…') : 'Procesando el último fragmento…',
+    processing:busy || outstanding > 0 || feeding || loading,
     progress:Number.isFinite(progress) && progress >= 0 ? Math.min(99,Math.round(progress)) : null,
     cancel:!recording && cancellable
   };
@@ -1962,7 +1999,7 @@ function refreshTranscriptionDock(){
     feed.len > 0 && feed.done > 0 ? 100 * feed.done / feed.len :
     totalSec > 0 && doneSec > 0 ? 100 * doneSec / totalSec : null
   );
-  const state = transcriptionDockState(recEng === 'whisper', recording, busy, outstanding, feeding, modelLoading, dead, hasProgress, !!(engine && typeof engine.terminate === 'function'));
+  const state = transcriptionDockState(recEng === 'whisper', recording, busy, outstanding, feeding, modelLoading, dead || !!modelErr, hasProgress, !!(engine && typeof engine.terminate === 'function'), paused);
   const dock = $('transcriptionDock');
   // Mantiene el indicador como fuente única, sin repintar los mismos valores cada 500 ms.
   if (dock.hidden === state.active) dock.hidden = !state.active;
@@ -1976,6 +2013,8 @@ function refreshTranscriptionDock(){
   putText('transcriptionDockTime', !recording && processingStartedAt ? fmtClock(Date.now() - processingStartedAt) : '');
   putText('transcriptionDockPercent', state.progress === null ? '' : '≈ ' + state.progress + '%');
   const bar = $('transcriptionDockBar'), pending = state.progress === null;
+  bar.hidden = !state.processing;
+  dock.classList.toggle('awaiting-audio', !state.processing);
   bar.classList.toggle('indeterminate', pending);
   const width = pending ? '40%' : state.progress + '%';
   if ($('transcriptionDockBarFill').style.width !== width) $('transcriptionDockBarFill').style.width = width;
@@ -1985,9 +2024,10 @@ function refreshTranscriptionDock(){
   if (cancel.hidden === state.cancel) cancel.hidden = !state.cancel;
 }
 function updProgress(){
+  refreshEditorFeedback();
   const tp = $('tp'), bz = $('busy');
   const working = recording || busy || outstanding > 0 || feeding;
-  bz.classList.toggle('on', working && !dead);
+  bz.classList.toggle('on', working && !dead && !modelErr);
   if (working) bz.textContent = recording
     ? (paused ? (busy || outstanding > 0 ? 'Grabación en pausa: se sigue transcribiendo lo ya grabado.' : 'Grabación en pausa.') : 'Grabando y transcribiendo: el texto va apareciendo de a poco.')
     : 'Todavía transcribiendo… esperá a que termine antes de copiar o guardar.';
@@ -2012,7 +2052,7 @@ function updProgress(){
 }
 function refreshStatus(){
   refreshCaptureWarning();
-  if (dead) return;
+  if (dead) { refreshEditorFeedback(); return; }
   updProgress();
   const where = backend === 'GPU' ? 'placa de video' : 'procesador';
   if (recording) {
@@ -2172,6 +2212,7 @@ function refreshTitle(){
   document.title = p ? p + ' · ' + base : base;
 }
 function updClock(){
+  refreshEditorFeedback();
   const c = $('clock'); c.textContent = fmtClock(elapsedMs()); c.classList.toggle('on', recording && !paused);
   refreshTitle();
   updateDockRecording();

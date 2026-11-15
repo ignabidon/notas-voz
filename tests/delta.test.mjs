@@ -489,7 +489,7 @@ test('Delta 09: estado único de Whisper incluye trabajo, grabación y fin', () 
   assert.equal(recording.active,true);
   assert.equal(recording.cancel,false);
   assert.equal(recording.progress,null);
-  assert.match(recording.title,/en vivo/);
+  assert.match(recording.title,/Whisper por partes/);
   assert.match(recording.message,/Podés seguir grabando/);
   assert.equal(f(true,false,false,0,false,true,false,null,false).active,true,'carga del modelo');
   assert.equal(f(true,false,false,0,true,false,false,null,false).active,true,'transcribe audio guardado');
@@ -788,7 +788,7 @@ function nativeHarness(options = {}){
     function lockUI(on){state.locked=on;}
     function beginClock(){state.clockStarted=true;}
     function endClock(){state.clockStopped=true;}
-    function updClock(){} function setCtl(){} function updateDockRecording(){}
+    function refreshEditorFeedback(){} function updClock(){} function setCtl(){} function updateDockRecording(){}
     function setStatus(t){state.status=t;}
     ${code}
     return {initial:initialNativeCheck,check:checkNativeAvailability,start:startNative,stop:stopNative,pause:pauseNative,
@@ -877,4 +877,45 @@ test('dictado: excepciones síncronas de start y stop informan el tipo y liberan
   assert.match(h.state.status,/NotSupportedError: modelo ausente/);assert.equal(h.node('rec').disabled,false);assert.equal(h.timers.size,0);assert.equal(h.nativeRadio.disabled,true);
   const s=nativeHarness({stopError:Object.assign(Error('ya terminó'),{name:'InvalidStateError'})});await s.api.initial;s.api.start();s.instances[0].onstart();s.api.stop();
   assert.match(s.state.status,/InvalidStateError: ya terminó/);assert.equal(s.node('rec').disabled,false);assert.equal(s.timers.size,0);
+});
+
+const feedback = new Function(html.match(/function editorFeedbackState\([\s\S]*?\n\}/)[0]+';return editorFeedbackState;')();
+test('texto: Whisper explica la espera antes del primer fragmento, pausa y procesamiento posterior',()=>{
+  assert.match(feedback(true,true,false,false,false).placeholder,/Grabando audio/);
+  assert.match(feedback(true,true,false,false,false).placeholder,/después de detener/);
+  assert.match(feedback(true,true,false,false,false).help,/no palabra por palabra/);
+  assert.match(feedback(true,true,true,true,false).placeholder,/Grabación en pausa/);
+  assert.match(feedback(true,false,false,true,false).placeholder,/Procesando el audio/);
+  assert.match(feedback(true,false,false,false,true).placeholder,/se detuvo/);
+  assert.equal(feedback(true,false,false,false,false).help,'');
+});
+test('texto: dictado nativo distingue inicio, provisional, pausa y cierre sin prometer resultados',()=>{
+  assert.match(feedback(false,false,false,false,false,'starting').placeholder,/Esperando/);
+  assert.match(feedback(false,true,false,false,false,'listening').placeholder,/puede mostrar texto provisional/);
+  assert.match(feedback(false,true,false,false,false,'listening').help,/Solo las frases confirmadas/);
+  assert.match(feedback(false,true,true,false,false,undefined).placeholder,/Dictado en pausa/);
+  assert.match(feedback(false,true,false,false,false,'stopping').placeholder,/últimos resultados/);
+});
+test('texto: actualizar la explicación no escribe mensajes en la nota ni altera contenido confirmado o editado',()=>{
+  const text={value:'Texto ficticio confirmado y editado.'},help={hidden:true,textContent:''};
+  let placeholder='',writes=0;
+  Object.defineProperty(text,'placeholder',{get:()=>placeholder,set:v=>{placeholder=v;writes++;}});
+  Object.defineProperty(text,'value',{get:()=> 'Texto ficticio confirmado y editado.',set:()=>assert.fail('la interfaz intentó cambiar la nota')});
+  const code=html.match(/function refreshEditorFeedback\(\)\{[\s\S]*?\n\}/)[0];
+  const render=new Function('$','editorFeedbackState',`let recEng='whisper',recording=true,paused=false,busy=false,outstanding=0,feeding=false,modelLoading=false,dead=false,modelErr='',nativeSession=null;${code};return refreshEditorFeedback;`)(id=>id==='text'?text:help,feedback);
+  render();render();assert.equal(writes,1);assert.match(placeholder,/Grabando/);assert.equal(help.hidden,false);
+  assert.equal(text.value,'Texto ficticio confirmado y editado.');
+  assert.match(html,/aria-describedby="selectionHelp transcriptionHelp"/);
+});
+test('aviso único: permanece durante la captura sin trabajos pendientes y no simula inferencia activa',()=>{
+  const f=new Function(html.match(/function transcriptionDockState\([\s\S]*?\n\}/)[0]+';return transcriptionDockState;')();
+  const gathering=f(true,true,false,0,false,false,false,null,true);
+  assert.equal(gathering.active,true);assert.equal(gathering.processing,false);assert.equal(gathering.cancel,false);
+  assert.match(gathering.parts,/Reuniendo audio/);assert.doesNotMatch(gathering.title,/en vivo/);
+  const paused=f(true,true,false,0,false,false,false,null,true,true);
+  assert.match(paused.title,/en pausa/);assert.match(paused.parts,/No hay fragmentos pendientes/);
+  assert.equal(f(true,true,false,0,false,true,false,null,true).processing,true);
+  assert.equal(f(true,false,true,1,false,false,false,null,true).processing,true);
+  assert.equal(f(true,true,false,0,false,false,true,null,true).active,false);
+  assert.match(html,/bar.hidden = !state.processing/);
 });
