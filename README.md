@@ -38,6 +38,12 @@ Al tocar **Guardar .txt** se solicita al navegador descargar un archivo de texto
 
 Este botón también conserva la copia local anterior como respaldo; no borra ni migra contenido. La lista interna de notas guardadas sigue oculta en este cambio. La descarga TXT es únicamente de la nota actual; no incluye audio, diccionario, claves o ajustes. No usar información sensible real antes de validar el proceso.
 
+## Grabaciones largas (Delta 05)
+
+Si vas a grabar durante varios minutos, elegí Whisper y activá «Guardar el audio de la grabación» antes de empezar. Mantené la pantalla encendida y preferentemente Brave en primer plano. Delta solicitará guardar fragmentos parciales al pausar, marcar momentos o pasar la página al fondo. Si el micrófono deja de enviar muestras o Whisper tiene muchos fragmentos pendientes, la aplicación mostrará un aviso. En el segundo caso, pausá la grabación para permitir que la transcripción alcance lo ya grabado.
+
+Los avisos **no interrumpen automáticamente la grabación**, ni sustituyen una copia descargada del audio. La transcripción de una sesión muy larga todavía puede agotar memoria; la continuidad con pantalla apagada no está garantizada. Después de la prueba, comprobá las primeras y últimas frases, los mensajes de aviso, los fragmentos pendientes y la descarga del audio.
+
 ## Audio: un principal y recuperación temporal (Delta 04)
 
 Si activás «Guardar el audio», Delta conserva **un audio principal** y, cuando lo reemplazás, una **única copia temporal del audio anterior**. Al iniciar una nueva grabación, el anterior no se borra anticipadamente: se reemplaza recién cuando el navegador guarda el primer fragmento de audio nuevo. Si falla la captura antes de eso, sigue disponible el anterior.
