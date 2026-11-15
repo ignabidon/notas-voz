@@ -3,148 +3,328 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Notas por voz (local)</title>
+<meta name="color-scheme" content="light dark">
+<title>Notas por voz</title>
 <style>
-  :root{--bg:#f6f5f1;--card:#fff;--ink:#1f2328;--mut:#6b7177;--acc:#2f5d8a;--rec:#c0392b;--line:#e1ded6}
-  @media (prefers-color-scheme:dark){:root{--bg:#16181b;--card:#1f2226;--ink:#e8e6e1;--mut:#9aa0a6;--acc:#7fb0e0;--rec:#e5604f;--line:#33373c}}
+  :root{
+    color-scheme:light dark;
+    --bg:#f3f0e8; --bg2:#ebe6da; --card:#fffdf9; --ink:#23262b; --mut:#656b72; --line:#e2dccf;
+    --acc:#3a6860; --acc-ink:#fff; --acc-soft:#e3eeea;
+    --rec:#c0503a; --rec-ink:#fff; --rec-soft:#f8e4de;
+    --note-bg:#fbf0d9; --note-ink:#6a4d10;
+    --shadow:0 1px 2px rgba(50,40,20,.05),0 10px 24px -14px rgba(50,40,20,.22);
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --bg:#121518; --bg2:#1a1e22; --card:#1b1f23; --ink:#e9e6df; --mut:#9ba2a9; --line:#2d3339;
+    --acc:#7dbbb0; --acc-ink:#0e1d1a; --acc-soft:#1f322d;
+    --rec:#ee7d66; --rec-ink:#2a0f09; --rec-soft:#3a2420;
+    --note-bg:#322a16; --note-ink:#e8d39b;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 24px -14px rgba(0,0,0,.6);
+  }}
   *{box-sizing:border-box}
-  body{margin:0;font:16px/1.45 system-ui,sans-serif;background:var(--bg);color:var(--ink);padding:14px;max-width:640px;margin-inline:auto}
-  h1{font-size:19px;margin:4px 0 2px}
-  .sub{color:var(--mut);font-size:13px;margin-bottom:12px}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px}
-  label{font-size:13px;color:var(--mut);display:block;margin-bottom:4px}
-  input[type=text],textarea,select{width:100%;font:inherit;color:inherit;background:transparent;border:1px solid var(--line);border-radius:8px;padding:9px}
-  textarea{min-height:200px;resize:vertical}
-  textarea.mono{min-height:150px;font:13px/1.4 ui-monospace,Menlo,Consolas,monospace}
-  .eng{display:flex;flex-direction:column;gap:6px;font-size:14px}
-  .eng label,.chk{display:flex;gap:8px;align-items:flex-start;color:var(--ink);font-size:14px;margin:0}
-  .chk{margin-top:10px}
-  .eng small{color:var(--mut);display:block}
-  button{font:inherit;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:9px 12px;border-radius:8px}
-  button.p{background:var(--acc);color:#fff;border-color:var(--acc)}
-  button:disabled{opacity:.5}
-  .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
-  #rec{width:100%;padding:16px;font-size:17px;font-weight:600;background:var(--acc);color:#fff;border:0;border-radius:12px}
-  #rec.on{background:var(--rec)}
-  #rec:disabled{opacity:.5}
-  #status{font-size:13px;color:var(--mut);margin-top:8px;min-height:18px;overflow-wrap:anywhere}
-  #interim{color:var(--mut);font-style:italic;font-size:14px;min-height:18px;margin-top:6px}
-  .bar{height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin-top:6px;display:none}
-  .bar i{display:block;height:100%;width:0;background:var(--acc)}
-  .n{display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-top:1px solid var(--line);align-items:center}
-  .n:first-child{border-top:0}
-  .n span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
-  .n small{color:var(--mut)}
-  .warn{font-size:12px;color:var(--mut)}
-  .chip{padding:4px 10px;margin:0 6px 6px 0;border-radius:999px;font-size:13px}
-  .chip.sel{background:var(--acc);color:#fff;border-color:var(--acc)}
-  details{margin-top:10px;font-size:14px}
-  summary{color:var(--mut);font-size:13px}
-  #flash{min-height:16px;margin-top:6px}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);
+    background:var(--bg) radial-gradient(900px 340px at 50% -120px,var(--acc-soft),transparent 70%) no-repeat;
+    min-height:100vh;padding:20px 14px 40px}
+  .wrap{max-width:1020px;margin-inline:auto}
+
+  /* ---------- Encabezado ---------- */
+  .top{display:flex;align-items:center;justify-content:space-between;gap:12px 20px;flex-wrap:wrap;margin:2px 2px 18px}
+  .brand{display:flex;align-items:center;gap:14px;min-width:0}
+  .logo{flex:none;width:46px;height:46px;border-radius:14px;background:var(--acc);color:var(--acc-ink);display:grid;place-items:center;box-shadow:var(--shadow)}
+  .logo svg{width:24px;height:24px}
+  h1{font:600 27px/1.15 var(--serif);margin:0;letter-spacing:-.01em}
+  .sub{color:var(--mut);font-size:14px;margin:3px 0 0;max-width:46ch}
+  .pill{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:500;color:var(--acc);background:var(--acc-soft);border-radius:999px;padding:6px 12px 6px 10px}
+  .pill svg{width:15px;height:15px;flex:none}
+
+  /* ---------- Estructura ---------- */
+  .layout{display:flex;flex-direction:column;gap:14px}
+  .col{display:contents}
+  .c-rec{order:1}.c-edit{order:2}.c-set{order:3}.c-notes{order:4}
+  @media (min-width:920px){
+    .layout{display:grid;grid-template-columns:minmax(310px,370px) 1fr;gap:18px;align-items:start}
+    .col{display:flex;flex-direction:column;gap:14px}
+  }
+  .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:var(--shadow)}
+  h2{font:600 13px/1 system-ui,sans-serif;text-transform:uppercase;letter-spacing:.07em;color:var(--mut);margin:0 0 14px}
+
+  /* ---------- Formularios ---------- */
+  label{display:block;font-size:13.5px;font-weight:600;color:var(--mut);margin-bottom:6px}
+  label .opt{font-weight:400}
+  input[type=text],textarea,select{width:100%;font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:11px;padding:10px 12px;transition:border-color .15s,box-shadow .15s}
+  select{appearance:auto;padding-block:9px}
+  select option{background:var(--card);color:var(--ink)}
+  ::placeholder{color:var(--mut);opacity:.75}
+  input[type=text]:focus,textarea:focus,select:focus{outline:none;border-color:var(--acc);box-shadow:0 0 0 3px var(--acc-soft)}
+  textarea{min-height:290px;resize:vertical;line-height:1.65}
+  textarea.mono{min-height:150px;font:13px/1.5 ui-monospace,Menlo,Consolas,monospace}
+  input[type=radio],input[type=checkbox]{accent-color:var(--acc);width:18px;height:18px;margin:2px 0 0;flex:none}
+  .field+.field,.field+label{margin-top:14px}
+  .hint{font-size:12.5px;color:var(--mut);margin-top:6px}
+
+  /* Motor de transcripción: opciones tipo tarjeta */
+  .eng{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+  .eng label{display:flex;gap:11px;align-items:flex-start;color:var(--ink);font-size:14.5px;font-weight:400;margin:0;
+    border:1px solid var(--line);border-radius:13px;padding:12px;cursor:pointer;transition:border-color .15s,background .15s}
+  .eng label:has(input:checked){border-color:var(--acc);background:var(--acc-soft)}
+  .eng label:has(input:disabled){cursor:not-allowed}
+  .eng strong{font-weight:600}
+  .eng small{color:var(--mut);display:block;font-size:13px;line-height:1.45;margin-top:2px}
+
+  /* Casilla "empezar de cero" */
+  .chk{display:flex;gap:10px;align-items:flex-start;color:var(--ink);font-size:14.5px;font-weight:400;margin:16px 0 0;cursor:pointer}
+  .chk small{display:block;color:var(--mut);font-size:13px;margin-top:1px}
+  .chk b{font-weight:600}
+
+  /* ---------- Botones ---------- */
+  button{font:inherit;font-size:14.5px;font-weight:500;cursor:pointer;color:var(--ink);background:var(--card);border:1px solid var(--line);
+    padding:8px 14px;min-height:40px;border-radius:11px;transition:background .15s,border-color .15s,transform .05s,filter .15s}
+  button:hover:not(:disabled){background:var(--bg2);border-color:color-mix(in srgb,var(--mut) 40%,var(--line))}
+  button:active:not(:disabled){transform:translateY(1px)}
+  button:focus-visible,summary:focus-visible,select:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+  button.p{background:var(--acc);color:var(--acc-ink);border-color:var(--acc);font-weight:600;padding-inline:20px}
+  button.p:hover:not(:disabled){background:var(--acc);filter:brightness(1.1)}
+  button.ghost{background:transparent;border-color:transparent;color:var(--mut)}
+  button.ghost:hover:not(:disabled){background:var(--bg2);color:var(--ink)}
+  button.danger:hover:not(:disabled){color:var(--rec)}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
+
+  /* Botón grande de grabar */
+  #rec{width:100%;min-height:68px;padding:16px;font-size:19px;font-weight:600;letter-spacing:.01em;border:0;border-radius:18px;
+    background:var(--acc);color:var(--acc-ink);display:flex;align-items:center;justify-content:center;gap:12px;
+    box-shadow:0 8px 20px -10px var(--acc)}
+  #rec:hover:not(:disabled){background:var(--acc);filter:brightness(1.1)}
+  #rec::before{content:"";width:16px;height:16px;border-radius:50%;background:currentColor;transition:border-radius .15s}
+  #rec.on,#rec.on:hover:not(:disabled){background:var(--rec);color:var(--rec-ink);box-shadow:0 8px 20px -10px var(--rec);animation:pulso 1.8s ease-out infinite}
+  #rec.on::before{border-radius:4px;width:14px;height:14px}
+  @keyframes pulso{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--rec) 45%,transparent)}70%,100%{box-shadow:0 0 0 14px transparent}}
+  @media (prefers-reduced-motion:reduce){#rec.on{animation:none}}
+  #rec:disabled{opacity:.55}
+
+  /* ---------- Estado, nivel y avance ---------- */
+  #status{font-size:14px;color:var(--mut);margin-top:12px;overflow-wrap:anywhere}
+  #status:empty{margin:0}
+  #interim{color:var(--mut);font-style:italic;font-size:14.5px;min-height:0;margin-top:4px}
+  .bar{height:8px;background:var(--bg2);border-radius:99px;overflow:hidden;margin-top:12px;display:none}
+  .bar i{display:block;height:100%;width:0;background:var(--acc);border-radius:99px;transition:width .12s}
+  #lv i{background:linear-gradient(90deg,var(--acc),color-mix(in srgb,var(--acc) 60%,var(--rec)))}
+  .warn{font-size:13px;color:var(--mut)}
+  #lvTxt{margin-top:6px;color:var(--rec);font-weight:500}
+  #flash{min-height:20px;margin-top:8px;color:var(--acc);font-weight:500}
+
+  /* ---------- Plegables ---------- */
+  details{margin-top:16px;padding-top:12px;border-top:1px solid var(--line);font-size:14px}
+  summary{cursor:pointer;color:var(--ink);font-size:14px;font-weight:600;list-style:none;display:block;user-select:none}
+  summary::-webkit-details-marker{display:none}
+  summary::before{content:"";width:7px;height:7px;border-right:2px solid var(--mut);border-bottom:2px solid var(--mut);transform:rotate(-45deg);transition:transform .15s;margin:0 10px 2px 2px;display:inline-block;vertical-align:middle}
+  details[open]>summary::before{transform:rotate(45deg)}
+  summary small{color:var(--mut);font-weight:400;font-size:13px}
+  details.card{padding:0;margin-top:0}
+  details.card>summary{padding:16px 18px}
+  details.card>.body{padding:0 18px 18px}
+  details.card[open]>summary{padding-bottom:12px}
+
+  /* ---------- Editor ---------- */
+  .lbl-row{display:flex;justify-content:space-between;align-items:flex-end;gap:8px;flex-wrap:wrap;margin:18px 0 8px}
+  .lbl-row label{margin:0}
+  .tools{display:flex;gap:2px;flex-wrap:wrap}
+  .tools button{min-height:34px;padding:5px 10px;font-size:13.5px}
+  #chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+  #chips:empty{display:none}
+  .chip{padding:4px 12px;min-height:30px;border-radius:999px;font-size:13.5px;background:var(--bg)}
+  #filt{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}
+  #filt:empty{display:none}
+  .chip.sel{background:var(--acc);color:var(--acc-ink);border-color:var(--acc)}
+  #learn .chip{background:var(--acc-soft);border-color:transparent;color:var(--ink);margin:0 6px 6px 0}
+  .tagrow input{flex:1;min-width:140px}
+  .tagrow{margin-top:0}
+  .save-row{margin-top:20px;padding-top:18px;border-top:1px solid var(--line)}
+  .group{margin-top:18px}
+  .group .gl{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);margin-bottom:2px}
+  .note{display:flex;gap:9px;align-items:flex-start;background:var(--note-bg);color:var(--note-ink);border-radius:12px;padding:10px 12px;font-size:13.5px;margin-top:12px}
+  .note svg{width:17px;height:17px;flex:none;margin-top:2px}
+
+  /* ---------- Notas guardadas ---------- */
+  .n{display:grid;grid-template-columns:1fr auto auto;column-gap:6px;align-items:center;padding:11px 0;border-top:1px solid var(--line)}
+  .n:first-child{border-top:0;padding-top:2px}
+  .n span{grid-column:1;grid-row:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;font-size:15px}
+  .n small{grid-column:1;grid-row:2;color:var(--mut);font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .n button{grid-row:1 / 3;min-height:34px;padding:4px 12px;font-size:13.5px}
+  .n button:nth-of-type(1){grid-column:2}
+  .n button:nth-of-type(2){grid-column:3}
+  #list>.warn{padding:4px 0}
+
+  footer{margin:26px 2px 0;font-size:12.5px;color:var(--mut);text-align:center}
+
+  @media (max-width:520px){
+    body{padding:14px 10px 32px}
+    .card{padding:15px;border-radius:16px}
+    h1{font-size:24px}
+    details.card>summary{padding:14px 15px}
+    details.card>.body{padding:0 15px 15px}
+  }
 </style>
 </head>
 <body>
-<h1>Notas por voz</h1>
-<div class="sub">El audio no se guarda ni se envía a ningún servidor. Las notas quedan en este dispositivo. · v3.1</div>
+<div class="wrap">
 
-<div class="card">
-  <label>Motor de transcripción</label>
-  <div class="eng">
-    <label><input type="radio" name="eng" value="whisper" checked>
-      <span>Whisper local<small>Corre en el dispositivo. La primera vez descarga el modelo y después funciona sin conexión. Transcribe por partes mientras hablás, así al terminar queda poco por esperar.</small></span></label>
-    <label id="lblNative"><input type="radio" name="eng" value="native">
-      <span>Dictado del navegador (local)<small id="nativeNote">En vivo, mientras hablás.</small></span></label>
+<header class="top">
+  <div class="brand">
+    <span class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7"/></svg></span>
+    <div>
+      <h1>Notas por voz</h1>
+      <p class="sub">Hablás y se escribe solo. El audio no se guarda ni se envía a ningún servidor.</p>
+    </div>
   </div>
-  <label for="model" style="margin-top:10px">Precisión de Whisper</label>
-  <select id="model">
-    <option value="Xenova/whisper-base" style="color:#000">Rápida (~75 MB)</option>
-    <option value="Xenova/whisper-small" style="color:#000" selected>Mejor (~250 MB, más lenta)</option>
-  </select>
-  <label for="accel" style="margin-top:10px">Aceleración</label>
-  <select id="accel">
-    <option value="auto" style="color:#000" selected>Automática (usa la GPU si puede)</option>
-    <option value="cpu" style="color:#000">Solo procesador (si la GPU da errores o texto raro)</option>
-  </select>
-  <label for="mic" style="margin-top:10px">Micrófono</label>
-  <select id="mic">
-    <option value="std" style="color:#000" selected>Con filtros del navegador (como hasta ahora)</option>
-    <option value="agc" style="color:#000">Solo volumen automático</option>
-    <option value="raw" style="color:#000">Natural, sin filtros</option>
-  </select>
-  <div class="warn" style="margin-top:4px">Para elegir: leé el mismo párrafo con cada opción y compará errores. Cerca de la boca y en un lugar callado ayuda más que cualquier ajuste.</div>
-  <div class="bar" id="bar"><i id="barI"></i></div>
-</div>
+  <span class="pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Las notas quedan solo en este dispositivo</span>
+</header>
 
-<div class="card">
-  <button id="rec">🎙️ Grabar</button>
-  <label class="chk"><input type="checkbox" id="replace" checked>
-    <span>Al grabar, empezar de cero: borra el texto anterior (se puede deshacer). Si lo destildás, lo nuevo se agrega al final.</span></label>
-  <div id="status"></div>
-  <div id="interim"></div>
-  <div class="bar" id="lv"><i id="lvI"></i></div>
-  <div class="warn" id="lvTxt"></div>
-  <details>
-    <summary>Registro de la última grabación</summary>
-    <pre id="diag" class="warn" style="white-space:pre-wrap;margin:6px 0"></pre>
-    <div class="warn">No incluye nada de lo que dijiste: solo duraciones, tiempos y errores.</div>
-    <div class="row"><button id="copyDiag">Copiar registro</button></div>
-  </details>
-</div>
+<main class="layout">
 
-<div class="card">
-  <label for="title">Título</label>
-  <input type="text" id="title" placeholder="Ej.: Clase 4to año – 14/11">
-  <label for="text" style="margin-top:10px">Texto (podés editarlo)</label>
-  <div class="row" style="margin:0 0 8px">
-    <button id="selAll">Seleccionar todo</button>
-    <button id="copyAll">Copiar todo</button>
-    <button id="clear">Borrar</button>
-    <button id="undoClear" style="display:none">Deshacer borrado</button>
-  </div>
-  <textarea id="text" placeholder="Acá aparece la transcripción…"></textarea>
-  <div class="warn" id="flash"></div>
-  <div id="learn"></div>
-  <label style="margin-top:10px">Etiquetas</label>
-  <div id="chips"></div>
-  <div class="row" style="margin-top:0">
-    <input type="text" id="tagIn" placeholder="Agregar etiqueta" style="flex:1;min-width:120px">
-    <button id="tagAdd">+</button>
-    <button id="tagSug">Sugerir por tema</button>
-  </div>
-  <div class="row">
-    <button class="p" id="save">Guardar</button>
-    <button id="anon">Anonimizar</button>
-    <button id="newn">Nueva</button>
-    <button id="doc">Exportar a Word</button>
-    <button id="txt">TXT</button>
-    <button id="share" style="display:none">Compartir</button>
-  </div>
-  <details>
-    <summary>Mi diccionario (correcciones y palabras propias)</summary>
-    <div class="warn" style="margin:8px 0 6px">Se aplica solo después de transcribir. Una regla por línea: <b>lo que escribe Whisper =&gt; lo que querés</b>. Una palabra sola (sin =&gt;) sirve para nombres propios: se corrige si suena parecido. Las líneas con # son comentarios. Se guarda en este dispositivo; no pongas nombres de pacientes.</div>
-    <textarea id="dict" class="mono" spellcheck="false" autocapitalize="off"></textarea>
-    <div class="warn" id="dictInfo" style="margin-top:4px"></div>
-    <div class="row">
-      <button id="applyDict">Aplicar al texto actual</button>
-      <button id="voseo">Agregar voseo rioplatense</button>
+<div class="col">
+
+  <!-- 1 · Grabar -->
+  <section class="card c-rec">
+    <h2>Grabar</h2>
+    <button id="rec" type="button">Grabar</button>
+    <div class="bar" id="bar"><i id="barI"></i></div>
+    <div id="status" role="status" aria-live="polite"></div>
+    <div id="interim"></div>
+    <div class="bar" id="lv"><i id="lvI"></i></div>
+    <div class="warn" id="lvTxt"></div>
+    <label class="chk"><input type="checkbox" id="replace" checked>
+      <span><b>Empezar de cero al grabar</b><small>Borra el texto anterior (podés deshacerlo). Si lo destildás, lo nuevo se suma al final.</small></span></label>
+    <details>
+      <summary>Detalles técnicos de la última grabación</summary>
+      <pre id="diag" class="warn" style="white-space:pre-wrap;margin:8px 0"></pre>
+      <div class="warn">No incluye nada de lo que dijiste: solo duraciones, tiempos y errores.</div>
+      <div class="row"><button id="copyDiag">Copiar detalles</button></div>
+    </details>
+  </section>
+
+  <!-- 3 · Ajustes de transcripción -->
+  <details class="card c-set">
+    <summary>Ajustes de transcripción <small>· cómo transcribir, calidad y micrófono</small></summary>
+    <div class="body">
+      <label>Cómo transcribir</label>
+      <div class="eng">
+        <label><input type="radio" name="eng" value="whisper" checked>
+          <span><strong>Whisper</strong> (recomendado)<small>Funciona dentro de tu dispositivo. La primera vez descarga un archivo de idioma (hace falta internet); después anda sin conexión. Va transcribiendo mientras hablás, así que al terminar queda poco por esperar.</small></span></label>
+        <label id="lblNative"><input type="radio" name="eng" value="native">
+          <span><strong>Dictado del navegador</strong><small id="nativeNote">El texto aparece en vivo, mientras hablás.</small></span></label>
+      </div>
+
+      <label for="model">Calidad de Whisper</label>
+      <select id="model">
+        <option value="Xenova/whisper-base">Rápida · descarga ~75 MB</option>
+        <option value="Xenova/whisper-small" selected>Más precisa · descarga ~250 MB (más lenta)</option>
+      </select>
+
+      <label for="accel" style="margin-top:14px">Velocidad de cálculo</label>
+      <select id="accel">
+        <option value="auto" selected>Automática (usa la placa de video si puede)</option>
+        <option value="cpu">Solo procesador (si da errores o escribe cosas raras)</option>
+      </select>
+
+      <label for="mic" style="margin-top:14px">Micrófono</label>
+      <select id="mic">
+        <option value="std" selected>Con filtros del navegador (reducen ruido y eco)</option>
+        <option value="agc">Solo volumen automático</option>
+        <option value="raw">Natural, sin filtros</option>
+      </select>
+      <div class="hint">Para elegir, leé el mismo párrafo con cada opción y compará los errores. Hablar cerca del micrófono y en un lugar callado ayuda más que cualquier ajuste.</div>
     </div>
   </details>
-  <details>
-    <summary>Ajustes de anonimización</summary>
-    <label style="margin-top:8px">Ocultar además estas palabras (separadas por coma)</label>
-    <input type="text" id="hideX" placeholder="Ej.: nombre de una escuela, apodo">
-    <label style="margin-top:8px">No ocultar nunca estas palabras</label>
-    <input type="text" id="keepX" placeholder="Ej.: Freud, Winnicott">
-    <div class="row"><button id="undo" disabled>Deshacer anonimizado</button></div>
-  </details>
-  <div class="warn" id="anonRes" style="margin-top:8px"></div>
-  <div class="warn" style="margin-top:8px">La anonimización es automática y puede fallar: revisá siempre el texto antes de guardarlo o exportarlo.</div>
+
+  <!-- 4 · Notas guardadas -->
+  <section class="card c-notes">
+    <h2>Notas guardadas</h2>
+    <div id="filt"></div>
+    <div id="list"></div>
+  </section>
+
 </div>
 
-<div class="card">
-  <label>Notas guardadas</label>
-  <div id="filt"></div>
-  <div id="list"></div>
+<div class="col">
+
+  <!-- 2 · Texto -->
+  <section class="card c-edit">
+    <h2>Tu texto</h2>
+    <label for="title">Título</label>
+    <input type="text" id="title" placeholder="Ej.: Clase 4to año – 14/11">
+
+    <div class="lbl-row">
+      <label for="text">Transcripción <span class="opt">(podés editarla)</span></label>
+      <div class="tools">
+        <button class="ghost" id="selAll">Seleccionar todo</button>
+        <button class="ghost" id="copyAll">Copiar todo</button>
+        <button class="ghost danger" id="clear">Borrar</button>
+        <button class="ghost" id="undoClear" style="display:none">Deshacer borrado</button>
+      </div>
+    </div>
+    <textarea id="text" placeholder="Acá va a aparecer lo que digas…"></textarea>
+    <div id="flash" role="status"></div>
+    <div id="learn"></div>
+
+    <label style="margin-top:14px">Etiquetas</label>
+    <div id="chips"></div>
+    <div class="row tagrow">
+      <input type="text" id="tagIn" placeholder="Agregar una etiqueta">
+      <button id="tagAdd" aria-label="Agregar etiqueta">+</button>
+      <button id="tagSug">Sugerir etiquetas</button>
+    </div>
+
+    <div class="row save-row">
+      <button class="p" id="save">Guardar</button>
+      <button id="newn">Nota nueva</button>
+    </div>
+
+    <div class="group">
+      <div class="gl">Exportar</div>
+      <div class="row" style="margin-top:6px">
+        <button id="doc">Exportar a Word</button>
+        <button id="txt">Descargar .txt</button>
+        <button id="share" style="display:none">Compartir</button>
+      </div>
+    </div>
+
+    <div class="group">
+      <div class="gl">Privacidad</div>
+      <div class="row" style="margin-top:6px">
+        <button id="anon">Anonimizar</button>
+        <button id="undo" disabled>Deshacer anonimizado</button>
+      </div>
+      <div class="warn" id="anonRes" style="margin-top:8px"></div>
+      <div class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 2.5 20h19L12 3z"/><path d="M12 10v4M12 17.5v.01"/></svg><span>La anonimización es automática y puede fallar: revisá siempre el texto antes de guardarlo o exportarlo.</span></div>
+      <details>
+        <summary>Ajustes de anonimización</summary>
+        <label style="margin-top:10px">Ocultar también estas palabras (separadas por coma)</label>
+        <input type="text" id="hideX" placeholder="Ej.: nombre de una escuela, apodo">
+        <label style="margin-top:12px">No ocultar nunca estas palabras</label>
+        <input type="text" id="keepX" placeholder="Ej.: Freud, Winnicott">
+      </details>
+    </div>
+
+    <details>
+      <summary>Mi diccionario <small>· corrige palabras que se escriben mal</small></summary>
+      <div class="warn" style="margin:10px 0 8px">Se aplica después de transcribir. Una regla por línea: <b>lo que escribe Whisper =&gt; lo que querés que diga</b>. Una palabra sola (sin =&gt;) sirve para nombres propios y términos técnicos: se corrige si suena parecida. Las líneas que empiezan con # son comentarios. Se guarda en este dispositivo; no pongas nombres de pacientes.</div>
+      <textarea id="dict" class="mono" spellcheck="false" autocapitalize="off"></textarea>
+      <div class="warn" id="dictInfo" style="margin-top:6px"></div>
+      <div class="row">
+        <button id="applyDict">Aplicar al texto actual</button>
+        <button id="voseo">Agregar formas rioplatenses (vos, tenés…)</button>
+      </div>
+    </details>
+  </section>
+
+</div>
+
+</main>
+
+<footer>Notas por voz · v3.2 · Todo se guarda únicamente en este navegador</footer>
 </div>
 
 <script>
@@ -335,14 +515,14 @@ function renderList(){
   if (activeTag && !all.includes(activeTag)) activeTag = null;
   all.forEach(t => { const b = document.createElement('button'); b.className = 'chip' + (t === activeTag ? ' sel' : ''); b.textContent = t; b.onclick = () => { activeTag = activeTag === t ? null : t; renderList(); }; f.append(b); });
   const shown = notes.filter(n => !activeTag || (n.tags || []).includes(activeTag));
-  if (!shown.length) { l.innerHTML = '<div class="warn">' + (notes.length ? 'Ninguna nota con esa etiqueta.' : 'Todavía no hay notas.') + '</div>'; return; }
+  if (!shown.length) { l.innerHTML = '<div class="warn">' + (notes.length ? 'Ninguna nota con esa etiqueta.' : 'Todavía no hay notas guardadas.') + '</div>'; return; }
   shown.slice().sort((a,b)=>b.ts-a.ts).forEach(n => {
     const d = document.createElement('div'); d.className = 'n';
     const s = document.createElement('span'); s.textContent = n.title || 'Sin título';
     const sm = document.createElement('small'); sm.textContent = fmt(n.ts) + ((n.tags || []).length ? ' · ' + n.tags.join(', ') : '');
     const o = document.createElement('button'); o.textContent = 'Abrir';
     o.onclick = () => { if (isUnsaved()) { stash(); flash('Tenías texto sin guardar: se recupera con «Deshacer borrado».'); } cur = n.id; $('title').value = n.title; $('text').value = n.text; baseline = n.text; tags = (n.tags || []).slice(); renderChips(); resetEdit(); window.scrollTo({top:0, behavior:'smooth'}); };
-    const x = document.createElement('button'); x.textContent = '✕';
+    const x = document.createElement('button'); x.textContent = 'Borrar'; x.className = 'ghost danger';
     x.onclick = () => { if (confirm('¿Borrar esta nota?')) { notes = notes.filter(m => m.id !== n.id); if (cur === n.id) cur = null; persist(); renderList(); } };
     d.append(s, sm, o, x); l.append(d);
   });
@@ -567,7 +747,7 @@ const nativeLocal = !!(SR && 'processLocally' in SR.prototype);
 if (!nativeLocal) {
   document.querySelector('input[value=native]').disabled = true;
   $('lblNative').style.opacity = .55;
-  $('nativeNote').textContent = 'No disponible: este navegador enviaría el audio a la nube, así que lo bloqueé.';
+  $('nativeNote').textContent = 'No disponible en este navegador: enviaría el audio a internet, así que lo bloqueé.';
 }
 let rec = null;
 function startNative(){
@@ -580,12 +760,12 @@ function startNative(){
     $('interim').textContent = interim;
   };
   rec.onerror = e => {
-    if (e.error === 'language-not-supported') setStatus('Falta el paquete de idioma local en el navegador. Probá con Whisper local.');
+    if (e.error === 'language-not-supported') setStatus('Al navegador le falta el idioma español para dictar sin internet. Probá con Whisper.');
     else if (e.error !== 'no-speech' && e.error !== 'aborted') setStatus('Error: ' + e.error);
     if (e.error === 'language-not-supported' || e.error === 'not-allowed') stopUI();
   };
   rec.onend = () => { if (recording) { try { rec.start(); } catch (e) {} } else $('interim').textContent = ''; };
-  rec.start(); setStatus('Escuchando (procesamiento local)…');
+  rec.start(); setStatus('Escuchando… (se procesa en este dispositivo)');
 }
 
 /* ---------- Whisper local: motor en segundo plano (Worker) ---------- */
@@ -705,8 +885,8 @@ async function toMono16k(blocks, rate){
 let lvT = 0, clipUntil = 0, failedParts = 0, warnParts = 0, segN = 0, diagLines = [];
 function logDiag(x){ diagLines.push(x); $('diag').textContent = diagLines.join('\n'); }
 $('copyDiag').onclick = async () => {
-  const x = $('diag').textContent; if (!x) return flash('Todavía no hay registro.');
-  try { await navigator.clipboard.writeText(x); flash('Registro copiado.'); } catch (e) { flash('No se pudo copiar el registro.'); }
+  const x = $('diag').textContent; if (!x) return flash('Todavía no hay detalles.');
+  try { await navigator.clipboard.writeText(x); flash('Detalles copiados.'); } catch (e) { flash('No se pudieron copiar los detalles.'); }
 };
 function level(b){
   let s = 0, pk = 0;
@@ -729,16 +909,16 @@ function lockUI(on){
 }
 function refreshStatus(){
   if (dead) return;
-  const where = backend === 'GPU' ? 'GPU' : 'procesador';
+  const where = backend === 'GPU' ? 'placa de video' : 'procesador';
   if (recording) {
     const s = Math.floor((Date.now() - t0) / 1000);
     let x = 'Grabando ' + Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
-    if (modelErr) x += ' · no se pudo cargar el modelo (' + modelErr + '). La primera vez hace falta internet.';
-    else if (modelLoading) x += ' · preparando el modelo…';
+    if (modelErr) x += ' · no se pudo preparar la transcripción (' + modelErr + '). La primera vez hace falta internet.';
+    else if (modelLoading) x += ' · preparando la transcripción…';
     else if (busy) x += ' · transcribiendo en segundo plano (' + where + ')…';
     setStatus(x);
   } else if (busy || outstanding > 0) {
-    setStatus(modelLoading ? 'Preparando el modelo…' : 'Terminando de transcribir (' + where + ')… quedan ' + outstanding + ' parte(s).');
+    setStatus(modelLoading ? 'Preparando la transcripción…' : 'Terminando de transcribir (' + where + ')… quedan ' + outstanding + ' parte(s).');
   }
 }
 function maybeDone(){
@@ -746,12 +926,12 @@ function maybeDone(){
   clearInterval(timer); timer = null; lockUI(false); $('rec').disabled = false;
   if (dead) return;
   if (failedParts) { setStatus('Terminó, pero ' + failedParts + ' parte(s) del audio no se pudieron transcribir: buscá «⚠ falta una parte» en el texto.'); return; }
-  if (warnParts) { setStatus('Terminó, pero ' + warnParts + ' parte(s) dieron muy poco texto para su duración: puede faltar algo. Mirá el registro de la grabación.'); return; }
-  setStatus(gotText ? 'Listo' + (lastMs ? ' (última parte: ' + Math.round(lastMs / 1000) + ' s, ' + (backend === 'GPU' ? 'con la GPU del dispositivo' : 'con el procesador') + ')' : '') + '. Revisá y guardá.' : 'No se detectó voz. Probá hablar más cerca del micrófono.');
+  if (warnParts) { setStatus('Terminó, pero ' + warnParts + ' parte(s) dieron muy poco texto para su duración: puede faltar algo. Mirá los detalles técnicos de la grabación.'); return; }
+  setStatus(gotText ? 'Listo' + (lastMs ? ' (última parte: ' + Math.round(lastMs / 1000) + ' s, ' + (backend === 'GPU' ? 'con la placa de video' : 'con el procesador') + ')' : '') + '. Revisá y guardá.' : 'No se detectó voz. Probá hablar más cerca del micrófono.');
 }
 function fail(e){
   dead = true; jobs.length = 0; outstanding = 0; busy = false;
-  setStatus('No se pudo transcribir: ' + (e.message || e) + '. Si es la primera vez, hace falta internet para bajar el modelo.');
+  setStatus('No se pudo transcribir: ' + (e.message || e) + '. Si es la primera vez, hace falta internet para descargar lo necesario.');
   maybeDone();
 }
 async function pump(){
@@ -769,7 +949,7 @@ async function pump(){
       ms = Date.now() - t; lastMs = ms; backend = r.backend || backend; c = cleanText(r.text); err = ''; break;
     } catch (e) { err = e.message || String(e); logDiag('#' + n + ' intento ' + k + ' falló: ' + err); }
   }
-  const where = backend === 'GPU' ? 'GPU' : 'procesador';
+  const where = backend === 'GPU' ? 'placa de video' : 'procesador';
   if (err) {
     failedParts++;
     appendMachine('[⚠ falta una parte del audio (~' + Math.round(sec) + ' s): no se pudo transcribir]');
@@ -806,18 +986,18 @@ function stopWhisper(){
   else { $('rec').disabled = true; refreshStatus(); }
 }
 
-function stopUI(){ $('lv').style.display = 'none'; $('lvTxt').textContent = ''; recording = false; $('rec').classList.remove('on'); $('rec').textContent = '🎙️ Grabar'; }
+function stopUI(){ $('lv').style.display = 'none'; $('lvTxt').textContent = ''; recording = false; $('rec').classList.remove('on'); $('rec').textContent = 'Grabar'; }
 $('rec').onclick = async () => {
   if (!recording) {
-    if (!window.isSecureContext || !navigator.mediaDevices) { setStatus('Chrome no permite usar el micrófono desde un archivo abierto así (' + location.protocol + '). Hace falta abrir la página desde una dirección https.'); return; }
+    if (!window.isSecureContext || !navigator.mediaDevices) { setStatus('El navegador no deja usar el micrófono con la página abierta de esta forma (' + location.protocol + '). Abrila desde una dirección que empiece con https.'); return; }
     recEng = eng(); $('rec').disabled = true;
     try {
       recording = true;
       if (recEng === 'native') { startNative(); prepareNew(); } else await startWhisper();
-      $('rec').classList.add('on'); $('rec').textContent = '⏹ Detener';
+      $('rec').classList.add('on'); $('rec').textContent = 'Detener';
     } catch (e) {
       stopUI(); lockUI(false); clearInterval(timer); timer = null;
-      setStatus('No se pudo acceder al micrófono: ' + (e.message || e));
+      setStatus('No se pudo usar el micrófono: ' + (e.message || e));
     }
     $('rec').disabled = false;
   } else {
