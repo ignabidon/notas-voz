@@ -38,6 +38,15 @@ Al tocar **Guardar .txt** se solicita al navegador descargar un archivo de texto
 
 Este botón también conserva la copia local anterior como respaldo; no borra ni migra contenido. La lista interna de notas guardadas sigue oculta en este cambio. La descarga TXT es únicamente de la nota actual; no incluye audio, diccionario, claves o ajustes. No usar información sensible real antes de validar el proceso.
 
+
+## Guardar audio y compartir texto (Delta 11)
+
+En Grabar, activá «Conservar también el audio» antes de empezar. Está sincronizado con Ajustes → Audio. Al terminar y completarse Whisper, tocá «Guardar audio» para descargar el audio guardado en Brave en su formato nativo (normalmente WebM, M4A u Ogg). Si no activaste la opción, no existe audio para descargar y el botón queda desactivado. El audio original no está anonimizado ni cifrado: evitá datos sensibles reales. La opción MP3 y la recuperación del último audio anterior siguen disponibles.
+
+En Texto, sobre el editor, están a la vista «Corregir selección», «Copiar», «Seleccionar todo» y «Compartir». Compartir utiliza el menú nativo de Android para texto plano; si Brave falla o no tiene soporte, intenta copiar al portapapeles y, si eso también falla, selecciona el texto. Antes de compartir exige revisar si hay datos identificatorios y si la transcripción está incompleta. TXT y Word siguen disponibles.
+
+En una prueba real, Whisper Small tardó 2:10 para transcribir ~1:10 de audio. Puede ser normal en un teléfono, pero para evaluar la diferencia con Base conviene transcribir exactamente el mismo archivo ficticio con ambos modelos.
+
 ## Un solo estado de transcripción y cómo investigar una demora (Delta 10)
 
 El estado de Whisper queda **exclusivamente en la barra inferior fija** mientras la transcripción está en marcha. Ya no repite «Procesando», tiempo, barra de progreso o «Cancelar procesamiento» dentro de la pantalla Grabar o del editor. Los mensajes de finalización, errores y advertencias importantes se conservan al terminar. El cartel global también funciona si cambiás de Grabar a Texto o Ajustes.
