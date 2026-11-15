@@ -1,5 +1,15 @@
 # Registro de cambios — Grabador de voz Delta
 
+## Delta 11 · Descarga de audio y acciones de texto accesibles — 15 de noviembre de 2026
+
+- En Grabar aparece «Conservar también el audio», sincronizado con Ajustes → Audio. Debe activarse antes de comenzar. El botón «Guardar audio» descarga el audio guardado en Brave, reutilizando la función existente y respetando el bloqueo durante captura y transcripción.
+- En Texto, «Corregir selección», «Copiar», «Seleccionar todo» y «Compartir» están visibles sobre el editor, sin pasar por Anonimizar.
+- «Compartir» ahora usa Web Share para compartir TEXTO en vez de requerir que Brave comparta un archivo Word. Si falla o falta el soporte, intenta copiar al portapapeles y muestra una explicación. Conserva las advertencias por transcripciones incompletas y datos identificables; no envía nada sin interacción del usuario.
+- Se conservan Whisper, audio anterior recuperable, exportaciones Word/TXT y almacenamiento, sin migraciones.
+- Medición real reportada: Whisper Small necesitó 2:10 para procesar aproximadamente 1:10 de audio; no demuestra una regresión. Para medir velocidad, comparar modelos con el mismo audio y condiciones.
+- Se agregan pruebas automáticas. Pendiente prueba de las acciones nuevas en Brave Android con contenido ficticio.
+
+
 ## Delta 10 · Progreso único y revisión de demora — 15 de noviembre de 2026
 
 - Se quitan visualmente las duplicaciones de estado en Grabar y Texto **solo mientras** el indicador global fijo de Whisper está activo. Los elementos históricos siguen en DOM para que la lógica, cancelar y compatibilidad no se rompan. Cuando Whisper termina o falla, los mensajes finales y advertencias vuelven a mostrarse como siempre.
