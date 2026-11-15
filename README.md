@@ -1,4 +1,4 @@
-# Grabador de voz Delta — Prueba Delta
+# DictaNota — Prueba Delta
 
 **Aplicación oficial:** https://ignabidon.github.io/notas-voz/
 
@@ -137,7 +137,7 @@ Se usa VisualViewport cuando está disponible y el navegador puede aceptar `inte
 
 Los prototipos web (`gamma-studio`, `gamma-profesional`, `gamma`, `prueba` y la web original), el experimento Android Alfa y su workflow se retiraron de **main**, pero se conservaron en la rama de archivo: [archivo-antes-de-delta-2026-11-15](https://github.com/ignabidon/notas-voz/tree/archivo-antes-de-delta-2026-11-15). También siguen en el historial de Git.
 
-La URL del repositorio permanece como **ignabidon/notas-voz** para no cambiar los enlaces. El nombre visible de la app es **Grabador de voz Delta**.
+La URL del repositorio permanece como **ignabidon/notas-voz** para no cambiar los enlaces. El nombre visible de la app es **DictaNota**.
 
 ## Guardar en Descargas (Delta 02)
 
