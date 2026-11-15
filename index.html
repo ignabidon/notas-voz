@@ -3,245 +3,67 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="color-scheme" content="light dark">
-<meta name="theme-color" content="#f3f0e8" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#121518" media="(prefers-color-scheme: dark)">
-<title>Notas por voz</title>
+<meta name="color-scheme" content="dark">
+
+
+<meta name="theme-color" content="#090f20">
+<meta name="studio-design" content="delta-01">
+<title>Grabador de voz Delta · Prueba Delta</title>
 <style>
-  :root{
-    color-scheme:light dark;
-    --bg:#f3f0e8; --bg2:#ebe6da; --card:#fffdf9; --ink:#23262b; --mut:#656b72; --line:#e2dccf;
-    --acc:#3a6860; --acc-ink:#fff; --acc-soft:#e3eeea;
-    --rec:#c0503a; --rec-ink:#fff; --rec-soft:#f8e4de;
-    --bar-l:46%; --note-bg:#fbf0d9; --note-ink:#6a4d10;
-    --shadow:0 1px 2px rgba(50,40,20,.05),0 10px 24px -14px rgba(50,40,20,.22);
-    --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
-  }
-  @media (prefers-color-scheme:dark){:root{
-    --bg:#121518; --bg2:#1a1e22; --card:#1b1f23; --ink:#e9e6df; --mut:#9ba2a9; --line:#2d3339;
-    --acc:#7dbbb0; --acc-ink:#0e1d1a; --acc-soft:#1f322d;
-    --rec:#ee7d66; --rec-ink:#2a0f09; --rec-soft:#3a2420;
-    --bar-l:58%; --note-bg:#322a16; --note-ink:#e8d39b;
-    --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 24px -14px rgba(0,0,0,.6);
-  }}
-  *{box-sizing:border-box}
-  html{-webkit-text-size-adjust:100%}
-  body{margin:0;font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);
-    background:var(--bg) radial-gradient(900px 340px at 50% -120px,var(--acc-soft),transparent 70%) no-repeat;
-    min-height:100vh;padding:20px 14px 40px}
-  .wrap{max-width:1020px;margin-inline:auto}
+:root{color-scheme:dark;--bg:#090f20;--bg2:#172139;--card:#101a2e;--ink:#edf3ff;--mut:#a1b0cc;--line:#293852;--acc:#9cbaff;--acc-ink:#0a1836;--acc-soft:#1c3156;--rec:#ff8e9b;--rec-ink:#300c17;--note-bg:#292637;--note-ink:#ded1b8;--bar-l:65%}
+*{box-sizing:border-box}html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;scroll-padding-top:24px}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif;padding:24px max(16px,env(safe-area-inset-right)) 100px max(16px,env(safe-area-inset-left))}button,input,textarea,select{font:inherit}button,summary,a{ -webkit-tap-highlight-color:transparent;touch-action:manipulation}button,summary{cursor:pointer}button:focus-visible,summary:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid #a9c6ff;outline-offset:4px}[hidden]{display:none!important}.wrap{max-width:1060px;margin:auto}.top{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:28px}.brand{display:flex;align-items:center;gap:12px}.logo{width:43px;height:43px;display:grid;place-items:center;border:1px solid #415988;border-radius:14px;color:#bbceff;background:#1a2d51}.logo svg{width:23px;height:23px}h1{font-size:23px;letter-spacing:-1px;line-height:1.1;margin:0}.sub{font-size:12px;color:var(--mut);margin:6px 0 0}.pill{display:flex;align-items:center;gap:6px;font-size:11px;color:#acc0e4}.pill svg{width:14px;height:14px}.layout{display:grid;grid-template-columns:350px minmax(0,1fr);gap:20px;align-items:start}.col{display:contents}.c-rec{grid-column:1;grid-row:1}.c-edit{grid-column:2;grid-row:1 / span 3}.c-set{grid-column:1;grid-row:2}.card{min-width:0;background:var(--card);border:1px solid var(--line);border-radius:24px;padding:22px}h2{font-size:18px;line-height:1.3;letter-spacing:-.4px;margin:0 0 18px}.section-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:16px}.section-heading h2{margin:0}.section-hint{font-size:11px;color:#b6cbf6;background:#203456;border-radius:20px;padding:4px 9px}.eyebrow{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#a6bfe9;margin:0 0 8px}.c-rec{background:radial-gradient(ellipse at 50% 35%,#203c6a 0, #121f39 55%,#101a2e 100%);text-align:center;position:relative}.c-rec h2{font-size:25px;letter-spacing:-.8px;margin-bottom:8px}.rec-caption{color:#b5c4e0;font-size:13px;margin:0 0 15px}.recrow{display:flex;flex-direction:column;align-items:center;gap:18px}button{background:var(--bg2);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:10px 14px;min-height:44px;font-size:13px;font-weight:600;transition:background .15s,transform .15s}button:hover:not(:disabled){background:#263859}button:active:not(:disabled){transform:scale(.98)}button:disabled{opacity:.4;cursor:not-allowed}button.p{background:var(--acc);color:var(--acc-ink);border-color:transparent}button.p:hover:not(:disabled){background:#bed0ff}button.ghost{background:transparent;color:var(--mut)}button.danger:hover:not(:disabled){color:#ffb4c0}#rec{width:130px;height:130px;min-height:130px;border-radius:50%;background:#abc5ff;color:#102349;border:8px solid #314e7c;box-shadow:0 0 0 8px #203759,0 10px 32px #070e2340;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:9px;font-size:16px;margin:12px 0}#rec:hover:not(:disabled){background:#c4d6ff}#rec::before{content:"";width:18px;height:27px;border:2.5px solid currentColor;border-radius:12px}#rec.on{background:var(--rec);color:var(--rec-ink);border-color:#713b58;box-shadow:0 0 0 8px #462c46}#rec.on::before{width:20px;height:20px;border:0;border-radius:5px;background:currentColor}#rec.on.paused{background:#b6b9c8;border-color:#515972;box-shadow:none}.side{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;max-width:300px}#clock{grid-column:1 / -1;font-size:35px;font-weight:400;letter-spacing:3px;line-height:1.2;font-variant-numeric:tabular-nums;margin-bottom:4px}#clock.on{color:#ffb8c3}#pause,#mark{font-size:12px;background:#1c2d49}.mark-help{font-size:11px;color:var(--mut);margin:12px 0 0}.warn,.hint{font-size:12px;color:var(--mut);overflow-wrap:anywhere}.hint{margin-top:6px}.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px}.row>*{min-width:0}.row button{flex-grow:1}label{display:block;color:var(--mut);font-size:12px;font-weight:600;margin-bottom:7px}input[type=text],input[type=number],textarea,select{width:100%;min-width:0;background:#0b1426;color:var(--ink);border:1px solid #30415f;border-radius:12px;padding:12px;font-size:16px}select option{background:var(--bg)}::placeholder{color:#8393b2;opacity:1}textarea{resize:vertical;min-height:200px;line-height:1.7}textarea#text{border:0;background:#0c1528;min-height:245px;padding:16px}.lbl-row>label{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}.tools{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}.tools button{font-size:11px;min-height:36px;padding:7px 9px;border:0;background:#192640}.meta{display:flex;justify-content:space-between;font-size:11px;color:var(--mut);margin-top:9px}#flash{color:var(--acc);font-size:12px;margin-top:8px}#flash:empty{display:none}.privacy-group{border:1px solid #35535d;background:#132a35;border-radius:18px;padding:16px;margin-top:22px}.privacy-group>.gl{color:#b9dedc;font-size:12px;font-weight:650}.studio-anon-actions{margin-top:12px}.studio-anon-secondary{display:flex;gap:8px;margin-top:8px}.studio-anon-secondary button{flex:1;font-size:11px;padding:8px;min-height:40px;background:transparent;border-color:#36525f;color:#c0d6df}#anon{width:100%;min-height:52px;background:#a4dbd2;color:#102c30;font-size:14px;border:0}#anon:hover{background:#c1eee6}.note{display:flex;gap:9px;color:#bac6cc;font-size:11px;line-height:1.5;margin-top:14px}.note svg{width:16px;height:16px;flex:none;margin-top:2px}details{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}summary{font-size:13px;font-weight:600;list-style:none;display:block;min-height:34px;padding:5px 22px 5px 0;position:relative}summary::-webkit-details-marker{display:none}summary::after{content:'+';position:absolute;right:0;top:2px;font-size:20px;font-weight:400;color:var(--mut)}details[open]>summary::after{content:'−'}summary small{display:block;color:var(--mut);font-weight:400;font-size:11px;margin-top:5px}.c-rec>details{text-align:left}.c-rec>details>summary{font-size:11px;color:var(--mut)}details.card{margin-top:0;padding:18px 20px}details.card>.body{padding-top:14px}#studioAnonConfig:not([open]){display:none}.studio-patients{padding:12px;background:#10232d;border:1px solid #35515d;border-radius:12px}.studio-workflow{padding:14px;border:1px solid var(--line);border-radius:14px;background:#162239}.studio-workflow-body{padding-top:14px}.note-details label{margin-top:12px}.tagrow{display:flex;gap:8px;flex-wrap:wrap}.tagrow input{flex:1;width:130px}.tagrow #tagSug{flex-basis:100%}.save-row{margin-top:16px}.group .gl{font-size:12px;margin-top:14px}.eng{display:grid;gap:8px}.eng label{display:flex;gap:10px;padding:12px;border:1px solid var(--line);border-radius:12px;color:var(--ink);font-weight:400}.eng label:has(input:checked){background:var(--acc-soft);border-color:#6689c5}.eng small,.chk small{display:block;font-size:11px;color:var(--mut);font-weight:400;margin-top:4px}.chk{display:flex;gap:10px;margin:16px 0;color:var(--ink);font-size:13px}input[type=checkbox],input[type=radio]{accent-color:var(--acc);width:19px;height:19px;flex:none}.body>label{margin-top:16px}.code-config{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}.code-config label{font-size:10px;min-height:30px}.code-config input,.code-config select{padding:8px;font-size:14px}#pGenerate{width:100%;margin-top:10px}.chip{border-radius:30px;font-size:12px;margin:0 5px 5px 0;min-height:34px;padding:5px 12px}.chip.sel{background:var(--acc);color:var(--acc-ink)}.n{padding:12px 0;border-top:1px solid var(--line)}.n small{display:block;color:var(--mut)}.n button{margin:8px 8px 0 0}.mono{font-family:monospace;font-size:13px;min-height:150px}.abox{border-top:1px solid var(--line);margin-top:16px;padding-top:16px}.two small{display:block;font-size:11px;font-weight:400}.bar{display:none;height:6px;border-radius:10px;background:var(--bg2);margin-top:12px;overflow:hidden}.bar i,.pbar i{display:block;height:100%;width:0;background:var(--acc);transition:width .15s}.pbar{height:7px;border-radius:8px;background:var(--bg2);overflow:hidden}#tp{display:none;margin-top:14px}#tp.on{display:block}#tpTxt,#status,#interim,#lvTxt{font-size:12px;margin-top:10px;color:var(--mut);overflow-wrap:anywhere}#status:empty,#interim:empty{display:none}.processing-timer{font-size:13px;color:var(--acc);margin-top:10px}.cancel-processing{width:100%;margin-top:10px}.cancel-help{font-size:11px}#busy{display:none;background:var(--note-bg);color:var(--note-ink);padding:10px;border-radius:10px;font-size:12px;margin-bottom:10px}#busy.on{display:block}footer{font-size:11px;color:var(--mut);text-align:center;margin-top:25px}.studio-nav{position:fixed;bottom:max(12px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);width:min(400px,calc(100% - 32px));display:flex;justify-content:space-around;padding:8px;background:#17243bf5;border:1px solid #354765;box-shadow:0 8px 30px #0007;border-radius:20px;z-index:5;backdrop-filter:blur(16px)}.studio-nav a{display:flex;align-items:center;justify-content:center;gap:7px;flex:1;padding:9px 8px;color:#c6d5ef;font-size:12px;text-decoration:none;border-radius:12px}.studio-nav a:hover{background:#2a3c5d}.studio-nav svg{width:17px;height:17px}
+@media(max-width:760px){body{padding-top:20px}.top{align-items:flex-start;margin-bottom:22px;gap:8px}.pill{font-size:0;padding-top:8px}.pill svg{width:17px;height:17px}.layout{display:flex;flex-direction:column;gap:16px}.card{width:100%;padding:19px;border-radius:22px}.c-rec{order:1}.c-edit{order:2}.c-set{order:3}.c-notes{order:4}.c-rec h2{font-size:24px}.recrow{gap:10px}#rec{width:118px;height:118px;min-height:118px;margin:10px 0}.rec-caption{margin-bottom:10px}#clock{font-size:30px}.mark-help{margin-top:10px}.c-rec>details{margin-top:12px;padding-top:8px}.tools button{flex:1}textarea#text{min-height:230px}.studio-anon-secondary{flex-wrap:wrap}.code-config{gap:5px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{transition:none!important}}
 
-  /* ---------- Encabezado ---------- */
-  .top{display:flex;align-items:center;justify-content:space-between;gap:12px 20px;flex-wrap:wrap;margin:2px 2px 18px}
-  .brand{display:flex;align-items:center;gap:14px;min-width:0}
-  .logo{flex:none;width:46px;height:46px;border-radius:14px;background:var(--acc);color:var(--acc-ink);display:grid;place-items:center;box-shadow:var(--shadow)}
-  .logo svg{width:24px;height:24px}
-  h1{font:800 24px/1.1 "Segoe UI",Roboto,system-ui,sans-serif;margin:0;letter-spacing:.09em;text-transform:uppercase}
-  .sub{color:var(--mut);font-size:14px;margin:3px 0 0;max-width:46ch}
-  .pill{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:500;color:var(--acc);background:var(--acc-soft);border-radius:999px;padding:6px 12px 6px 10px}
-  .pill svg{width:15px;height:15px;flex:none}
+/* Barra de acciones: accesos principales y navegación secundaria. */
+body{padding-bottom:calc(200px + env(safe-area-inset-bottom))}
+html{scroll-padding-bottom:200px}
+.studio-dock{position:fixed;bottom:max(12px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);width:min(480px,calc(100% - 24px));padding:10px;background:#14223af5;border:1px solid #40577b;border-radius:22px;box-shadow:0 8px 32px #0008;backdrop-filter:blur(18px);z-index:5}
+.dock-actions{display:grid;grid-template-columns:1fr 1.12fr;gap:10px}
+.dock-actions button{display:flex;justify-content:center;align-items:center;gap:9px;min-height:54px;font-size:14px;font-weight:750;border-radius:14px;padding:10px}
+.dock-actions svg{height:20px;width:20px;flex:none}
+#save{background:#b4cbff;color:#102449;border:1px solid #d0dfff;box-shadow:0 3px 12px #07152e40}
+#save:hover:not(:disabled){background:#d0dfff}
+#studioAnonAction{background:#244d52;border:1px solid #74b8ae;color:#d1f6ef}
+#studioAnonAction:hover:not(:disabled){background:#32666a}
+.studio-dock .studio-nav{position:static;transform:none;width:100%;padding:6px 0 0;margin-top:8px;border:0;border-top:1px solid #30425f;border-radius:0;box-shadow:none;background:transparent;backdrop-filter:none}
+.studio-dock .studio-nav a{min-height:40px;padding:7px;font-size:11px;color:#b8c9e7}
+.studio-dock #flash{margin:0 0 9px;padding:9px 12px;background:#243b5c;border-radius:10px;color:#edf4ff;font-size:12px;max-height:80px;overflow:auto}
+.studio-dock #flash:empty{display:none}
+#studioDockCapture{display:grid;gap:8px}
+#studioDockCapture[hidden],#studioDockNotes[hidden]{display:none!important}
+.dock-capture-status{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:1px 3px 0;color:#ffbbc6;font-weight:700;font-size:12px}
+.dock-capture-status .capture-clock{color:#e9f1ff;font-size:16px;font-variant-numeric:tabular-nums;letter-spacing:1px}
+.dock-capture-status .capture-mode{display:flex;align-items:center;gap:8px}
+.dock-capture-status .capture-dot{width:9px;height:9px;flex:none;border-radius:100%;background:#ff899b;box-shadow:0 0 0 4px #ff899b24}
+#studioDockCapture.paused .capture-dot{background:#b8c4d9;box-shadow:0 0 0 4px #b8c4d924}
+#studioDockCapture .dock-actions{grid-template-columns:0.82fr 1.18fr}
+#studioDockPause{background:#233652;border:1px solid #7186a7;color:#edf3ff}
+#studioDockStop{background:#ff9aa8;border:1px solid #ffb9c3;color:#350e19;font-size:15px}
+#studioDockStop:hover:not(:disabled){background:#ffbac4}
+#studioDockCapture .dock-actions button{min-width:0}
+#anon{min-height:56px;border:1px solid #d0f4eb;font-weight:750;box-shadow:0 3px 12px #061b2240}
+#aTx{flex-basis:100%;min-height:52px;background:#b4cbff;border:1px solid #d0dfff;color:#102449;font-size:14px;font-weight:750}
+#aTx:hover:not(:disabled){background:#d0dfff}
+#privacidad{scroll-margin-bottom:190px}
+@media(max-width:360px){.dock-actions{gap:7px}.dock-actions button{font-size:13px;gap:6px}.dock-actions svg{width:18px;height:18px}}
+.sub{max-width:42ch;line-height:1.5}.studio-dictionary code{color:#d1dfff;overflow-wrap:anywhere}.studio-dictionary .hint{margin:10px 0}
 
-  /* ---------- Estructura ---------- */
-  .layout{display:flex;flex-direction:column;gap:14px}
-  .col{display:contents}
-  .c-rec{order:1}.c-edit{order:2}.c-set{order:3}.c-notes{order:4}
-  @media (min-width:920px){
-    .layout{display:grid;grid-template-columns:minmax(310px,370px) 1fr;gap:18px;align-items:start}
-    .col{display:flex;flex-direction:column;gap:14px}
-  }
-  .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:var(--shadow)}
-  h2{font:600 13px/1 system-ui,sans-serif;text-transform:uppercase;letter-spacing:.07em;color:var(--mut);margin:0 0 14px}
-
-  /* ---------- Formularios ---------- */
-  label{display:block;font-size:13.5px;font-weight:600;color:var(--mut);margin-bottom:6px}
-  label .opt{font-weight:400}
-  input[type=text],textarea,select{width:100%;font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:11px;padding:10px 12px;transition:border-color .15s,box-shadow .15s}
-  select{appearance:auto;padding-block:9px}
-  select option{background:var(--card);color:var(--ink)}
-  ::placeholder{color:var(--mut);opacity:.75}
-  input[type=text]:focus,textarea:focus,select:focus{outline:none;border-color:var(--acc);box-shadow:0 0 0 3px var(--acc-soft)}
-  textarea{min-height:290px;resize:vertical;line-height:1.65}
-  textarea.mono{min-height:150px;font:13px/1.5 ui-monospace,Menlo,Consolas,monospace}
-  input[type=radio],input[type=checkbox]{accent-color:var(--acc);width:18px;height:18px;margin:2px 0 0;flex:none}
-  .field+.field,.field+label{margin-top:14px}
-  .hint{font-size:12.5px;color:var(--mut);margin-top:6px}
-
-  /* Motor de transcripción: opciones tipo tarjeta */
-  .eng{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
-  .eng label{display:flex;gap:11px;align-items:flex-start;color:var(--ink);font-size:14.5px;font-weight:400;margin:0;
-    border:1px solid var(--line);border-radius:13px;padding:12px;cursor:pointer;transition:border-color .15s,background .15s}
-  .eng label:has(input:checked){border-color:var(--acc);background:var(--acc-soft)}
-  .eng label:has(input:disabled){cursor:not-allowed}
-  .eng strong{font-weight:600}
-  .eng small{color:var(--mut);display:block;font-size:13px;line-height:1.45;margin-top:2px}
-
-  /* Casilla "empezar de cero" */
-  .chk{display:flex;gap:10px;align-items:flex-start;color:var(--ink);font-size:14.5px;font-weight:400;margin:16px 0 0;cursor:pointer}
-  .chk small{display:block;color:var(--mut);font-size:13px;margin-top:1px}
-  .chk b{font-weight:600}
-
-  /* ---------- Botones ---------- */
-  button{font:inherit;font-size:14.5px;font-weight:500;cursor:pointer;color:var(--ink);background:var(--card);border:1px solid var(--line);
-    padding:8px 14px;min-height:40px;border-radius:11px;transition:background .15s,border-color .15s,transform .05s,filter .15s}
-  button:hover:not(:disabled){background:var(--bg2);border-color:color-mix(in srgb,var(--mut) 40%,var(--line))}
-  button:active:not(:disabled){transform:translateY(1px)}
-  button:focus-visible,summary:focus-visible,select:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
-  button.p{background:var(--acc);color:var(--acc-ink);border-color:var(--acc);font-weight:600;padding-inline:20px}
-  button.p:hover:not(:disabled){background:var(--acc);filter:brightness(1.1)}
-  button.ghost{background:transparent;border-color:transparent;color:var(--mut)}
-  button.ghost:hover:not(:disabled){background:var(--bg2);color:var(--ink)}
-  button.danger:hover:not(:disabled){color:var(--rec)}
-  button:disabled{opacity:.45;cursor:not-allowed}
-  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
-
-  /* Botón grande de grabar: cuadrado redondeado */
-  #rec{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
-    flex:none;width:min(44vw,168px);aspect-ratio:1/1;min-height:0;margin:0;padding:12px;
-    font-size:22px;font-weight:700;letter-spacing:.02em;border:0;border-radius:38px;
-    background:var(--acc);color:var(--acc-ink);box-shadow:0 16px 30px -16px var(--acc)}
-  #rec:hover:not(:disabled){background:var(--acc);filter:brightness(1.08)}
-  #rec::before{content:"";width:36px;height:36px;border-radius:50%;background:currentColor;transition:border-radius .15s,width .15s,height .15s}
-  #rec.on,#rec.on:hover:not(:disabled){background:var(--rec);color:var(--rec-ink);box-shadow:0 16px 30px -16px var(--rec);animation:pulso 1.8s ease-out infinite}
-  #rec.on::before{border-radius:9px;width:30px;height:30px}
-  @keyframes pulso{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--rec) 45%,transparent)}70%,100%{box-shadow:0 0 0 18px transparent}}
-  @media (prefers-reduced-motion:reduce){#rec.on{animation:none}}
-  #rec:disabled{opacity:.55}
-  #rec.on.paused,#rec.on.paused:hover:not(:disabled){animation:none;background:var(--mut);color:var(--card);box-shadow:0 16px 30px -16px var(--mut)}
-
-  /* Contador, pausa y marcas al lado del botón */
-  .recrow{display:flex;align-items:center;justify-content:center;gap:14px;margin-top:4px}
-  .side{flex:1 1 0;min-width:0;max-width:150px;display:flex;flex-direction:column;gap:8px}
-  #clock{font-size:26px;font-weight:700;line-height:1;text-align:center;white-space:nowrap;font-variant-numeric:tabular-nums;color:var(--mut)}
-  #clock.on{color:var(--rec)}
-  #pause{width:100%}
-  #mark{width:100%;min-height:34px;padding:4px 10px;font-size:13.5px}
-
-  /* Audio guardado */
-  button.two{text-align:center;line-height:1.25}
-  button.two small{display:block;font-weight:400;font-size:12px;opacity:.85;margin-top:2px}
-  .abox{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
-  .abox .gl{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);margin-bottom:4px}
-  .arow{margin-top:10px}
-  .arow button{flex:1 1 140px}
-  #susBox .chip{margin:0 6px 6px 0}
-
-  /* ---------- Estado, nivel y avance ---------- */
-  #status{font-size:14px;color:var(--mut);margin-top:12px;overflow-wrap:anywhere}
-  #status:empty{margin:0}
-  #status,#interim,#lvTxt{text-align:center}
-  #interim{color:var(--mut);font-style:italic;font-size:14.5px;min-height:0;margin-top:4px}
-  .bar{height:8px;background:var(--bg2);border-radius:99px;overflow:hidden;margin-top:12px;display:none}
-  .bar i{display:block;height:100%;width:0;background:var(--acc);border-radius:99px;transition:width .12s}
-  #lv i{background:linear-gradient(90deg,var(--acc),color-mix(in srgb,var(--acc) 60%,var(--rec)))}
-  .warn{font-size:13px;color:var(--mut)}
-  #lvTxt{margin-top:6px;color:var(--rec);font-weight:500}
-  #flash{min-height:20px;margin-top:8px;color:var(--acc);font-weight:500}
-
-  /* Avance de la transcripción y contador */
-  #tp{display:none;margin-top:14px}
-  #tp.on{display:block}
-  #tpTxt{font-size:13.5px;color:var(--mut);text-align:center;margin-bottom:7px;font-variant-numeric:tabular-nums}
-  .pbar{height:10px;background:var(--bg2);border-radius:99px;overflow:hidden}
-  .pbar i{display:block;height:100%;width:0;border-radius:99px;background:hsl(var(--h,40) 85% var(--bar-l));transition:width .45s ease,background-color .45s ease}
-  #busy{display:none;align-items:center;gap:10px;background:var(--note-bg);color:var(--note-ink);border-radius:12px;padding:9px 12px;font-size:13.5px;font-weight:500;margin-bottom:8px}
-  #busy.on{display:flex}
-  #busy::before{content:"";flex:none;width:16px;height:16px;border-radius:50%;border:2.5px solid currentColor;border-right-color:transparent;animation:gira .9s linear infinite}
-  @keyframes gira{to{transform:rotate(360deg)}}
-  @media (prefers-reduced-motion:reduce){#busy::before{animation:none}}
-  .meta{display:flex;justify-content:space-between;gap:10px;font-size:13px;color:var(--mut);margin-top:8px}
-  #wc{font-variant-numeric:tabular-nums;font-weight:500}
-
-  /* ---------- Plegables ---------- */
-  details{margin-top:16px;padding-top:12px;border-top:1px solid var(--line);font-size:14px}
-  summary{cursor:pointer;color:var(--ink);font-size:14px;font-weight:600;list-style:none;display:block;user-select:none}
-  summary::-webkit-details-marker{display:none}
-  summary::before{content:"";width:7px;height:7px;border-right:2px solid var(--mut);border-bottom:2px solid var(--mut);transform:rotate(-45deg);transition:transform .15s;margin:0 10px 2px 2px;display:inline-block;vertical-align:middle}
-  details[open]>summary::before{transform:rotate(45deg)}
-  summary small{color:var(--mut);font-weight:400;font-size:13px}
-  details.card{padding:0;margin-top:0}
-  details.card>summary{padding:16px 18px}
-  details.card>.body{padding:0 18px 18px}
-  details.card[open]>summary{padding-bottom:12px}
-
-  /* ---------- Editor ---------- */
-  .lbl-row{display:flex;justify-content:space-between;align-items:flex-end;gap:8px;flex-wrap:wrap;margin:18px 0 8px}
-  .lbl-row label{margin:0}
-  .tools{display:flex;gap:2px;flex-wrap:wrap}
-  .tools button{min-height:34px;padding:5px 10px;font-size:13.5px}
-  #chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
-  #chips:empty{display:none}
-  .chip{padding:4px 12px;min-height:30px;border-radius:999px;font-size:13.5px;background:var(--bg)}
-  #filt{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}
-  #filt:empty{display:none}
-  .chip.sel{background:var(--acc);color:var(--acc-ink);border-color:var(--acc)}
-  #learn .chip{background:var(--acc-soft);border-color:transparent;color:var(--ink);margin:0 6px 6px 0}
-  .tagrow input{flex:1;min-width:140px}
-  .tagrow{margin-top:0}
-  .save-row{margin-top:20px;padding-top:18px;border-top:1px solid var(--line)}
-  .group{margin-top:18px}
-  .group .gl{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);margin-bottom:2px}
-  .note{display:flex;gap:9px;align-items:flex-start;background:var(--note-bg);color:var(--note-ink);border-radius:12px;padding:10px 12px;font-size:13.5px;margin-top:12px}
-  .note svg{width:17px;height:17px;flex:none;margin-top:2px}
-
-  /* ---------- Notas guardadas ---------- */
-  .n{display:grid;grid-template-columns:1fr auto auto;column-gap:6px;align-items:center;padding:11px 0;border-top:1px solid var(--line)}
-  .n:first-child{border-top:0;padding-top:2px}
-  .n span{grid-column:1;grid-row:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;font-size:15px}
-  .n small{grid-column:1;grid-row:2;color:var(--mut);font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .n button{grid-row:1 / 3;min-height:34px;padding:4px 12px;font-size:13.5px}
-  .n button:nth-of-type(1){grid-column:2}
-  .n button:nth-of-type(2){grid-column:3}
-  #list>.warn{padding:4px 0}
-
-  footer{margin:26px 2px 0;font-size:12.5px;color:var(--mut);text-align:center}
-
-  html{-webkit-tap-highlight-color:transparent}
-  button,summary,label{touch-action:manipulation}
-  body{padding-left:max(14px,env(safe-area-inset-left));padding-right:max(14px,env(safe-area-inset-right));padding-bottom:calc(36px + env(safe-area-inset-bottom))}
-
-  @media (max-width:640px){
-    body{padding-top:14px;padding-left:max(10px,env(safe-area-inset-left));padding-right:max(10px,env(safe-area-inset-right))}
-    .top{margin-bottom:12px;gap:10px}
-    .logo{width:42px;height:42px;border-radius:13px}
-    h1{font-size:21px}
-    .sub{font-size:13.5px}
-    .pill{font-size:12.5px}
-    .card{padding:16px;border-radius:20px}
-    h2{margin-bottom:12px}
-    /* Botones cómodos para el pulgar */
-    button{min-height:48px;font-size:15px;border-radius:13px}
-    input[type=text],select{min-height:48px}
-    textarea{min-height:240px}
-    input[type=radio],input[type=checkbox]{width:22px;height:22px}
-    .chk{margin-top:18px;gap:12px}
-    .eng label{padding:14px}
-    /* Barra de herramientas del texto: 3 botones parejos */
-    .lbl-row{display:block;margin-top:16px}
-    .lbl-row label{margin-bottom:8px}
-    .tools{display:grid;grid-template-columns:1.45fr 1.15fr .8fr;gap:8px}
-    .tools button{min-height:44px;padding:6px 4px;font-size:13.5px;white-space:nowrap;background:var(--bg);border-color:var(--line)}
-    .tools button#undoClear{grid-column:1 / -1}
-    /* Acciones: botones a lo ancho */
-    .save-row{display:grid;grid-template-columns:1.4fr 1fr;gap:10px}
-    .save-row button.p{min-height:54px;font-size:16px}
-    .group .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    .group .row button{padding-inline:8px}
-    .group .row #share{grid-column:1 / -1}
-    .tagrow{display:grid;grid-template-columns:1fr 52px;gap:8px}
-    .tagrow #tagSug{grid-column:1 / -1}
-    #chips .chip,#filt .chip{min-height:38px;padding:6px 14px}
-    .n{padding:12px 0}
-    .n button{min-height:42px}
-    details.card>summary{padding:16px}
-    details.card>.body{padding:0 16px 16px}
-    summary{padding-block:4px}
-    details>summary{min-height:36px}
-    #applyDict,#voseo{width:100%}
-    #copyDiag{width:100%}
-    #mark{min-height:38px}
-    #susBox .chip{min-height:38px;padding:6px 14px}
-    .arow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  }
+.tools #correctSelection{background:#294b70;color:#e1edff;border:1px solid #688bb9;font-size:12px;min-height:44px}
+.selection-help{margin:0 0 10px;font-size:11px}
+.editor-area{position:relative}
+.editor-area textarea#text{display:block;padding-bottom:70px}
+#quickCorrect{position:absolute;right:12px;bottom:12px;max-width:calc(100% - 24px);min-height:46px;z-index:2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;background:#b4cbff;color:#102449;border:1px solid #d0dfff;box-shadow:0 4px 16px #020c2288;font-size:13px}
+#quickCorrect:hover:not(:disabled){background:#d0dfff}
+#correctionDialog{width:min(460px,calc(100% - 24px));max-height:85dvh;overflow:auto;background:#14223a;color:var(--ink);border:1px solid #567197;border-radius:22px;padding:22px;box-shadow:0 24px 70px #0009}
+#correctionDialog::backdrop{background:#050b1bcc;backdrop-filter:blur(3px)}
+#correctionDialog h2{margin:0 0 8px}#correctionDialog label{margin-top:14px}
+#correctionDialog input{font-size:16px}#correctionOriginal{color:#c5d4ec!important;background:#0c1729!important}
+#correctionDialog .chk{font-size:13px;margin-bottom:8px}#correctionDialog .chk input{margin-top:3px}
+#correctionDialog .dialog-actions{display:flex;gap:10px;margin-top:20px}#correctionDialog .dialog-actions button{flex:1;min-height:48px}
+#correctionError{color:#ffbdc8;margin-top:12px;font-size:12px}#correctionError:empty{display:none}
+#correctionRuleNotice{color:#dfd4b8;font-size:12px;margin:8px 0}
+@media(max-width:760px){.tools #correctSelection{flex-basis:100%;font-size:13px}}
 </style>
 </head>
 <body>
@@ -251,11 +73,11 @@
   <div class="brand">
     <span class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7"/></svg></span>
     <div>
-      <h1>Notas por voz</h1>
-      <p class="sub">Hablás y se escribe solo. El audio no se envía a ningún servidor; solo se guarda en tu dispositivo si lo activás en Ajustes.</p>
+      <h1>Grabador de voz Delta</h1>
+      <p class="sub">Prueba Delta · Grabá y transcribí notas. Corregí el texto y anonimizá datos personales.</p>
     </div>
   </div>
-  <span class="pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Las notas quedan solo en este dispositivo</span>
+  <span class="pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Procesamiento local</span>
 </header>
 
 <main class="layout">
@@ -263,28 +85,28 @@
 <div class="col">
 
   <!-- 1 · Grabar -->
-  <section class="card c-rec">
-    <h2>Grabar</h2>
+  <section class="card c-rec" id="grabacion">
+    <p class="eyebrow">ESPACIO DE GRABACIÓN</p><h2>Una idea. Tu voz.</h2><p class="rec-caption">Grabá, transcribí y dale forma a tu nota.</p>
     <div class="recrow">
       <button id="rec" type="button">Grabar</button>
       <div class="side">
         <div id="clock" aria-label="Tiempo de grabación">00:00</div>
         <button id="pause" type="button" disabled title="Pausar o reanudar (tecla P)">Pausar</button>
-        <button id="mark" type="button" disabled title="Insertar la hora en el texto (tecla M)">Marcar</button>
+        <button id="mark" type="button" disabled title="Insertá una marca de tiempo en la transcripción (tecla M)" aria-label="Marcar momento en la transcripción">Marcar momento</button>
       </div>
     </div>
+    <p class="mark-help">«Marcar momento» agrega la hora exacta en el texto, por ejemplo [02:15].</p>
     <div class="warn" id="keepOn" style="display:none;text-align:center;margin-top:12px">Mantené la pantalla encendida y no cambies de app: si no, la grabación puede cortarse.</div>
     <div class="bar" id="bar"><i id="barI"></i></div>
     <div id="status" role="status" aria-live="polite"></div>
+    <div id="processingTimer" class="processing-timer" hidden>Procesando · <span id="processClock">00:00</span></div>
+    <button id="cancelProcessing" type="button" class="cancel-processing danger" hidden>Cancelar procesamiento</button>
+    <p id="cancelNote" class="warn cancel-help" hidden>Se conservará el texto que ya apareció, pero la transcripción quedará incompleta.</p>
     <div id="interim"></div>
     <div id="tp" aria-live="off"><div id="tpTxt"></div><div class="pbar" role="progressbar" aria-label="Avance de la transcripción"><i id="tpI"></i></div></div>
     <div class="bar" id="lv"><i id="lvI"></i></div>
     <div class="warn" id="lvTxt"></div>
-    <label class="chk"><input type="checkbox" id="replace" checked>
-      <span><b>Empezar de cero al grabar</b><small>Borra el texto anterior (podés deshacerlo). Si lo destildás, lo nuevo se suma al final.</small></span></label>
-
-    <label class="chk"><input type="checkbox" id="liveAnon" checked>
-      <span><b>Ocultar nombres mientras transcribe</b><small>Usa tu tabla de personas y una lista de nombres comunes. Igual revisá siempre el texto.</small></span></label>
+    <input type="checkbox" id="liveAnon" hidden>
 
     <div class="abox" id="audioBox" style="display:none">
       <div class="gl">Audio guardado</div>
@@ -308,7 +130,7 @@
   </section>
 
   <!-- 3 · Ajustes de transcripción -->
-  <details class="card c-set">
+  <details class="card c-set" id="ajustes">
     <summary>Ajustes de transcripción <small>· cómo transcribir, calidad y micrófono</small></summary>
     <div class="body">
       <label>Cómo transcribir</label>
@@ -319,11 +141,15 @@
           <span><strong>Dictado del navegador</strong><small id="nativeNote">El texto aparece en vivo, mientras hablás.</small></span></label>
       </div>
 
-      <label for="model">Calidad de Whisper</label>
+      <label class="chk"><input type="checkbox" id="replace" checked><span><b>Empezar de cero al grabar</b><small>Podés deshacer el borrado. Si lo desactivás, lo nuevo se suma al final.</small></span></label>
+      <label for="model" style="margin-top:16px">Modelo de Whisper</label>
       <select id="model">
-        <option value="Xenova/whisper-base">Rápida · descarga ~75 MB</option>
-        <option value="Xenova/whisper-small" selected>Más precisa · descarga ~250 MB (más lenta)</option>
+        <option value="Xenova/whisper-tiny">Tiny · más liviano (para pruebas)</option>
+        <option value="Xenova/whisper-base">Base · equilibrio entre velocidad y precisión</option>
+        <option value="Xenova/whisper-small" selected>Small · más precisión, más lento</option>
       </select>
+      <div class="hint" id="modelHint" role="status">Small: para mayor precisión. Requiere más memoria y tiempo de procesamiento.</div>
+      <div class="hint">La primera vez se descarga el modelo elegido. Después puede usarse sin conexión si quedó guardado en el navegador. Elegir otro modelo puede requerir una nueva descarga.</div>
 
       <label for="accel" style="margin-top:14px">Velocidad de cálculo</label>
       <select id="accel">
@@ -341,12 +167,26 @@
 
       <label class="chk" style="margin-top:18px"><input type="checkbox" id="saveAudio">
         <span><b>Guardar el audio de la grabación</b><small>Queda solo en este dispositivo (dentro del navegador), para descargarlo como archivo o recuperar la grabación si se corta. Solo con Whisper. Es tu voz tal cual: no se puede anonimizar, así que borralo cuando ya no lo necesites.</small></span></label>
+    <details class="studio-dictionary">
+      <summary>Corregir palabras frecuentes <small>Opcional · para errores que se repiten</small></summary>
+      <p class="hint" id="dictHelp">Escribí qué palabra sale mal y por cuál reemplazarla, una corrección por línea. No hace falta explicar el motivo.</p>
+      <p class="hint">Ejemplo: <code>contra transferencia =&gt; contratransferencia</code></p>
+      <p class="hint">Se guarda automáticamente en este navegador y se aplica a las próximas transcripciones. Para corregir el texto que ya tenés, tocá «Aplicar al texto actual».</p>
+      <p class="hint">También podés escribir un término técnico solo, como <code>Winnicott</code>: la app intentará corregir variantes parecidas. Revisá el resultado. Para nombres de pacientes, usá Personas y códigos.</p>
+      <label for="dict" style="margin-top:12px">Tus palabras y correcciones</label>
+      <textarea id="dict" aria-describedby="dictHelp" class="mono" spellcheck="false" autocapitalize="off"></textarea>
+      <div class="warn" id="dictInfo" style="margin-top:6px"></div>
+      <div class="row">
+        <button id="applyDict">Aplicar al texto actual</button>
+        <button id="voseo">Agregar formas rioplatenses (vos, tenés…)</button>
+      </div>
+    </details>
     </div>
   </details>
 
-  <!-- 4 · Notas guardadas -->
-  <section class="card c-notes">
-    <h2>Notas guardadas</h2>
+  <!-- Gamma Studio: se retira la sección visual de notas guardadas.
+       Se mantienen los nodos para que la lógica original no falle. -->
+  <section class="c-notes" hidden aria-hidden="true" style="display:none!important">
     <div id="filt"></div>
     <div id="list"></div>
   </section>
@@ -356,25 +196,80 @@
 <div class="col">
 
   <!-- 2 · Texto -->
-  <section class="card c-edit">
-    <h2>Tu texto</h2>
-    <label for="title">Título</label>
-    <input type="text" id="title" placeholder="Ej.: Clase 4to año – 14/11">
-
+  <section class="card c-edit" id="transcripcion">
+    <div class="section-heading"><h2>Transcripción</h2><span class="section-hint">Tu borrador</span></div>
     <div class="lbl-row">
       <label for="text">Transcripción <span class="opt">(podés editarla)</span></label>
       <div class="tools">
         <button class="ghost" id="selAll">Seleccionar todo</button>
+        <button type="button" id="correctSelection" aria-haspopup="dialog">Corregir texto</button>
         <button class="ghost" id="copyAll">Copiar todo</button>
-        <button class="ghost danger" id="clear">Borrar</button>
+        <button class="ghost danger" id="clear" title="Podés deshacer el borrado">Borrar texto</button>
         <button class="ghost" id="undoClear" style="display:none">Deshacer borrado</button>
       </div>
     </div>
     <div id="busy" role="status"></div>
-    <textarea id="text" placeholder="Acá va a aparecer lo que digas…"></textarea>
+    <p class="hint selection-help" id="selectionHelp">Tocá una palabra para corregirla. También podés mantener presionado y seleccionar una frase; aparecerá un botón de corrección dentro del recuadro.</p>
+    <div class="editor-area">
+      <textarea aria-describedby="selectionHelp" id="text" placeholder="Acá va a aparecer lo que digas…"></textarea>
+      <button type="button" id="quickCorrect" aria-haspopup="dialog" hidden>Corregir palabra</button>
+    </div>
     <div class="meta"><span id="wc">0 palabras</span><span id="cc"></span></div>
-    <div id="flash" role="status"></div>
+
     <div id="learn"></div>
+
+    <div class="group privacy-group" id="privacidad">
+      <div class="gl">Privacidad · Revisá el texto antes de compartir</div>
+      <div class="studio-anon-actions"><button class="p" id="anon" title="Aplicar una sola vez; se puede deshacer">Anonimizar transcripción</button><div class="studio-anon-secondary"><button id="undo" disabled>↶ Deshacer anonimizado</button><button type="button" id="studioAnonSettings" aria-expanded="false" aria-controls="studioAnonConfig">⚙ Ajustes</button></div></div>
+      <div class="warn" id="anonRes" style="margin-top:8px"></div>
+      <div id="susBox"></div>
+      <div class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 2.5 20h19L12 3z"/><path d="M12 10v4M12 17.5v.01"/></svg><span>La anonimización es automática y puede fallar: revisá siempre el texto antes de guardarlo o exportarlo.</span></div>
+      <details id="studioAnonConfig">
+        <summary>Ajustes de anonimización</summary>
+        <label style="margin-top:10px">Ocultar también estas palabras (separadas por coma)</label>
+        <input type="text" id="hideX" placeholder="Ej.: nombre de una escuela, apodo">
+        <label style="margin-top:12px">No ocultar nunca estas palabras</label>
+        <input type="text" id="keepX" placeholder="Ej.: Freud, Winnicott">
+      </details>
+      <details id="peopleBox" class="studio-patients">
+        <summary>Personas y códigos <small>· cómo se reemplaza cada nombre</small></summary>
+        <div class="warn" style="margin:10px 0 8px">Opcional: asociá nombres y apodos con un código que elegís o generás. La asociación se usa solo cuando tocás «Anonimizar». Si no configurás nada, los nombres se ocultan como [Persona 1], [Persona 2], etc. La tabla se guarda en este navegador y contiene nombres reales.</div>
+        <label for="pName">Nombre (y apodos, separados por coma)</label>
+        <input type="text" id="pName" placeholder="Ej.: José, Pepe" autocomplete="off">
+        <label for="pRel" style="margin-top:10px">Relación <span class="opt">(vacía = es el paciente)</span></label>
+        <input type="text" id="pRel" placeholder="Ej.: madre, hermano, docente" autocomplete="off">
+        <label for="pCode" style="margin-top:10px">Código <span class="opt">(escribilo libremente o generá uno)</span></label>
+        <input type="text" id="pCode" placeholder="Ej.: P-024" autocomplete="off" spellcheck="false">
+        <details class="code-settings">
+          <summary>Generar un código <small>· opcional, a tu elección</small></summary>
+          <div class="code-options">
+            <label for="pMode">Método</label>
+            <select id="pMode">
+              <option value="sequential">Correlativo (P-001, P-002…)</option>
+              <option value="random">Aleatorio (P-A3F82C…)</option>
+            </select>
+            <div class="code-config">
+              <div><label for="pPrefix">Prefijo</label><input type="text" id="pPrefix" value="P-" maxlength="12" autocomplete="off" spellcheck="false"></div>
+              <div><label for="pNext">Próximo número</label><input type="number" id="pNext" min="1" max="999999999" value="1" inputmode="numeric"></div>
+              <div><label for="pDigits">Dígitos</label><select id="pDigits"><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></select></div>
+            </div>
+            <div class="hint" id="pGenHint">El generador propone un código, pero no lo registra hasta que toques «Agregar asociación».</div>
+            <button id="pGenerate" type="button">Generar código</button>
+          </div>
+        </details>
+        <div class="row"><button class="p" id="pAdd" type="button">Agregar asociación</button><button id="pApply" type="button">Aplicar asociaciones al texto</button></div>
+        <div class="warn" id="pMsg" style="margin-top:8px"></div>
+        <div id="pList" style="margin-top:8px"></div>
+        <label class="chk"><input type="checkbox" id="pVolatile"><span><b>No guardar las asociaciones</b><small>Opcional: si lo activás, las asociaciones actuales se pierden al cerrar la página. Por defecto se guardan localmente.</small></span></label>
+        <div class="row"><button class="ghost danger" id="pClear" type="button">Borrar toda la tabla</button></div>
+      </details>
+    </div>
+
+
+    <details class="studio-workflow"><summary>Guardar, organizar y exportar la nota</summary><div class="studio-workflow-body"><div class="note-details">
+      <label for="title">Título de la nota <span class="opt">(opcional)</span></label>
+      <input type="text" id="title" placeholder="Ej.: Nota de sesión · 15/11">
+    </div>
 
     <label style="margin-top:14px">Etiquetas</label>
     <div id="chips"></div>
@@ -385,11 +280,11 @@
     </div>
 
     <div class="row save-row">
-      <button class="p" id="save">Guardar</button>
+
       <button id="newn">Nota nueva</button>
     </div>
 
-    <div class="group">
+    <div class="group export-group">
       <div class="gl">Exportar</div>
       <div class="row" style="margin-top:6px">
         <button id="doc">Exportar a Word</button>
@@ -397,59 +292,65 @@
         <button id="share" style="display:none">Compartir</button>
       </div>
     </div>
+</div></details>
 
-    <div class="group">
-      <div class="gl">Privacidad</div>
-      <div class="row" style="margin-top:6px">
-        <button id="anon">Anonimizar</button>
-        <button id="undo" disabled>Deshacer anonimizado</button>
-      </div>
-      <div class="warn" id="anonRes" style="margin-top:8px"></div>
-      <div id="susBox"></div>
-      <div class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 2.5 20h19L12 3z"/><path d="M12 10v4M12 17.5v.01"/></svg><span>La anonimización es automática y puede fallar: revisá siempre el texto antes de guardarlo o exportarlo.</span></div>
-      <details>
-        <summary>Ajustes de anonimización</summary>
-        <label style="margin-top:10px">Ocultar también estas palabras (separadas por coma)</label>
-        <input type="text" id="hideX" placeholder="Ej.: nombre de una escuela, apodo">
-        <label style="margin-top:12px">No ocultar nunca estas palabras</label>
-        <input type="text" id="keepX" placeholder="Ej.: Freud, Winnicott">
-      </details>
-      <details id="peopleBox">
-        <summary>Personas y códigos <small>· cómo se reemplaza cada nombre</small></summary>
-        <div class="warn" style="margin:10px 0 8px">Cargá a cada persona una vez. Si es el paciente mismo, dejá «Relación» vacía. Si solo querés ocultar un nombre sin código, dejá vacías «Relación» y «Código». La tabla queda solo en este dispositivo (y tiene nombres reales: cuidala).</div>
-        <label for="pName">Nombre (y apodos, separados por coma)</label>
-        <input type="text" id="pName" placeholder="Ej.: José, Pepe" autocomplete="off">
-        <label for="pRel" style="margin-top:10px">Relación <span class="opt">(vacía = es el paciente)</span></label>
-        <input type="text" id="pRel" placeholder="Ej.: madre, hermano, docente" autocomplete="off">
-        <label for="pCode" style="margin-top:10px">Código del paciente</label>
-        <input type="text" id="pCode" placeholder="Ej.: C.036" autocomplete="off">
-        <div class="row"><button class="p" id="pAdd" type="button">Agregar</button><button id="pApply" type="button">Aplicar al texto actual</button></div>
-        <div class="warn" id="pMsg" style="margin-top:8px"></div>
-        <div id="pList" style="margin-top:8px"></div>
-        <label class="chk"><input type="checkbox" id="pVolatile"><span><b>No guardar esta tabla en el dispositivo</b><small>La tabla se pierde al cerrar la página y hay que cargarla de nuevo cada vez.</small></span></label>
-        <div class="row"><button class="ghost danger" id="pClear" type="button">Borrar toda la tabla</button></div>
-      </details>
-    </div>
 
-    <details>
-      <summary>Mi diccionario <small>· corrige palabras que se escriben mal</small></summary>
-      <div class="warn" style="margin:10px 0 8px">Se aplica después de transcribir. Una regla por línea: <b>lo que escribe Whisper =&gt; lo que querés que diga</b>. Una palabra sola (sin =&gt;) sirve para nombres propios y términos técnicos: se corrige si suena parecida. Las líneas que empiezan con # son comentarios. Se guarda en este dispositivo; no pongas nombres de pacientes.</div>
-      <textarea id="dict" class="mono" spellcheck="false" autocapitalize="off"></textarea>
-      <div class="warn" id="dictInfo" style="margin-top:6px"></div>
-      <div class="row">
-        <button id="applyDict">Aplicar al texto actual</button>
-        <button id="voseo">Agregar formas rioplatenses (vos, tenés…)</button>
-      </div>
-    </details>
   </section>
 
 </div>
 
 </main>
 
-<footer>Notas por voz · v3.3 · Todo se guarda únicamente en este navegador</footer>
+<footer>Grabador de voz Delta · Prueba Delta 01<br>Versión experimental · Usá solo datos ficticios</footer>
 </div>
 
+<aside class="studio-dock" aria-label="Acciones de la nota">
+  <div id="flash" role="status" aria-live="polite"></div>
+  <div class="dock-actions" id="studioDockNotes">
+    <button type="button" id="studioAnonAction" aria-label="Anonimizar transcripción"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3 4 6v6c0 4 8 9 8 9s8-5 8-9V6z"/><path d="m8 12 3 3 5-6"/></svg><span>Anonimizar</span></button>
+    <button type="button" class="p" id="save"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 3h12l4 4v14H3V3zM7 3v6h10V3M7 21v-8h10v8"/></svg><span>Guardar nota</span></button>
+  </div>
+  <div id="studioDockCapture" hidden aria-label="Controles fijos de grabación">
+    <div class="dock-capture-status" role="status" aria-live="off">
+      <span class="capture-mode"><span class="capture-dot" aria-hidden="true"></span><span id="studioDockMode">Grabando</span></span>
+      <span class="capture-clock" id="studioDockClock" aria-label="Tiempo grabado">00:00</span>
+    </div>
+    <div class="dock-actions">
+      <button type="button" id="studioDockPause">Pausar</button>
+      <button type="button" id="studioDockStop">Detener grabación</button>
+    </div>
+  </div>
+<nav class="studio-nav" aria-label="Secciones"><a href="#grabacion"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>Grabar</a><a href="#transcripcion"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5"/></svg>Texto</a><a href="#ajustes" id="studioSettingsLink"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3" fill="#17243b"/><circle cx="15" cy="17" r="3" fill="#17243b"/></svg>Ajustes</a></nav></aside>
+<dialog id="correctionDialog" aria-labelledby="correctionTitle" aria-describedby="correctionDescription">
+  <form id="correctionForm">
+    <h2 id="correctionTitle">Corregir selección</h2>
+    <p class="hint" id="correctionDescription">Cambiá solo esta aparición. Recordarla para próximas transcripciones es opcional.</p>
+    <label for="correctionOriginal">Texto seleccionado</label>
+    <input id="correctionOriginal" type="text" readonly>
+    <label for="correctionReplacement">Reemplazar por…</label>
+    <input id="correctionReplacement" type="text" autocomplete="off" spellcheck="true" required>
+    <label class="chk"><input id="correctionRemember" type="checkbox"><span>Recordar para próximas transcripciones<small>Se guarda en este navegador. Evitá guardar nombres de pacientes.</small></span></label>
+    <p id="correctionRuleNotice" hidden></p>
+    <p id="correctionError" role="alert"></p>
+    <div class="dialog-actions"><button id="correctionCancel" type="button">Cancelar</button><button class="p" type="submit">Aplicar</button></div>
+  </form>
+</dialog>
+
+<script>
+document.addEventListener('DOMContentLoaded',function(){
+  document.getElementById('studioSettingsLink').addEventListener('click',()=>{document.getElementById('ajustes').open=true;});
+  const anonAction=document.getElementById('studioAnonAction'),anonButton=document.getElementById('anon');
+  const syncAnon=()=>{anonAction.disabled=anonButton.disabled;};
+  new MutationObserver(syncAnon).observe(anonButton,{attributes:true,attributeFilter:['disabled']});
+  syncAnon();
+  anonAction.addEventListener('click',()=>{
+    anonButton.click();
+    if(anonButton.disabled) document.getElementById('privacidad').scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
+  });
+  const btn=document.getElementById('studioAnonSettings'),panel=document.getElementById('studioAnonConfig');
+  if(btn&&panel){btn.addEventListener('click',function(){panel.open=!panel.open;btn.setAttribute('aria-expanded',String(panel.open));});}
+});
+</script>
 <script>
 /* ====================================================================
    Funciones puras (se prueban aparte, sin navegador)
@@ -717,7 +618,7 @@ function sentenceStarters(text, S){
    Estado general
    ==================================================================== */
 const $ = id => document.getElementById(id);
-const KEY = 'notasvoz.v1', DKEY = 'notasvoz.dict.v1', CKEY = 'notasvoz.cfg.v1', DRAFT = 'notasvoz.draft.v1', UNDO = 'notasvoz.undo.v1';
+const KEY = 'notasvoz.gamma.v1', DKEY = 'notasvoz.gamma.dict.v1', CKEY = 'notasvoz.gamma.cfg.v1', DRAFT = 'notasvoz.gamma.draft.v1', UNDO = 'notasvoz.gamma.undo.v1';
 let notes = [], cur = null, tags = [], activeTag = null, anonBackup = null, baseline = '', clearBackup = null;
 try { notes = JSON.parse(localStorage.getItem(KEY) || '[]'); } catch (e) { notes = []; }
 const setStatus = s => $('status').textContent = s;
@@ -728,7 +629,7 @@ const nWords = s => (s.match(WORDS) || []).length;
 
 /* ---------- Notas ---------- */
 function fmt(ts){ return new Date(ts).toLocaleString('es-AR', {dateStyle:'short', timeStyle:'short'}); }
-function resetEdit(){ anonBackup = null; $('undo').disabled = true; $('anonRes').textContent = ''; $('learn').innerHTML = ''; $('susBox').innerHTML = ''; }
+function resetEdit(){ anonBackup = null; $('undo').disabled = true; $('anon').disabled = false; $('anonRes').textContent = ''; $('learn').innerHTML = ''; $('susBox').innerHTML = ''; }
 function renderList(){
   const l = $('list'); l.innerHTML = '';
   const f = $('filt'); f.innerHTML = '';
@@ -824,6 +725,11 @@ $('tagSug').onclick = () => {
 const KEEP = ['lunes','martes','miércoles','jueves','viernes','sábado','domingo','enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre','hoy','ayer','mañana','argentina','buenos','aires','dios','freud','winnicott','klein','lacan','salud','adolescencia','claude','whisper','word','sigmund','melanie','donald','jacques','wilfred','bion','jung','adler','ferenczi','bowlby','spitz','mahler','piaget','aberastury','pichon','riviere','dolto','erikson'];
 const reEsc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 function anonymize(){
+  // No volver a procesar los marcadores [Persona N] ni perder la copia original.
+  if (anonBackup) {
+    $('anonRes').textContent = 'Esta transcripción ya fue anonimizada. Para repetir el proceso, primero tocá «Deshacer anonimizado».';
+    return;
+  }
   const hide = $('hideX').value.split(',').map(s => s.trim()).filter(Boolean);
   const keep = new Set(KEEP.concat($('keepX').value.split(',')).map(s => norm(s.trim())).filter(Boolean));
   const np0 = maxPersona($('title').value + ' ' + $('text').value), S = buildAnon(new Map(), {n: np0});
@@ -862,18 +768,26 @@ function anonymize(){
     });
     return s;
   };
-  anonBackup = {title: $('title').value, text: $('text').value, baseline};
-  $('title').value = run($('title').value); $('text').value = run($('text').value);
+  const original = {title: $('title').value, text: $('text').value, baseline};
+  const anonymizedTitle = run(original.title), anonymizedText = run(original.text);
+  if (anonymizedTitle === original.title && anonymizedText === original.text) {
+    $('anonRes').textContent = 'No se encontraron datos para reemplazar automáticamente. Revisá nombres, lugares y detalles que puedan identificar a alguien.';
+    return;
+  }
+  anonBackup = original; // una sola copia de la transcripción anterior
+  $('title').value = anonymizedTitle; $('text').value = anonymizedText;
   baseline = $('text').value; // para que el diccionario nunca "aprenda" los nombres ocultados
   $('learn').innerHTML = '';
   $('undo').disabled = false;
+  $('anon').disabled = true;
+  updWC(); saveDraft();
   $('anonRes').textContent = 'Se ocultaron ' + (S.np.n - np0) + ' nombre(s)' + (S.stat.t ? ', ' + S.stat.t + ' reemplazo(s) por código' : '') + ' y ' + nOther + ' dato(s) (correo, teléfono, fecha). Revisá el texto: pueden quedar nombres sin detectar.';
   showSuspects(Array.from(S.sus).concat(sentenceStarters($('text').value, S)));
 }
-$('anon').onclick = () => { if (!$('text').value.trim()) return flash('No hay texto para anonimizar.'); anonymize(); };
+$('anon').onclick = () => { if (!$('text').value.trim()) return flash('No hay texto para anonimizar.'); if (!pendingOk()) return; anonymize(); };
 
 /* ---------- Tabla de personas y ocultar nombres en vivo ---------- */
-const PKEY = 'notasvoz.people.v1';
+const PKEY = 'notasvoz.gamma.people.v1';
 let people = [], liveIds = new Map(), liveNp = {n: 0}, ackTxt = null;
 const resetLive = () => { liveIds = new Map(); liveNp = {n: 0}; };
 function savePeople(){ if ($('pVolatile').checked) return; try { localStorage.setItem(PKEY, JSON.stringify(people)); } catch (e) {} }
@@ -904,7 +818,7 @@ function buildAnon(ids, np, rulesOnly){
   people.forEach(p => p.names.forEach(nm => {
     const w = (nm.match(WORDS) || []).map(norm); if (!w.length) return;
     if (!p.code) { w.forEach(x => hide.add(x)); return; }
-    rules.push({w, k: w.length === 1 ? phon(nm) : null, out: p.rel ? '[' + p.rel + ' de ' + p.code + ']' : p.code});
+    rules.push({w, k: null, out: p.rel ? '[' + p.rel + ' de ' + p.code + ']' : '[' + p.code + ']'});
   }));
   rules.sort((a, b) => b.w.length - a.w.length);
   return mkAnon({rules, hide, keep, ids, np, rulesOnly: !!rulesOnly});
@@ -922,19 +836,93 @@ function applyPeopleToText(){
   if (t === baseline) baseline = n;
   $('text').value = n; return true;
 }
+/* Códigos Gamma. La generación no registra datos hasta confirmar «Agregar asociación». */
+const GKEY = 'notasvoz.gamma.generator.v1';
+let proposedCode = null;
+const normalizedCode = c => String(c || '').trim().toLocaleUpperCase('es-AR');
+const validPrefix = p => /^[A-Za-z0-9_-]{0,12}$/.test(p);
+const usedCode = c => people.some(p => p.code && normalizedCode(p.code) === normalizedCode(c));
+function readGenerator(){
+  const prefix = $('pPrefix').value.trim().toUpperCase();
+  const next = Number($('pNext').value);
+  const digits = Number($('pDigits').value);
+  if (!validPrefix(prefix)) throw new Error('El prefijo solo puede contener letras, números, guiones y guiones bajos (máximo 12 caracteres).');
+  if (!Number.isSafeInteger(next) || next < 1 || next > 999999999) throw new Error('Elegí un número inicial entre 1 y 999999999.');
+  if (![2,3,4,5,6].includes(digits)) throw new Error('La cantidad de dígitos no es válida.');
+  return {prefix, next, digits, mode:$('pMode').value};
+}
+function saveGenerator(){
+  try { localStorage.setItem(GKEY, JSON.stringify(readGenerator())); } catch (e) {}
+}
+function loadGenerator(){
+  try {
+    const c = JSON.parse(localStorage.getItem(GKEY) || 'null');
+    if (!c) return;
+    if (typeof c.prefix === 'string' && validPrefix(c.prefix)) $('pPrefix').value = c.prefix;
+    if (Number.isSafeInteger(c.next) && c.next > 0 && c.next <= 999999999) $('pNext').value = c.next;
+    if ([2,3,4,5,6].includes(c.digits)) $('pDigits').value = String(c.digits);
+    if (['sequential','random'].includes(c.mode)) $('pMode').value = c.mode;
+  } catch (e) {}
+}
+function updateGeneratorUI(){
+  $('pNext').disabled = $('pMode').value !== 'sequential';
+  $('pDigits').disabled = $('pMode').value !== 'sequential';
+  $('pGenHint').textContent = $('pMode').value === 'random'
+    ? 'Código aleatorio: 8 caracteres, generado en este dispositivo. Se verifica que no esté en uso.'
+    : 'Código correlativo: usa el próximo número libre y conserva el contador al registrar una asociación.';
+}
+['pPrefix','pNext','pDigits','pMode'].forEach(id => $(id).addEventListener('change', () => {updateGeneratorUI();saveGenerator();}));
+$('pGenerate').onclick = () => {
+  try {
+    const c = readGenerator();
+    let code = '';
+    if (c.mode === 'random') {
+      if (!crypto || !crypto.getRandomValues) throw new Error('Este navegador no permite generar códigos aleatorios seguros.');
+      const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      for (let tries = 0; tries < 100; tries++) {
+        const data = new Uint8Array(8);
+        crypto.getRandomValues(data);
+        code = c.prefix + Array.from(data, b => alphabet[b % alphabet.length]).join('');
+        if (!usedCode(code)) break;
+        code = '';
+      }
+      if (!code) throw new Error('No se encontró un código aleatorio libre.');
+    } else {
+      for (let n = c.next; n <= 999999999; n++) {
+        const candidate = c.prefix + String(n).padStart(c.digits, '0');
+        if (!usedCode(candidate)) {code = candidate; break;}
+      }
+      if (!code) throw new Error('No quedan códigos correlativos disponibles.');
+    }
+    $('pCode').value = code;
+    proposedCode = {code, mode:c.mode, prefix:c.prefix, next:c.next, digits:c.digits};
+    $('pMsg').textContent = 'Código propuesto: ' + code + '. Cargá el nombre y tocá «Agregar asociación» para confirmarlo.';
+  } catch (e) { $('pMsg').textContent = e.message || String(e); }
+};
+$('pCode').addEventListener('input', () => { proposedCode = null; });
 $('pAdd').onclick = () => {
   const msg = t => $('pMsg').textContent = t;
   const names = $('pName').value.split(',').map(s => s.trim()).filter(Boolean);
   const rel = $('pRel').value.trim(), code = $('pCode').value.trim();
-  if (!names.length) return msg('Escribí el nombre (o los apodos, separados por coma).');
-  if (rel && !code) return msg('Falta el código del paciente. Para solo ocultar un nombre, dejá vacías la relación y el código.');
-  const key = n => (n.match(WORDS) || []).map(norm).join(' '), keys = names.map(key);
-  people.forEach(p => { p.names = p.names.filter(n => !keys.includes(key(n))); });
-  people = people.filter(p => p.names.length);
+  if (!names.length) return msg('Escribí al menos un nombre o apodo.');
+  if (names.some(n => !(n.match(WORDS) || []).length)) return msg('Revisá los nombres o apodos.');
+  if (!code && rel) return msg('Para asociar una relación, escribí un código.');
+  if (code && (!/^[A-Za-z0-9][A-Za-z0-9_.-]{0,31}$/.test(code))) return msg('El código debe tener entre 1 y 32 caracteres y solo letras, números, punto, guion o guion bajo.');
+  if (code && usedCode(code)) return msg('Ese código ya está asignado a otra asociación. Elegí uno distinto.');
+  const key = n => (n.match(WORDS) || []).map(norm).join(' ');
+  const keys = names.map(key);
+  if (new Set(keys).size !== keys.length) return msg('Hay nombres o apodos repetidos en esta asociación.');
+  if (people.some(p => p.names.some(n => keys.includes(key(n))))) return msg('Ese nombre o apodo ya figura en otra asociación. Primero quitá la anterior para evitar errores.');
   people.push({names, rel, code});
   savePeople(); renderPeople();
-  $('pName').value = ''; $('pRel').value = ''; // el código queda, para cargar rápido a los familiares
-  msg(applyPeopleToText() ? 'Agregado y aplicado al texto.' : 'Agregado.');
+  if (proposedCode && proposedCode.code === code && proposedCode.mode === 'sequential') {
+    const n = Number(code.slice(proposedCode.prefix.length));
+    if (Number.isSafeInteger(n) && n >= Number($('pNext').value)) $('pNext').value = String(n + 1);
+    saveGenerator();
+  }
+  proposedCode = null;
+  $('pName').value = ''; $('pRel').value = ''; $('pCode').value = '';
+  msg('Asociación guardada. Se aplicará cuando toques «Anonimizar transcripción».');
 };
 $('pApply').onclick = () => $('pMsg').textContent = applyPeopleToText() ? 'Tabla aplicada al texto.' : 'No había nada para cambiar en el texto.';
 $('pClear').onclick = () => { if (!people.length || !confirm('¿Borrar toda la tabla de personas?')) return; people = []; savePeople(); renderPeople(); $('pMsg').textContent = 'Tabla borrada.'; };
@@ -976,7 +964,18 @@ function anonOk(){
   if (confirm('Ojo: el texto parece tener datos que podrían identificar a alguien (' + left.slice(0, 6).join(', ') + '). ¿Seguir igual? Podés cancelar y usar «Anonimizar».')) { ackTxt = t; return true; }
   return false;
 }
-$('undo').onclick = () => { if (!anonBackup) return; $('title').value = anonBackup.title; $('text').value = anonBackup.text; baseline = anonBackup.baseline; anonBackup = null; $('undo').disabled = true; $('anonRes').textContent = 'Se deshizo el anonimizado.'; };
+$('undo').onclick = () => {
+  if (!anonBackup) return;
+  $('title').value = anonBackup.title;
+  $('text').value = anonBackup.text;
+  baseline = anonBackup.baseline;
+  anonBackup = null;
+  $('undo').disabled = true;
+  $('anon').disabled = false;
+  $('susBox').innerHTML = '';
+  $('anonRes').textContent = 'Se recuperó la versión original. Podés volver a anonimizarla si querés.';
+  updWC(); saveDraft();
+};
 
 /* ---------- Exportar ---------- */
 const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -1149,13 +1148,13 @@ function makeEngine(){
       const w = new Worker(URL.createObjectURL(new Blob([src], {type:'text/javascript'})), {type:'module'});
       w.onmessage = e => onMsg(e.data);
       w.onerror = e => { if (e.preventDefault) e.preventDefault(); noWorker = true; engine = null; ready = null; failAll(new Error('el motor en segundo plano falló' + (e.message ? ': ' + e.message : ''))); };
-      return {post: (m, t) => w.postMessage(m, t || [])};
+      return {post: (m, t) => w.postMessage(m, t || []), terminate: () => { w.terminate(); }};
     } catch (e) { noWorker = true; }
   }
   // Sin Worker: corre en la página principal (la pantalla puede trabarse mientras transcribe)
   const shim = {postMessage: d => onMsg(d), onmessage: null};
   new Function('self', src)(shim);
-  return {post: m => shim.onmessage({data: m})};
+  return {post: m => shim.onmessage({data: m}), terminate: null};
 }
 function call(msg, transfer){
   if (!engine) engine = makeEngine();
@@ -1223,6 +1222,7 @@ function level(b){
   $('lvTxt').textContent = now < clipUntil ? 'El sonido se está saturando: alejá un poco el micrófono.' : '';
 }
 let cap = null, seg = null, jobs = [], busy = false, outstanding = 0, dead = false, gotText = false, lastMs = 0, t0 = 0, timer = null, chain = Promise.resolve(), wl = null;
+let processingStartedAt = 0, processingEpoch = 0;
 const lockWake = async () => { try { wl = await navigator.wakeLock.request('screen'); } catch (e) {} };
 const unlockWake = () => { try { wl && wl.release(); } catch (e) {} wl = null; };
 document.addEventListener('visibilitychange', () => {
@@ -1244,6 +1244,13 @@ function updProgress(){
   if (working) bz.textContent = recording
     ? (paused ? (busy || outstanding > 0 ? 'Grabación en pausa: se sigue transcribiendo lo ya grabado.' : 'Grabación en pausa.') : 'Grabando y transcribiendo: el texto va apareciendo de a poco.')
     : 'Todavía transcribiendo… esperá a que termine antes de copiar o guardar.';
+  const processing = !recording && (busy || outstanding > 0 || feeding || modelLoading);
+  if (processing && !processingStartedAt) processingStartedAt = Date.now();
+  $('processingTimer').hidden = !processing;
+  $('cancelProcessing').hidden = !processing || !engine?.terminate;
+  $('cancelNote').hidden = !processing || !engine?.terminate;
+  if (processing) $('processClock').textContent = fmtClock(Date.now() - processingStartedAt);
+  if (!processing && !recording) processingStartedAt = 0;
   refreshTitle();
   if (!totalSec || (!recording && outstanding === 0 && !busy && !feeding)) { tp.classList.remove('on'); return; }
   const pct = Math.min(100, Math.round((feed.len ? feed.done / feed.len : doneSec / totalSec) * 100));
@@ -1276,7 +1283,7 @@ function maybeDone(){
   if (dead) return;
   if (failedParts) { setStatus('Terminó, pero ' + failedParts + ' parte(s) del audio no se pudieron transcribir: buscá «⚠ falta una parte» en el texto.'); return; }
   if (warnParts) { setStatus('Terminó, pero ' + warnParts + ' parte(s) dieron muy poco texto para su duración: puede faltar algo. Mirá los detalles técnicos de la grabación.'); return; }
-  setStatus(gotText ? 'Listo' + (lastMs ? ' (última parte: ' + Math.round(lastMs / 1000) + ' s, ' + (backend === 'GPU' ? 'con la placa de video' : 'con el procesador') + ')' : '') + '. Revisá y guardá.' : 'No se detectó voz. Probá hablar más cerca del micrófono.');
+  setStatus(gotText ? 'Transcripción completa. Revisá el texto antes de copiar o guardar.' : 'No se detectó voz. Probá hablar más cerca del micrófono.');
 }
 function fail(e){
   dead = true; jobs.length = 0; outstanding = 0; busy = false;
@@ -1285,20 +1292,24 @@ function fail(e){
 }
 async function pump(){
   if (busy || dead) return;
+  const epoch = processingEpoch;
   const job = jobs.shift();
   if (!job) return maybeDone();
   if (job.mark) { appendMachine('[' + job.mark + ']', '\n\n'); outstanding--; return pump(); }
   busy = true; refreshStatus();
   const n = ++segN, sec = job.a.length / 16000;
-  try { await ensureModel(); } catch (e) { return fail(e); }
+  try { await ensureModel(); } catch (e) { if (epoch !== processingEpoch || dead) return; return fail(e); }
+  if (epoch !== processingEpoch || dead) return;
   let c = '', err = '', ms = 0;
   for (let k = 1; k <= 2; k++) { // un reintento por parte
     try {
       const t = Date.now(), copy = job.a.slice();
       const r = await call({type:'run', audio: copy}, [copy.buffer]);
+      if (epoch !== processingEpoch || dead) return;
       ms = Date.now() - t; lastMs = ms; backend = r.backend || backend; c = cleanText(r.text); err = ''; break;
-    } catch (e) { err = e.message || String(e); logDiag('#' + n + ' intento ' + k + ' falló: ' + err); }
+    } catch (e) { if (epoch !== processingEpoch || dead) return; err = e.message || String(e); logDiag('#' + n + ' intento ' + k + ' falló: ' + err); }
   }
+  if (epoch !== processingEpoch || dead) return;
   const where = backend === 'GPU' ? 'placa de video' : 'procesador';
   if (err) {
     failedParts++;
@@ -1338,7 +1349,41 @@ function stopWhisper(){
   else { $('rec').disabled = true; refreshStatus(); }
 }
 
+/* Detiene el Worker de Whisper y descarta partes pendientes. No borra el texto ya transcripto ni los audios guardados. */
+function cancelProcessing(){
+  if (recording || (!busy && !outstanding && !feeding && !modelLoading)) return;
+  if (!engine || typeof engine.terminate !== 'function') {
+    setStatus('En este navegador no se puede interrumpir inmediatamente el cálculo. Esperá a que termine.');
+    return;
+  }
+  if (!confirm('¿Cancelar la transcripción pendiente? El texto ya generado se conserva, pero puede estar incompleto.')) return;
+  dead = true;
+  processingEpoch++;
+  engine.terminate();
+  engine = null;
+  ready = null; readyKey = '';
+  modelLoading = false; modelErr = '';
+  jobs = []; outstanding = 0; busy = false; feeding = false;
+  chain = Promise.resolve();
+  failAll(new Error('Procesamiento cancelado por el usuario'));
+  clearInterval(timer); timer = null;
+  unlockWake();
+  lockUI(false);
+  $('rec').disabled = false;
+  $('bar').style.display = 'none';
+  $('tp').classList.remove('on');
+  $('busy').classList.remove('on');
+  $('processingTimer').hidden = true;
+  $('cancelProcessing').hidden = true;
+  $('cancelNote').hidden = true;
+  processingStartedAt = 0;
+  setStatus('Procesamiento cancelado. El texto visible puede estar incompleto.');
+  refreshTitle();
+  logDiag('El usuario canceló el procesamiento pendiente.');
+}
+$('cancelProcessing').onclick = cancelProcessing;
 function resetPipeline(){
+  processingEpoch++;
   dead = false; jobs = []; busy = false; outstanding = 0; gotText = false; lastMs = 0; modelErr = ''; chain = Promise.resolve(); failedParts = 0; warnParts = 0; segN = 0; diagLines = []; totalSec = 0; doneSec = 0; procMs = 0; procSec = 0; $('diag').textContent = '';
   feed = {pos: 0, len: 0, done: 0};
 }
@@ -1352,7 +1397,7 @@ function fmtClock(ms){
 function endClock(){ if (tRun) { tAcc += Date.now() - tRun; tRun = 0; } }
 function beginClock(){ tAcc = 0; tRun = Date.now(); paused = false; clearInterval(clockT); clockT = setInterval(updClock, 250); updClock(); }
 function refreshTitle(){
-  const base = 'Notas por voz';
+  const base = 'Grabador de voz Delta';
   let p = '';
   if (recording) p = (paused ? '⏸ ' : '● ') + fmtClock(elapsedMs());
   else if (busy || outstanding > 0 || feeding) p = '⏳ Transcribiendo';
@@ -1361,6 +1406,7 @@ function refreshTitle(){
 function updClock(){
   const c = $('clock'); c.textContent = fmtClock(elapsedMs()); c.classList.toggle('on', recording && !paused);
   refreshTitle();
+  updateDockRecording();
 }
 function setCtl(on){
   $('pause').disabled = !on; $('mark').disabled = !on;
@@ -1408,7 +1454,7 @@ function getDb(){
   if (dbP) return dbP;
   const p = dbP = new Promise((res, rej) => {
     if (!window.indexedDB) return rej(new Error('este navegador no puede guardar audio'));
-    const r = indexedDB.open('notasvoz-audio', 1);
+    const r = indexedDB.open('notasvoz-gamma-audio', 1);
     r.onupgradeneeded = () => { const d = r.result; d.createObjectStore('chunks', {keyPath: 'k'}); d.createObjectStore('meta', {keyPath: 'id'}); };
     r.onsuccess = () => res(r.result);
     r.onerror = () => rej(r.error || new Error('no se pudo abrir el almacenamiento'));
@@ -1548,21 +1594,39 @@ async function transcribeSaved(){
   let pcm;
   try { pcm = await decodePcm(await audioGetBlob(m), 16000); }
   catch (e) { feeding = false; lockUI(false); $('rec').disabled = false; setStatus('No se pudo leer el audio guardado (' + (e.message || e) + '). Descargalo y probá abrirlo en otro reproductor.'); return; }
-  resetPipeline(); feed.len = pcm.length; prepareNew(); lockWake();
+  resetPipeline();
+  const epoch = processingEpoch;
+  feed.len = pcm.length; prepareNew(); lockWake();
   const rate = 16000, sg = makeSegmenter(rate, blocks => onSegment(blocks, rate));
   logDiag('Transcribiendo el audio guardado · ' + fmtClock(m.ms) + ' · modelo ' + $('model').value.replace('Xenova/', ''));
   ensureModel().catch(() => {});
   timer = setInterval(refreshStatus, 500); refreshStatus();
-  for (let i = 0; i < pcm.length && !dead; i += 4096) {
+  for (let i = 0; i < pcm.length && !dead && epoch === processingEpoch; i += 4096) {
     feed.pos = i;
     const b = new Float32Array(4096); b.set(pcm.subarray(i, i + 4096));
     sg.push(b);
     while (outstanding >= 3 && !dead) await sleep(250);
   }
+  if (dead || epoch !== processingEpoch) return;
   feed.pos = pcm.length; sg.flush(); feeding = false; unlockWake();
   if (!busy && outstanding === 0) maybeDone();
 }
 
+function updateDockRecording(){
+  const capture=$('studioDockCapture'),active=recording;
+  $('studioDockNotes').hidden=active;
+  capture.hidden=!active;
+  if(!active)return;
+  capture.classList.toggle('paused',paused);
+  $('studioDockMode').textContent=paused?'Grabación en pausa':'Grabando';
+  $('studioDockClock').textContent=fmtClock(elapsedMs());
+  $('studioDockPause').textContent=paused?'Reanudar':'Pausar';
+  $('studioDockPause').disabled=$('pause').disabled;
+  $('studioDockStop').disabled=$('rec').disabled;
+}
+// Reutiliza los controles principales, incluidas sus confirmaciones y estados.
+$('studioDockPause').addEventListener('click',()=>$('pause').click());
+$('studioDockStop').addEventListener('click',()=>$('rec').click());
 function stopUI(){
   recording = false; endClock(); paused = false; clearInterval(clockT); clockT = null;
   $('lv').style.display = 'none'; $('lvTxt').textContent = ''; $('rec').classList.remove('on'); $('rec').textContent = 'Grabar';
@@ -1581,12 +1645,13 @@ $('rec').onclick = async () => {
     try {
       recording = true;
       if (recEng === 'native') { startNative(); prepareNew(); } else await startWhisper();
-      $('rec').classList.add('on'); $('rec').textContent = 'Detener'; beginClock(); setCtl(true);
+      $('rec').classList.add('on'); $('rec').textContent = 'Detener'; beginClock(); setCtl(true); updateDockRecording();
     } catch (e) {
       stopUI(); lockUI(false); clearInterval(timer); timer = null;
       setStatus('No se pudo usar el micrófono: ' + (e.message || e));
     }
     $('rec').disabled = false;
+    updateDockRecording();
   } else {
     if (elapsedMs() > 60000 && !confirm('¿Detener la grabación? Lleva ' + fmtClock(elapsedMs()) + '.')) return;
     recording = false; stopUI();
@@ -1596,11 +1661,20 @@ $('rec').onclick = async () => {
 };
 
 /* ---------- Ajustes guardados ---------- */
+const MODEL_HELP = {
+  'Xenova/whisper-tiny': 'Tiny: más liviano y generalmente más rápido; puede omitir o confundir más palabras. Ideal para pruebas.',
+  'Xenova/whisper-base': 'Base: equilibrio entre precisión y velocidad. Recomendado para uso cotidiano en el celular.',
+  'Xenova/whisper-small': 'Small: prioriza la precisión, pero puede tardar bastante y usar más memoria.'
+};
+function updateModelHint(){
+  $('modelHint').textContent = MODEL_HELP[$('model').value] || '';
+}
+$('model').addEventListener('change', updateModelHint);
 const hasOpt = (sel, v) => [...sel.options].some(o => o.value === v);
 function loadCfg(){
   try {
     const c = JSON.parse(localStorage.getItem(CKEY) || '{}');
-    if (typeof c.liveAnon === 'boolean') $('liveAnon').checked = c.liveAnon;
+    $('liveAnon').checked = false; // Solo anonimización posterior
     if (typeof c.pVolatile === 'boolean') $('pVolatile').checked = c.pVolatile;
     if (c.model && hasOpt($('model'), c.model)) $('model').value = c.model;
     else if (!c.model && matchMedia('(pointer:coarse)').matches) $('model').value = 'Xenova/whisper-base'; // en celulares, la opción rápida por defecto
@@ -1611,8 +1685,8 @@ function loadCfg(){
     if (typeof c.saveAudio === 'boolean') $('saveAudio').checked = c.saveAudio;
   } catch (e) {}
 }
-const saveCfg = () => { try { localStorage.setItem(CKEY, JSON.stringify({model:$('model').value, accel:$('accel').value, mic:$('mic').value, eng:eng(), replace:$('replace').checked, saveAudio:$('saveAudio').checked, liveAnon:$('liveAnon').checked, pVolatile:$('pVolatile').checked})); } catch (e) {} };
-['model', 'accel', 'mic', 'replace', 'saveAudio', 'liveAnon', 'pVolatile'].forEach(id => $(id).addEventListener('change', saveCfg));
+const saveCfg = () => { try { localStorage.setItem(CKEY, JSON.stringify({model:$('model').value, accel:$('accel').value, mic:$('mic').value, eng:eng(), replace:$('replace').checked, saveAudio:$('saveAudio').checked, pVolatile:$('pVolatile').checked})); } catch (e) {} };
+['model', 'accel', 'mic', 'replace', 'saveAudio', 'pVolatile'].forEach(id => $(id).addEventListener('change', saveCfg));
 document.querySelectorAll('input[name=eng]').forEach(r => r.addEventListener('change', () => { setStatus(''); saveCfg(); }));
 
 /* ---------- Borrador autoguardado: sobrevive a recargas y cierres ---------- */
@@ -1645,7 +1719,119 @@ function updWC(){
 }
 $('text').addEventListener('input', updWC);
 setInterval(updWC, 300);
-loadCfg(); loadDict(); loadPeople(); renderList(); restoreDraft(); updWC(); refreshAudioBox();
+loadCfg(); updateModelHint(); loadDict(); loadPeople(); loadGenerator(); updateGeneratorUI(); renderList(); restoreDraft(); updWC(); refreshAudioBox();
+</script>
+<script>
+/* Corrección explícita: una aparición, reglas futuras solo con consentimiento. */
+function correctionRuleKey(value){return value.trim().toLowerCase().replace(/\s+/g,' ');}
+function correctionRuleLines(source, original){
+  const key=correctionRuleKey(original);
+  return source.split('\n').map((line,index)=>({line,index})).filter(({line})=>{
+    const clean=line.trim(), split=clean.indexOf('=>');
+    return clean[0]!=='#' && split>0 && correctionRuleKey(clean.slice(0,split))===key;
+  });
+}
+function correctionDictionary(source,original,replacement){
+  const matches=new Set(correctionRuleLines(source,original).map(x=>x.index));
+  const lines=source.split('\n').filter((_,i)=>!matches.has(i));
+  return lines.join('\n').trimEnd()+'\n'+original+' => '+replacement+'\n';
+}
+function correctionCanRemember(text,start,end){
+  const chosen=text.slice(start,end);
+  return !/[\r\n]/.test(chosen) && /^[\p{L}\p{N}]+(?:['’][\p{L}\p{N}]+)*(?:\s+[\p{L}\p{N}]+(?:['’][\p{L}\p{N}]+)*)*$/u.test(chosen)
+    && !/[\p{L}\p{N}'’]/u.test(text[start-1]||'') && !/[\p{L}\p{N}'’]/u.test(text[end]||'');
+}
+(()=>{
+  const editor=$('text'),button=$('correctSelection'),quick=$('quickCorrect'),dialog=$('correctionDialog');
+  const replacement=$('correctionReplacement'),remember=$('correctionRemember'),error=$('correctionError'),notice=$('correctionRuleNotice');
+  let selection=null,lastChoice=null,lastInputAt=0;
+  // El menú Copiar/Pegar de Android es nativo: el acceso de corrección es un botón propio.
+  function choiceFromEditor(){
+    const text=editor.value;
+    let start=editor.selectionStart,end=editor.selectionEnd;
+    if(start==null||end==null||!text)return null;
+    if(start===end){
+      const word=/[\p{L}\p{N}'’]/u;
+      if(!word.test(text[start]||'')&&!word.test(text[start-1]||''))return null;
+      if(!word.test(text[start]||''))start--;
+      end=start+1;
+      while(start>0&&word.test(text[start-1]))start--;
+      while(end<text.length&&word.test(text[end]))end++;
+    } else {
+      while(start<end&&/\s/.test(text[start]))start++;
+      while(end>start&&/\s/.test(text[end-1]))end--;
+    }
+    if(start===end)return null;
+    return {text,start,end,original:text.slice(start,end)};
+  }
+  function updateQuick(){
+    if(dialog.open||document.activeElement!==editor||Date.now()-lastInputAt<220)return;
+    const chosen=choiceFromEditor();
+    lastChoice=chosen;
+    if(!chosen){quick.hidden=true;return;}
+    const short=chosen.original.replace(/\s+/g,' ');
+    quick.textContent=short.length>24?'Corregir selección':'Corregir «'+short+'»';
+    quick.hidden=false;
+  }
+  function queueQuick(delay){setTimeout(updateQuick,delay);}
+  ['click','mouseup','keyup','select'].forEach(type=>editor.addEventListener(type,()=>queueQuick(0)));
+  editor.addEventListener('touchend',()=>{queueQuick(80);queueQuick(340);},{passive:true});
+  document.addEventListener('selectionchange',()=>{if(document.activeElement===editor)queueQuick(80);});
+  editor.addEventListener('input',()=>{lastInputAt=Date.now();lastChoice=null;quick.hidden=true;});
+  editor.addEventListener('blur',()=>setTimeout(()=>{if(document.activeElement!==editor)quick.hidden=true;},300));
+  function updateNotice(){
+    if(!selection)return;
+    const existing=correctionRuleLines($('dict').value,selection.original);
+    notice.hidden=!remember.checked||!existing.length;
+    notice.textContent=existing.length?'Ya hay una corrección para «'+selection.original+'». Al aplicar, la reemplazás por la nueva.':'';
+    error.textContent='';
+  }
+  function openCorrection(chosen){
+    if(!chosen||chosen.text!==editor.value){
+      flash('Primero tocá una palabra o seleccioná una frase en la transcripción.');
+      editor.focus();
+      return;
+    }
+    selection=chosen;
+    quick.hidden=true;
+    $('correctionOriginal').value=selection.original;
+    replacement.value=selection.original;
+    remember.checked=false;remember.disabled=!correctionCanRemember(chosen.text,chosen.start,chosen.end);
+    notice.hidden=!remember.disabled;
+    notice.textContent=remember.disabled?'Podés corregir esta selección. Para recordarla, seleccioná palabras completas sin signos de puntuación.':'';
+    error.textContent='';
+    dialog.showModal();replacement.focus();replacement.select();
+  }
+  // Guardamos la selección antes de que el botón tome el foco y Android la cierre.
+  quick.addEventListener('click',()=>openCorrection(lastChoice&&lastChoice.text===editor.value?lastChoice:choiceFromEditor()));
+  button.addEventListener('click',()=>openCorrection(lastChoice&&lastChoice.text===editor.value?lastChoice:choiceFromEditor()));
+  remember.addEventListener('change',updateNotice);
+  $('correctionCancel').addEventListener('click',()=>dialog.close());
+  dialog.addEventListener('close',()=>{selection=null;lastChoice=null;quick.hidden=true;button.focus();});
+  $('correctionForm').addEventListener('submit',event=>{
+    event.preventDefault();
+    if(!selection)return;
+    const value=replacement.value.trim();
+    if(!value){error.textContent='Escribí la palabra o frase correcta.';return;}
+    if(value===selection.original){error.textContent='Escribí una corrección diferente del texto seleccionado.';return;}
+    if(editor.value!==selection.text){error.textContent='La transcripción cambió mientras corregías. Cancelá y seleccioná de nuevo para no perder texto.';return;}
+    if(remember.checked&&(/[\r\n]/.test(value)||value.includes('=>'))){error.textContent='Para recordar la corrección, usá una sola línea sin el símbolo =>.';return;}
+    const updated=selection.text.slice(0,selection.start)+value+selection.text.slice(selection.end);
+    if(remember.checked){
+      const next=correctionDictionary($('dict').value,selection.original,value);
+      try{localStorage.setItem(DKEY,next);}catch(e){error.textContent='No se pudo guardar la regla. Desmarcá «Recordar» para corregir solo este texto.';return;}
+      $('dict').value=next;updDict(false);
+    }
+    editor.value=updated;
+    editor.setSelectionRange(selection.start,selection.start+value.length);
+    editor.dispatchEvent(new Event('input',{bubbles:true}));
+    saveDraft();
+    const saved=remember.checked;
+    dialog.close();
+    flash(saved?'Palabra corregida. Reemplazo guardado en Ajustes → Corregir palabras frecuentes.':'Corrección aplicada solo a esta aparición.');
+  });
+})();
+
 </script>
 </body>
 </html>
