@@ -282,6 +282,10 @@ textarea{min-height:240px}
 .c-edit .privacy-group #anon{min-height:50px;font-weight:700}
 .c-edit .privacy-group #undo{min-height:44px}
 
+/* Cancelar solo el trabajo pendiente, sin perder el texto ya procesado */
+.cancel-processing{display:block;width:100%;margin-top:10px;border-color:var(--line);background:transparent;color:var(--mut)}
+.cancel-processing[hidden],.cancel-help[hidden]{display:none!important}
+.cancel-help{text-align:center;margin:7px 0 0;line-height:1.4}
 /* Ayuda discreta para la marca de tiempo */
 .mark-help{font-size:12px;color:var(--mut);text-align:center;margin:8px 0 0;line-height:1.45}
 #mark{font-size:12.5px;line-height:1.2;padding:7px 9px}
@@ -321,6 +325,8 @@ textarea{min-height:240px}
     <div class="bar" id="bar"><i id="barI"></i></div>
     <div id="status" role="status" aria-live="polite"></div>
     <div id="processingTimer" class="processing-timer" hidden>Procesando · <span id="processClock">00:00</span></div>
+    <button id="cancelProcessing" type="button" class="cancel-processing danger" hidden>Cancelar procesamiento</button>
+    <p id="cancelNote" class="warn cancel-help" hidden>Se conservará el texto que ya apareció, pero la transcripción quedará incompleta.</p>
     <div id="interim"></div>
     <div id="tp" aria-live="off"><div id="tpTxt"></div><div class="pbar" role="progressbar" aria-label="Avance de la transcripción"><i id="tpI"></i></div></div>
     <div class="bar" id="lv"><i id="lvI"></i></div>
@@ -1222,13 +1228,13 @@ function makeEngine(){
       const w = new Worker(URL.createObjectURL(new Blob([src], {type:'text/javascript'})), {type:'module'});
       w.onmessage = e => onMsg(e.data);
       w.onerror = e => { if (e.preventDefault) e.preventDefault(); noWorker = true; engine = null; ready = null; failAll(new Error('el motor en segundo plano falló' + (e.message ? ': ' + e.message : ''))); };
-      return {post: (m, t) => w.postMessage(m, t || [])};
+      return {post: (m, t) => w.postMessage(m, t || []), terminate: () => { w.terminate(); }};
     } catch (e) { noWorker = true; }
   }
   // Sin Worker: corre en la página principal (la pantalla puede trabarse mientras transcribe)
   const shim = {postMessage: d => onMsg(d), onmessage: null};
   new Function('self', src)(shim);
-  return {post: m => shim.onmessage({data: m})};
+  return {post: m => shim.onmessage({data: m}), terminate: null};
 }
 function call(msg, transfer){
   if (!engine) engine = makeEngine();
@@ -1296,7 +1302,7 @@ function level(b){
   $('lvTxt').textContent = now < clipUntil ? 'El sonido se está saturando: alejá un poco el micrófono.' : '';
 }
 let cap = null, seg = null, jobs = [], busy = false, outstanding = 0, dead = false, gotText = false, lastMs = 0, t0 = 0, timer = null, chain = Promise.resolve(), wl = null;
-let processingStartedAt = 0;
+let processingStartedAt = 0, processingEpoch = 0;
 const lockWake = async () => { try { wl = await navigator.wakeLock.request('screen'); } catch (e) {} };
 const unlockWake = () => { try { wl && wl.release(); } catch (e) {} wl = null; };
 document.addEventListener('visibilitychange', () => {
@@ -1321,6 +1327,8 @@ function updProgress(){
   const processing = !recording && (busy || outstanding > 0 || feeding || modelLoading);
   if (processing && !processingStartedAt) processingStartedAt = Date.now();
   $('processingTimer').hidden = !processing;
+  $('cancelProcessing').hidden = !processing || !engine?.terminate;
+  $('cancelNote').hidden = !processing || !engine?.terminate;
   if (processing) $('processClock').textContent = fmtClock(Date.now() - processingStartedAt);
   if (!processing && !recording) processingStartedAt = 0;
   refreshTitle();
@@ -1364,20 +1372,24 @@ function fail(e){
 }
 async function pump(){
   if (busy || dead) return;
+  const epoch = processingEpoch;
   const job = jobs.shift();
   if (!job) return maybeDone();
   if (job.mark) { appendMachine('[' + job.mark + ']', '\n\n'); outstanding--; return pump(); }
   busy = true; refreshStatus();
   const n = ++segN, sec = job.a.length / 16000;
-  try { await ensureModel(); } catch (e) { return fail(e); }
+  try { await ensureModel(); } catch (e) { if (epoch !== processingEpoch || dead) return; return fail(e); }
+  if (epoch !== processingEpoch || dead) return;
   let c = '', err = '', ms = 0;
   for (let k = 1; k <= 2; k++) { // un reintento por parte
     try {
       const t = Date.now(), copy = job.a.slice();
       const r = await call({type:'run', audio: copy}, [copy.buffer]);
+      if (epoch !== processingEpoch || dead) return;
       ms = Date.now() - t; lastMs = ms; backend = r.backend || backend; c = cleanText(r.text); err = ''; break;
-    } catch (e) { err = e.message || String(e); logDiag('#' + n + ' intento ' + k + ' falló: ' + err); }
+    } catch (e) { if (epoch !== processingEpoch || dead) return; err = e.message || String(e); logDiag('#' + n + ' intento ' + k + ' falló: ' + err); }
   }
+  if (epoch !== processingEpoch || dead) return;
   const where = backend === 'GPU' ? 'placa de video' : 'procesador';
   if (err) {
     failedParts++;
@@ -1417,7 +1429,41 @@ function stopWhisper(){
   else { $('rec').disabled = true; refreshStatus(); }
 }
 
+/* Detiene el Worker de Whisper y descarta partes pendientes. No borra el texto ya transcripto ni los audios guardados. */
+function cancelProcessing(){
+  if (recording || (!busy && !outstanding && !feeding && !modelLoading)) return;
+  if (!engine || typeof engine.terminate !== 'function') {
+    setStatus('En este navegador no se puede interrumpir inmediatamente el cálculo. Esperá a que termine.');
+    return;
+  }
+  if (!confirm('¿Cancelar la transcripción pendiente? El texto ya generado se conserva, pero puede estar incompleto.')) return;
+  dead = true;
+  processingEpoch++;
+  engine.terminate();
+  engine = null;
+  ready = null; readyKey = '';
+  modelLoading = false; modelErr = '';
+  jobs = []; outstanding = 0; busy = false; feeding = false;
+  chain = Promise.resolve();
+  failAll(new Error('Procesamiento cancelado por el usuario'));
+  clearInterval(timer); timer = null;
+  unlockWake();
+  lockUI(false);
+  $('rec').disabled = false;
+  $('bar').style.display = 'none';
+  $('tp').classList.remove('on');
+  $('busy').classList.remove('on');
+  $('processingTimer').hidden = true;
+  $('cancelProcessing').hidden = true;
+  $('cancelNote').hidden = true;
+  processingStartedAt = 0;
+  setStatus('Procesamiento cancelado. El texto visible puede estar incompleto.');
+  refreshTitle();
+  logDiag('El usuario canceló el procesamiento pendiente.');
+}
+$('cancelProcessing').onclick = cancelProcessing;
 function resetPipeline(){
+  processingEpoch++;
   dead = false; jobs = []; busy = false; outstanding = 0; gotText = false; lastMs = 0; modelErr = ''; chain = Promise.resolve(); failedParts = 0; warnParts = 0; segN = 0; diagLines = []; totalSec = 0; doneSec = 0; procMs = 0; procSec = 0; $('diag').textContent = '';
   feed = {pos: 0, len: 0, done: 0};
 }
@@ -1627,17 +1673,20 @@ async function transcribeSaved(){
   let pcm;
   try { pcm = await decodePcm(await audioGetBlob(m), 16000); }
   catch (e) { feeding = false; lockUI(false); $('rec').disabled = false; setStatus('No se pudo leer el audio guardado (' + (e.message || e) + '). Descargalo y probá abrirlo en otro reproductor.'); return; }
-  resetPipeline(); feed.len = pcm.length; prepareNew(); lockWake();
+  resetPipeline();
+  const epoch = processingEpoch;
+  feed.len = pcm.length; prepareNew(); lockWake();
   const rate = 16000, sg = makeSegmenter(rate, blocks => onSegment(blocks, rate));
   logDiag('Transcribiendo el audio guardado · ' + fmtClock(m.ms) + ' · modelo ' + $('model').value.replace('Xenova/', ''));
   ensureModel().catch(() => {});
   timer = setInterval(refreshStatus, 500); refreshStatus();
-  for (let i = 0; i < pcm.length && !dead; i += 4096) {
+  for (let i = 0; i < pcm.length && !dead && epoch === processingEpoch; i += 4096) {
     feed.pos = i;
     const b = new Float32Array(4096); b.set(pcm.subarray(i, i + 4096));
     sg.push(b);
     while (outstanding >= 3 && !dead) await sleep(250);
   }
+  if (dead || epoch !== processingEpoch) return;
   feed.pos = pcm.length; sg.flush(); feeding = false; unlockWake();
   if (!busy && outstanding === 0) maybeDone();
 }
