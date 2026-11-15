@@ -39,5 +39,19 @@ Son datos vinculados al origen de GitHub Pages, no al nombre de la carpeta. Cual
 - Si algo falla, consultar «Detalles técnicos de la última grabación» antes de modificar el motor de audio.
 - Comunicar siempre **tres niveles separados**: (a) código guardado, (b) verificaciones técnicas, (c) validación real en Motorola. No declarar completado el tercer nivel sin una prueba real.
 
-## Situación pendiente a 15/11/2026
-En Gamma Studio Diseño 07 se observaron números/errores durante una grabación en el Motorola, pero sin diagnóstico reproducible. No atribuirlo a la barra fija sin evidencia. Delta 01 no modifica la lógica de audio: solamente hace más claro el punto único de entrada y renombra la interfaz.
+## Estado de entrega — 15/11/2026 (Delta 11)
+
+**Punto de partida para cualquier IA nueva:** leer AGENTS.md, README.md y CAMBIOS.md; obtener el SHA actual de `main`; inspeccionar el código de `index.html` y el test correspondiente. No basarse solo en una conversación anterior o en la numeración de versión. Delta 11 es la versión vigente; el último código confirmado antes de este ajuste exclusivamente documental fue `36eb407e7ca7804c52f7462b725df72a81ca3b1c`.
+
+- **Validado realmente por el usuario en Brave/Motorola:** grabar y transcribir; guardar TXT; recuperar el audio anterior; prueba de grabación larga y funcionamiento general del rediseño de tres pantallas. No inferir que todas las funciones añadidas posteriormente han sido probadas.
+- **Delta 11, todavía sin validación real en Android:** «Conservar también el audio» y «Guardar audio» en Grabar; «Compartir» texto mediante menú Android o copia alternativa; acciones visibles «Seleccionar todo», «Copiar» y «Corregir selección». El código y **53/53 pruebas automáticas** pasaron y GitHub Pages se publicó, pero estas interacciones deben probarse con datos ficticios antes de darlas por solucionadas en el teléfono.
+- **Rendimiento conocido:** el usuario midió unos **2:10 de procesamiento para 1:10 de audio con Whisper Small**. No se conoce causa específica ni se demostró regresión. Comparar Base y Small con el *mismo* audio ficticio, mismo dispositivo y configuración; registrar backend CPU/GPU, duración por parte y eventuales errores sin registrar texto o audio. No modificar Whisper sin diagnóstico.
+- **Diseño actual:** tres vistas Grabar / Texto / Ajustes; progreso único de Whisper sobre la barra inferior. No duplicar mensajes de procesamiento en las vistas ni cambiar íconos a estilos inconsistentes.
+- **Seguridad pendiente:** localStorage, IndexedDB y TXT descargados no están cifrados. No probar con datos de pacientes reales. Decidir estrategia de copia de seguridad, cifrado y retención antes de habilitar uso sensible.
+- **Audio:** hay un principal y una sola copia temporal recuperable. Conservar esa lógica, sin borrados previos a permisos ni migraciones de datos no solicitadas.
+- **Método de continuidad:** cada IA crea una rama de cambio desde el `main` actualizado, toca solo los archivos necesarios, agrega tests, documenta en CAMBIOS.md, ejecuta CI y fusiona si corresponde. No sobrescribir cambios de otras ramas ni borrar respaldos. Confirmar por separado fusión, CI, publicación en Pages y prueba física.
+- **Próximos pasos aconsejados:** validar Delta 11 en Brave; comparar rendimiento Base/Small; después continuar con mejoras pedidas por el usuario. No asumir que están autorizadas funcionalidades nuevas que no se hayan acordado.
+
+## Nota histórica (no es un fallo vigente confirmado)
+
+En una etapa anterior de Gamma se observaron números o errores en la transcripción sin diagnóstico reproducible. Se conserva el antecedente por contexto, pero **no debe atribuirse a Delta 11** ni tratarse como incidencia actual sin una nueva prueba.
