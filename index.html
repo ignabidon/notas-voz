@@ -1726,7 +1726,7 @@ function transcriptionDockState(whisper, recording, busy, outstanding, feeding, 
   };
 }
 function refreshTranscriptionDock(){
-  const hasProgress = !recording && (
+  const hasProgress = recording ? null : (
     feed.len > 0 && feed.done > 0 ? 100 * feed.done / feed.len :
     totalSec > 0 && doneSec > 0 ? 100 * doneSec / totalSec : null
   );
