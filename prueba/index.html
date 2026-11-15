@@ -281,6 +281,10 @@ textarea{min-height:240px}
 .c-edit .note-details label{margin-bottom:7px}
 .c-edit .privacy-group #anon{min-height:50px;font-weight:700}
 .c-edit .privacy-group #undo{min-height:44px}
+
+/* Ayuda discreta para la marca de tiempo */
+.mark-help{font-size:12px;color:var(--mut);text-align:center;margin:8px 0 0;line-height:1.45}
+#mark{font-size:12.5px;line-height:1.2;padding:7px 9px}
 </style>
 </head>
 <body>
@@ -309,9 +313,10 @@ textarea{min-height:240px}
       <div class="side">
         <div id="clock" aria-label="Tiempo de grabación">00:00</div>
         <button id="pause" type="button" disabled title="Pausar o reanudar (tecla P)">Pausar</button>
-        <button id="mark" type="button" disabled title="Insertar la hora en el texto (tecla M)">Marcar</button>
+        <button id="mark" type="button" disabled title="Insertá una marca de tiempo en la transcripción (tecla M)" aria-label="Marcar momento en la transcripción">Marcar momento</button>
       </div>
     </div>
+    <p class="mark-help">«Marcar momento» agrega la hora exacta en el texto, por ejemplo [02:15].</p>
     <div class="warn" id="keepOn" style="display:none;text-align:center;margin-top:12px">Mantené la pantalla encendida y no cambies de app: si no, la grabación puede cortarse.</div>
     <div class="bar" id="bar"><i id="barI"></i></div>
     <div id="status" role="status" aria-live="polite"></div>
