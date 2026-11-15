@@ -1590,6 +1590,7 @@ function addMark(){
   if (recEng === 'native') appendMachine('[' + label + ']', '\n\n');
   else {
     if (seg) seg.flush();
+    checkpointRecordedAudio('marca');
     outstanding++;
     chain = chain.then(() => { if (dead) outstanding--; else { jobs.push({mark: label}); pump(); } }).catch(() => {});
   }
