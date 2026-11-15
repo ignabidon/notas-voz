@@ -6,6 +6,10 @@ Esta es la **única versión web activa** del repositorio. La etapa vigente es *
 
 > **Prueba Delta 11 — experimental.** El usuario ya probó en Brave Android la grabación, Whisper, descarga TXT, recuperación del audio anterior y funcionamiento general de la interfaz. Las acciones nuevas de Delta 11 —Guardar audio visible, Compartir texto y accesos directos— **todavía necesitan prueba real en el Motorola**. Las 53 pruebas automáticas y la publicación GitHub Pages fueron satisfactorias. No usar datos reales de pacientes.
 
+## Bóveda opcional — diseño pendiente de pruebas
+
+La propuesta está en [DISENO-BOVEDA.md](DISENO-BOVEDA.md): protección por nota, separada de anonimizar, con modo protegido antes de grabar, recuperación y migración verificable. **Todavía no hay cifrado implementado.** La aprobación del usuario está condicionada a fluidez; primero prototipo con datos ficticios y mediciones, sin migrar notas reales.
+
 ## Funciones
 - Grabación de voz, cronómetro, pausa/reanudación, marcas y detención.
 - **Tres pantallas:** Grabar, Texto y Ajustes, accesibles desde la barra inferior. Mientras se graba, mantiene **Pausar/Reanudar** y **Detener** sin importar qué pantalla esté abierta.
