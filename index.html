@@ -96,7 +96,7 @@
 
   /* Botón grande de grabar: cuadrado redondeado */
   #rec{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
-    width:min(62vw,230px);aspect-ratio:1/1;min-height:0;margin:4px auto 0;padding:16px;
+    flex:none;width:min(44vw,168px);aspect-ratio:1/1;min-height:0;margin:0;padding:12px;
     font-size:22px;font-weight:700;letter-spacing:.02em;border:0;border-radius:38px;
     background:var(--acc);color:var(--acc-ink);box-shadow:0 16px 30px -16px var(--acc)}
   #rec:hover:not(:disabled){background:var(--acc);filter:brightness(1.08)}
@@ -106,6 +106,24 @@
   @keyframes pulso{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--rec) 45%,transparent)}70%,100%{box-shadow:0 0 0 18px transparent}}
   @media (prefers-reduced-motion:reduce){#rec.on{animation:none}}
   #rec:disabled{opacity:.55}
+  #rec.on.paused,#rec.on.paused:hover:not(:disabled){animation:none;background:var(--mut);color:var(--card);box-shadow:0 16px 30px -16px var(--mut)}
+
+  /* Contador, pausa y marcas al lado del botón */
+  .recrow{display:flex;align-items:center;justify-content:center;gap:14px;margin-top:4px}
+  .side{flex:1 1 0;min-width:0;max-width:150px;display:flex;flex-direction:column;gap:8px}
+  #clock{font-size:26px;font-weight:700;line-height:1;text-align:center;white-space:nowrap;font-variant-numeric:tabular-nums;color:var(--mut)}
+  #clock.on{color:var(--rec)}
+  #pause{width:100%}
+  #mark{width:100%;min-height:34px;padding:4px 10px;font-size:13.5px}
+
+  /* Audio guardado */
+  button.two{text-align:center;line-height:1.25}
+  button.two small{display:block;font-weight:400;font-size:12px;opacity:.85;margin-top:2px}
+  .abox{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+  .abox .gl{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);margin-bottom:4px}
+  .arow{margin-top:10px}
+  .arow button{flex:1 1 140px}
+  #susBox .chip{margin:0 6px 6px 0}
 
   /* ---------- Estado, nivel y avance ---------- */
   #status{font-size:14px;color:var(--mut);margin-top:12px;overflow-wrap:anywhere}
@@ -220,6 +238,9 @@
     details>summary{min-height:36px}
     #applyDict,#voseo{width:100%}
     #copyDiag{width:100%}
+    #mark{min-height:38px}
+    #susBox .chip{min-height:38px;padding:6px 14px}
+    .arow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
   }
 </style>
 </head>
@@ -231,7 +252,7 @@
     <span class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7"/></svg></span>
     <div>
       <h1>Notas por voz</h1>
-      <p class="sub">Hablás y se escribe solo. El audio no se guarda ni se envía a ningún servidor.</p>
+      <p class="sub">Hablás y se escribe solo. El audio no se envía a ningún servidor; solo se guarda en tu dispositivo si lo activás en Ajustes.</p>
     </div>
   </div>
   <span class="pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Las notas quedan solo en este dispositivo</span>
@@ -244,7 +265,15 @@
   <!-- 1 · Grabar -->
   <section class="card c-rec">
     <h2>Grabar</h2>
-    <button id="rec" type="button">Grabar</button>
+    <div class="recrow">
+      <button id="rec" type="button">Grabar</button>
+      <div class="side">
+        <div id="clock" aria-label="Tiempo de grabación">00:00</div>
+        <button id="pause" type="button" disabled title="Pausar o reanudar (tecla P)">Pausar</button>
+        <button id="mark" type="button" disabled title="Insertar la hora en el texto (tecla M)">Marcar</button>
+      </div>
+    </div>
+    <div class="warn" id="keepOn" style="display:none;text-align:center;margin-top:12px">Mantené la pantalla encendida y no cambies de app: si no, la grabación puede cortarse.</div>
     <div class="bar" id="bar"><i id="barI"></i></div>
     <div id="status" role="status" aria-live="polite"></div>
     <div id="interim"></div>
@@ -253,6 +282,23 @@
     <div class="warn" id="lvTxt"></div>
     <label class="chk"><input type="checkbox" id="replace" checked>
       <span><b>Empezar de cero al grabar</b><small>Borra el texto anterior (podés deshacerlo). Si lo destildás, lo nuevo se suma al final.</small></span></label>
+
+    <label class="chk"><input type="checkbox" id="liveAnon" checked>
+      <span><b>Ocultar nombres mientras transcribe</b><small>Usa tu tabla de personas y una lista de nombres comunes. Igual revisá siempre el texto.</small></span></label>
+
+    <div class="abox" id="audioBox" style="display:none">
+      <div class="gl">Audio guardado</div>
+      <div class="warn" id="audioInfo"></div>
+      <div class="row arow">
+        <button class="p two" id="aDown" type="button"><span>Descargar audio</span><small id="aDownSub">recomendado</small></button>
+        <button class="two" id="aMp3" type="button"><span>Convertir a MP3</span><small>alternativa · más compatible</small></button>
+      </div>
+      <div class="row">
+        <button id="aTx" type="button">Transcribir este audio</button>
+        <button class="ghost danger" id="aDel" type="button">Borrar audio</button>
+      </div>
+      <div class="warn" id="audioMsg" style="margin-top:8px"></div>
+    </div>
     <details>
       <summary>Detalles técnicos de la última grabación</summary>
       <pre id="diag" class="warn" style="white-space:pre-wrap;margin:8px 0"></pre>
@@ -292,6 +338,9 @@
         <option value="raw">Natural, sin filtros</option>
       </select>
       <div class="hint">Para elegir, leé el mismo párrafo con cada opción y compará los errores. Hablar cerca del micrófono y en un lugar callado ayuda más que cualquier ajuste.</div>
+
+      <label class="chk" style="margin-top:18px"><input type="checkbox" id="saveAudio">
+        <span><b>Guardar el audio de la grabación</b><small>Queda solo en este dispositivo (dentro del navegador), para descargarlo como archivo o recuperar la grabación si se corta. Solo con Whisper. Es tu voz tal cual: no se puede anonimizar, así que borralo cuando ya no lo necesites.</small></span></label>
     </div>
   </details>
 
@@ -356,6 +405,7 @@
         <button id="undo" disabled>Deshacer anonimizado</button>
       </div>
       <div class="warn" id="anonRes" style="margin-top:8px"></div>
+      <div id="susBox"></div>
       <div class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 2.5 20h19L12 3z"/><path d="M12 10v4M12 17.5v.01"/></svg><span>La anonimización es automática y puede fallar: revisá siempre el texto antes de guardarlo o exportarlo.</span></div>
       <details>
         <summary>Ajustes de anonimización</summary>
@@ -363,6 +413,21 @@
         <input type="text" id="hideX" placeholder="Ej.: nombre de una escuela, apodo">
         <label style="margin-top:12px">No ocultar nunca estas palabras</label>
         <input type="text" id="keepX" placeholder="Ej.: Freud, Winnicott">
+      </details>
+      <details id="peopleBox">
+        <summary>Personas y códigos <small>· cómo se reemplaza cada nombre</small></summary>
+        <div class="warn" style="margin:10px 0 8px">Cargá a cada persona una vez. Si es el paciente mismo, dejá «Relación» vacía. Si solo querés ocultar un nombre sin código, dejá vacías «Relación» y «Código». La tabla queda solo en este dispositivo (y tiene nombres reales: cuidala).</div>
+        <label for="pName">Nombre (y apodos, separados por coma)</label>
+        <input type="text" id="pName" placeholder="Ej.: José, Pepe" autocomplete="off">
+        <label for="pRel" style="margin-top:10px">Relación <span class="opt">(vacía = es el paciente)</span></label>
+        <input type="text" id="pRel" placeholder="Ej.: madre, hermano, docente" autocomplete="off">
+        <label for="pCode" style="margin-top:10px">Código del paciente</label>
+        <input type="text" id="pCode" placeholder="Ej.: C.036" autocomplete="off">
+        <div class="row"><button class="p" id="pAdd" type="button">Agregar</button><button id="pApply" type="button">Aplicar al texto actual</button></div>
+        <div class="warn" id="pMsg" style="margin-top:8px"></div>
+        <div id="pList" style="margin-top:8px"></div>
+        <label class="chk"><input type="checkbox" id="pVolatile"><span><b>No guardar esta tabla en el dispositivo</b><small>La tabla se pierde al cerrar la página y hay que cargarla de nuevo cada vez.</small></span></label>
+        <div class="row"><button class="ghost danger" id="pClear" type="button">Borrar toda la tabla</button></div>
       </details>
     </div>
 
@@ -382,7 +447,7 @@
 
 </main>
 
-<footer>Notas por voz · v3.2 · Todo se guarda únicamente en este navegador</footer>
+<footer>Notas por voz · v3.3 · Todo se guarda únicamente en este navegador</footer>
 </div>
 
 <script>
@@ -548,6 +613,104 @@ function makeSegmenter(rate, emit, o) {
     flush() { out(seg.length); }
   };
 }
+/* ---- Anonimización por listas ----
+   NAMES_OK: nombres y apellidos comunes que no son palabras corrientes: se ocultan en cualquier posición.
+   NAMES_AMB: nombres que también son palabras (Rosa, Luz, Sol…): solo con mayúscula y en medio de la oración;
+   al empezar una oración quedan como "sospechosos" para que los revises. */
+const mkSet = s => new Set(s.split(/\s+/).filter(Boolean).map(norm));
+const NAMES_OK = mkSet(`
+maria ana anna laura marta carmen lucia sofia camila valentina martina julieta florencia agustina micaela carolina natalia veronica monica patricia adriana alicia beatriz cecilia gabriela graciela silvia liliana susana teresa ramona olga hilda irene lidia berta josefa juana julia marcela elena paula lorena brenda daiana yamila selene karina cristina andrea sandra romina emilia catalina isabella delfina renata bianca lara ema eva elsa nora mabel noelia melisa mariana antonella ailen aylen anahi araceli ariana carla claudia daniela ines ivana jimena jessica johana leonor luciana lourdes magdalena malena miriam nadia nancy nelida nelly noemi paola pamela rebeca rosana roxana ruth sabrina sara silvana stella tamara tatiana valeria vanesa viviana ximena yanina zulma analia cintia constanza eugenia evelyn fabiana fernanda giselle gisela griselda lilian luisa maite marisa marisol maribel mirta ofelia oriana priscila rafaela sonia tomasa ursula rita alejandra
+jose juan luis carlos jorge pedro pablo miguel manuel mario ricardo roberto alberto eduardo daniel fernando javier sergio diego gustavo ruben hector oscar raul walter marcelo matias nicolas agustin joaquin tomas mateo benjamin bruno valentin facundo lucas santiago martin gonzalo ramiro lautaro thiago dante hugo ariel andres alejandro adrian alan alexis antonio armando augusto cesar cristian damian dario emanuel emilio enrique ernesto esteban ezequiel fabian federico felipe francisco gabriel gaston german guillermo horacio ignacio ivan jeremias joel julian kevin leandro leonardo lisandro luciano mauricio maximiliano nahuel nelson norberto octavio omar patricio rafael ramon renzo rodolfo rodrigo samuel santino sebastian simon teodoro tobias vicente victor waldo abel adolfo alfredo anibal braian brian bryan christian cristobal dylan elias esequiel fausto fidel florencio genaro gerardo gregorio ismael isaac jonatan jonathan jesus lazaro lorenzo lucio matheo maxi nestor nicanor orlando osvaldo pascual rolando saul severo silvio ulises felix
+pepe nacho mati fede facu santi paco lalo beto toto tito juancito pedrito
+gonzalez rodriguez fernandez lopez martinez perez gomez sanchez diaz romero alvarez ramirez benitez acosta medina herrera suarez aguirre gimenez gutierrez pereyra pereira rojas molina castro ortiz silva nunez juarez cabrera dominguez munoz alonso navarro vazquez peralta sosa ledesma ibarra vargas roldan cardozo maidana godoy rivero montenegro barrios sandoval quiroga villalba figueroa carrizo cardenas miranda pacheco duarte bustos arias ojeda ferreyra ferreira garcia ponce coria leiva mansilla olivera palacios sanabria tapia toledo valdez valdes varela velazquez vidal villarreal zapata zarate zalazar aranda avila baez barrera bianchi chavez contreras escobar galvan gallardo gauna guzman heredia hernandez lezcano maldonado marquez montiel nieva ocampo orellana pavon quinteros rinaldi rivas rossi russo saavedra soto trejo ugarte urquiza vallejos vilchez yanez ybarra zamora zelaya ferrari esposito colombo ricci conti greco
+`);
+const NAMES_AMB = mkSet(`
+rosa luz paz sol victoria pilar angel amparo consuelo dolores mercedes soledad esperanza gloria salvador santos cruz rocio estrella milagros belen nieves mora alma estela norma nina mia morena franco marcos rosario candela celeste violeta margarita paloma aurora jazmin flor perla ambar iris guadalupe trinidad leon bautista marina lila vera clara diana pia luna blanco castillo bravo correa rios morales moreno ramos vega
+campos salas salinas paredes reyes fuentes pinto arce cejas mendoza torres romano jara lagos mercado coronel marino robles oliva lucero
+`);
+/* Palabras muy comunes al empezar una oración: no se muestran como "sospechosas" */
+const COMMON_START = mkSet(`
+el la los las un una unos unas y o u e pero porque entonces despues antes ayer hoy manana ahora bueno bien si no yo tu vos el ella nosotros ustedes ellos ellas mi mis tu tus su sus este esta estos estas ese esa esos esas eso esto aquel aquella cuando donde como que quien cual cuanto cuantos tambien tampoco ademas igual mientras aunque luego primero segundo tercero finalmente por para con sin sobre entre hasta desde hacia segun durante todo todos todas nada algo alguien nadie cada otro otra otros otras mas menos muy mucho muchos mucha muchas poco pocos tan tanto asi aca alla aqui ahi claro obvio capaz tal quizas en de a al del ya todavia siempre nunca hay habia tengo tiene tienen tenia estaba estaban esta estan es son era eran fue fueron soy somos ser estar hacer hace hizo dice dijo digo decir quiere queria puede podia vamos va voy ve vi veo mira fijate sabes sabe creo pienso siento paso lo le les me te se nos ningun ninguna ninguno persona dentro fuera arriba abajo lunes martes miercoles jueves viernes sabado domingo
+`);
+const maxPersona = t => (String(t || '').match(/\[Persona (\d+)\]/g) || []).reduce((m, s) => Math.max(m, +s.match(/\d+/)[0]), 0);
+/* Estado de una pasada: reglas de la tabla, palabras a ocultar/respetar, numeración de [Persona N] */
+function mkAnon(o){
+  const S = Object.assign({rules: [], hide: new Set(), keep: new Set(), ids: new Map(), np: {n: 0}, rulesOnly: false, found: [], sus: new Set(), stat: {t: 0}}, o);
+  /* Misma persona: frase igual, o solo el primer nombre ("José" = "José Pérez"). "María José" y "José" son distintas. */
+  S.person = text => {
+    const toks = text.split(/\s+/).filter(Boolean).map(norm), key = toks.join(' '), f = 'f:' + toks[0];
+    let id = S.ids.get(key) || S.ids.get(f);
+    if (!id) id = '[Persona ' + (++S.np.n) + ']';
+    if (!S.ids.has(key)) S.ids.set(key, id);
+    if (!S.ids.has(f)) S.ids.set(f, id);
+    return id;
+  };
+  return S;
+}
+/* Reemplaza: 1) personas de la tabla (con código), 2) nombres comunes (como [Persona N]) */
+function anonNames(text, S){
+  const parts = String(text || '').match(TOK) || [], n = parts.length;
+  const isW = parts.map(isWord), nw = parts.map((p, i) => isW[i] ? norm(p) : null);
+  const mid = i => { for (let j = i - 1; j >= 0; j--) { if (isW[j]) return true; if (/[.!?\n¿¡:]/.test(parts[j])) return false; } return false; };
+  const sp = i => i >= 0 && i < n && /^[ \t]+$/.test(parts[i]);
+  const rule = i => {
+    for (const r of S.rules) {
+      const k = r.w.length; let ok = true;
+      for (let j = 0; j < k && ok; j++) {
+        const p = i + 2 * j;
+        if (p >= n || !isW[p] || (j < k - 1 && !sp(p + 1))) { ok = false; break; }
+        if (nw[p] !== r.w[j] && !(k === 1 && r.k && nw[p].length >= 4 && phon(parts[p]) === r.k)) ok = false;
+      }
+      if (ok) return r;
+    }
+    return null;
+  };
+  const kind = i => {
+    const w = nw[i]; if (w === null) return null;
+    if (S.hide.has(w)) return 'name';
+    if (S.rulesOnly || S.keep.has(w)) return null;
+    if (NAMES_OK.has(w)) return 'name';
+    if (NAMES_AMB.has(w) && isUp(parts[i])) { if (mid(i)) return 'name'; S.sus.add(parts[i]); return 'sus'; }
+    return null;
+  };
+  /* palabra con mayúscula que no es de ninguna lista: se suma a un nombre vecino (Sofronio López, José Quevedo) */
+  const cap = j => !S.rulesOnly && isUp(parts[j]) && parts[j].length >= 3 && !S.keep.has(nw[j]) && !COMMON_START.has(nw[j]);
+  const more = last => last + 2 < n && sp(last + 1) && isW[last + 2] && !rule(last + 2) && (kind(last + 2) === 'name' || cap(last + 2));
+  const out = []; let i = 0;
+  while (i < n) {
+    if (!isW[i]) { out.push(parts[i]); i++; continue; }
+    const r = rule(i);
+    if (r) { // persona de la tabla; si le sigue un apellido, se absorbe
+      let last = i + 2 * (r.w.length - 1);
+      while (more(last)) last += 2;
+      out.push(r.out); S.stat.t++; i = last + 1; continue;
+    }
+    if (kind(i) === 'name' || (cap(i) && mid(i) && sp(i + 1) && isW[i + 2] && !rule(i + 2) && kind(i + 2) === 'name')) {
+      let last = i;
+      while (more(last)) last += 2;
+      const phrase = parts.slice(i, last + 1).join('');
+      S.found.push(phrase); out.push(S.person(phrase)); i = last + 1; continue;
+    }
+    out.push(parts[i]); i++;
+  }
+  return out.join('');
+}
+/* Palabras con mayúscula al empezar una oración que no están en ninguna lista ni aparecen en minúscula: pueden ser nombres */
+function sentenceStarters(text, S){
+  const parts = String(text || '').match(TOK) || [], low = new Set();
+  parts.forEach(p => { if (isWord(p) && !isUp(p)) low.add(norm(p)); });
+  const res = [], seen = new Set();
+  parts.forEach((p, i) => {
+    if (!isWord(p) || !isUp(p) || p.length < 3 || /^\p{N}/u.test(p)) return;
+    if (i > 0 && /\[$/.test(parts[i - 1])) return;
+    for (let j = i - 1; j >= 0; j--) { if (isWord(parts[j])) return; if (/[.!?\n¿¡:]/.test(parts[j])) break; }
+    const w = norm(p);
+    if (/(ó|aron|ieron|ando|iendo|mente)$/i.test(p)) return; // verbos y adverbios, no nombres
+    if (seen.has(w) || low.has(w) || S.keep.has(w) || COMMON_START.has(w)) return;
+    seen.add(w); res.push(p);
+  });
+  return res;
+}
 /*PURE-END*/
 
 /* ====================================================================
@@ -565,7 +728,7 @@ const nWords = s => (s.match(WORDS) || []).length;
 
 /* ---------- Notas ---------- */
 function fmt(ts){ return new Date(ts).toLocaleString('es-AR', {dateStyle:'short', timeStyle:'short'}); }
-function resetEdit(){ anonBackup = null; $('undo').disabled = true; $('anonRes').textContent = ''; $('learn').innerHTML = ''; }
+function resetEdit(){ anonBackup = null; $('undo').disabled = true; $('anonRes').textContent = ''; $('learn').innerHTML = ''; $('susBox').innerHTML = ''; }
 function renderList(){
   const l = $('list'); l.innerHTML = '';
   const f = $('filt'); f.innerHTML = '';
@@ -579,7 +742,7 @@ function renderList(){
     const s = document.createElement('span'); s.textContent = n.title || 'Sin título';
     const sm = document.createElement('small'); sm.textContent = fmt(n.ts) + ' · ' + nWords(n.text || '').toLocaleString('es-AR') + ' palabras' + ((n.tags || []).length ? ' · ' + n.tags.join(', ') : '');
     const o = document.createElement('button'); o.textContent = 'Abrir';
-    o.onclick = () => { if (isUnsaved()) { stash(); flash('Tenías texto sin guardar: se recupera con «Deshacer borrado».'); } cur = n.id; $('title').value = n.title; $('text').value = n.text; baseline = n.text; tags = (n.tags || []).slice(); renderChips(); resetEdit(); window.scrollTo({top:0, behavior:'smooth'}); };
+    o.onclick = () => { if (isUnsaved()) { stash(); flash('Tenías texto sin guardar: se recupera con «Deshacer borrado».'); } cur = n.id; $('title').value = n.title; $('text').value = n.text; baseline = n.text; tags = (n.tags || []).slice(); renderChips(); resetEdit(); resetLive(); window.scrollTo({top:0, behavior:'smooth'}); };
     const x = document.createElement('button'); x.textContent = 'Borrar'; x.className = 'ghost danger';
     x.onclick = () => { if (confirm('¿Borrar esta nota?')) { notes = notes.filter(m => m.id !== n.id); if (cur === n.id) cur = null; persist(); renderList(); } };
     d.append(s, sm, o, x); l.append(d);
@@ -597,18 +760,18 @@ $('save').onclick = () => {
 };
 $('newn').onclick = () => {
   if ($('text').value || $('title').value || tags.length) { doClear(false); flash('Nota nueva. Lo anterior se recupera con «Deshacer borrado».'); }
-  else { cur = null; baseline = ''; resetEdit(); flash(''); }
+  else { cur = null; baseline = ''; resetEdit(); resetLive(); flash(''); }
 };
 
 /* ---------- Seleccionar, copiar, borrar ---------- */
 $('selAll').onclick = () => { const t = $('text'); t.focus(); t.select(); try { t.setSelectionRange(0, t.value.length); } catch (e) {} };
 function pendingOk(){
-  if (!recording && !outstanding) return true;
-  return confirm(recording ? 'Todavía estás grabando: el texto está incompleto. ¿Continuar igual?' : 'Todavía faltan ' + outstanding + ' parte(s) por transcribir: el texto está incompleto. ¿Continuar igual?');
+  if (!recording && !outstanding && !feeding) return true;
+  return confirm(recording ? 'Todavía estás grabando: el texto está incompleto. ¿Continuar igual?' : 'Todavía faltan ' + (outstanding || 'algunas') + ' parte(s) por transcribir: el texto está incompleto. ¿Continuar igual?');
 }
 $('copyAll').onclick = async () => {
   const t = $('text'); if (!t.value.trim()) return flash('No hay texto para copiar.');
-  if (!pendingOk()) return;
+  if (!pendingOk() || !anonOk()) return;
   try { await navigator.clipboard.writeText(t.value); }
   catch (e) { t.focus(); t.select(); try { document.execCommand('copy'); } catch (e2) { return flash('No se pudo copiar. Usá Seleccionar todo y copiá a mano.'); } }
   flash('Copiado (' + nWords(t.value) + ' palabras).');
@@ -622,7 +785,7 @@ function isUnsaved(){ const t = $('text').value; if (!t.trim()) return false; co
 function doClear(auto){
   if (!$('text').value && !$('title').value && !tags.length) return;
   stash();
-  cur = null; $('title').value = ''; $('text').value = ''; baseline = ''; tags = []; renderChips(); resetEdit();
+  cur = null; $('title').value = ''; $('text').value = ''; baseline = ''; tags = []; renderChips(); resetEdit(); resetLive();
   $('undoClear').style.display = '';
   flash(auto ? 'Se borró el texto anterior. Podés deshacerlo.' : 'Texto borrado. Podés deshacerlo.');
 }
@@ -631,7 +794,7 @@ $('undoClear').onclick = () => {
   if (!clearBackup) return;
   const b = clearBackup;
   const had = ($('text').value.trim() || $('title').value.trim()) ? {title: $('title').value, text: $('text').value, tags: tags.slice(), cur, baseline} : null;
-  cur = b.cur; $('title').value = b.title; $('text').value = b.text; baseline = b.baseline; tags = b.tags; renderChips(); resetEdit();
+  cur = b.cur; $('title').value = b.title; $('text').value = b.text; baseline = b.baseline; tags = b.tags; renderChips(); resetEdit(); resetLive();
   clearBackup = had; persistUndo();
   $('undoClear').style.display = had ? '' : 'none';
   flash(had ? 'Recuperado. Lo que había quedó de respaldo: tocá otra vez para volver a eso.' : 'Recuperado.');
@@ -658,19 +821,13 @@ $('tagSug').onclick = () => {
 };
 
 /* ---------- Anonimizar (reglas locales) ---------- */
-const KEEP = ['lunes','martes','miércoles','jueves','viernes','sábado','domingo','enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre','hoy','ayer','mañana','argentina','buenos','aires','dios','freud','winnicott','klein','lacan','salud','adolescencia','claude','whisper','word'];
+const KEEP = ['lunes','martes','miércoles','jueves','viernes','sábado','domingo','enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre','hoy','ayer','mañana','argentina','buenos','aires','dios','freud','winnicott','klein','lacan','salud','adolescencia','claude','whisper','word','sigmund','melanie','donald','jacques','wilfred','bion','jung','adler','ferenczi','bowlby','spitz','mahler','piaget','aberastury','pichon','riviere','dolto','erikson'];
 const reEsc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 function anonymize(){
   const hide = $('hideX').value.split(',').map(s => s.trim()).filter(Boolean);
   const keep = new Set(KEEP.concat($('keepX').value.split(',')).map(s => norm(s.trim())).filter(Boolean));
-  const ids = new Map(); let np = 0, nOther = 0;
-  const person = text => {
-    const toks = text.split(/\s+/).map(norm);
-    let id = toks.map(t => ids.get(t)).find(Boolean);
-    if (!id) id = '[Persona ' + (++np) + ']';
-    toks.forEach(t => { if (!ids.has(t)) ids.set(t, id); });
-    return id;
-  };
+  const np0 = maxPersona($('title').value + ' ' + $('text').value), S = buildAnon(new Map(), {n: np0});
+  const person = S.person; let nOther = 0;
   const CAP = /(?<![\p{L}\[])\p{Lu}\p{Ll}+(?:[ \t]+\p{Lu}\p{Ll}+)*/gu;
   const startsSentence = (str, off) => /(^|[.!?¿¡\n:]\s*)$/.test(str.slice(0, off));
   // Pasada 1: nombres seguros (mayúscula en medio de la oración)
@@ -685,6 +842,7 @@ function anonymize(){
     s = s.replace(/\b\d{1,2}\/\d{1,2}\/\d{2,4}\b/g, () => { nOther++; return '[fecha]'; });
     s = s.replace(/\+?\d[\d\s().-]{5,}\d/g, () => { nOther++; return '[número]'; });
     hide.forEach(h => { s = s.replace(new RegExp('(?<![\\p{L}\\[])' + reEsc(h) + '(?![\\p{L}])', 'giu'), () => person(h)); });
+    s = anonNames(s, S); // tabla de personas + nombres comunes
     s = s.replace(CAP, (m, off, str) => {
       const st = startsSentence(str, off);
       const parts = m.split(/(\s+)/); // palabras y separadores
@@ -709,9 +867,115 @@ function anonymize(){
   baseline = $('text').value; // para que el diccionario nunca "aprenda" los nombres ocultados
   $('learn').innerHTML = '';
   $('undo').disabled = false;
-  $('anonRes').textContent = 'Se ocultaron ' + np + ' nombre(s) y ' + nOther + ' dato(s) (correo, teléfono, fecha). Revisá el texto: pueden quedar nombres sin detectar (al empezar una oración o en minúscula).';
+  $('anonRes').textContent = 'Se ocultaron ' + (S.np.n - np0) + ' nombre(s)' + (S.stat.t ? ', ' + S.stat.t + ' reemplazo(s) por código' : '') + ' y ' + nOther + ' dato(s) (correo, teléfono, fecha). Revisá el texto: pueden quedar nombres sin detectar.';
+  showSuspects(Array.from(S.sus).concat(sentenceStarters($('text').value, S)));
 }
 $('anon').onclick = () => { if (!$('text').value.trim()) return flash('No hay texto para anonimizar.'); anonymize(); };
+
+/* ---------- Tabla de personas y ocultar nombres en vivo ---------- */
+const PKEY = 'notasvoz.people.v1';
+let people = [], liveIds = new Map(), liveNp = {n: 0}, ackTxt = null;
+const resetLive = () => { liveIds = new Map(); liveNp = {n: 0}; };
+function savePeople(){ if ($('pVolatile').checked) return; try { localStorage.setItem(PKEY, JSON.stringify(people)); } catch (e) {} }
+function loadPeople(){
+  people = [];
+  if (!$('pVolatile').checked) { try { const p = JSON.parse(localStorage.getItem(PKEY) || '[]'); if (Array.isArray(p)) people = p.filter(x => x && Array.isArray(x.names)); } catch (e) {} }
+  renderPeople();
+}
+function renderPeople(){
+  const l = $('pList'); l.innerHTML = '';
+  if (!people.length) { l.innerHTML = '<div class="warn">Todavía no cargaste a nadie.</div>'; return; }
+  people.forEach((p, i) => {
+    const d = document.createElement('div'); d.className = 'n';
+    const s = document.createElement('span'); s.textContent = p.names.join(', ');
+    const sm = document.createElement('small'); sm.textContent = '→ ' + (p.code ? (p.rel ? '[' + p.rel + ' de ' + p.code + ']' : p.code + ' (el paciente)') : '[Persona] (solo ocultar)');
+    const x = document.createElement('button'); x.textContent = 'Quitar'; x.className = 'ghost danger';
+    x.onclick = () => { people.splice(i, 1); savePeople(); renderPeople(); };
+    d.append(s, sm, x); l.append(d);
+  });
+}
+/* Arma el estado de una pasada con la tabla y los ajustes de la pantalla */
+function buildAnon(ids, np, rulesOnly){
+  const keep = new Set(KEEP.concat($('keepX').value.split(',')).map(s => norm(s.trim())).filter(Boolean));
+  D.V.forEach(v => keep.add(norm(v.t)));
+  const hide = new Set();
+  $('hideX').value.split(',').forEach(h => (h.match(WORDS) || []).forEach(w => hide.add(norm(w))));
+  const rules = [];
+  people.forEach(p => p.names.forEach(nm => {
+    const w = (nm.match(WORDS) || []).map(norm); if (!w.length) return;
+    if (!p.code) { w.forEach(x => hide.add(x)); return; }
+    rules.push({w, k: w.length === 1 ? phon(nm) : null, out: p.rel ? '[' + p.rel + ' de ' + p.code + ']' : p.code});
+  }));
+  rules.sort((a, b) => b.w.length - a.w.length);
+  return mkAnon({rules, hide, keep, ids, np, rulesOnly: !!rulesOnly});
+}
+/* Se aplica a cada parte que transcribe Whisper, antes de que entre al texto */
+function liveAnon(t){
+  if (!t || !$('liveAnon').checked) return t;
+  try { liveNp.n = Math.max(liveNp.n, maxPersona($('text').value)); return anonNames(t, buildAnon(liveIds, liveNp)); }
+  catch (e) { return t; }
+}
+function applyPeopleToText(){
+  const t = $('text').value; if (!t.trim() || !people.length) return false;
+  const n = anonNames(t, buildAnon(new Map(), {n: maxPersona(t)}, true));
+  if (n === t) return false;
+  if (t === baseline) baseline = n;
+  $('text').value = n; return true;
+}
+$('pAdd').onclick = () => {
+  const msg = t => $('pMsg').textContent = t;
+  const names = $('pName').value.split(',').map(s => s.trim()).filter(Boolean);
+  const rel = $('pRel').value.trim(), code = $('pCode').value.trim();
+  if (!names.length) return msg('Escribí el nombre (o los apodos, separados por coma).');
+  if (rel && !code) return msg('Falta el código del paciente. Para solo ocultar un nombre, dejá vacías la relación y el código.');
+  const key = n => (n.match(WORDS) || []).map(norm).join(' '), keys = names.map(key);
+  people.forEach(p => { p.names = p.names.filter(n => !keys.includes(key(n))); });
+  people = people.filter(p => p.names.length);
+  people.push({names, rel, code});
+  savePeople(); renderPeople();
+  $('pName').value = ''; $('pRel').value = ''; // el código queda, para cargar rápido a los familiares
+  msg(applyPeopleToText() ? 'Agregado y aplicado al texto.' : 'Agregado.');
+};
+$('pApply').onclick = () => $('pMsg').textContent = applyPeopleToText() ? 'Tabla aplicada al texto.' : 'No había nada para cambiar en el texto.';
+$('pClear').onclick = () => { if (!people.length || !confirm('¿Borrar toda la tabla de personas?')) return; people = []; savePeople(); renderPeople(); $('pMsg').textContent = 'Tabla borrada.'; };
+$('pVolatile').addEventListener('change', () => {
+  if ($('pVolatile').checked) { try { localStorage.removeItem(PKEY); } catch (e) {} $('pMsg').textContent = 'La tabla ya no se guarda: se pierde al cerrar la página.'; }
+  else { savePeople(); $('pMsg').textContent = 'La tabla se guarda en este dispositivo.'; }
+});
+function showSuspects(list){
+  const box = $('susBox'); box.innerHTML = '';
+  const seen = new Set(), L = list.filter(w => { const k = norm(w); if (seen.has(k)) return false; seen.add(k); return true; }).slice(0, 8);
+  if (!L.length) return;
+  const h = document.createElement('div'); h.className = 'warn'; h.style.margin = '10px 0 6px';
+  h.textContent = 'Revisá estas palabras: ¿son nombres? Tocá una para cargarla en la tabla de personas.';
+  box.append(h);
+  L.forEach(w => {
+    const b = document.createElement('button'); b.className = 'chip'; b.textContent = w;
+    b.onclick = () => { $('pName').value = w; $('peopleBox').open = true; $('pName').scrollIntoView({block: 'center', behavior: 'smooth'}); $('pCode').focus(); };
+    box.append(b);
+  });
+  const x = document.createElement('button'); x.className = 'chip'; x.textContent = 'Ignorar'; x.onclick = () => box.innerHTML = ''; box.append(x);
+}
+/* Antes de copiar o exportar: avisa si quedan nombres u otros datos que identifican */
+function scanLeft(text){
+  const S = buildAnon(new Map(), {n: 0}); anonNames(text, S);
+  const res = S.found.slice(), re = /(?<![\p{L}\[])\p{Lu}\p{Ll}+/gu; let m;
+  while ((m = re.exec(text))) {
+    if (/(^|[.!?¿¡\n:]\s*)$/.test(text.slice(0, m.index))) continue;
+    const w = norm(m[0]); if (S.keep.has(w) || COMMON_START.has(w)) continue;
+    res.push(m[0]);
+  }
+  (text.match(/[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g) || []).forEach(x => res.push(x));
+  (text.match(/\b\d{2}\.?\d{3}\.?\d{3}\b/g) || []).forEach(x => res.push(x));
+  return [...new Set(res)];
+}
+function anonOk(){
+  const t = $('text').value;
+  if (!t.trim() || t === ackTxt) return true;
+  const left = scanLeft(t); if (!left.length) return true;
+  if (confirm('Ojo: el texto parece tener datos que podrían identificar a alguien (' + left.slice(0, 6).join(', ') + '). ¿Seguir igual? Podés cancelar y usar «Anonimizar».')) { ackTxt = t; return true; }
+  return false;
+}
 $('undo').onclick = () => { if (!anonBackup) return; $('title').value = anonBackup.title; $('text').value = anonBackup.text; baseline = anonBackup.baseline; anonBackup = null; $('undo').disabled = true; $('anonRes').textContent = 'Se deshizo el anonimizado.'; };
 
 /* ---------- Exportar ---------- */
@@ -722,12 +986,12 @@ function makeDoc(){
   const html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>' + t + '</title></head><body style="font-family:Calibri,Arial,sans-serif;font-size:12pt"><h1>' + t + '</h1><p style="color:#666">' + fmt(Date.now()) + (tags.length ? ' · Etiquetas: ' + esc(tags.join(', ')) : '') + '</p>' + paras + '</body></html>';
   return new File(['﻿' + html], fname('doc'), {type:'application/msword'});
 }
-function download(file){ const a = document.createElement('a'); a.href = URL.createObjectURL(file); a.download = file.name; document.body.append(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href), 4000); }
-$('doc').onclick = () => $('text').value.trim() ? (pendingOk() && download(makeDoc())) : flash('No hay texto para exportar.');
-$('txt').onclick = () => $('text').value.trim() ? (pendingOk() && download(new File([($('title').value ? $('title').value + '\n\n' : '') + $('text').value], fname('txt'), {type:'text/plain'}))) : flash('No hay texto para exportar.');
+function download(file){ const a = document.createElement('a'); a.href = URL.createObjectURL(file); a.download = file.name; document.body.append(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href), 60000); }
+$('doc').onclick = () => $('text').value.trim() ? (pendingOk() && anonOk() && download(makeDoc())) : flash('No hay texto para exportar.');
+$('txt').onclick = () => $('text').value.trim() ? (pendingOk() && anonOk() && download(new File([($('title').value ? $('title').value + '\n\n' : '') + $('text').value], fname('txt'), {type:'text/plain'}))) : flash('No hay texto para exportar.');
 if (navigator.canShare && navigator.canShare({files:[new File(['x'],'x.txt',{type:'text/plain'})]})) {
   $('share').style.display = '';
-  $('share').onclick = async () => { if (!$('text').value.trim() || !pendingOk()) return; try { await navigator.share({files:[makeDoc()], title: $('title').value || 'Nota'}); } catch (e) {} };
+  $('share').onclick = async () => { if (!$('text').value.trim() || !pendingOk() || !anonOk()) return; try { await navigator.share({files:[makeDoc()], title: $('title').value || 'Nota'}); } catch (e) {} };
 }
 
 /* ====================================================================
@@ -786,12 +1050,13 @@ function showSuggestions(list){
    Transcripción
    ==================================================================== */
 let recording = false, recEng = 'whisper';
-function appendMachine(t){
+function appendMachine(t, sep){
   t = t.trim(); if (!t) return;
+  const sp = s => s && !/\s$/.test(s) ? (sep || ' ') : '';
   const ta = $('text'), pristine = ta.value === baseline;
-  ta.value += (ta.value && !/\s$/.test(ta.value) ? ' ' : '') + t;
+  ta.value += sp(ta.value) + t;
   ta.scrollTop = ta.scrollHeight;
-  baseline = pristine ? ta.value : baseline + (baseline && !/\s$/.test(baseline) ? ' ' : '') + t;
+  baseline = pristine ? ta.value : baseline + sp(baseline) + t;
 }
 /* Al empezar a grabar: borra lo anterior (si está tildado) y deja el texto base limpio */
 function prepareNew(){
@@ -813,7 +1078,7 @@ function startNative(){
   rec.onresult = e => {
     let interim = '';
     for (let i = e.resultIndex; i < e.results.length; i++) {
-      if (e.results[i].isFinal) { const c = cleanText(e.results[i][0].transcript); if (c) appendMachine(applyDict(c, D)); } else interim += e.results[i][0].transcript;
+      if (e.results[i].isFinal) { const c = cleanText(e.results[i][0].transcript); if (c) appendMachine(liveAnon(applyDict(c, D))); } else interim += e.results[i][0].transcript;
     }
     $('interim').textContent = interim;
   };
@@ -822,7 +1087,8 @@ function startNative(){
     else if (e.error !== 'no-speech' && e.error !== 'aborted') setStatus('Error: ' + e.error);
     if (e.error === 'language-not-supported' || e.error === 'not-allowed') stopUI();
   };
-  rec.onend = () => { if (recording) { try { rec.start(); } catch (e) {} } else $('interim').textContent = ''; };
+  const me = rec;
+  rec.onend = () => { if (recording && !paused) { if (rec === me) { try { me.start(); } catch (e) {} } } else if (rec === me) $('interim').textContent = ''; };
   rec.start(); setStatus('Escuchando… (se procesa en este dispositivo)');
 }
 
@@ -941,6 +1207,8 @@ async function toMono16k(blocks, rate){
 }
 
 let lvT = 0, clipUntil = 0, failedParts = 0, warnParts = 0, segN = 0, diagLines = [], totalSec = 0, doneSec = 0, procMs = 0, procSec = 0;
+let paused = false, tAcc = 0, tRun = 0, clockT = null, markT = null, feeding = false, feed = {pos: 0, len: 0, done: 0};
+let mr = null, audioOk = false, audioSid = '', audioN = 0, audioBytes = 0, audioQ = Promise.resolve(), audioMime = '', audioTs = 0, audioWarned = false;
 function logDiag(x){ diagLines.push(x); $('diag').textContent = diagLines.join('\n'); }
 $('copyDiag').onclick = async () => {
   const x = $('diag').textContent; if (!x) return flash('Todavía no hay detalles.');
@@ -958,11 +1226,11 @@ let cap = null, seg = null, jobs = [], busy = false, outstanding = 0, dead = fal
 const lockWake = async () => { try { wl = await navigator.wakeLock.request('screen'); } catch (e) {} };
 const unlockWake = () => { try { wl && wl.release(); } catch (e) {} wl = null; };
 document.addEventListener('visibilitychange', () => {
-  if (recording && recEng === 'whisper') logDiag('La página pasó a ' + (document.visibilityState === 'visible' ? 'visible' : 'segundo plano') + ' a los ' + Math.floor((Date.now() - t0) / 1000) + ' s');
+  if (recording && recEng === 'whisper') logDiag('La página pasó a ' + (document.visibilityState === 'visible' ? 'visible' : 'segundo plano') + ' a los ' + Math.floor(elapsedMs() / 1000) + ' s');
   if (document.visibilityState === 'visible' && recording && recEng === 'whisper') lockWake();
 });
 function lockUI(on){
-  $('model').disabled = on; $('accel').disabled = on; $('mic').disabled = on;
+  $('model').disabled = on; $('accel').disabled = on; $('mic').disabled = on; $('saveAudio').disabled = on;
   document.querySelectorAll('input[name=eng]').forEach(r => r.disabled = on || (r.value === 'native' && !nativeLocal));
 }
 function fmtEta(ms){
@@ -971,17 +1239,20 @@ function fmtEta(ms){
 }
 function updProgress(){
   const tp = $('tp'), bz = $('busy');
-  const working = recording || busy || outstanding > 0;
+  const working = recording || busy || outstanding > 0 || feeding;
   bz.classList.toggle('on', working && !dead);
-  if (working) bz.textContent = recording ? 'Grabando y transcribiendo: el texto va apareciendo de a poco.' : 'Todavía transcribiendo… esperá a que termine antes de copiar o guardar.';
-  if (!totalSec || (!recording && outstanding === 0 && !busy)) { tp.classList.remove('on'); return; }
-  const pct = Math.min(100, Math.round(doneSec / totalSec * 100));
+  if (working) bz.textContent = recording
+    ? (paused ? (busy || outstanding > 0 ? 'Grabación en pausa: se sigue transcribiendo lo ya grabado.' : 'Grabación en pausa.') : 'Grabando y transcribiendo: el texto va apareciendo de a poco.')
+    : 'Todavía transcribiendo… esperá a que termine antes de copiar o guardar.';
+  refreshTitle();
+  if (!totalSec || (!recording && outstanding === 0 && !busy && !feeding)) { tp.classList.remove('on'); return; }
+  const pct = Math.min(100, Math.round((feed.len ? feed.done / feed.len : doneSec / totalSec) * 100));
   $('tpI').style.width = pct + '%';
   $('tpI').style.setProperty('--h', Math.round(pct < 60 ? 45 : 45 + (pct - 60) / 40 * 95));
   let t;
-  if (recording) t = 'Transcribiendo mientras grabás · ' + pct + '% de lo grabado hasta ahora';
+  if (recording) t = (paused ? 'En pausa · transcribiendo lo grabado · ' : 'Transcribiendo mientras grabás · ') + pct + '% de lo grabado hasta ahora';
   else if (!procSec) t = modelLoading ? 'Preparando la transcripción…' : 'Empezando a transcribir…';
-  else t = pct + '% · faltan ' + fmtEta((totalSec - doneSec) * (procMs / procSec));
+  else t = pct + '% · faltan ' + fmtEta((feed.len ? (feed.len - feed.done) / 16000 : totalSec - doneSec) * (procMs / procSec));
   $('tpTxt').textContent = t; tp.classList.add('on');
 }
 function refreshStatus(){
@@ -989,19 +1260,18 @@ function refreshStatus(){
   updProgress();
   const where = backend === 'GPU' ? 'placa de video' : 'procesador';
   if (recording) {
-    const s = Math.floor((Date.now() - t0) / 1000);
-    let x = 'Grabando ' + Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+    let x = paused ? 'Grabación en pausa' : 'Grabando';
     if (modelErr) x += ' · no se pudo preparar la transcripción (' + modelErr + '). La primera vez hace falta internet.';
     else if (modelLoading) x += ' · preparando la transcripción…';
     else if (busy) x += ' · transcribiendo en segundo plano (' + where + ')…';
     setStatus(x);
-  } else if (busy || outstanding > 0) {
-    setStatus(modelLoading ? 'Preparando la transcripción…' : 'Terminando de transcribir (' + where + ')… quedan ' + outstanding + ' parte(s).');
+  } else if (busy || outstanding > 0 || feeding) {
+    setStatus(modelLoading ? 'Preparando la transcripción…' : feeding ? 'Transcribiendo el audio guardado (' + where + ')…' : 'Terminando de transcribir (' + where + ')… quedan ' + outstanding + ' parte(s).');
   }
 }
 function maybeDone(){
   updProgress();
-  if (recording || busy || outstanding > 0) return;
+  if (recording || busy || outstanding > 0 || feeding) return;
   clearInterval(timer); timer = null; lockUI(false); $('rec').disabled = false;
   if (dead) return;
   if (failedParts) { setStatus('Terminó, pero ' + failedParts + ' parte(s) del audio no se pudieron transcribir: buscá «⚠ falta una parte» en el texto.'); return; }
@@ -1017,6 +1287,7 @@ async function pump(){
   if (busy || dead) return;
   const job = jobs.shift();
   if (!job) return maybeDone();
+  if (job.mark) { appendMachine('[' + job.mark + ']', '\n\n'); outstanding--; return pump(); }
   busy = true; refreshStatus();
   const n = ++segN, sec = job.a.length / 16000;
   try { await ensureModel(); } catch (e) { return fail(e); }
@@ -1035,52 +1306,289 @@ async function pump(){
     logDiag('#' + n + ' · ' + sec.toFixed(1) + ' s de audio · ERROR');
   } else {
     const words = nWords(c), low = sec >= 10 && words / sec < 0.8;
-    if (c) { gotText = true; appendMachine(applyDict(c, D)); }
+    if (c) { gotText = true; appendMachine(liveAnon(applyDict(c, D))); }
     if (low) warnParts++;
     logDiag('#' + n + ' · ' + sec.toFixed(1) + ' s de audio · ' + (ms / 1000).toFixed(1) + ' s procesando (' + where + ') · ' + words + ' palabras' + (low ? ' ⚠ poco texto para la duración' : (!c ? ' (sin texto)' : '')));
   }
-  busy = false; outstanding--; doneSec += job.sec || 0; if (!err && ms) { procMs += ms; procSec += sec; } refreshStatus(); pump();
+  busy = false; outstanding--; doneSec += job.sec || 0; if (job.pos) feed.done = job.pos; if (!err && ms) { procMs += ms; procSec += sec; } refreshStatus(); pump();
 }
 function onSegment(blocks, rate){
   if (dead) return;
   outstanding++;
-  const secs = blocks.length * 4096 / rate; totalSec += secs;
-  chain = chain.then(() => toMono16k(blocks, rate)).then(a => { if (!dead) { jobs.push({a, sec: secs}); pump(); } }).catch(e => { failedParts++; outstanding--; doneSec += secs; appendMachine('[⚠ falta una parte del audio: no se pudo preparar]'); logDiag('Parte sin preparar: ' + (e.message || e)); pump(); });
+  const secs = blocks.length * 4096 / rate, pos = feed.pos; totalSec += secs;
+  chain = chain.then(() => toMono16k(blocks, rate)).then(a => { if (!dead) { jobs.push({a, sec: secs, pos}); pump(); } }).catch(e => { failedParts++; outstanding--; doneSec += secs; appendMachine('[⚠ falta una parte del audio: no se pudo preparar]'); logDiag('Parte sin preparar: ' + (e.message || e)); pump(); });
 }
 async function startWhisper(){
-  dead = false; jobs = []; busy = false; outstanding = 0; gotText = false; lastMs = 0; modelErr = ''; chain = Promise.resolve(); failedParts = 0; warnParts = 0; segN = 0; diagLines = []; totalSec = 0; doneSec = 0; procMs = 0; procSec = 0; $('diag').textContent = '';
-  cap = await startCapture(b => { level(b); if (seg) seg.push(b); });
+  resetPipeline();
+  cap = await startCapture(b => { if (paused) return; level(b); if (seg) seg.push(b); });
   const rate = cap.rate;
   logDiag('Modelo ' + $('model').value.replace('Xenova/', '') + ' · aceleración ' + $('accel').value + ' · micrófono ' + $('mic').value + ' · ' + rate + ' Hz');
   seg = makeSegmenter(rate, blocks => onSegment(blocks, rate));
-  t0 = Date.now(); lockWake(); lockUI(true); prepareNew(); $('lv').style.display = 'block';
+  startAudioSave(cap.stream); lockWake(); lockUI(true); prepareNew(); $('lv').style.display = 'block';
   ensureModel().catch(() => {}); // carga el modelo mientras hablás
   timer = setInterval(refreshStatus, 500); refreshStatus();
 }
 function stopWhisper(){
   if (cap) { stopCapture(cap); cap = null; }
   if (seg) { seg.flush(); seg = null; }
-  logDiag('Fin de la grabación a los ' + Math.floor((Date.now() - t0) / 1000) + ' s · partes pendientes: ' + outstanding);
+  if (mr && mr.state !== 'inactive') { try { mr.stop(); } catch (e) {} }
+  logDiag('Fin de la grabación a los ' + Math.floor(elapsedMs() / 1000) + ' s · partes pendientes: ' + outstanding);
   unlockWake();
   if (outstanding === 0 && !busy) maybeDone();
   else { $('rec').disabled = true; refreshStatus(); }
 }
 
-function stopUI(){ $('lv').style.display = 'none'; $('lvTxt').textContent = ''; recording = false; $('rec').classList.remove('on'); $('rec').textContent = 'Grabar'; }
+function resetPipeline(){
+  dead = false; jobs = []; busy = false; outstanding = 0; gotText = false; lastMs = 0; modelErr = ''; chain = Promise.resolve(); failedParts = 0; warnParts = 0; segN = 0; diagLines = []; totalSec = 0; doneSec = 0; procMs = 0; procSec = 0; $('diag').textContent = '';
+  feed = {pos: 0, len: 0, done: 0};
+}
+
+/* ---------- Reloj, pausa y marcas ---------- */
+function elapsedMs(){ return tAcc + (tRun ? Date.now() - tRun : 0); }
+function fmtClock(ms){
+  const s = Math.max(0, Math.floor(ms / 1000)), h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = s % 60, p = n => String(n).padStart(2, '0');
+  return h ? h + ':' + p(m) + ':' + p(x) : p(m) + ':' + p(x);
+}
+function endClock(){ if (tRun) { tAcc += Date.now() - tRun; tRun = 0; } }
+function beginClock(){ tAcc = 0; tRun = Date.now(); paused = false; clearInterval(clockT); clockT = setInterval(updClock, 250); updClock(); }
+function refreshTitle(){
+  const base = 'Notas por voz';
+  let p = '';
+  if (recording) p = (paused ? '⏸ ' : '● ') + fmtClock(elapsedMs());
+  else if (busy || outstanding > 0 || feeding) p = '⏳ Transcribiendo';
+  document.title = p ? p + ' · ' + base : base;
+}
+function updClock(){
+  const c = $('clock'); c.textContent = fmtClock(elapsedMs()); c.classList.toggle('on', recording && !paused);
+  refreshTitle();
+}
+function setCtl(on){
+  $('pause').disabled = !on; $('mark').disabled = !on;
+  if (!on) { $('pause').textContent = 'Pausar'; $('pause').classList.remove('p'); $('rec').classList.remove('paused'); }
+  $('keepOn').style.display = on && recEng === 'whisper' && matchMedia('(pointer:coarse)').matches ? '' : 'none';
+}
+function setPaused(p){
+  if (!recording || p === paused) return;
+  paused = p;
+  if (p) endClock(); else tRun = Date.now();
+  if (recEng === 'whisper') {
+    if (p) { if (seg) seg.flush(); $('lvI').style.width = '0'; $('lvTxt').textContent = ''; } // lo grabado hasta acá se transcribe mientras estás en pausa
+    if (mr && mr.state !== 'inactive') { try { p ? mr.pause() : mr.resume(); } catch (e) {} }
+  } else if (p) { try { rec.stop(); } catch (e) {} $('interim').textContent = ''; setStatus('Grabación en pausa'); }
+  else setTimeout(() => { if (recording && !paused) startNative(); }, 250);
+  $('pause').textContent = p ? 'Reanudar' : 'Pausar'; $('pause').classList.toggle('p', p); $('rec').classList.toggle('paused', p);
+  updClock(); if (recEng === 'whisper') { refreshStatus(); updProgress(); }
+}
+/* Marca de tiempo: se corta el audio en este punto y la marca entra en el texto en su lugar exacto */
+function addMark(){
+  if (!recording) return;
+  const label = fmtClock(elapsedMs());
+  if (recEng === 'native') appendMachine('[' + label + ']', '\n\n');
+  else {
+    if (seg) seg.flush();
+    outstanding++;
+    chain = chain.then(() => { if (dead) outstanding--; else { jobs.push({mark: label}); pump(); } }).catch(() => {});
+  }
+  const b = $('mark'); b.textContent = 'Marcado ✓'; clearTimeout(markT); markT = setTimeout(() => b.textContent = 'Marcar', 1200);
+}
+$('pause').onclick = () => setPaused(!paused);
+$('mark').onclick = addMark;
+document.addEventListener('keydown', e => {
+  if (!recording || e.ctrlKey || e.metaKey || e.altKey) return;
+  const t = e.target; if (t && ((t.matches && t.matches('input,textarea,select')) || t.isContentEditable)) return;
+  if (e.key === 'p' || e.key === 'P') { e.preventDefault(); setPaused(!paused); }
+  else if (e.key === 'm' || e.key === 'M') { e.preventDefault(); addMark(); }
+});
+window.addEventListener('beforeunload', e => { if (recording || busy || outstanding > 0 || feeding) { e.preventDefault(); e.returnValue = ''; } });
+
+/* ---------- Audio guardado (solo en este dispositivo) ---------- */
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+let dbP = null;
+function getDb(){
+  if (dbP) return dbP;
+  const p = dbP = new Promise((res, rej) => {
+    if (!window.indexedDB) return rej(new Error('este navegador no puede guardar audio'));
+    const r = indexedDB.open('notasvoz-audio', 1);
+    r.onupgradeneeded = () => { const d = r.result; d.createObjectStore('chunks', {keyPath: 'k'}); d.createObjectStore('meta', {keyPath: 'id'}); };
+    r.onsuccess = () => res(r.result);
+    r.onerror = () => rej(r.error || new Error('no se pudo abrir el almacenamiento'));
+  });
+  p.catch(() => { if (dbP === p) dbP = null; });
+  return p;
+}
+function idbDo(stores, mode, fn){
+  return getDb().then(db => new Promise((res, rej) => {
+    const t = db.transaction(stores, mode), r = fn(t);
+    t.oncomplete = () => res(r && 'result' in r ? r.result : undefined);
+    t.onerror = t.onabort = () => rej(t.error || new Error('operación cancelada'));
+  }));
+}
+const audioPutChunk = (sid, n, b) => idbDo(['chunks'], 'readwrite', t => t.objectStore('chunks').put({k: sid + ':' + String(n).padStart(6, '0'), b}));
+const audioPutMeta = m => idbDo(['meta'], 'readwrite', t => t.objectStore('meta').put(m));
+const audioGetMeta = () => idbDo(['meta'], 'readonly', t => t.objectStore('meta').get('last'));
+const audioClear = () => idbDo(['chunks', 'meta'], 'readwrite', t => { t.objectStore('chunks').clear(); return t.objectStore('meta').clear(); });
+async function audioGetBlob(m){
+  const recs = await idbDo(['chunks'], 'readonly', t => t.objectStore('chunks').getAll(IDBKeyRange.bound(m.sid + ':', m.sid + ':￿')));
+  return new Blob(recs.map(r => r.b), {type: m.mime || 'audio/webm'});
+}
+const mb = b => (b / 1048576).toFixed(b < 10485760 ? 1 : 0).replace('.', ',') + ' MB';
+const audioExt = mime => /mp4/.test(mime || '') ? 'm4a' : /ogg/.test(mime || '') ? 'ogg' : 'webm';
+const audioName = ext => fname('x').replace(/\.x$/, '') + '_audio.' + ext;
+function audioErr(e){
+  if (audioWarned) return; audioWarned = true;
+  flash('No se pudo guardar el audio en este navegador (' + ((e && e.message) || e) + '). La transcripción sigue igual.');
+  logDiag('Audio: ' + ((e && e.message) || e));
+}
+/* Antes de grabar: si hay un audio anterior sin descargar, avisa; deja el lugar libre */
+async function audioSlotOk(){
+  try {
+    const m = await audioGetMeta();
+    if (m && !m.downloaded && !confirm('Hay un audio guardado de una grabación anterior que todavía no descargaste. Si seguís, se va a reemplazar. ¿Continuar?')) return 'cancel';
+    if (m) await audioClear();
+    $('audioBox').style.display = 'none';
+    return 'ok';
+  } catch (e) { return 'off'; }
+}
+function startAudioSave(stream){
+  mr = null;
+  if (!$('saveAudio').checked) return;
+  if (!audioOk || !window.MediaRecorder) { flash('No se pudo preparar el guardado del audio: se graba igual, sin guardarlo.'); logDiag('Audio: no se guarda (no disponible).'); return; }
+  const mime = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg;codecs=opus'].find(t => MediaRecorder.isTypeSupported(t));
+  try { mr = new MediaRecorder(stream, Object.assign({audioBitsPerSecond: 32000}, mime ? {mimeType: mime} : {})); }
+  catch (e) { mr = null; flash('Este navegador no puede guardar el audio.'); logDiag('Audio: ' + (e.message || e)); return; }
+  audioMime = (mr.mimeType || mime || 'audio/webm').split(';')[0];
+  audioSid = Date.now().toString(36); audioN = 0; audioBytes = 0; audioTs = Date.now(); audioQ = Promise.resolve(); audioWarned = false;
+  const sid = audioSid, mimeT = audioMime, ts = audioTs;
+  mr.ondataavailable = e => {
+    if (!e.data || !e.data.size) return;
+    const n = audioN++; audioBytes += e.data.size;
+    const meta = {id: 'last', sid, mime: mimeT, ts, ms: elapsedMs(), bytes: audioBytes, complete: false, downloaded: false};
+    audioQ = audioQ.then(() => audioPutChunk(sid, n, e.data)).then(() => audioPutMeta(meta)).catch(audioErr);
+  };
+  mr.onstop = () => {
+    const meta = {id: 'last', sid, mime: mimeT, ts, ms: elapsedMs(), bytes: audioBytes, complete: true, downloaded: false};
+    audioQ = audioQ.then(() => audioPutMeta(meta)).then(refreshAudioBox).catch(audioErr);
+  };
+  try { mr.start(10000); logDiag('Audio: se guarda en este dispositivo (' + audioMime + ')'); }
+  catch (e) { mr = null; flash('Este navegador no puede guardar el audio.'); logDiag('Audio: ' + (e.message || e)); }
+}
+async function refreshAudioBox(){
+  const box = $('audioBox'); let m = null;
+  try { m = await audioGetMeta(); } catch (e) {}
+  if (!m) { box.style.display = 'none'; return; }
+  $('audioInfo').textContent = (m.complete ? '' : 'Quedó una grabación que no llegó a cerrarse (se cortó); se guardó lo grabado hasta ahí. ') + fmtClock(m.ms) + ' · ' + mb(m.bytes) + ' · ' + fmt(m.ts) + (m.downloaded ? ' · ya descargado' : '');
+  $('aDownSub').textContent = 'recomendado · .' + audioExt(m.mime);
+  box.style.display = '';
+}
+const audioBtns = on => ['aDown', 'aMp3', 'aTx', 'aDel'].forEach(id => $(id).disabled = on);
+const audioBusy = () => recording || busy || outstanding > 0 || feeding;
+const audioMsg = t => $('audioMsg').textContent = t;
+$('aDown').onclick = async () => {
+  audioBtns(true);
+  try {
+    const m = await audioGetMeta(); if (!m) return;
+    download(new File([await audioGetBlob(m)], audioName(audioExt(m.mime)), {type: m.mime}));
+    m.downloaded = true; await audioPutMeta(m);
+    audioMsg('Descargado. Cuando ya no lo necesites, borralo del celular y de acá con «Borrar audio».');
+  } catch (e) { audioMsg('No se pudo descargar el audio: ' + (e.message || e)); }
+  finally { audioBtns(false); refreshAudioBox(); }
+};
+$('aDel').onclick = async () => {
+  let m = null; try { m = await audioGetMeta(); } catch (e) {}
+  if (!m) return refreshAudioBox();
+  if (!confirm((m.downloaded ? '' : 'Todavía no lo descargaste. ') + '¿Borrar el audio guardado en este dispositivo? No se puede deshacer.')) return;
+  try { await audioClear(); audioMsg(''); } catch (e) { audioMsg('No se pudo borrar: ' + (e.message || e)); }
+  refreshAudioBox();
+};
+$('aTx').onclick = () => transcribeSaved();
+async function decodePcm(blob, rate){
+  const buf = await blob.arrayBuffer();
+  const ctx = new OfflineAudioContext(1, 1, rate);
+  const ab = await new Promise((res, rej) => ctx.decodeAudioData(buf, res, rej));
+  return ab.getChannelData(0);
+}
+let lameP = null;
+function loadLame(){
+  if (window.lamejs) return Promise.resolve();
+  if (lameP) return lameP;
+  return lameP = new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js';
+    s.onload = () => window.lamejs ? res() : (lameP = null, rej(new Error('no se cargó el conversor')));
+    s.onerror = () => { lameP = null; rej(new Error('hace falta internet para cargar el conversor')); };
+    document.head.append(s);
+  });
+}
+$('aMp3').onclick = async () => {
+  if (audioBusy()) return audioMsg('Esperá a que termine la grabación y la transcripción.');
+  audioBtns(true); lockWake();
+  try {
+    const m = await audioGetMeta(); if (!m) return;
+    audioMsg('Cargando el conversor…'); await loadLame();
+    audioMsg('Leyendo el audio…'); const pcm = await decodePcm(await audioGetBlob(m), 16000);
+    const enc = new lamejs.Mp3Encoder(1, 16000, 64), out = [], N = 1152 * 8;
+    for (let i = 0, k = 0; i < pcm.length; i += N, k++) {
+      const part = pcm.subarray(i, i + N), s = new Int16Array(part.length);
+      for (let j = 0; j < part.length; j++) { const v = Math.max(-1, Math.min(1, part[j])); s[j] = v < 0 ? v * 32768 : v * 32767; }
+      const b = enc.encodeBuffer(s); if (b.length) out.push(b);
+      if (k % 25 === 0) { audioMsg('Convirtiendo a MP3… ' + Math.round(i / pcm.length * 100) + '% (dejá la pantalla encendida)'); await sleep(0); }
+    }
+    const f = enc.flush(); if (f.length) out.push(f);
+    download(new File(out, audioName('mp3'), {type: 'audio/mpeg'}));
+    audioMsg('Listo: MP3 descargado (' + mb(out.reduce((a, b) => a + b.length, 0)) + ').');
+  } catch (e) { audioMsg('No se pudo convertir a MP3: ' + (e.message || e) + '. Probá con «Descargar audio».'); }
+  finally { audioBtns(false); unlockWake(); }
+};
+/* Vuelve a transcribir el audio guardado (por ejemplo, si se cortó la grabación) */
+async function transcribeSaved(){
+  if (audioBusy()) return audioMsg('Esperá a que termine lo que se está haciendo.');
+  let m = null; try { m = await audioGetMeta(); } catch (e) {}
+  if (!m) return refreshAudioBox();
+  audioMsg(''); feeding = true; lockUI(true); $('rec').disabled = true; recEng = 'whisper'; setStatus('Leyendo el audio guardado…');
+  let pcm;
+  try { pcm = await decodePcm(await audioGetBlob(m), 16000); }
+  catch (e) { feeding = false; lockUI(false); $('rec').disabled = false; setStatus('No se pudo leer el audio guardado (' + (e.message || e) + '). Descargalo y probá abrirlo en otro reproductor.'); return; }
+  resetPipeline(); feed.len = pcm.length; prepareNew(); lockWake();
+  const rate = 16000, sg = makeSegmenter(rate, blocks => onSegment(blocks, rate));
+  logDiag('Transcribiendo el audio guardado · ' + fmtClock(m.ms) + ' · modelo ' + $('model').value.replace('Xenova/', ''));
+  ensureModel().catch(() => {});
+  timer = setInterval(refreshStatus, 500); refreshStatus();
+  for (let i = 0; i < pcm.length && !dead; i += 4096) {
+    feed.pos = i;
+    const b = new Float32Array(4096); b.set(pcm.subarray(i, i + 4096));
+    sg.push(b);
+    while (outstanding >= 3 && !dead) await sleep(250);
+  }
+  feed.pos = pcm.length; sg.flush(); feeding = false; unlockWake();
+  if (!busy && outstanding === 0) maybeDone();
+}
+
+function stopUI(){
+  recording = false; endClock(); paused = false; clearInterval(clockT); clockT = null;
+  $('lv').style.display = 'none'; $('lvTxt').textContent = ''; $('rec').classList.remove('on'); $('rec').textContent = 'Grabar';
+  setCtl(false); updClock();
+}
 $('rec').onclick = async () => {
   if (!recording) {
     if (!window.isSecureContext || !navigator.mediaDevices) { setStatus('El navegador no deja usar el micrófono con la página abierta de esta forma (' + location.protocol + '). Abrila desde una dirección que empiece con https.'); return; }
-    recEng = eng(); $('rec').disabled = true;
+    if (feeding || busy || outstanding > 0) { setStatus('Todavía se está transcribiendo: esperá a que termine para grabar de nuevo.'); return; }
+    recEng = eng(); $('rec').disabled = true; audioOk = false;
+    if (recEng === 'whisper' && $('saveAudio').checked) {
+      const r = await audioSlotOk();
+      if (r === 'cancel') { $('rec').disabled = false; return; }
+      audioOk = r === 'ok';
+    }
     try {
       recording = true;
       if (recEng === 'native') { startNative(); prepareNew(); } else await startWhisper();
-      $('rec').classList.add('on'); $('rec').textContent = 'Detener';
+      $('rec').classList.add('on'); $('rec').textContent = 'Detener'; beginClock(); setCtl(true);
     } catch (e) {
       stopUI(); lockUI(false); clearInterval(timer); timer = null;
       setStatus('No se pudo usar el micrófono: ' + (e.message || e));
     }
     $('rec').disabled = false;
   } else {
+    if (elapsedMs() > 60000 && !confirm('¿Detener la grabación? Lleva ' + fmtClock(elapsedMs()) + '.')) return;
     recording = false; stopUI();
     if (recEng === 'native') { try { rec.stop(); } catch (e) {} setStatus('Detenido.'); }
     else stopWhisper();
@@ -1092,15 +1600,19 @@ const hasOpt = (sel, v) => [...sel.options].some(o => o.value === v);
 function loadCfg(){
   try {
     const c = JSON.parse(localStorage.getItem(CKEY) || '{}');
+    if (typeof c.liveAnon === 'boolean') $('liveAnon').checked = c.liveAnon;
+    if (typeof c.pVolatile === 'boolean') $('pVolatile').checked = c.pVolatile;
     if (c.model && hasOpt($('model'), c.model)) $('model').value = c.model;
+    else if (!c.model && matchMedia('(pointer:coarse)').matches) $('model').value = 'Xenova/whisper-base'; // en celulares, la opción rápida por defecto
     if (c.accel && hasOpt($('accel'), c.accel)) $('accel').value = c.accel;
     if (c.mic && hasOpt($('mic'), c.mic)) $('mic').value = c.mic;
     if (c.eng) { const r = document.querySelector('input[name=eng][value=' + c.eng + ']'); if (r && !r.disabled) r.checked = true; }
     if (typeof c.replace === 'boolean') $('replace').checked = c.replace;
+    if (typeof c.saveAudio === 'boolean') $('saveAudio').checked = c.saveAudio;
   } catch (e) {}
 }
-const saveCfg = () => { try { localStorage.setItem(CKEY, JSON.stringify({model:$('model').value, accel:$('accel').value, mic:$('mic').value, eng:eng(), replace:$('replace').checked})); } catch (e) {} };
-['model', 'accel', 'mic', 'replace'].forEach(id => $(id).addEventListener('change', saveCfg));
+const saveCfg = () => { try { localStorage.setItem(CKEY, JSON.stringify({model:$('model').value, accel:$('accel').value, mic:$('mic').value, eng:eng(), replace:$('replace').checked, saveAudio:$('saveAudio').checked, liveAnon:$('liveAnon').checked, pVolatile:$('pVolatile').checked})); } catch (e) {} };
+['model', 'accel', 'mic', 'replace', 'saveAudio', 'liveAnon', 'pVolatile'].forEach(id => $(id).addEventListener('change', saveCfg));
 document.querySelectorAll('input[name=eng]').forEach(r => r.addEventListener('change', () => { setStatus(''); saveCfg(); }));
 
 /* ---------- Borrador autoguardado: sobrevive a recargas y cierres ---------- */
@@ -1133,7 +1645,7 @@ function updWC(){
 }
 $('text').addEventListener('input', updWC);
 setInterval(updWC, 300);
-loadCfg(); loadDict(); renderList(); restoreDraft(); updWC();
+loadCfg(); loadDict(); loadPeople(); renderList(); restoreDraft(); updWC(); refreshAudioBox();
 </script>
 </body>
 </html>
