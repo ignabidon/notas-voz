@@ -26,7 +26,8 @@ test('IDs únicos y referencias existentes', () => {
 
 test('controles de voz visibles y sincronizados', () => {
   for (const id of ['rec','pause','save','studioDockNotes','studioDockCapture','studioDockPause','studioDockStop','studioAnonAction']) assert.ok(ids.includes(id), 'falta #'+id);
-  assert.ok(html.includes("document.getElementById('studioSettingsLink')"));
+  assert.match(html, /id="studioSettingsLink" data-delta-view="ajustes"/);
+  assert.match(html, /if \(view==='ajustes'\) document\.getElementById\('ajustes'\)\.open=true;/);
   assert.ok(html.includes("$('studioDockStop').addEventListener('click',()=>$('rec').click())"));
   assert.ok(html.includes("$('studioDockPause').addEventListener('click',()=>$('pause').click())"));
 });
