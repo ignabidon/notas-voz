@@ -608,7 +608,7 @@ test('Delta 11: Compartir texto no exige archivo Word ni oculta errores', async 
   assert.match(match[0], /navigator\.share\(payload\)/);
   assert.doesNotMatch(match[0], /makeDoc\(\)|navigator\.canShare/);
   assert.match(match[0], /e\.name === 'AbortError'/);
-  assert.match(match[0], /No se pudo compartir/);
+  assert.match(match[0], /Brave no pudo abrir Compartir/);
   assert.match(match[0], /navigator\.clipboard\.writeText\(text\)/);
   assert.match(html, /\$\('share'\)\.onclick = shareNote/);
   assert.equal((html.match(/id="share"/g) || []).length, 1);
