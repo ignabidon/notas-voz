@@ -1,5 +1,12 @@
 # Registro de cambios — Grabador de voz Delta
 
+## Bóveda opcional · diseño v1 — 15/11/2026
+
+- Base: `63bc33bd99d75e6b6bf681c6cc23cc6f4bf9e86f`. Solo documentación en `DISENO-BOVEDA.md` y enlace README; `index.html` y pruebas sin cambios.
+- El usuario prefiere protección selectiva y condiciona implementación a no perjudicar fluidez. Se propone Proteger separado de Anonimizar y elegir protección antes de capturar para evitar borradores en claro.
+- Se documentan formato criptográfico, recuperación, destinos mixtos, deshacer, ámbitos privados de personas/diccionario, audio excluido, exportaciones, transferencias reanudables, pestañas y puertas de rendimiento.
+- Sin migración, claves nuevas ni tratamiento de notas reales. Suite de regresión de la app: 79/79 aprobadas; no valida cifrado aún inexistente. Rendimiento y Motorola pendientes. Diseño para revisión en rama `docs/optional-vault-design`; sin publicar una función nueva.
+
 ## DictaNota · identidad visible — 15/11/2026
 
 - Nombre elegido por el usuario: **DictaNota**, en singular. Reemplaza «Grabador de voz Delta» en encabezado, título inicial y dinámico de la pestaña, presentación de Ajustes y nombre accesible de navegación.
