@@ -7,16 +7,9 @@ import android.webkit.PermissionRequest
 import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import android.webkit.WebSettings
 import android.content.pm.PackageManager
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
-import android.webkit.WebResourceError
-import android.net.Uri
-import android.webkit.WebViewAssetLoader
-import android.os.Build
-import android.content.Intent
-import android.provider.Settings
 
 class MainActivity : Activity() {
     private lateinit var web: WebView
