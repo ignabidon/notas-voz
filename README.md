@@ -14,6 +14,24 @@ Esta es la **única versión web activa** del repositorio. La etapa vigente es *
 - Edición de texto, anonimización posterior (revisar siempre), deshacer, códigos o alias de personas.
 - Borrador, notas y audio guardados en el navegador; el botón Guardar solicita además un archivo TXT descargable; exportación y diagnósticos técnicos.
 
+## Corrección de bloqueo en Firefox (15/11/2026)
+
+Whisper trabaja localmente con muestras PCM mono a 16 kHz enviadas a un Worker. No se sube el audio a una API de transcripción. Solo se descargan librerías y modelos. MediaRecorder guarda, por separado, el archivo nativo (WebM/Opus u Ogg/Opus según soporte); sus fragmentos se concatenan en orden antes de decodificar el archivo completo para retranscribir.
+
+En Firefox se usa CPU y, sin aislamiento entre orígenes, un hilo WASM; Android conserva su selección de aceleración. La carga del modelo y cada petición de transcripción tienen un límite absoluto de **5 minutos por petición**. Activar AudioContext tiene 10 segundos y preparar AudioWorklet, 15. La preparación PCM tiene 15 segundos; leer el archivo, 15 segundos; decodificarlo, 30 segundos. Un plazo agotado termina el Worker y habilita un nuevo intento. Una descarga muy lenta o Small en un equipo lento pueden superar esos límites: probá Base/Tiny. Los temporizadores pueden demorarse si el navegador suspende la pestaña o el sistema.
+
+Al terminar, fallar o cancelar aparece **Reintentar transcripción del audio en memoria**, si quedó una copia completa de las partes con voz. Pide confirmación y reemplaza el editor; guardá antes cualquier corrección. La copia es temporal, se pierde al recargar o comenzar otra grabación, y se limita a 32 MB para no aumentar sin límite la memoria en Android. Si se supera el límite, se descarta toda esa copia temporal y se informa en los detalles técnicos; nunca se ofrece como si fuese el audio completo. Para grabaciones largas activá **Conservar también el audio**: podés usar **Transcribir este audio** sobre el archivo guardado, incluso después de volver a abrir la página. No se agregaron nuevos registros de consola con audio o texto.
+
+### Cómo verificar en Firefox y Android
+
+1. Abrí https://ignabidon.github.io/notas-voz/ y recargá para traer el último código. No borres los datos del sitio. En Detalles técnicos debe aparecer «corrección Firefox» al grabar.
+2. Elegí Whisper Base y activá Conservar también el audio. Con internet disponible, grabá 20–30 segundos de una frase ficticia, pausá, reanudá y detené. Comprobá que aparece el texto y desaparece el aviso de transcripción.
+3. Descargá y reproducí el audio; luego usá Transcribir este audio. Comprobá que contiene también el final de la frase. En Firefox los detalles deben indicar modo compatible con procesador.
+4. Guardá el texto y probá el reintento en memoria: debe completar sin volver a usar el micrófono. Para comprobar recuperación después de una interrupción, iniciá otra transcripción, cancelala y reintentá. Si el modelo ya está en caché, cortar internet puede no causar ningún error.
+5. Repetí los pasos en Brave del Motorola, incluyendo cambiar entre Grabar / Texto / Ajustes mientras graba. Anotá versión del navegador, modelo, duración y etapa del error, sin copiar contenido privado. Si falla, copiá los detalles técnicos.
+
+**Estado de validación:** ver CAMBIOS.md. La prueba física en Firefox de Windows del usuario y en Motorola con este cambio sigue pendiente; no se confirma compatibilidad de esos dispositivos a partir de pruebas simuladas o de Linux.
+
 ## Organización
 
 | Ruta | Para qué sirve |

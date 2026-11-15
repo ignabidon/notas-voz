@@ -382,6 +382,7 @@ body.delta-transcribing.delta-recording{padding-bottom:calc(400px + env(safe-are
     <div id="status" role="status" aria-live="polite"></div>
     <div id="captureWarning" class="warn" role="status" aria-live="polite" hidden></div>
     <div id="processingTimer" class="processing-timer" hidden>Procesando · <span id="processClock">00:00</span></div>
+    <button id="retryTranscription" type="button" hidden>Reintentar transcripción del audio en memoria</button>
     <button id="cancelProcessing" type="button" class="cancel-processing danger" hidden>Cancelar procesamiento</button>
     <p id="cancelNote" class="warn cancel-help" hidden>Se conservará el texto que ya apareció, pero la transcripción quedará incompleta.</p>
     <div id="interim"></div>
@@ -1584,7 +1585,12 @@ function workerBody(){
   const note = t => say({type:'note', text:t});
   async function getLib(){
     stage = 'descarga de la librería';
-    if (!lib) { lib = await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1'); lib.env.allowLocalModels = false; }
+    if (!lib) { lib = await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1'); lib.env.allowLocalModels = false;
+      // Firefox: evitar hilos WASM sin aislamiento y WebGPU experimental.
+      if (/Firefox\//.test(globalThis.navigator?.userAgent || '')) {
+        if (!globalThis.crossOriginIsolated) lib.env.backends.onnx.wasm.numThreads = 1;
+        lib.env.backends.onnx.wasm.proxy = false;
+      } }
     return lib;
   }
   async function build(m, gpu){
@@ -1598,7 +1604,8 @@ function workerBody(){
     const k = m + '|' + accel;
     if (asr && key === k) return;
     asr = null; be = 'CPU'; model = m;
-    if (accel === 'cpu') note('Placa de video: no se intenta porque elegiste solo procesador.');
+    if (/Firefox\//.test(globalThis.navigator?.userAgent || '')) { accel = 'cpu'; note('Firefox: modo compatible con procesador, sin WebGPU.'); }
+    if (accel === 'cpu') note('Placa de video: se usa solo procesador por configuración o compatibilidad.');
     else {
       try {
         const nav = globalThis.navigator;
@@ -1626,6 +1633,7 @@ function workerBody(){
         const opt = {language:'spanish', task:'transcribe'};
         let r;
         stage = 'transcripción';
+        if (!(m.audio instanceof Float32Array) || !m.audio.length) throw new Error('Audio PCM vacío o inválido');
         try { r = await asr(m.audio, opt); }
         catch (e) {
           if (be !== 'GPU') throw e;
@@ -1644,28 +1652,50 @@ function onMsg(m){
   if (m.type === 'progress') { $('barI').style.width = m.progress.toFixed(0) + '%'; return; }
   if (m.type === 'note') { logDiag(m.text); return; }
   const w = waiters.get(m.id); if (!w) return;
-  waiters.delete(m.id);
-  if (m.type === 'error') w.rej(Object.assign(new Error(m.message), {stage: m.stage || ''})); else w.res(m);
+  if (!['ready', 'result', 'error'].includes(m.type)) return;
+  if ((m.type === 'result' && typeof m.text !== 'string') || (m.type === 'ready' && !m.backend)) { resetEngine(engineError('respuesta inválida')); return; }
+  waiters.delete(m.id); clearTimeout(w.timer);
+  if (m.type === 'error') w.rej(engineError(m.stage || 'transcripción')); else w.res(m);
 }
-function failAll(err){ const a = [...waiters.values()]; waiters.clear(); a.forEach(w => w.rej(err)); }
+function failAll(err){ const a = [...waiters.values()]; waiters.clear(); a.forEach(w => { clearTimeout(w.timer); w.rej(err); }); }
+/* Cada petición tiene plazo absoluto; el Worker terminado no puede responder a otra sesión. */
+function engineError(stage, timeout = false){
+  return Object.assign(new Error(timeout
+    ? 'Se agotó el tiempo de ' + stage + '. Reintentá con Base o Tiny y comprobá la conexión para descargar el modelo.'
+    : 'El motor de transcripción se interrumpió. Podés reintentar con el audio disponible.'), {stage});
+}
+function resetEngine(err){
+  if (engine) engine.terminate();
+  engine = null; ready = null; readyKey = ''; modelLoading = false;
+  $('bar').style.display = 'none';
+  failAll(err);
+}
 function makeEngine(){
   const src = '(' + workerBody.toString() + ')()';
-  if (!noWorker) {
-    try {
-      const w = new Worker(URL.createObjectURL(new Blob([src], {type:'text/javascript'})), {type:'module'});
-      w.onmessage = e => onMsg(e.data);
-      w.onerror = e => { if (e.preventDefault) e.preventDefault(); logDiag('El motor en segundo plano se cerró con un error' + (e.message ? ': ' + e.message : '') + '. La próxima vez correrá en la página principal.'); noWorker = true; engine = null; ready = null; failAll(new Error('el motor en segundo plano falló' + (e.message ? ': ' + e.message : ''))); };
-      return {post: (m, t) => w.postMessage(m, t || []), terminate: () => { w.terminate(); }};
-    } catch (e) { noWorker = true; }
-  }
-  // Sin Worker: corre en la página principal (la pantalla puede trabarse mientras transcribe)
-  const shim = {postMessage: d => onMsg(d), onmessage: null};
-  new Function('self', src)(shim);
-  return {post: m => shim.onmessage({data: m}), terminate: null};
+  const url = URL.createObjectURL(new Blob([src], {type:'text/javascript'}));
+  let w;
+  try { w = new Worker(url, {type:'module'}); }
+  finally { URL.revokeObjectURL(url); }
+  w.onmessage = e => onMsg(e.data);
+  w.onerror = e => { e.preventDefault?.(); resetEngine(engineError('motor')); };
+  w.onmessageerror = () => resetEngine(engineError('recepción de audio'));
+  return {post: (m, t) => w.postMessage(m, t || []), terminate: () => w.terminate()};
 }
 function call(msg, transfer){
-  if (!engine) engine = makeEngine();
-  return new Promise((res, rej) => { const id = ++seq; waiters.set(id, {res, rej}); engine.post({...msg, id}, transfer); });
+  return new Promise((res, rej) => {
+    const stage = msg.type === 'load' ? 'preparación del modelo' : 'transcripción';
+    const id = ++seq;
+    const timer = setTimeout(() => resetEngine(engineError(stage, true)), 300000);
+    waiters.set(id, {res, rej, timer});
+    try { if (!engine) engine = makeEngine(); engine.post({...msg, id}, transfer); }
+    catch (e) { resetEngine(engineError(stage)); }
+  });
+}
+function withDeadline(task, ms, stage){
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(engineError(stage, true)), ms);
+    Promise.resolve(task).then(resolve, reject).finally(() => clearTimeout(timer));
+  });
 }
 
 let backend = 'CPU', ready = null, readyKey = '', modelLoading = false, modelErr = '';
@@ -1683,15 +1713,17 @@ function ensureModel(){
 const WL = "class P extends AudioWorkletProcessor{constructor(){super();this.b=new Float32Array(4096);this.n=0}process(i){const c=i[0]&&i[0][0];if(c){for(let k=0;k<c.length;k++){this.b[this.n++]=c[k];if(this.n===4096){const o=this.b;this.port.postMessage(o,[o.buffer]);this.b=new Float32Array(4096);this.n=0}}}return true}}registerProcessor('cap',P)";
 async function startCapture(onBlock){
   const stream = await navigator.mediaDevices.getUserMedia({audio:{channelCount:1, echoCancellation: $('mic').value === 'std', noiseSuppression: $('mic').value === 'std', autoGainControl: $('mic').value !== 'raw'}});
+  let ctx;
   try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    if (ctx.resume) await ctx.resume();
+    ctx = new (window.AudioContext || window.webkitAudioContext)();
+    if (ctx.resume) await withDeadline(ctx.resume(), 10000, 'activación del audio');
     const src = ctx.createMediaStreamSource(stream);
     const mute = ctx.createGain(); mute.gain.value = 0; mute.connect(ctx.destination);
     let node;
     if (ctx.audioWorklet && window.AudioWorkletNode) {
       const url = URL.createObjectURL(new Blob([WL], {type:'text/javascript'}));
-      await ctx.audioWorklet.addModule(url); URL.revokeObjectURL(url);
+      try { await withDeadline(ctx.audioWorklet.addModule(url), 15000, 'preparación de la captura'); }
+      finally { URL.revokeObjectURL(url); }
       node = new AudioWorkletNode(ctx, 'cap', {numberOfInputs:1, numberOfOutputs:1, outputChannelCount:[1]});
       node.port.onmessage = e => onBlock(e.data);
     } else {
@@ -1700,7 +1732,7 @@ async function startCapture(onBlock){
     }
     src.connect(node); node.connect(mute);
     return {stream, ctx, node, src, rate: ctx.sampleRate};
-  } catch (e) { stream.getTracks().forEach(t => t.stop()); throw e; }
+  } catch (e) { stream.getTracks().forEach(t => t.stop()); try { ctx?.close(); } catch (x) {} throw e; }
 }
 function stopCapture(c){ try { c.src.disconnect(); c.node.disconnect(); } catch (e) {} c.stream.getTracks().forEach(t => t.stop()); try { c.ctx.close(); } catch (e) {} }
 async function toMono16k(blocks, rate){
@@ -1709,10 +1741,23 @@ async function toMono16k(blocks, rate){
   const off = new OfflineAudioContext(1, Math.max(1, Math.ceil(n * 16000 / rate)), 16000);
   const buf = off.createBuffer(1, n, rate); buf.copyToChannel(all, 0);
   const src = off.createBufferSource(); src.buffer = buf; src.connect(off.destination); src.start();
-  return new Float32Array((await off.startRendering()).getChannelData(0));
+  return new Float32Array((await withDeadline(off.startRendering(), 15000, 'preparación del audio')).getChannelData(0));
 }
 
-const BUILD = 'Delta 05 · vigilancia de grabaciones largas';
+const BUILD = 'Delta 11 · corrección Firefox · vigilancia de grabaciones largas';
+let retryAudio = [], retryBytes = 0, retryUnavailable = false;
+function clearRetryAudio(){ retryAudio = []; retryBytes = 0; retryUnavailable = false; }
+function retainRetryAudio(blocks, rate, info){
+  if (feeding || retryUnavailable) return;
+  retryBytes += blocks.reduce((n, b) => n + b.byteLength, 0);
+  if (retryBytes > 32 * 1024 * 1024) {
+    retryAudio = []; retryUnavailable = true;
+    logDiag('Reintento en memoria: límite de 32 MB. Para grabaciones largas, usá Conservar también el audio y Transcribir este audio.');
+    return;
+  }
+  retryAudio.push({blocks, rate, info});
+}
+function refreshRetry(){ $('retryTranscription').hidden = recording || busy || outstanding > 0 || feeding || !retryAudio.length; }
 const WHY = {silencio: 'pausa en el habla', limite: 'límite de ~29 s', manual: 'pausa, marca o fin'};
 let capBlocks = 0, capRate = 48000, lastMicBlockAt = 0, audioStoppedEarly = false, oddParts = 0, pauseAt = 0;
 let lvT = 0, clipUntil = 0, failedParts = 0, warnParts = 0, segN = 0, diagLines = [], totalSec = 0, doneSec = 0, procMs = 0, procSec = 0;
@@ -1850,6 +1895,7 @@ function refreshStatus(){
 function maybeDone(){
   refreshCaptureWarning();
   updProgress();
+  refreshRetry();
   if (recording || busy || outstanding > 0 || feeding) return;
   refreshAudioBox(); // habilita Guardar audio cuando terminaron Whisper y la captura
   clearInterval(timer); timer = null; lockUI(false); $('rec').disabled = false;
@@ -1860,9 +1906,10 @@ function maybeDone(){
   setStatus(gotText ? 'Transcripción completa. Revisá el texto antes de copiar o guardar.' : 'No se detectó voz. Probá hablar más cerca del micrófono.');
 }
 function fail(e){
-  dead = true; jobs.length = 0; outstanding = 0; busy = false;
+  dead = true; jobs.length = 0; outstanding = 0; busy = false; feeding = false;
   logDiag('Se detuvo la transcripción de esta grabación' + (e && e.stage ? ' (etapa: ' + e.stage + ')' : '') + '. El audio guardado se puede transcribir de nuevo.');
   setStatus('No se pudo transcribir: ' + (e.message || e) + '. Si es la primera vez, hace falta internet para descargar lo necesario.');
+  unlockWake();
   maybeDone();
 }
 async function pump(){
@@ -1882,7 +1929,7 @@ async function pump(){
       const r = await call({type:'run', audio: copy}, [copy.buffer]);
       if (epoch !== processingEpoch || dead) return;
       ms = Date.now() - t; lastMs = ms; backend = r.backend || backend; c = cleanText(r.text); err = ''; break;
-    } catch (e) { if (epoch !== processingEpoch || dead) return; err = e.message || String(e); logDiag('#' + n + ' intento ' + k + ' falló' + (e.stage ? ' (etapa: ' + e.stage + ')' : '') + ': ' + err); }
+    } catch (e) { if (epoch !== processingEpoch || dead) return; if (!ready) return fail(e); err = e.message || String(e); logDiag('#' + n + ' intento ' + k + ' falló' + (e.stage ? ' (etapa: ' + e.stage + ')' : '') + ': ' + err); }
   }
   if (epoch !== processingEpoch || dead) return;
   const where = backend === 'GPU' ? 'placa de video' : 'procesador';
@@ -1903,12 +1950,15 @@ async function pump(){
 }
 const skipDiag = info => logDiag('Parte descartada sin voz: ' + info.sec.toFixed(1) + ' s · volumen máx ' + info.maxRms.toFixed(3) + ' · ruido ' + info.noise.toFixed(3) + ' · corte: ' + (WHY[info.why] || info.why));
 function onSegment(blocks, rate, info){
+  retainRetryAudio(blocks, rate, info);
   if (dead) return;
   outstanding++;
+  const epoch = processingEpoch;
   const secs = blocks.length * 4096 / rate, pos = feed.pos; totalSec += secs;
-  chain = chain.then(() => toMono16k(blocks, rate)).then(a => { if (!dead) { jobs.push({a, sec: secs, pos, info}); pump(); } }).catch(e => { failedParts++; outstanding--; doneSec += secs; appendMachine('[⚠ falta una parte del audio: no se pudo preparar]'); logDiag('Parte sin preparar: ' + (e.message || e)); pump(); });
+  chain = chain.then(() => epoch === processingEpoch && !dead ? toMono16k(blocks, rate) : null).then(a => { if (!dead && epoch === processingEpoch) { jobs.push({a, sec: secs, pos, info}); pump(); } }).catch(e => { if (epoch !== processingEpoch || dead) return; failedParts++; outstanding--; doneSec += secs; appendMachine('[⚠ falta una parte del audio: no se pudo preparar]'); logDiag('Parte sin preparar: ' + (e.message || e)); pump(); });
 }
 async function startWhisper(){
+  clearRetryAudio(); refreshRetry();
   resetPipeline();
   capBlocks = 0; lastMicBlockAt = Date.now(); audioStoppedEarly = false;
   cap = await startCapture(b => { capBlocks++; lastMicBlockAt = Date.now(); if (paused) return; level(b); if (seg) seg.push(b); });
@@ -1921,9 +1971,10 @@ async function startWhisper(){
   timer = setInterval(refreshStatus, 500); refreshStatus();
 }
 function stopWhisper(){
+  // Cerrar el archivo antes de cortar las pistas: conservar el último dataavailable.
+  if (mr && mr.state !== 'inactive') { try { mr._deltaStopRequested = true; mr.stop(); } catch (e) {} }
   if (cap) { stopCapture(cap); cap = null; }
   if (seg) { seg.flush(); seg = null; }
-  if (mr && mr.state !== 'inactive') { try { mr._deltaStopRequested = true; mr.stop(); } catch (e) {} }
   logDiag('Fin de la grabación a los ' + Math.floor(elapsedMs() / 1000) + ' s · partes pendientes: ' + outstanding + ' · audio recibido del micrófono: ' + Math.round(capBlocks * 4096 / capRate) + ' s');
   unlockWake();
   if (outstanding === 0 && !busy) maybeDone();
@@ -1962,6 +2013,7 @@ function cancelProcessing(){
   setStatus('Procesamiento cancelado. El texto visible puede estar incompleto.');
   refreshTitle();
   logDiag('El usuario canceló el procesamiento pendiente.');
+  refreshRetry();
 }
 $('cancelProcessing').onclick = cancelProcessing;
 $('transcriptionDockCancel').onclick = () => $('cancelProcessing').click();
@@ -2124,7 +2176,7 @@ function startAudioSave(stream){
   const mime = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg;codecs=opus'].find(t => MediaRecorder.isTypeSupported(t));
   try { mr = new MediaRecorder(stream, Object.assign({audioBitsPerSecond: 32000}, mime ? {mimeType: mime} : {})); }
   catch (e) { mr = null; flash('Este navegador no puede guardar el audio.'); logDiag('Audio: ' + (e.message || e)); return; }
-  audioMime = (mr.mimeType || mime || 'audio/webm').split(';')[0];
+  audioMime = mr.mimeType || mime || 'audio/webm';
   audioSid = Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,7); audioN = 0; audioBytes = 0; audioTs = Date.now(); audioQ = Promise.resolve(); audioWarned = false; audioSaveFailed = false;
   const sid = audioSid, mimeT = audioMime, ts = audioTs, recorder = mr;
   recorder._deltaStopRequested = false;
@@ -2145,6 +2197,7 @@ function startAudioSave(stream){
     }).catch(audioErr);
   };
   recorder.onstop = () => {
+    logDiag('Audio: archivo cerrado · ' + audioN + ' fragmentos · ' + audioBytes + ' bytes · ' + mimeT);
     const expected = recorder._deltaStopRequested;
     if (!expected) {
       audioStoppedEarly = true;
@@ -2218,11 +2271,22 @@ $('aUndoAudio').onclick = async () => {
   } catch (e) { audioMsg('No se pudo recuperar el audio anterior: ' + (e.message || e)); }
   finally { audioBtns(false); }
 };
+$('retryTranscription').onclick = () => {
+  if (recording || busy || outstanding || feeding || !retryAudio.length) return;
+  if (!confirm('¿Reintentar el audio? Se reemplazará el texto del editor. Guardá antes cualquier corrección.')) return;
+  const parts = retryAudio;
+  resetEngine(engineError('reinicio'));
+  resetPipeline(); clearRetryAudio(); recEng = 'whisper'; doClear(true); baseline = $('text').value; resetEdit(); lockUI(true);
+  $('rec').disabled = true; $('retryTranscription').hidden = true;
+  timer = setInterval(refreshStatus, 500);
+  for (const part of parts) onSegment(part.blocks, part.rate, part.info);
+  refreshStatus();
+};
 $('aTx').onclick = () => transcribeSaved();
 async function decodePcm(blob, rate){
-  const buf = await blob.arrayBuffer();
+  const buf = await withDeadline(blob.arrayBuffer(), 15000, 'lectura del archivo');
   const ctx = new OfflineAudioContext(1, 1, rate);
-  const ab = await new Promise((res, rej) => ctx.decodeAudioData(buf, res, rej));
+  const ab = await withDeadline(new Promise((res, rej) => ctx.decodeAudioData(buf, res, rej)), 30000, 'decodificación del archivo');
   return ab.getChannelData(0);
 }
 let lameP = null;
@@ -2260,13 +2324,14 @@ $('aMp3').onclick = async () => {
 /* Vuelve a transcribir el audio guardado (por ejemplo, si se cortó la grabación) */
 async function transcribeSaved(){
   if (audioBusy()) return audioMsg('Esperá a que termine lo que se está haciendo.');
-  let m = null; try { m = await audioGetMeta(); } catch (e) {}
+  let m = null; try { m = await withDeadline(audioGetMeta(), 15000, 'lectura de la grabación'); } catch (e) { audioMsg(e.message); return; }
   if (!m) return refreshAudioBox();
+  if (!confirm('¿Transcribir el audio guardado? Guardá antes las correcciones del editor.')) return;
   audioMsg(''); feeding = true; lockUI(true); $('rec').disabled = true; recEng = 'whisper'; setStatus('Leyendo el audio guardado…');
   let pcm;
-  try { pcm = await decodePcm(await audioGetBlob(m), 16000); }
-  catch (e) { feeding = false; lockUI(false); $('rec').disabled = false; setStatus('No se pudo leer el audio guardado (' + (e.message || e) + '). Descargalo y probá abrirlo en otro reproductor.'); return; }
-  resetPipeline();
+  try { pcm = await decodePcm(await withDeadline(audioGetBlob(m), 15000, 'lectura del audio guardado'), 16000); }
+  catch (e) { feeding = false; lockUI(false); $('rec').disabled = false; setStatus('No se pudo leer el audio guardado (' + (e.message || e) + '). Descargalo y probá abrirlo en otro reproductor.'); updProgress(); refreshRetry(); return; }
+  clearRetryAudio(); resetPipeline();
   const epoch = processingEpoch;
   feed.len = pcm.length; prepareNew(); lockWake();
   const rate = 16000, sg = makeSegmenter(rate, (blocks, info) => onSegment(blocks, rate, info), {onSkip: skipDiag});
@@ -2277,7 +2342,7 @@ async function transcribeSaved(){
     feed.pos = i;
     const b = new Float32Array(4096); b.set(pcm.subarray(i, i + 4096));
     sg.push(b);
-    while (outstanding >= 3 && !dead) await sleep(250);
+    while (outstanding >= 3 && !dead && epoch === processingEpoch) await sleep(250);
   }
   if (dead || epoch !== processingEpoch) return;
   feed.pos = pcm.length; sg.flush(); feeding = false; unlockWake();
