@@ -140,6 +140,7 @@ html{scroll-padding-bottom:200px}
         <label id="lblNative"><input type="radio" name="eng" value="native">
           <span><strong>Dictado del navegador</strong><small id="nativeNote">El texto aparece en vivo, mientras hablás.</small></span></label>
       </div>
+      <div id="nativeSetup" class="row" hidden><button id="nativePrepare" type="button">Preparar dictado local en español</button></div>
 
       <label class="chk"><input type="checkbox" id="replace" checked><span><b>Empezar de cero al grabar</b><small>Podés deshacer el borrado. Si lo desactivás, lo nuevo se suma al final.</small></span></label>
       <label for="model" style="margin-top:16px">Modelo de Whisper</label>
@@ -1095,16 +1096,66 @@ function prepareNew(){
   baseline = $('text').value; resetEdit();
 }
 
-/* Dictado del navegador: solo se habilita si puede procesar localmente */
+/* Dictado del navegador: nunca permitir que envíe voz a un servicio remoto. */
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 const nativeLocal = !!(SR && 'processLocally' in SR.prototype);
-if (!nativeLocal) {
-  document.querySelector('input[value=native]').disabled = true;
-  $('lblNative').style.opacity = .55;
-  $('nativeNote').textContent = 'No disponible en este navegador: enviaría el audio a internet, así que lo bloqueé.';
+const nativeRadio = document.querySelector('input[name=eng][value=native]');
+const nativeSetup = $('nativeSetup');
+let nativeReady = false;
+function setNativeAvailability(ready, detail, canPrepare) {
+  nativeReady = ready;
+  nativeRadio.disabled = !ready;
+  $('lblNative').style.opacity = ready ? '' : .55;
+  $('nativeNote').textContent = detail;
+  nativeSetup.hidden = !canPrepare;
+  if (!ready && nativeRadio.checked) document.querySelector('input[name=eng][value=whisper]').checked = true;
 }
-let rec = null;
+async function checkNativeAvailability() {
+  if (!nativeLocal) {
+    setNativeAvailability(false, 'Este navegador no ofrece dictado local verificado. Usá Whisper: no se activará el dictado en línea.', false);
+    return;
+  }
+  if (typeof SR.available !== 'function') {
+    // Navegadores antiguos pueden tener processLocally sin un método de consulta.
+    setNativeAvailability(true, 'El navegador declara procesamiento local, pero no permite comprobar si tiene español instalado. Si falla, usá Whisper.', false);
+    return;
+  }
+  setNativeAvailability(false, 'Comprobando si el navegador tiene español disponible sin conexión…', false);
+  try {
+    const state = await SR.available({langs: ['es-AR'], processLocally: true});
+    if (state === 'available') setNativeAvailability(true, 'Dictado local en español disponible. El audio no se enviará a un servicio externo.', false);
+    else if (state === 'downloadable') {
+      setNativeAvailability(false, 'Falta instalar el paquete de español para dictar sin internet. Tocá «Preparar dictado local».', typeof SR.install === 'function');
+      $('nativePrepare').textContent = 'Preparar dictado local en español';
+    } else if (state === 'downloading') {
+      setNativeAvailability(false, 'El navegador todavía está descargando español. Tocá «Volver a comprobar» más tarde.', true);
+      $('nativePrepare').textContent = 'Volver a comprobar';
+    } else setNativeAvailability(false, 'Este navegador no dispone del paquete local de español (es-AR). Seguí usando Whisper.', false);
+  } catch (e) {
+    setNativeAvailability(false, 'No se pudo comprobar el dictado local: ' + (e.message || e) + '. Usá Whisper.', false);
+  }
+}
+$('nativePrepare').onclick = async () => {
+  const b = $('nativePrepare');
+  b.disabled = true;
+  try {
+    const state = await SR.available({langs: ['es-AR'], processLocally: true});
+    if (state === 'downloadable') {
+      if (typeof SR.install !== 'function') { setStatus('Este navegador no puede instalar el paquete de español.'); return; }
+      if (!confirm('El navegador descargará el paquete de español para dictar sin enviar la voz a internet. ¿Continuar?')) return;
+      setStatus('Descargando el paquete de español dentro del navegador…');
+      const installed = await SR.install({langs: ['es-AR'], processLocally: true});
+      if (!installed) { setStatus('No se pudo instalar el paquete de español. Seguí usando Whisper.'); return; }
+    }
+    await checkNativeAvailability();
+  } catch (e) {
+    setStatus('No se pudo preparar el dictado local (' + (e.message || e) + '). Seguí usando Whisper.');
+  } finally { b.disabled = false; }
+};
+checkNativeAvailability();
+let rec = null, nativeStartedAt = 0;
 function startNative(){
+  if (!nativeReady) throw new Error('El dictado local todavía no está disponible. Revisá los ajustes o elegí Whisper.');
   rec = new SR(); rec.lang = 'es-AR'; rec.continuous = true; rec.interimResults = true; rec.processLocally = true;
   rec.onresult = e => {
     let interim = '';
@@ -1114,13 +1165,28 @@ function startNative(){
     $('interim').textContent = interim;
   };
   rec.onerror = e => {
-    if (e.error === 'language-not-supported') setStatus('Al navegador le falta el idioma español para dictar sin internet. Probá con Whisper.');
-    else if (e.error !== 'no-speech' && e.error !== 'aborted') setStatus('Error: ' + e.error);
-    if (e.error === 'language-not-supported' || e.error === 'not-allowed') stopUI();
+    if (e.error === 'aborted' && (!recording || paused)) return;
+    stopUI(); 
+    if (e.error === 'language-not-supported') setStatus('No está instalado el idioma español para dictar localmente. Revisá Ajustes o elegí Whisper.');
+    else if (e.error === 'not-allowed' || e.error === 'service-not-allowed') setStatus('El navegador no permitió el dictado. Comprobá los permisos del micrófono o usá Whisper.');
+    else if (e.error === 'no-speech') setStatus('El dictado se detuvo porque no detectó voz. Volvé a intentarlo o usá Whisper.');
+    else setStatus('El dictado del navegador se detuvo (' + (e.error || 'sin detalle') + '). Probá con Whisper.');
   };
   const me = rec;
-  rec.onend = () => { if (recording && !paused) { if (rec === me) { try { me.start(); } catch (e) {} } } else if (rec === me) $('interim').textContent = ''; };
-  rec.start(); setStatus('Escuchando… (se procesa en este dispositivo)');
+  rec.onend = () => {
+    if (rec !== me) return;
+    if (!recording || paused) { $('interim').textContent = ''; return; }
+    if (Date.now() - nativeStartedAt < 1200) {
+      stopUI();
+      setStatus('El navegador detuvo el dictado inmediatamente. Puede faltarle el paquete de español; comprobá Ajustes o usá Whisper.');
+      return;
+    }
+    try { nativeStartedAt = Date.now(); me.start(); }
+    catch (e) { stopUI(); setStatus('No se pudo reanudar el dictado del navegador. Usá Whisper.'); }
+  };
+  nativeStartedAt = Date.now();
+  rec.start();
+  setStatus('Escuchando… (dictado local en este dispositivo)');
 }
 
 /* ---------- Whisper local: motor en segundo plano (Worker) ---------- */
@@ -1290,7 +1356,7 @@ document.addEventListener('visibilitychange', () => {
 });
 function lockUI(on){
   $('model').disabled = on; $('accel').disabled = on; $('mic').disabled = on; $('saveAudio').disabled = on;
-  document.querySelectorAll('input[name=eng]').forEach(r => r.disabled = on || (r.value === 'native' && !nativeLocal));
+  document.querySelectorAll('input[name=eng]').forEach(r => r.disabled = on || (r.value === 'native' && !nativeReady));
 }
 function fmtEta(ms){
   const s = Math.max(5, Math.round(ms / 5000) * 5);
