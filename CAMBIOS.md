@@ -1,5 +1,21 @@
 # Registro de cambios — Grabador de voz Delta
 
+## Delta 08 · Tres pantallas reales con estética Android — 15 de noviembre de 2026
+
+**Alcance:** rediseño estructural y visual. Se conserva un único `index.html`, un solo motor de grabación, un solo editor, un solo almacenamiento y la misma URL pública.
+
+- **Grabar:** pantalla independiente con cronómetro central de gran tamaño, micrófono protagonista, estado de captura, marcas, audio anterior/recuperación y detalles técnicos plegados.
+- **Texto:** pantalla de lectura y edición amplia (18 px en móvil), acciones visibles de corrección y copia y herramientas secundarias plegadas. Barra inferior contextual con **Anonimizar** y **Guardar .txt**.
+- **Ajustes:** pantalla propia con módulos de calidad Whisper, audio, privacidad, diccionario y otras opciones (estas últimas plegadas). Todos los IDs y controles existentes se conservaron.
+- Navegación fija con tres pestañas **Grabar / Texto / Ajustes**. Cambiar de pantalla solo cambia qué parte del mismo DOM se ve: no detiene la grabación, no vuelve a crear instancias ni borra borradores. Los enlaces directos `#localPrivacy` siguen abriendo privacidad.
+- La barra inferior muestra un botón **Grabar** al estar en inicio, acciones de nota en Texto y ninguna acción destructiva adicional en Ajustes; durante una grabación mantiene **Pausar / Detener** en cualquiera de las tres pantallas.
+- Se reemplaza la estética de varias tarjetas apiladas por superficies oscuras con acento verde agua, espacios claros, botones accesibles y una jerarquía visual móvil distinta de Delta 07.
+- La versión anterior queda como respaldo en la rama `respaldo-delta-07-antes-de-delta-08`. No se cambian las claves de Brave, la lógica de Whisper, descargas TXT, audio, recuperación anterior, anonimización ni cifrado.
+- **Pruebas:** validaciones de navegación, pantalla activa, preservación de elementos, tamaño de texto y controles; sigue pendiente prueba real en Brave Android para este rediseño.
+
+**Pendientes posteriores:** comprobar la navegación de una mano, transcribir mientras se consulta Texto, pasar por Ajustes sin interrumpir audio, legibilidad con teclado visible y orientación vertical/horizontal. No usar datos reales sensibles durante pruebas.
+
+
 ## Delta 07 · Rediseño de legibilidad y una sola mano — 15 de noviembre de 2026
 
 **Objetivo:** mejorar lectura y acciones desde el pulgar, evitando información visual innecesaria sin alterar las funciones ya verificadas en Motorola.

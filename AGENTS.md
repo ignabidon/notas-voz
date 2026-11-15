@@ -5,16 +5,17 @@
 ## Una sola versión oficial
 - Repositorio: ignabidon/notas-voz, rama activa: **main**.
 - Única aplicación web: **/index.html**.
-- Nombre visible: **Grabador de voz Delta**, etapa **Prueba Delta 01**.
+- Nombre visible: **Grabador de voz Delta**, etapa **Prueba Delta 08**.
 - Publicación: https://ignabidon.github.io/notas-voz/
 - No crear carpetas paralelas como delta-v2, nueva-gamma o copias index2.html.
 - Versionar cambios mediante commits; documentarlos en CAMBIOS.md.
 - Archivo inalterable de prototipos antiguos: rama **archivo-antes-de-delta-2026-11-15**. No usarla como fuente de desarrollo ni borrarla.
+- Respaldo exacto antes del rediseño en tres pantallas: **respaldo-delta-07-antes-de-delta-08**. Conservarla.
 - No renombrar el repositorio, cambiar la URL de Pages o modificar ramas ajenas sin solicitud del usuario.
 
 ## Funcionalidades que deben preservarse
 1. Inicio, pausa, reanudación y detención de voz; marcas y cronómetro.
-2. Barra fija de **Detener** y **Pausar/Reanudar** mientras se graba, con Guardar/Anonimizar ocultos temporalmente.
+2. Tres pantallas visibles de a una: **Grabar / Texto / Ajustes**. Cambiar de pantalla no debe detener la captura. Barra fija de **Detener** y **Pausar/Reanudar** mientras se graba; al terminar, Grabar en la pantalla Grabar y Anonimizar/Guardar en Texto.
 3. Whisper local, progreso, estado y diagnósticos de errores. Primera carga de modelos puede requerir internet.
 4. Corrección contextual sobre selección en Android, con opción de guardar regla en diccionario (nunca automáticamente sin consentimiento).
 5. Edición, borrador, notas, audio local, guardar, copiar y exportar.

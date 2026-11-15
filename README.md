@@ -2,13 +2,13 @@
 
 **Aplicación oficial:** https://ignabidon.github.io/notas-voz/
 
-Esta es la **única versión web activa** del repositorio, derivada de Gamma Studio Diseño 07 (15 de noviembre de 2026). Está pensada para Android/Brave.
+Esta es la **única versión web activa** del repositorio, basada en Delta 07 con una nueva navegación Android en Delta 08. Está pensada para Android/Brave.
 
-> **Prueba Delta 07 — experimental.** El código se revisó estáticamente; la grabación y transcripción todavía deben validarse en el Motorola G56 5G. No usar datos reales de pacientes.
+> **Prueba Delta 08 — experimental.** El usuario confirmó grabación, Whisper, guardar TXT, recuperación de audio y Delta 07 en Brave Android. La nueva navegación de tres pantallas requiere otra prueba en el Motorola. No usar datos reales de pacientes.
 
 ## Funciones
 - Grabación de voz, cronómetro, pausa/reanudación, marcas y detención.
-- Barra fija: durante la grabación muestra **Detener** y **Pausar/Reanudar**; al terminar vuelve a **Anonimizar** y **Guardar nota**.
+- **Tres pantallas:** Grabar, Texto y Ajustes, accesibles desde la barra inferior. Mientras se graba, mantiene **Pausar/Reanudar** y **Detener** sin importar qué pantalla esté abierta.
 - Transcripción local con Whisper. Descargar o cambiar de modelo puede requerir conexión a internet.
 - Corrección contextual de palabras o frases; guardar correcciones frecuentes en un diccionario solo si se elige esa opción.
 - Edición de texto, anonimización posterior (revisar siempre), deshacer, códigos o alias de personas.
@@ -37,6 +37,22 @@ La URL del repositorio permanece como **ignabidon/notas-voz** para no cambiar lo
 Al tocar **Guardar .txt** se solicita al navegador descargar un archivo de texto con el título y la transcripción actual. En Android, buscá el archivo en **Descargas de Brave** o en la carpeta de descargas configurada en el dispositivo. El navegador puede consultar dónde guardarlo. La aplicación no puede comprobar desde la página que el archivo terminó de guardarse: abrí el archivo para verificarlo.
 
 Este botón también conserva la copia local anterior como respaldo; no borra ni migra contenido. La lista interna de notas guardadas sigue oculta en este cambio. La descarga TXT es únicamente de la nota actual; no incluye audio, diccionario, claves o ajustes. No usar información sensible real antes de validar el proceso.
+
+## Navegación en tres pantallas (Delta 08)
+
+El rediseño crea tres vistas distintas, sin instalar otra app: **Grabar** (micrófono grande, cronómetro, estado y audio conservado), **Texto** (editor amplio, corregir, copiar, anonimizar y Guardar .txt) y **Ajustes** (calidad de Whisper, audio, privacidad, diccionario y opciones avanzadas). La barra inferior cambia las acciones disponibles según la pantalla. Durante una grabación, los controles fijos Pausar y Detener se mantienen visibles incluso si entrás en Texto para consultar la transcripción.
+
+Todos los controles originales siguen existiendo y sus datos permanecen en Brave. Las tres pantallas son distintas vistas del **mismo** documento web: cambiar entre ellas no debe detener el micrófono, reiniciar Whisper, borrar texto ni alterar datos. Privacidad está dentro de Ajustes, y el enlace directo `#localPrivacy` sigue funcionando.
+
+### Prueba recomendada en Brave Android
+
+1. Abrí la web, verificá que aparece **Grabar** como pantalla inicial y que la barra inferior tiene tres destinos.
+2. Grabá una frase ficticia; mientras grabás, entrá en **Texto** y regresá a **Grabar**, sin detener la sesión. Probá Pausar, Marcar y Detener.
+3. En Texto, corregí una palabra y guardá un TXT; comprobá la descarga.
+4. En Ajustes, comprobá que podés elegir Base/Small, activar Guardar audio, abrir Privacidad y consultar el Diccionario.
+5. Verificá que el audio anterior todavía puede recuperarse y que los textos no desaparecen al cambiar de pestaña.
+
+La rama de recuperación de la interfaz previa es [respaldo-delta-07-antes-de-delta-08](https://github.com/ignabidon/notas-voz/tree/respaldo-delta-07-antes-de-delta-08). No se modificó la lógica de Whisper ni el almacenamiento.
 
 ## Diseño cómodo para una mano (Delta 07)
 
