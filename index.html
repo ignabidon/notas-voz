@@ -1753,7 +1753,7 @@ document.addEventListener('visibilitychange', () => {
   }
 });
 function lockUI(on){
-  $('model').disabled = on; $('accel').disabled = on; $('mic').disabled = on; $('saveAudio').disabled = on;
+  $('model').disabled = on; $('accel').disabled = on; $('mic').disabled = on; $('saveAudio').disabled = on; $('recordSaveAudio').disabled = on;
   document.querySelectorAll('input[name=eng]').forEach(r => r.disabled = on || (r.value === 'native' && !nativeReady));
 }
 function fmtEta(ms){
@@ -1845,6 +1845,7 @@ function maybeDone(){
   refreshCaptureWarning();
   updProgress();
   if (recording || busy || outstanding > 0 || feeding) return;
+  refreshAudioBox(); // habilita Guardar audio cuando terminaron Whisper y la captura
   clearInterval(timer); timer = null; lockUI(false); $('rec').disabled = false;
   if (dead) return;
   if (failedParts) { setStatus('Terminó, pero ' + failedParts + ' parte(s) del audio no se pudieron transcribir: buscá «⚠ falta una parte» en el texto.'); return; }
