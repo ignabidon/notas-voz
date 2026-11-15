@@ -242,6 +242,38 @@
     #susBox .chip{min-height:38px;padding:6px 14px}
     .arow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
   }
+
+/* Visual beta: sin sombras pronunciadas ni fondos decorativos */
+:root{--bg:#f3f5f1;--bg2:#e9eeea;--card:#fff;--ink:#1e2d2a;--mut:#5b6d68;--line:#d5dfda;--acc:#397e70;--acc-ink:#fff;--acc-soft:#e5f1ec;--shadow:none}
+@media (prefers-color-scheme:dark){:root{--bg:#121b1b;--bg2:#202b2a;--card:#1b2827;--ink:#eef2ed;--mut:#a8bbb5;--line:#354845;--acc:#9bd4bf;--acc-ink:#102b25;--acc-soft:#253b35;--shadow:none}}
+body{background:var(--bg)}
+h1{text-transform:none;letter-spacing:-.025em;font-size:27px;font-weight:700}
+.sub{font-size:13px}
+.logo{box-shadow:none}
+.pill{border:1px solid var(--line);background:transparent}
+.card{box-shadow:none;border-radius:19px;padding:20px}
+h2{font-size:16px;letter-spacing:0;text-transform:none;color:var(--ink)}
+.section-heading{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:16px}
+.section-heading h2{margin:0}
+.section-hint{color:var(--mut);font-size:12px}
+#rec,#rec.on,#rec.on:hover:not(:disabled),#rec.on.paused,#rec.on.paused:hover:not(:disabled){box-shadow:none}
+#rec{border-radius:28px}
+#rec.on{animation:none}
+#clock{color:var(--ink);font-size:29px}
+#tpTxt{text-align:left}
+.pbar i{background:var(--acc)}
+.processing-timer{text-align:center;color:var(--acc);font-size:14px;font-weight:600;margin-top:8px;font-variant-numeric:tabular-nums}
+.processing-timer[hidden]{display:none!important}
+.privacy-group{padding:14px;border:1px solid var(--line);border-radius:15px;background:var(--bg)}
+.privacy-group #anon{flex:1}
+textarea{min-height:240px}
+@media (max-width:640px){
+ h1{font-size:23px}.sub{font-size:12.5px}.card{padding:16px;border-radius:17px}
+ .tools{grid-template-columns:1fr 1fr}.tools button{white-space:normal}
+ #selAll{display:none}.tools button#undoClear{grid-column:1 / -1}
+ .privacy-group .row{display:grid;grid-template-columns:1fr}
+ #rec{width:min(43vw,172px)}
+}
 </style>
 </head>
 <body>
@@ -252,10 +284,10 @@
     <span class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7"/></svg></span>
     <div>
       <h1>Notas por voz</h1>
-      <p class="sub">Hablás y se escribe solo. El audio no se envía a ningún servidor; solo se guarda en tu dispositivo si lo activás en Ajustes.</p>
+      <p class="sub">Transcribí tus notas con privacidad, en tu dispositivo.</p>
     </div>
   </div>
-  <span class="pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Las notas quedan solo en este dispositivo</span>
+  <span class="pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Procesamiento local</span>
 </header>
 
 <main class="layout">
@@ -264,7 +296,7 @@
 
   <!-- 1 · Grabar -->
   <section class="card c-rec">
-    <h2>Grabar</h2>
+    <h2>Grabación</h2>
     <div class="recrow">
       <button id="rec" type="button">Grabar</button>
       <div class="side">
@@ -276,15 +308,12 @@
     <div class="warn" id="keepOn" style="display:none;text-align:center;margin-top:12px">Mantené la pantalla encendida y no cambies de app: si no, la grabación puede cortarse.</div>
     <div class="bar" id="bar"><i id="barI"></i></div>
     <div id="status" role="status" aria-live="polite"></div>
+    <div id="processingTimer" class="processing-timer" hidden>Procesando · <span id="processClock">00:00</span></div>
     <div id="interim"></div>
     <div id="tp" aria-live="off"><div id="tpTxt"></div><div class="pbar" role="progressbar" aria-label="Avance de la transcripción"><i id="tpI"></i></div></div>
     <div class="bar" id="lv"><i id="lvI"></i></div>
     <div class="warn" id="lvTxt"></div>
-    <label class="chk"><input type="checkbox" id="replace" checked>
-      <span><b>Empezar de cero al grabar</b><small>Borra el texto anterior (podés deshacerlo). Si lo destildás, lo nuevo se suma al final.</small></span></label>
-
-    <label class="chk"><input type="checkbox" id="liveAnon" checked>
-      <span><b>Ocultar nombres mientras transcribe</b><small>Usa tu tabla de personas y una lista de nombres comunes. Igual revisá siempre el texto.</small></span></label>
+    <input type="checkbox" id="liveAnon" hidden>
 
     <div class="abox" id="audioBox" style="display:none">
       <div class="gl">Audio guardado</div>
@@ -319,7 +348,8 @@
           <span><strong>Dictado del navegador</strong><small id="nativeNote">El texto aparece en vivo, mientras hablás.</small></span></label>
       </div>
 
-      <label for="model">Calidad de Whisper</label>
+      <label class="chk"><input type="checkbox" id="replace" checked><span><b>Empezar de cero al grabar</b><small>Podés deshacer el borrado. Si lo desactivás, lo nuevo se suma al final.</small></span></label>
+      <label for="model" style="margin-top:16px">Calidad de Whisper</label>
       <select id="model">
         <option value="Xenova/whisper-base">Rápida · descarga ~75 MB</option>
         <option value="Xenova/whisper-small" selected>Más precisa · descarga ~250 MB (más lenta)</option>
@@ -357,7 +387,7 @@
 
   <!-- 2 · Texto -->
   <section class="card c-edit">
-    <h2>Tu texto</h2>
+    <div class="section-heading"><h2>Transcripción</h2><span class="section-hint">Editable</span></div>
     <label for="title">Título</label>
     <input type="text" id="title" placeholder="Ej.: Clase 4to año – 14/11">
 
@@ -366,7 +396,7 @@
       <div class="tools">
         <button class="ghost" id="selAll">Seleccionar todo</button>
         <button class="ghost" id="copyAll">Copiar todo</button>
-        <button class="ghost danger" id="clear">Borrar</button>
+        <button class="ghost danger" id="clear" title="Podés deshacer el borrado">Borrar texto</button>
         <button class="ghost" id="undoClear" style="display:none">Deshacer borrado</button>
       </div>
     </div>
@@ -389,7 +419,7 @@
       <button id="newn">Nota nueva</button>
     </div>
 
-    <div class="group">
+    <div class="group export-group">
       <div class="gl">Exportar</div>
       <div class="row" style="margin-top:6px">
         <button id="doc">Exportar a Word</button>
@@ -398,10 +428,10 @@
       </div>
     </div>
 
-    <div class="group">
-      <div class="gl">Privacidad</div>
+    <div class="group privacy-group">
+      <div class="gl">Privacidad · Revisá el texto antes de compartir</div>
       <div class="row" style="margin-top:6px">
-        <button id="anon">Anonimizar</button>
+        <button class="p" id="anon">Anonimizar transcripción</button>
         <button id="undo" disabled>Deshacer anonimizado</button>
       </div>
       <div class="warn" id="anonRes" style="margin-top:8px"></div>
@@ -447,7 +477,7 @@
 
 </main>
 
-<footer>Notas por voz · v3.3 · Todo se guarda únicamente en este navegador</footer>
+<footer>Notas por voz · Beta · Información técnica disponible en Ajustes</footer>
 </div>
 
 <script>
@@ -1223,6 +1253,7 @@ function level(b){
   $('lvTxt').textContent = now < clipUntil ? 'El sonido se está saturando: alejá un poco el micrófono.' : '';
 }
 let cap = null, seg = null, jobs = [], busy = false, outstanding = 0, dead = false, gotText = false, lastMs = 0, t0 = 0, timer = null, chain = Promise.resolve(), wl = null;
+let processingStartedAt = 0;
 const lockWake = async () => { try { wl = await navigator.wakeLock.request('screen'); } catch (e) {} };
 const unlockWake = () => { try { wl && wl.release(); } catch (e) {} wl = null; };
 document.addEventListener('visibilitychange', () => {
@@ -1244,6 +1275,11 @@ function updProgress(){
   if (working) bz.textContent = recording
     ? (paused ? (busy || outstanding > 0 ? 'Grabación en pausa: se sigue transcribiendo lo ya grabado.' : 'Grabación en pausa.') : 'Grabando y transcribiendo: el texto va apareciendo de a poco.')
     : 'Todavía transcribiendo… esperá a que termine antes de copiar o guardar.';
+  const processing = !recording && (busy || outstanding > 0 || feeding || modelLoading);
+  if (processing && !processingStartedAt) processingStartedAt = Date.now();
+  $('processingTimer').hidden = !processing;
+  if (processing) $('processClock').textContent = fmtClock(Date.now() - processingStartedAt);
+  if (!processing && !recording) processingStartedAt = 0;
   refreshTitle();
   if (!totalSec || (!recording && outstanding === 0 && !busy && !feeding)) { tp.classList.remove('on'); return; }
   const pct = Math.min(100, Math.round((feed.len ? feed.done / feed.len : doneSec / totalSec) * 100));
@@ -1276,7 +1312,7 @@ function maybeDone(){
   if (dead) return;
   if (failedParts) { setStatus('Terminó, pero ' + failedParts + ' parte(s) del audio no se pudieron transcribir: buscá «⚠ falta una parte» en el texto.'); return; }
   if (warnParts) { setStatus('Terminó, pero ' + warnParts + ' parte(s) dieron muy poco texto para su duración: puede faltar algo. Mirá los detalles técnicos de la grabación.'); return; }
-  setStatus(gotText ? 'Listo' + (lastMs ? ' (última parte: ' + Math.round(lastMs / 1000) + ' s, ' + (backend === 'GPU' ? 'con la placa de video' : 'con el procesador') + ')' : '') + '. Revisá y guardá.' : 'No se detectó voz. Probá hablar más cerca del micrófono.');
+  setStatus(gotText ? 'Transcripción completa. Revisá el texto antes de copiar o guardar.' : 'No se detectó voz. Probá hablar más cerca del micrófono.');
 }
 function fail(e){
   dead = true; jobs.length = 0; outstanding = 0; busy = false;
@@ -1600,7 +1636,7 @@ const hasOpt = (sel, v) => [...sel.options].some(o => o.value === v);
 function loadCfg(){
   try {
     const c = JSON.parse(localStorage.getItem(CKEY) || '{}');
-    if (typeof c.liveAnon === 'boolean') $('liveAnon').checked = c.liveAnon;
+    $('liveAnon').checked = false; // Solo anonimización posterior
     if (typeof c.pVolatile === 'boolean') $('pVolatile').checked = c.pVolatile;
     if (c.model && hasOpt($('model'), c.model)) $('model').value = c.model;
     else if (!c.model && matchMedia('(pointer:coarse)').matches) $('model').value = 'Xenova/whisper-base'; // en celulares, la opción rápida por defecto
@@ -1611,8 +1647,8 @@ function loadCfg(){
     if (typeof c.saveAudio === 'boolean') $('saveAudio').checked = c.saveAudio;
   } catch (e) {}
 }
-const saveCfg = () => { try { localStorage.setItem(CKEY, JSON.stringify({model:$('model').value, accel:$('accel').value, mic:$('mic').value, eng:eng(), replace:$('replace').checked, saveAudio:$('saveAudio').checked, liveAnon:$('liveAnon').checked, pVolatile:$('pVolatile').checked})); } catch (e) {} };
-['model', 'accel', 'mic', 'replace', 'saveAudio', 'liveAnon', 'pVolatile'].forEach(id => $(id).addEventListener('change', saveCfg));
+const saveCfg = () => { try { localStorage.setItem(CKEY, JSON.stringify({model:$('model').value, accel:$('accel').value, mic:$('mic').value, eng:eng(), replace:$('replace').checked, saveAudio:$('saveAudio').checked, pVolatile:$('pVolatile').checked})); } catch (e) {} };
+['model', 'accel', 'mic', 'replace', 'saveAudio', 'pVolatile'].forEach(id => $(id).addEventListener('change', saveCfg));
 document.querySelectorAll('input[name=eng]').forEach(r => r.addEventListener('change', () => { setStatus(''); saveCfg(); }));
 
 /* ---------- Borrador autoguardado: sobrevive a recargas y cierres ---------- */
