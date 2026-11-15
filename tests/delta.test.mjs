@@ -10,7 +10,7 @@ const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map(m => m[1]);
 test('título y punto único de entrada', () => {
   assert.match(html, /<title>Grabador de voz Delta/);
   assert.match(html, /<h1>Grabador de voz Delta<\/h1>/);
-  assert.match(html, /Prueba de diseño 07/);
+  assert.match(html, /DELTA 08 · VERSIÓN DE PRUEBA/);
 });
 
 test('los scripts se pueden analizar', () => {
@@ -358,49 +358,98 @@ test('Delta 06a: jamás se borra automáticamente al iniciar o guardar notas', (
 });
 
 
-test('Delta 07: la navegación inferior permite llegar a Privacidad sin recorrer Ajustes', () => {
-  assert.match(html, /id="studioPrivacyLink"/);
-  assert.match(html, /href="#localPrivacy"/);
-  assert.match(html, /document\.getElementById\('studioPrivacyLink'\)\.addEventListener\('click'/);
-  assert.match(html, /document\.getElementById\('ajustes'\)\.open=true;/);
-  assert.match(html, /document\.getElementById\('localPrivacy'\)\.open=true;/);
-  const nav = html.match(/<nav class="studio-nav"[\s\S]*?<\/nav>/);
+
+test('Delta 08: navegación inferior de tres pantallas reales', () => {
+  const nav=html.match(/<nav class="studio-nav"[\s\S]*?<\/nav>/);
   assert.ok(nav);
-  for (const label of ['Grabar', 'Texto', 'Ajustes', 'Privacidad']) assert.match(nav[0], new RegExp(label));
+  assert.equal((nav[0].match(/data-delta-view="/g)||[]).length,3);
+  for(const tab of ['grabacion','transcripcion','ajustes']) assert.match(nav[0],new RegExp('data-delta-view="'+tab+'"'));
+  assert.doesNotMatch(nav[0],/studioPrivacyLink/);
+  assert.match(html, /<body data-view="grabacion">/);
+  assert.match(html, /body\[data-view="grabacion"\] \.c-edit/);
+  assert.match(html, /body\[data-view="transcripcion"\] \.c-rec/);
+  assert.match(html, /body\[data-view="ajustes"\] \.c-rec/);
 });
 
-test('Delta 07: Grabar al alcance del pulgar acciona el mismo control original', () => {
-  assert.match(html, /id="studioDockStart"/);
-  assert.match(html, /startAction\.addEventListener\('click',\(\)=>startButton\.click\(\)\)/);
-  assert.match(html, /startAction\.disabled=startButton\.disabled/);
-  assert.match(html, /new MutationObserver\(syncStart\)/);
-  assert.match(html, /#studioDockNotes\{grid-template-columns:1fr 1\.18fr 1\.28fr/);
-  assert.match(html, /#studioDockCapture\[hidden\],#studioDockNotes\[hidden\]/);
-  assert.match(html, /id="studioDockStop"/);
+test('Delta 08: cambiar pantallas conserva un único DOM y actualiza el tab activo', () => {
+  const match=html.match(/function chooseDeltaView\(view, scrollToTop=true\) \{[\s\S]*?\n  \}/);
+  assert.ok(match,'falta selector de pantallas');
+  const settings={open:false};
+  const tabs=['grabacion','transcripcion','ajustes'].map(deltaView=>({
+    dataset:{deltaView},attrs:{},
+    setAttribute(k,v){this.attrs[k]=v;},
+    removeAttribute(k){delete this.attrs[k];}
+  }));
+  let scrolled=0;
+  const doc={
+    body:{dataset:{view:'grabacion'}},
+    getElementById:id=>id==='ajustes'?settings:null,
+    querySelectorAll:selector=>{
+      assert.equal(selector,'[data-delta-view]');
+      return tabs;
+    }
+  };
+  const win={scrollTo:()=>scrolled++};
+  const choose=new Function('validDeltaViews','document','window',
+    match[0]+'; return chooseDeltaView;')(['grabacion','transcripcion','ajustes'],doc,win);
+  assert.equal(choose('transcripcion'), 'transcripcion');
+  assert.equal(doc.body.dataset.view,'transcripcion');
+  assert.equal(tabs[1].attrs['aria-current'],'page');
+  assert.equal(tabs[0].attrs['aria-current'],undefined);
+  assert.equal(scrolled,1);
+  assert.equal(choose('ajustes',false),'ajustes');
+  assert.equal(settings.open,true);
+  assert.equal(scrolled,1);
+  assert.equal(choose('desconocido',false),'grabacion');
+  assert.equal(doc.body.dataset.view,'grabacion');
 });
 
-test('Delta 07: textos, botones y barra inferior son más legibles en celular', () => {
-  assert.match(html, /\/\* Delta 07 — legibilidad y uso desde el pulgar/);
-  assert.match(html, /body\{font-size:16px;line-height:1\.55\}/);
-  assert.match(html, /label,\.warn,\.hint\{font-size:14px/);
-  assert.match(html, /summary\{min-height:48px;font-size:16px/);
-  assert.match(html, /textarea#text\{font-size:17px/);
-  assert.match(html, /\.studio-dock\{width:100%;max-width:none;bottom:0/);
-  assert.match(html, /calc\(8px \+ env\(safe-area-inset-bottom\)\)/);
-  assert.match(html, /@media\(max-width:380px\)/);
+test('Delta 08: Grabar Texto Ajustes comparten acciones sin duplicar ni borrar estado', () => {
+  assert.match(html,/id="studioDockStart"/);
+  assert.match(html,/startAction\.addEventListener\('click',\(\)=>startButton\.click\(\)\)/);
+  assert.match(html,/startAction\.disabled=startButton\.disabled/);
+  assert.match(html,/new MutationObserver\(syncStart\)/);
+  assert.match(html,/#studioDockNotes\{display:none\}/);
+  assert.match(html,/id="studioDockStop"/);
+  assert.match(html,/id="studioDockPause"/);
+  assert.match(html,/id="studioAnonAction"/);
+  assert.match(html,/id="save"/);
+  assert.match(html,/function updateDockRecording\(\)/);
+  assert.match(html,/studioDockStop'\)\.addEventListener\('click',\(\)=>\$\('rec'\)\.click\(\)/);
+  assert.match(html,/record-clock/);
+  assert.match(html,/id="clock"/);
 });
 
-test('Delta 07: privacidad es fácil de encontrar y mantiene todas las medidas', () => {
-  const privacy = html.match(/<details id="localPrivacy"[\s\S]*?<\/details>/);
-  assert.ok(privacy);
-  assert.match(privacy[0], /Privacidad y datos guardados/);
-  assert.match(privacy[0], /id="clearLocalTexts"/);
-  assert.match(privacy[0], /Estas copias no están cifradas/);
-  assert.match(privacy[0], /No elimina los archivos de Descargas/);
-  const settings = html.indexOf('<details class="card c-set" id="ajustes">');
-  const privacyPos = html.indexOf('<details id="localPrivacy"');
-  const enginePos = html.indexOf('<label>Cómo transcribir</label>');
-  assert.ok(settings < privacyPos && privacyPos < enginePos);
-  assert.equal((html.match(/id="localPrivacy"/g) || []).length, 1);
+test('Delta 08: editor protagonista y herramientas secundarias accesibles', () => {
+  assert.match(html,/class="screen-title text-screen-title"/);
+  assert.match(html,/textarea#text\{background:#0e1a24/);
+  assert.match(html,/min-height:48svh;font-size:18px/);
+  assert.match(html,/<details class="text-tools">/);
+  for(const id of ['correctSelection','copyAll','selAll','clear','undoClear','quickCorrect','text','anon','undo','title','doc','txt'])
+    assert.ok(ids.includes(id),'falta #'+id);
+  assert.match(html,/body\[data-view="transcripcion"\] #studioDockStart\{display:none\}/);
+});
+
+test('Delta 08: ajustes agrupados y privacidad, audio y diccionario intactos', () => {
+  for(const id of ['settingsQuality','settingsAudio','settingsPrivacy','settingsDictionary','settingsAdvanced','model','accel','mic','saveAudio','localPrivacy','clearLocalTexts','dict','nativeNote','nativePrepare'])
+    assert.ok(ids.includes(id),'falta #'+id);
+  assert.match(html, /<details class="card c-set" id="ajustes" open>/);
+  assert.match(html, /class="settings-module-top"/);
+  assert.match(html, /Micrófono y rendimiento/);
+  assert.match(html, /Otras opciones/);
+  assert.match(html, /No elimina los archivos de Descargas/);
   assert.match(html, /removeLocalTextKeys\(localStorage, TEXT_STORAGE_KEYS\)/);
+  assert.match(html, /'localPrivacy'\)\.open=true/);
+});
+
+test('Delta 08: nuevo sistema visual y diseño móvil adaptable', () => {
+  assert.match(html,/\/\* DELTA 08: three real screens/);
+  assert.match(html,/--bg:#090f18/);
+  assert.match(html,/#rec\{width:154px;height:154px/);
+  assert.match(html,/#clock\{font-size:64px/);
+  assert.match(html,/\.studio-dock \.studio-nav\{display:grid;grid-template-columns:repeat\(3,1fr\)/);
+  assert.match(html,/\.studio-dock \.studio-nav a\[aria-current="page"\]/);
+  assert.match(html,/@media\(max-width:760px\)/);
+  assert.match(html,/env\(safe-area-inset-bottom\)/);
+  assert.match(html,/@media\(max-width:380px\)/);
 });
