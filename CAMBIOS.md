@@ -1,3 +1,10 @@
+## 16/11/2026 · Traspaso del rediseño conversacional (SOLO documentación)
+
+- Nuevo punto de entrada para agentes: [CONTINUAR-AQUI.md](CONTINUAR-AQUI.md), enlazado desde AGENTS.md, CLAUDE.md y README.md.
+- Publicados [informe de rediseño](docs/REDISENO-CONVERSACIONAL-2026-11-16.md) e [instrucciones para la próxima IA](docs/PROMPT-SIGUIENTE-IA-2026-11-16.txt).
+- Resume decisiones de interfaz Clínica contemporánea, tres secciones propuestas (Notas / Biblioteca / Ajustes), captura rápida que crea nota nueva por defecto, movimientos de mensajes y fecha/hora de registro inmutable desde la interfaz.
+- **No se modificó `index.html`, los datos, las pruebas, el almacenamiento, la aplicación publicada ni el motor de audio.** La implementación queda pendiente de aprobación expresa del usuario, con migración segura y pruebas.
+
 ## 16/11/2026 · Código de recuperación: copiar y generar uno nuevo
 
 Lo informó el usuario después de activar la protección en el Motorola: no podía copiar el código de recuperación. La huella sí le funcionó (primera validación real: activar, salir, volver a entrar y desbloquear con la huella en Brave/Android).
