@@ -1,37 +1,23 @@
 # CONTINUAR AQUÍ — Próxima IA de DictaNota
 
-> **Punto de entrada obligatorio para continuar el rediseño conversacional (16/11/2026).**
-> **Estado (16/11/2026, 09:52):** fases 1 a 3 hechas: la pestaña **Notas** ya muestra hojas con mensajes (ver CAMBIOS.md). **Leer las secciones 2.5 y 2.6 de la especificación** (Guardar, sello = hora de guardado, audio solo a pedido y fuera de las burbujas). Falta la prueba en el Motorola. Próximo paso sugerido: Ajustes reordenado, Anonimizar desde la hoja y vista Documento, con autorización del usuario.
+> **Actualizado: 16/11/2026, 10:15.** `main` = `bb89314`, publicado.
+> **Primer documento para leer: [docs/INFORME-CONTINUIDAD-2026-11-16.md](docs/INFORME-CONTINUIDAD-2026-11-16.md)**: qué está hecho, qué falta, en qué orden y por qué el usuario «no ve cambios».
+
+## En una frase
+
+El rediseño conversacional tiene hechos los datos, el guardado protegido y una **pestaña Notas** funcional (hojas, burbujas con fecha y hora de guardado, Guardar/Descartar, mover y copiar). **Falta la estética clara «Clínica contemporánea» (nunca se implementó: la app sigue oscura)**, el aspecto de chat de Notas, la navegación final y la prueba en el Motorola.
 
 ## Lectura en orden
 
-1. **[Especificación completa del rediseño](docs/REDISENO-CONVERSACIONAL-2026-11-16.md)** — acuerdos del usuario, arquitectura, bitácora y biblioteca, fecha/hora original de cada mensaje, flujos, migración segura y pruebas.
-2. **[Encargo listo para otra IA](docs/PROMPT-SIGUIENTE-IA-2026-11-16.txt)** — instrucciones concretas para la siguiente etapa.
-3. **[AGENTS.md](AGENTS.md)** y **[CLAUDE.md](CLAUDE.md)** — convenciones de desarrollo y coordinación de agentes.
-4. **[SEGURIDAD.md](SEGURIDAD.md)** y **[DISENO-CIFRADO.md](DISENO-CIFRADO.md)** — restricciones obligatorias de seguridad, cifrado y persistencia.
-5. **[README.md](README.md)** y **[CAMBIOS.md](CAMBIOS.md)** — estado vigente de la aplicación e historial técnico.
-6. Inspeccionar la versión actual de **[index.html](index.html)** y **[tests](tests/)** y confirmar el SHA actualizado de `main` antes de recomendar cambios.
+1. **[Informe de continuidad](docs/INFORME-CONTINUIDAD-2026-11-16.md)**: estado, pendientes priorizados y decisiones vigentes.
+2. **[Especificación](docs/REDISENO-CONVERSACIONAL-2026-11-16.md)**: secciones **2.5 y 2.6** (decisiones del usuario del 16/11; reemplazan a lo anterior donde choquen).
+3. **[AGENTS.md](AGENTS.md)**: reglas compartidas. **[SEGURIDAD.md](SEGURIDAD.md)** y **[DISENO-CIFRADO.md](DISENO-CIFRADO.md)**: restricciones obligatorias.
+4. **[CAMBIOS.md](CAMBIOS.md)**: detalle de las fases 1, 2 y 3. **[README.md](README.md)**: guía de uso y prueba en el celular.
 
-## Qué está acordado
+## Próximo paso sugerido
 
-- Estética **Clínica contemporánea**, móvil primero, preparada para una futura app Android.
-- Navegación a rediseñar: **Notas / Biblioteca / Ajustes**. Texto y Anonimizar siguen existiendo como capacidades dentro de las notas, no como pestañas obligatorias.
-- **Captura rápida**: cada grabación desde el botón global crea **una nota nueva por defecto**, sin título obligatorio ni necesidad de clasificarla; después se puede renombrar («Supermercado», «Días lunes») o **mover su mensaje** a otra nota existente.
-- Grabar dentro de una conversación abierta agrega allí la nueva entrada; nunca agregar una grabación global automáticamente a la última conversación.
-- Interfaz tipo chat **privado y local**, no mensajería ni transmisión a terceros. Cada burbuja muestra transcripción y, solo cuando exista, audio reproducible.
-- **Fecha completa y hora originales** del registro visibles en cada burbuja (por ejemplo, `16/11/2026 · 10:42`), guardadas como **metadatos no editables en la UI**. Editar, mover, anonimizar o exportar no las cambia. Las aclaraciones sobre fechas van en el texto del usuario.
-- **Biblioteca destacada** con notas, audios realmente conservados y documentos; no esconder la recuperación y las descargas.
+1. Implementar la **estética Clínica contemporánea**: está aprobada; los colores están en el informe, sección 3.1. Mostrar capturas al usuario antes de publicar.
+2. Dar a Notas **aspecto de chat**: barra de escritura abajo y botón global «Nueva nota».
+3. Después: navegación Notas / Biblioteca / Ajustes, Anonimizar desde la hoja, vista Documento.
 
-## Riesgo técnico que NO se puede ignorar
-
-La versión actual guarda notas planas (`id/text/title/ts/tags`) y mantiene en IndexedDB **el último audio más uno anterior recuperable**: todavía **no** existe una biblioteca multi-audio asociada a mensajes. El nuevo diseño exige **modelo de datos, migración versionada, pruebas y plan de rollback**. Proteger claves antiguas (`notasvoz.gamma.*`), el almacén `vaultStore` y la funcionalidad actual. **Los audios conservados todavía no están cifrados**; no tratar el aspecto visual de privacidad como garantía de seguridad.
-
-## Tu primera tarea (solo análisis, sin programar)
-
-1. Verificar el HEAD actual de `main` y revisar código/documentación.
-2. Presentar diagnóstico de compatibilidad con el almacenamiento real, límites y riesgos.
-3. Crear propuestas visuales/maquetas para Notas, Biblioteca y Ajustes, incluyendo mensajes, menú mover y marca de fecha/hora.
-4. Describir modelo de datos + plan de migración, respaldo y recuperación de múltiples audios.
-5. Separar decisiones **confirmadas** de sugerencias, exponer dudas puntuales y **pedir aprobación explícita antes de editar o publicar funcionalidades**.
-
-**No cambiar `index.html`, pruebas, datos, ramas de respaldo ni la aplicación publicada durante esta etapa documental.**
+Cada paso va en su rama, con pruebas, CI y **permiso del usuario para unir a `main`**. Sin datos reales de pacientes.

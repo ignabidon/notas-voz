@@ -1,12 +1,12 @@
 # DictaNota — Prueba Delta
 
-> **📌 CONTINUIDAD DEL PROYECTO PARA OTRAS IA:** comenzá por **[CONTINUAR-AQUI.md](CONTINUAR-AQUI.md)** y el [informe de rediseño conversacional](docs/REDISENO-CONVERSACIONAL-2026-11-16.md). Describe el próximo diseño propuesto (Notas / Biblioteca / Ajustes, bitácora y biblioteca multi-audio), **aún sin implementar**. No modificar la aplicación sin autorización explícita.
+> **📌 CONTINUIDAD DEL PROYECTO PARA OTRAS IA:** comenzá por **[CONTINUAR-AQUI.md](CONTINUAR-AQUI.md)** y el **[informe de continuidad del 16/11/2026](docs/INFORME-CONTINUIDAD-2026-11-16.md)**. La pestaña Notas (hojas con mensajes) ya está publicada; la estética clara y el aspecto de chat **todavía no**. No modificar la aplicación sin autorización explícita.
 
 **Aplicación oficial:** https://ignabidon.github.io/notas-voz/
 
 > **⚠ Seguridad:** hay una revisión de seguridad («pen testing») en curso. Leé [SEGURIDAD.md](SEGURIDAD.md): qué está confirmado, qué no, riesgos abiertos y reglas para editar. Hasta ahora las notas **no están cifradas**: no uses datos reales.
 
-Esta es la **única versión web activa** del repositorio. La etapa vigente es **Delta 11**, con navegación Android de cuatro pantallas (Audio / Texto / Anonimizar / Ajustes), estado global de transcripción y acciones accesibles de audio y texto.
+Esta es la **única versión web activa** del repositorio. La etapa vigente es **Delta 11**, con navegación Android de cuatro pantallas (Audio / Notas / Anonimizar / Ajustes; «Notas» reemplazó a «Texto» el 16/11/2026), estado global de transcripción y acciones accesibles de audio y texto.
 
 > **Prueba Delta 11 — experimental.** El usuario ya probó en Brave Android la grabación, Whisper, descarga TXT, recuperación del audio anterior y funcionamiento general de la interfaz. Las acciones nuevas de Delta 11 —Descargar audio visible, Compartir texto y accesos directos— **todavía necesitan prueba real en el Motorola**. Las 53 pruebas automáticas y la publicación GitHub Pages fueron satisfactorias. No usar datos reales de pacientes.
 
