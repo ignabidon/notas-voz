@@ -15,6 +15,7 @@
 5. **Motor Whisper (`@huggingface/transformers@3.8.1`):** se carga con `import()` dinámico desde jsDelivr; el navegador no permite huella en ese tipo de carga. Mantener la versión fija. Cambiarla requiere probar CPU y placa de video.
 6. **No ampliar la CSP por comodidad** (`unsafe-eval`, comodines `*`, `https:` genérico). Si una función deja de andar, mirar la consola del navegador: los bloqueos aparecen como «Content Security Policy» y dicen qué dirección o directiva falló.
 7. **No guardar datos nuevos** (ni en `localStorage`, ni en IndexedDB) sin documentar aquí qué datos son y si quedan sin cifrar.
+   - *16/11/2026:* el aprendizaje automático de correcciones agrega líneas `a => b` al diccionario existente (`notasvoz.gamma.dict.v1`, **sin cifrar**) y el campo booleano `learnAuto` a la configuración existente (`notasvoz.gamma.cfg.v1`). No hay claves nuevas. Solo se aprenden palabras en minúscula y sin cifras (no nombres propios), pero provienen de lo dictado: no usar datos reales. El aviso de lo aprendido usa `textContent`.
 
 ## Qué está confirmado
 

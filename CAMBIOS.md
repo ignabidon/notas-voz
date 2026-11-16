@@ -1,5 +1,30 @@
 # Registro de cambios — Grabador de voz Delta
 
+## DictaNota · Anonimizar como pantalla propia, audios a la vista y aprendizaje automático de correcciones — 16/11/2026
+
+Base: `main` en `7ba0289e827244f50cb35630ff9256506d6b5c89` (verificado antes de editar), rama `claude/notavoz-ux-improvements-o95axk`. Pedido del usuario: (1) el audio está muy escondido; (2) la barra fija debe incluir Anonimizar (Grabar · Texto · Anonimizar · Ajustes); (3) explicar con palabras simples qué hace Anonimizar; (4) las correcciones del usuario deben aprenderse solas, sin un botón extra, y Anonimizar debe permitir asociar nombre ↔ código.
+
+### Qué cambió (en español sencillo)
+- **Cuatro pantallas en la barra fija:** Grabar · Texto · **Anonimizar** · Ajustes. Anonimizar es una pantalla completa (antes era un bloque al final de Texto). Se quitó el botón «Anonimizar» repetido de la barra de acciones de Texto, que ejecutaba la anonimización sin explicar nada; en Texto quedan «Grabar» y «Guardar .txt». Mismos IDs de los controles (`anon`, `undo`, `peopleBox`, `pName`…), mismo motor de anonimización.
+- **Explicación de Anonimizar:** «¿Para qué sirve?», un ejemplo con datos inventados (texto original / sin cargar a nadie / con «Ana = madre, código P-001») verificado con el motor real, indicaciones de uso y aviso de que puede fallar. Vista de solo lectura del texto actual dentro de la pantalla, para ver el resultado sin cambiar de pantalla.
+- **Personas y códigos** (nombre ↔ código/relación) quedó abierta por defecto, con rótulos más claros («1. Nombre», «2. ¿Quién es?», «3. Código»), una línea «se va a escribir así: [madre de P-001]» que se actualiza mientras se escribe y la lista cargada indica exactamente cómo se escribe cada persona. Tipos de reemplazo: con código (`[P-024]`), con relación (`[madre de P-024]`) o solo ocultar (`[Persona 1]`, si se deja el código vacío). Sin cambios en el formato guardado de la tabla.
+- **Audios a la vista:** el cuadro «Tus audios guardados» ya no está oculto ni al final de la pantalla: aparece justo debajo de «Conservar también el audio», siempre visible (con un mensaje si todavía no hay audio). Si hay audio, un botón arriba de todo en Grabar («Audio guardado · 01:05 · Ver, descargar o recuperar») lleva a ese cuadro; además hay accesos directos desde Texto y desde Ajustes → Audio. «Recuperar audio anterior» sigue apareciendo cuando existe esa copia.
+- **Aprendizaje automático:** si se corrige el texto (al salir del editor, al guardar, al anonimizar, al borrar o al pasar la app a segundo plano, o con «Corregir selección») DictaNota compara con lo que escribió Whisper y guarda sola la corrección en el diccionario, bajo «# Aprendido de tus correcciones». Aparece un aviso con **Deshacer**. Solo aprende errores de transcripción parecidos (suenan o se escriben parecido): frases partidas que se unen («contra transferencia» → «contratransferencia», sin contexto) y correcciones de ortografía (con la palabra anterior como contexto). **No aprende** reescrituras de contenido, palabras cortas (el → la), nombres con mayúscula, números, ni lo que cambia la anonimización. Se puede apagar en Ajustes → Diccionario → «Aprender de mis correcciones» (campo opcional `learnAuto` en la configuración existente). Con el aprendizaje apagado se conserva el comportamiento anterior (sugerencias al guardar). En «Corregir selección», la casilla pasó a ser «Reemplazar siempre, en cualquier contexto» (opcional, desmarcada); la corrección en sí se aprende automáticamente.
+- **Regla del proyecto actualizada con consentimiento del usuario:** antes AGENTS.md decía «nunca automáticamente sin consentimiento». El usuario pidió explícitamente aprendizaje automático; el consentimiento queda en el ajuste (activado por defecto, apagable).
+
+### Qué NO cambió
+- Grabación, pausa, barra fija de captura, Whisper, segmentador, audio (IndexedDB), motor de anonimización, exportaciones, claves de almacenamiento (se reutilizan `notasvoz.gamma.dict.v1` y `notasvoz.gamma.cfg.v1`; no hay claves nuevas).
+
+### Verificación (tres niveles)
+- **Código guardado:** en la rama indicada; **no** unido a `main` ni publicado.
+- **Pruebas técnicas:** `node --test tests/delta.test.mjs`: **93/93** (86 anteriores —5 adaptadas a cuatro pantallas y a la barra sin botón duplicado— + 7 nuevas). Chromium de laboratorio (Playwright) con datos ficticios a 320/360/412 px: la navegación de cuatro destinos cabe sin desbordar; cambio de pantalla; anonimización con y sin tabla de personas; vista previa; alta de persona con código generado; aprendizaje (unión de palabras, ortografía, deshacer, apagado, diálogo de corrección, persistencia); audio vacío / con audio / acceso directo desde Texto y Ajustes; nota ficticia de 8.000 palabras comparada en ~2 ms. Sin errores de consola.
+- **Motorola/Brave: NO confirmado.** Probar con datos ficticios: abrir Anonimizar y leer la explicación; cargar una persona con código y anonimizar; deshacer; corregir una palabra en Texto, cerrar el teclado y ver el aviso «Aprendí…»; grabar con «Conservar también el audio» y encontrar el audio desde Grabar, Texto y Ajustes; comprobar que los cuatro botones de la barra se leen bien con letra Normal y Grande.
+
+### Límites conocidos
+- El aprendizaje por ortografía usa la palabra anterior como contexto para no reemplazar palabras reales en todas partes; por eso una corrección de una sola palabra puede tardar en repetirse. Reglas más amplias se pueden escribir a mano en Ajustes → Diccionario.
+- El diccionario se guarda sin cifrar, igual que antes. Las palabras aprendidas son siempre minúsculas (sin nombres propios), pero provienen de lo dictado: no usar datos reales.
+- Un navegador que no dispare el evento `change` al cerrar el teclado (poco habitual) aprende igualmente al guardar, anonimizar, borrar o pasar a segundo plano.
+
 ## Seguridad 01 · revisión («pen testing») inicial, política CSP y huella de la librería MP3 — 15/11/2026
 
 **Leer también [SEGURIDAD.md](SEGURIDAD.md): es el registro vivo de la revisión (reglas, hallazgos, pendientes).** Base: `main` en `63bc33bd99d75e6b6bf681c6cc23cc6f4bf9e86f`, rama `seguridad-01-csp-huella-2026-11-15`.

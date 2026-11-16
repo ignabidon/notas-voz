@@ -10,11 +10,23 @@ Esta es la **única versión web activa** del repositorio. La etapa vigente es *
 
 ## Funciones
 - Grabación de voz, cronómetro, pausa/reanudación, marcas y detención.
-- **Tres pantallas:** Grabar, Texto y Ajustes, accesibles desde la barra inferior. Mientras se graba, mantiene **Pausar/Reanudar** y **Detener** sin importar qué pantalla esté abierta.
+- **Cuatro pantallas:** Grabar, Texto, **Anonimizar** y Ajustes, accesibles desde la barra inferior. Mientras se graba, mantiene **Pausar/Reanudar** y **Detener** sin importar qué pantalla esté abierta.
 - Transcripción local con Whisper. Descargar o cambiar de modelo puede requerir conexión a internet.
-- Corrección contextual de palabras o frases; guardar correcciones frecuentes en un diccionario solo si se elige esa opción.
-- Edición de texto, anonimización posterior (revisar siempre), deshacer, códigos o alias de personas.
+- Corrección contextual de palabras o frases. **DictaNota aprende sola de lo que corregís** (se puede apagar en Ajustes → Diccionario) y también podés escribir reglas a mano en el diccionario.
+- Edición de texto; pantalla **Anonimizar** (explica para qué sirve, asocia cada nombre con un código y permite deshacer; revisar siempre).
 - Borrador, notas y audio guardados en el navegador; el botón Guardar solicita además un archivo TXT descargable; exportación y diagnósticos técnicos.
+
+## Anonimizar, audios y aprendizaje (16/11/2026)
+
+**Barra inferior:** Grabar · Texto · **Anonimizar** · Ajustes.
+
+**Anonimizar** reemplaza nombres de personas, teléfonos, correos y fechas del texto por etiquetas (`[Persona 1]`, `[número]`…) o por códigos que elegís, para poder guardar o compartir la nota sin mostrar quién es cada persona. En esa pantalla encontrás: qué hace (con un ejemplo inventado), el botón «Anonimizar transcripción», «Deshacer anonimizado», una vista del texto tal como queda y la lista **Personas y códigos**: escribís el nombre (y apodos), quién es (madre, hermano… o vacío si es el paciente) y un código tuyo o generado (`P-001`); debajo se ve cómo se va a escribir (`[madre de P-001]`). Sin lista, los nombres se ocultan como `[Persona 1]`, `[Persona 2]`… La lista se guarda solo en este navegador y **no está cifrada**. La anonimización es automática y puede fallar: revisá siempre el resultado.
+
+**Audios:** «Tus audios guardados» está en Grabar, justo debajo de «Conservar también el audio». Si hay un audio guardado, aparece un botón arriba de todo en Grabar para ir directo; también hay accesos en Texto y en Ajustes → Audio. Desde ahí descargás, convertís a MP3, transcribís de nuevo, borrás o recuperás el audio anterior.
+
+**Aprendizaje automático:** cuando corregís una palabra del texto, DictaNota la recuerda sola (sin botón) y la usa en próximas transcripciones. Verás el aviso «Aprendí tu corrección…» con **Deshacer**. Solo aprende errores de transcripción parecidos (palabras que se escriben o suenan casi igual), nunca nombres con mayúscula, números ni cambios de contenido, y no aprende de la anonimización. Lo aprendido queda en Ajustes → Diccionario, bajo «Aprendido de tus correcciones», donde podés borrarlo. Se apaga con «Aprender de mis correcciones».
+
+**Cómo probarlo en el celular (datos ficticios):** (1) Abrí Anonimizar y leé la explicación; cargá una persona con código, volvé a Texto con un texto de prueba y anonimizá; deshacé. (2) En Texto corregí una palabra mal transcripta, cerrá el teclado y buscá el aviso «Aprendí…»; revisalo en Ajustes → Diccionario. (3) Grabá con «Conservar también el audio» y recuperalo desde Grabar, Texto y Ajustes. Estado: pruebas automáticas y navegador de laboratorio; **sin prueba en el Motorola todavía**.
 
 ## Corrección de bloqueo en Firefox (15/11/2026)
 
