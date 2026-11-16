@@ -1,0 +1,23 @@
+Retomá el trabajo de DictaNota. Antes de empezar algo nuevo, terminá lo que quedó en tu rama `rediseno-04-clinica-chat-chatgpt` (nuevo PR, sin squash, solo con mi permiso para unir a `main`).
+
+Cuando eso esté terminado e integrado, incorporá las mejoras estéticas que propuso Claude tras revisar la app. Leé en este orden: `CONTINUAR-AQUI.md`, `AGENTS.md`, `SEGURIDAD.md` y `docs/PROPUESTA-ESTETICA-2026-11-16.md` (el documento central de este pedido).
+
+Repositorio: https://github.com/ignabidon/notas-voz
+Sitio: https://ignabidon.github.io/notas-voz/
+
+Verificá primero el HEAD actualizado de `main` y los PR abiertos. Esa propuesta se midió sobre `main` = `2f56388`: si cambió, volvé a medir antes de aplicar.
+
+Qué hacer:
+- Etapa A (ajustes menores): rótulos viejos «Texto» → «Notas» (sin renombrar pestañas), mismo estilo en los dos accesos de Audio, orden visual de Ajustes, punto rojo de grabación, «Procesamiento local» visible en el celular.
+- Etapa B (barra más baja en Notas, una acción principal por pantalla, burbujas y lista de hojas más limpias): empezala solo cuando mi PR anterior esté integrado.
+- Etapas C y D (anonimización visible, contraste, tokens de CSS): en ese orden y cada una en su rama.
+
+Reglas que no se negocian:
+- Una rama nueva desde el `main` actualizado por cada etapa o ítem, con pruebas (`node --test tests/delta.test.mjs` y las tres de navegador), entrada en CAMBIOS.md y los tres niveles de estado separados: código guardado, pruebas técnicas, probado en el Motorola.
+- Mostrame capturas con datos ficticios (360 y 412 px) antes de publicar. NO unas nada a `main` sin mi autorización explícita. Sin squash.
+- Nada de `innerHTML` con datos del usuario, sin dependencias ni servicios externos, íconos SVG en línea, sin tocar Whisper, captura, audio ni almacenamiento.
+- Los nombres definitivos de las pestañas, el cambio de «Grabar» en la barra de Audio (B2), la vista previa del texto en la lista (B3) y el modo oscuro (D2) los decido yo: preguntame antes de implementarlos.
+- Sin datos reales de pacientes. Sin nombres de IA ni créditos en la interfaz; la autoría va solo en documentación.
+- No tocar ramas de otra IA sin coordinarlo conmigo.
+
+Entregame primero un plan breve de la etapa que vas a encarar (qué archivos y funciones tocás, qué pruebas actualizás) y esperá mi aprobación antes de programar.

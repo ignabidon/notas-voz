@@ -1,3 +1,10 @@
+## 16/11/2026 · Propuesta estética de Claude (SOLO documentación)
+
+- **Responsable:** Claude. Rama: `estetica-propuesta-claude-2026-11-16`. Base: `2f56388` (`main`). **No modifica `index.html`, pruebas ni almacenamiento.**
+- Nuevo [docs/PROPUESTA-ESTETICA-2026-11-16.md](docs/PROPUESTA-ESTETICA-2026-11-16.md): perspectiva de diseño y mejoras en cuatro etapas (A ajustes menores, B jerarquía y densidad, C anonimización y contraste, D cimientos de CSS), con mediciones, ids afectados, criterios de aceptación y restricciones del repositorio. Y [docs/PROMPT-CHATGPT-ESTETICA-2026-11-16.txt](docs/PROMPT-CHATGPT-ESTETICA-2026-11-16.txt), texto para pasarle el pedido a ChatGPT.
+- Orden acordado con el usuario: ChatGPT **termina primero** su rama `rediseno-04-clinica-chat-chatgpt`; recién después incorpora estas mejoras, cada etapa en su rama y con permiso del usuario para unir a `main`.
+- Revisión hecha en Chrome sin conexión (412×892 y 360×740, datos ficticios; estados de captura simulados con clases CSS). **Sin prueba en el Motorola.**
+
 ## 16/11/2026 · Clínica contemporánea y notas en chat — ChatGPT
 
 - **Responsable:** ChatGPT (Codex). Rama: `rediseno-04-clinica-chat-chatgpt`. Base: `089ebbecfccf596fa8e5505d44224909bebb6b11`. Autorización: el usuario pidió comenzar con la estética clara y disposición de chat; navegación final y ampliación de anonimización quedan para la siguiente etapa.
