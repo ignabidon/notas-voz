@@ -1164,8 +1164,9 @@ test('seguridad: importación valida bytes y duración antes de decodificar', ()
   const src = html.slice(html.indexOf('const IMPORT_MAX_BYTES'), html.indexOf('function inspectImport'));
   const validate = new Script(src + ';validateImport').runInNewContext();
   assert.doesNotThrow(() => validate(1024, 60));
-  for (const sec of [0, -1, Infinity, NaN, 601]) assert.throws(() => validate(1024, sec));
-  assert.throws(() => validate(32*1024*1024+1, 1));
+  assert.doesNotThrow(() => validate(200*1024*1024, 900));
+  for (const sec of [0, -1, Infinity, NaN, 901]) assert.throws(() => validate(1024, sec));
+  assert.throws(() => validate(200*1024*1024+1, 1));
   assert.match(html, /if \(imported\) await inspectImport\(blob\); pcm = await decodePcm/);
   const probe = html.slice(html.indexOf('function inspectImport'), html.indexOf('async function decodePcm'));
   assert.match(probe, /URL.revokeObjectURL/); assert.match(probe, /clearTimeout/);
