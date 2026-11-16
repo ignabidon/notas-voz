@@ -1,7 +1,7 @@
 # CONTINUAR AQUÍ — Próxima IA de DictaNota
 
 > **Punto de entrada obligatorio para continuar el rediseño conversacional (16/11/2026).**
-> **Estado: diseño aprobado en lo conceptual, NO implementado.** El usuario autorizó publicar **solo documentación**; antes de cambiar código, datos o interfaz, presentar una propuesta y pedir autorización explícita.
+> **Estado (16/11/2026, 01:31):** propuesta, maquetas y **fase 1** hechas. La fase 1 (modelo de datos en funciones puras, bloque `CONV` de `index.html`, sin cambios visibles) está en la rama `rediseno-01-modelo-conversaciones-2026-11-16`. Decisiones nuevas del usuario en la sección 2.5 de la especificación. **Las fases siguientes necesitan autorización explícita**; la migración de notas viejas espera una decisión del usuario.
 
 ## Lectura en orden
 

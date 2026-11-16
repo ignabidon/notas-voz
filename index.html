@@ -1795,6 +1795,146 @@ function sentenceStarters(text, S){
   return res;
 }
 /*PURE-END*/
+/*CONV-START*/
+/* ====================================================================
+   Rediseño conversacional · fase 1: modelo de datos (16/11/2026).
+   Funciones puras: no leen ni escriben almacenamiento y la app TODAVÍA
+   NO las usa. Ver docs/REDISENO-CONVERSACIONAL-2026-11-16.md.
+   - Nota = conversación; mensaje = entrada con su fecha y hora de registro.
+   - recordedAt (ms UTC) se escribe una sola vez y nunca se cambia.
+   - Una nota se crea solo cuando hay texto o audio válido.
+   - Título provisional de una nota nueva: fecha y hora de registro.
+   ==================================================================== */
+const CONV_SCHEMA = 2;
+const CONV_KINDS = ['audio', 'texto', 'importado', 'heredado'];
+const CONV_MAX_MS = 8640000000000000;
+const convIsMs = v => Number.isFinite(v) && Math.abs(v) < CONV_MAX_MS;
+const convIsOffset = v => Number.isInteger(v) && Math.abs(v) <= 18 * 60;
+function convNewId(){
+  try { if (globalThis.crypto && crypto.randomUUID) return crypto.randomUUID(); } catch (e) {}
+  return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+}
+function convEmpty(){ return {schema: CONV_SCHEMA, conversations: [], entries: []}; }
+/* «16/11/2026 · 10:42» en la hora local del registro (tzOffsetMin = getTimezoneOffset() de ese momento). */
+function convStamp(ms, tzOffsetMin){
+  if (!convIsMs(ms)) return '';
+  const d = new Date(ms - (convIsOffset(tzOffsetMin) ? tzOffsetMin : 0) * 60000), p = n => String(n).padStart(2, '0');
+  return p(d.getUTCDate()) + '/' + p(d.getUTCMonth() + 1) + '/' + d.getUTCFullYear() + ' · ' + p(d.getUTCHours()) + ':' + p(d.getUTCMinutes());
+}
+const convHasContent = e => (typeof e.text === 'string' && e.text.trim() !== '') || (typeof e.audioId === 'string' && e.audioId !== '');
+/* Lectura defensiva: descarta lo malformado sin tocar el original. */
+function convValid(raw){
+  const out = convEmpty(); let dropped = 0;
+  if (!raw || typeof raw !== 'object' || raw.schema !== CONV_SCHEMA || !Array.isArray(raw.conversations) || !Array.isArray(raw.entries)) return {data: out, dropped: raw == null ? 0 : 1, ok: raw == null};
+  const seen = new Set();
+  for (const c of raw.conversations) {
+    if (!c || typeof c !== 'object' || typeof c.id !== 'string' || !c.id || seen.has(c.id) || typeof c.title !== 'string') { dropped++; continue; }
+    seen.add(c.id);
+    out.conversations.push({id: c.id, title: c.title, createdAt: convIsMs(c.createdAt) ? c.createdAt : null,
+      updatedAt: convIsMs(c.updatedAt) ? c.updatedAt : null, tags: Array.isArray(c.tags) ? c.tags.filter(t => typeof t === 'string') : []});
+  }
+  const seenE = new Set();
+  for (const e of raw.entries) {
+    const okKind = e && typeof e === 'object' && CONV_KINDS.includes(e.kind);
+    const okTime = okKind && (e.kind === 'heredado' ? (e.recordedAt === null || convIsMs(e.recordedAt)) : convIsMs(e.recordedAt));
+    if (!okTime || typeof e.id !== 'string' || !e.id || seenE.has(e.id) || !seen.has(e.conversationId) || typeof e.text !== 'string') { dropped++; continue; }
+    seenE.add(e.id);
+    out.entries.push({id: e.id, conversationId: e.conversationId, kind: e.kind, recordedAt: e.recordedAt,
+      tzOffsetMin: convIsOffset(e.tzOffsetMin) ? e.tzOffsetMin : null, text: e.text,
+      textEditedAt: convIsMs(e.textEditedAt) ? e.textEditedAt : null,
+      audioId: typeof e.audioId === 'string' && e.audioId ? e.audioId : null,
+      durationMs: convIsMs(e.durationMs) && e.durationMs >= 0 ? e.durationMs : null,
+      transcriptionStatus: ['pendiente', 'procesando', 'listo', 'error'].includes(e.transcriptionStatus) ? e.transcriptionStatus : 'listo',
+      legacySavedAt: convIsMs(e.legacySavedAt) ? e.legacySavedAt : null});
+  }
+  return {data: out, dropped, ok: dropped === 0};
+}
+/* Mensajes de una nota, en orden de registro (los heredados sin fecha, primero). */
+function convEntriesOf(data, conversationId){
+  return data.entries.map((e, i) => [e, i]).filter(([e]) => e.conversationId === conversationId)
+    .sort((a, b) => ((a[0].recordedAt ?? -Infinity) - (b[0].recordedAt ?? -Infinity)) || a[1] - b[1]).map(([e]) => e);
+}
+/* Agrega un mensaje. Sin conversationId (captura global) crea SIEMPRE una nota nueva, titulada con la fecha y hora.
+   Sin texto ni audio no crea nada. Devuelve datos nuevos; no modifica los recibidos. */
+function convAddEntry(data, input, opts = {}){
+  const newId = opts.newId || convNewId, now = convIsMs(opts.now) ? opts.now : Date.now();
+  const kind = input && input.kind;
+  if (!CONV_KINDS.includes(kind) || kind === 'heredado') throw new Error('Tipo de mensaje no válido.');
+  if (!convIsMs(input.recordedAt)) throw new Error('Falta la fecha y hora de registro.');
+  const entry = {id: newId(), conversationId: null, kind, recordedAt: input.recordedAt,
+    tzOffsetMin: convIsOffset(input.tzOffsetMin) ? input.tzOffsetMin : null, text: typeof input.text === 'string' ? input.text : '',
+    textEditedAt: null, audioId: typeof input.audioId === 'string' && input.audioId ? input.audioId : null,
+    durationMs: convIsMs(input.durationMs) && input.durationMs >= 0 ? input.durationMs : null,
+    transcriptionStatus: ['pendiente', 'procesando', 'listo', 'error'].includes(input.transcriptionStatus) ? input.transcriptionStatus : 'listo',
+    legacySavedAt: null};
+  if (!convHasContent(entry)) return {data, entry: null, conversation: null, created: false};
+  let conversations = data.conversations, conversation;
+  if (input.conversationId == null) {
+    conversation = {id: newId(), title: convStamp(entry.recordedAt, entry.tzOffsetMin), createdAt: entry.recordedAt, updatedAt: now, tags: []};
+    conversations = conversations.concat(conversation);
+  } else {
+    const c = conversations.find(x => x.id === input.conversationId);
+    if (!c) throw new Error('La nota de destino no existe.');
+    conversation = {...c, updatedAt: now};
+    conversations = conversations.map(x => x.id === c.id ? conversation : x);
+  }
+  entry.conversationId = conversation.id;
+  return {data: {...data, conversations, entries: data.entries.concat(entry)}, entry, conversation, created: input.conversationId == null};
+}
+/* Editar el texto nunca toca recordedAt: la última edición queda aparte. */
+function convEditText(data, entryId, text, now = Date.now()){
+  if (typeof text !== 'string') throw new Error('Texto no válido.');
+  const e = data.entries.find(x => x.id === entryId); if (!e) throw new Error('El mensaje no existe.');
+  if (e.text === text) return data;
+  return {...data, entries: data.entries.map(x => x.id === entryId ? {...x, text, textEditedAt: now} : x)};
+}
+function convRename(data, conversationId, title, now = Date.now()){
+  const t = typeof title === 'string' ? title.trim() : '';
+  if (!t) throw new Error('El título no puede quedar vacío.');
+  if (!data.conversations.some(c => c.id === conversationId)) throw new Error('La nota no existe.');
+  return {...data, conversations: data.conversations.map(c => c.id === conversationId ? {...c, title: t, updatedAt: now} : c)};
+}
+/* Mover (no copiar): solo cambia la nota de destino. Devuelve lo necesario para «Deshacer». */
+function convMoveEntry(data, entryId, targetId, now = Date.now()){
+  const e = data.entries.find(x => x.id === entryId); if (!e) throw new Error('El mensaje no existe.');
+  if (!data.conversations.some(c => c.id === targetId)) throw new Error('La nota de destino no existe.');
+  if (e.conversationId === targetId) return {data, undo: null};
+  const from = e.conversationId;
+  return {data: {...data,
+      conversations: data.conversations.map(c => c.id === targetId || c.id === from ? {...c, updatedAt: now} : c),
+      entries: data.entries.map(x => x.id === entryId ? {...x, conversationId: targetId} : x)},
+    undo: {entryId, from, to: targetId}};
+}
+function convUndoMove(data, undo, now = Date.now()){
+  if (!undo) return data;
+  const e = data.entries.find(x => x.id === undo.entryId);
+  if (!e || e.conversationId !== undo.to || !data.conversations.some(c => c.id === undo.from)) throw new Error('No se puede deshacer: la nota cambió.');
+  return convMoveEntry(data, undo.entryId, undo.from, now).data;
+}
+const convIsEmpty = (data, conversationId) => !data.entries.some(e => e.conversationId === conversationId);
+/* Control antes de guardar: ningún mensaje existente puede perder o cambiar su fecha de registro. */
+function convCheckWrite(before, after){
+  const ids = new Set();
+  for (const e of after.entries) { if (ids.has(e.id)) return 'Mensaje duplicado.'; ids.add(e.id); }
+  const next = new Map(after.entries.map(e => [e.id, e]));
+  for (const e of before.entries) {
+    const n = next.get(e.id);
+    if (n && n.recordedAt !== e.recordedAt) return 'Se intentó cambiar la fecha y hora de registro de un mensaje.';
+    if (n && n.tzOffsetMin !== e.tzOffsetMin) return 'Se intentó cambiar la zona horaria de un mensaje.';
+  }
+  return '';
+}
+/* Volver atrás: convierte cada nota en una nota plana del formato anterior ({id, text, title, ts, tags}).
+   Las fechas no se meten en el texto: los mensajes se separan con una línea en blanco. */
+function convToLegacyNotes(data){
+  return data.conversations.map(c => {
+    const es = convEntriesOf(data, c.id);
+    const times = es.flatMap(e => [e.recordedAt, e.textEditedAt, e.legacySavedAt]).concat(c.updatedAt, c.createdAt).filter(convIsMs);
+    return {id: c.id, title: c.title, text: es.map(e => e.text).filter(t => t.trim()).join('\n\n'),
+      ts: times.length ? Math.max(...times) : 0, tags: c.tags.slice()};
+  }).filter(n => n.text);
+}
+/*CONV-END*/
 
 /* ====================================================================
    Estado general
