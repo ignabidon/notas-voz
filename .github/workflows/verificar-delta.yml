@@ -30,6 +30,9 @@ jobs:
       - name: Verificar audio por nota E1 en Chrome (apagado, datos ficticios)
         run: node tests/audio-nota-browser.mjs
         timeout-minutes: 3
+      - name: Verificar audio cifrado por nota E2 en Chrome (tono sintético, datos ficticios)
+        run: node tests/audio-cifrado-browser.mjs
+        timeout-minutes: 4
       - name: Verificar pantalla Notas en Chrome (hojas y mensajes, datos ficticios)
         run: node tests/notas-browser.mjs
         timeout-minutes: 4
