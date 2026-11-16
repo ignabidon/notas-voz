@@ -521,7 +521,7 @@ input[type=password]{width:100%;min-width:0;background:#0b1426;color:var(--ink);
 .vault-panel h4{font-size:15px;margin:6px 0 4px}
 .vault-panel form,.vault-panel .vault-box{margin-top:12px}
 .vault-panel .row button{min-height:48px}
-.vault-code{font:600 20px/1.5 ui-monospace,monospace;letter-spacing:1px;background:#0b1426;border:1px dashed #6386b5;border-radius:12px;padding:12px;text-align:center;overflow-wrap:anywhere;user-select:all}
+.vault-code{-webkit-user-select:text;font:600 20px/1.5 ui-monospace,monospace;letter-spacing:1px;background:#0b1426;border:1px dashed #6386b5;border-radius:12px;padding:12px;text-align:center;overflow-wrap:anywhere;user-select:text}
 #vaultMsg:empty,#vaultWarn:empty,#vaultSaveError:empty{display:none}
 #vaultMsg{color:var(--acc);font-size:13px}
 #vaultWarn,#vaultSaveError{color:#ffc9a8;font-size:13px}
@@ -675,12 +675,14 @@ input[type=password]{width:100%;min-width:0;background:#0b1426;color:var(--ink);
           <div id="vaultRecoveryBox" class="vault-box" hidden>
             <p class="hint"><b>Código de recuperación.</b> Anotalo en papel y guardalo fuera del celular. Sirve para entrar si olvidás la contraseña. No se vuelve a mostrar.</p>
             <p class="vault-code" id="vaultRecoveryCode"></p>
+            <button type="button" id="vaultRecoveryCopy">Copiar código</button>
+            <p class="hint">Si lo copiás, pegalo enseguida en un lugar seguro (por ejemplo, una nota de papel o tu gestor de contraseñas) y no lo dejes en el portapapeles ni en WhatsApp.</p>
             <label class="chk"><input type="checkbox" id="vaultRecoverySaved"><span>Ya lo anoté en un lugar seguro</span></label>
             <div class="row"><button type="button" id="vaultRecoveryBio" class="p">Activar huella</button><button type="button" id="vaultRecoveryDone">Ahora no</button></div>
           </div>
           <div id="vaultOn" hidden>
             <div class="row"><button type="button" id="vaultLockBtn">Bloquear ahora</button><button type="button" id="vaultBioAdd">Activar huella</button><button type="button" id="vaultBioRemove" hidden>Dejar de usar la huella</button></div>
-            <div class="row"><button type="button" id="vaultChangePw" class="ghost">Cambiar contraseña</button><button type="button" id="vaultDisable" class="ghost danger">Quitar la protección</button></div>
+            <div class="row"><button type="button" id="vaultChangePw" class="ghost">Cambiar contraseña</button><button type="button" id="vaultNewCode" class="ghost">Nuevo código de recuperación</button><button type="button" id="vaultDisable" class="ghost danger">Quitar la protección</button></div>
           </div>
           <form id="vaultAuth" class="vault-box" hidden>
             <label for="vaultAuthPass" id="vaultAuthTitle">Contraseña</label>
@@ -1226,6 +1228,15 @@ function createVault(storage){
     if (!(await vaultUnwrapBio(header, prfOutput)).every((x, i) => x === dek[i])) throw new Error('La verificación de la huella falló.');
     storage.setItem(VAULT_HEADER, JSON.stringify(header)); v.header = header;
   };
+  v.newRecovery = async password => {
+    const dek = await vaultUnwrapPassword(v.header, password);
+    const recovery = vaultNewRecoveryCode(), salt = vaultRandom(16);
+    const kek = await vaultKekFromSecret(vaultEnc.encode(vaultNormalizeRecovery(recovery)), salt, 'dictanota recuperacion v1');
+    const header = {...v.header, rec: {kdf: 'HKDF-SHA256', salt: vb64(salt), box: await vaultSeal(kek, dek, vaultAad(v.header.id, 'clave-recuperacion'))}};
+    if (!(await vaultUnwrapRecovery(header, recovery)).every((x, i) => x === dek[i])) throw new Error('La verificación del código nuevo falló; se conserva el anterior.');
+    dek.fill(0); storage.setItem(VAULT_HEADER, JSON.stringify(header)); v.header = header;
+    return recovery;
+  };
   v.removeBio = () => { const header = {...v.header, bio: null}; storage.setItem(VAULT_HEADER, JSON.stringify(header)); v.header = header; };
   v.disable = async password => {
     (await vaultUnwrapPassword(v.header, password)).fill(0);
@@ -1344,7 +1355,36 @@ async function vaultOfferBio(dek){
   catch (e) { vaultPanelMsg('No se activó la huella: ' + vaultFriendly(e)); }
   finally { dek.fill(0); vaultRefreshPanel(); }
 }
+function vaultShowRecovery(code, offerBio){
+  vaultEl('vaultRecoveryCode').textContent = code; vaultEl('vaultRecoveryBox').hidden = false; vaultEl('vaultRecoverySaved').checked = false;
+  vaultEl('vaultRecoveryBio').hidden = !offerBio;
+  vaultEl('vaultRecoveryDone').textContent = offerBio ? 'Ahora no' : 'Listo';
+}
+async function vaultCopyRecovery(){
+  const code = vaultEl('vaultRecoveryCode').textContent;
+  if (!code) return;
+  try { await navigator.clipboard.writeText(code); vaultPanelMsg('Código copiado. Pegalo ya en un lugar seguro.'); }
+  catch (e) {
+    const r = document.createRange(); r.selectNodeContents(vaultEl('vaultRecoveryCode'));
+    const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
+    vaultPanelMsg('No se pudo copiar solo: quedó seleccionado; mantené apretado y elegí Copiar, o anotalo a mano.');
+  }
+}
 function vaultInitUI(){
+  vaultEl('vaultRecoveryCopy').addEventListener('click', vaultCopyRecovery);
+  vaultEl('vaultNewCode').addEventListener('click', async () => {
+    const pw = await vaultAskPassword('Confirmá tu contraseña para crear un código nuevo (el anterior deja de servir)'); if (pw === null) return;
+    try {
+      const code = await vault.newRecovery(pw);
+      vaultShowRecovery(code, false);
+      vaultEl('vaultRecoveryDone').onclick = () => {
+        if (!vaultEl('vaultRecoverySaved').checked) { vaultPanelMsg('Marcá la casilla cuando hayas anotado el código.'); return; }
+        vaultEl('vaultRecoveryCode').textContent = ''; vaultEl('vaultRecoveryBox').hidden = true; vaultEl('vaultRecoveryDone').onclick = null;
+        vaultPanelMsg('Código nuevo guardado. El anterior ya no sirve.');
+      };
+      vaultPanelMsg('Este es tu código nuevo. El anterior ya no sirve.');
+    } catch (e) { vaultPanelMsg(vaultFriendly(e)); }
+  });
   vault.onError = msg => { vaultEl('vaultSaveError').textContent = msg; if (msg && typeof flash === 'function') flash(msg); };
   vaultEl('vaultLockForm').addEventListener('submit', async ev => {
     ev.preventDefault();
@@ -1379,7 +1419,7 @@ function vaultInitUI(){
       try { vaultBeforeLock(); } catch (e) {}
       const {recovery, dek} = await vault.enable(vaultEl('vaultNew').value);
       vaultEl('vaultNew').value = ''; vaultEl('vaultNew2').value = ''; vaultEl('vaultSetup').hidden = true;
-      vaultEl('vaultRecoveryCode').textContent = recovery; vaultEl('vaultRecoveryBox').hidden = false; vaultEl('vaultRecoverySaved').checked = false;
+      vaultShowRecovery(recovery, true);
       vaultEl('vaultRecoveryDone').onclick = () => {
         if (!vaultEl('vaultRecoverySaved').checked) { vaultPanelMsg('Marcá la casilla cuando hayas anotado el código.'); return; }
         vaultEl('vaultRecoveryCode').textContent = ''; vaultEl('vaultRecoveryBox').hidden = true;

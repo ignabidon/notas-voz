@@ -113,6 +113,20 @@ try {
   await waitFor('vault.state === "open"', 'desbloqueo con código');
   assert.equal(await run('notes.length'), 1);
 
+  // 7b) Código nuevo: botón Copiar presente y el código anterior deja de servir.
+  await run('document.getElementById("vaultNewCode").click(); true');
+  await waitFor('!document.getElementById("vaultAuth").hidden', 'pide contraseña para el código nuevo');
+  await run(`document.getElementById("vaultAuthPass").value = ${JSON.stringify(PASS2)}; document.querySelector("#vaultAuth button[type=submit]").click(); true`);
+  await waitFor('!document.getElementById("vaultRecoveryBox").hidden && document.getElementById("vaultRecoveryCode").textContent.length === 29', 'código nuevo visible');
+  const nuevo = await run('document.getElementById("vaultRecoveryCode").textContent');
+  assert.notEqual(nuevo, recovery);
+  assert.equal(await run('document.getElementById("vaultRecoveryBio").hidden'), true);
+  await run('document.getElementById("vaultRecoveryCopy").click(); true');
+  await waitFor('/[Cc]opi/.test(document.getElementById("vaultMsg").textContent)', 'aviso de copia');
+  await run('document.getElementById("vaultRecoverySaved").click(); document.getElementById("vaultRecoveryDone").click(); true');
+  assert.equal(await run('document.getElementById("vaultRecoveryBox").hidden && document.getElementById("vaultRecoveryCode").textContent === ""'), true);
+  await shot('5-codigo-nuevo');
+
   // 8) Quitar la protección (con contraseña): los datos vuelven a quedar como antes.
   await run('document.getElementById("vaultDisable").click(); true');
   await waitFor('!document.getElementById("vaultAuth").hidden', 'pide contraseña');
