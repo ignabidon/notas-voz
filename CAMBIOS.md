@@ -1,3 +1,13 @@
+## 16/11/2026 · Etapa A estética: ajustes menores de presentación (PR #41)
+
+- **Responsable:** Claude. Rama: `estetica-a-ajustes-2026-11-16`. Base: `e89d0a1` (`main`). **Toca `index.html` y `tests/delta.test.mjs`. Solo presentación**: sin datos persistidos nuevos, claves, orígenes, dependencias ni cambios de CSP, cifrado, Whisper, captura ni almacenamiento de audio. Detalle de cada ítem y de lo que **no** se hizo: [docs/TRASPASO-A-CHATGPT-2026-11-16.md](docs/TRASPASO-A-CHATGPT-2026-11-16.md).
+- **Autorización:** el usuario pidió (16/11/2026, 13:54) preparar la Etapa A mientras ChatGPT no está disponible. **No se une a `main` sin su permiso explícito** (merge normal, sin squash).
+- **A1** Se quitan los cinco rótulos viejos «Texto»; las frases ya no nombran ninguna pestaña (para no repetirlas en la Etapa N). **A2** «Ver hojas guardadas» y «Escribir una nota» con el mismo estilo. **A3** Ajustes: botón (i) en línea con su etiqueta, opciones del modelo con nombre corto (la descripción sigue debajo) e íconos SVG en línea, uno por módulo. **A4** El punto de estado es rojo al grabar y ámbar al pausar. **A5** «Procesamiento local» visible en el celular (antes se ocultaba bajo 760 px). **A6** Audio: «Conservar audio» en una fila propia y la tarjeta repetida «Descargar audio» solo aparece si hay un audio; `#audioBox` y «Mis grabaciones» siguen siempre visibles.
+- **No incluido:** pulso animado del punto de grabación; unificar los tres botones «Descargar audio» cuando hay audio (queda para la Etapa E); etiqueta «Protegida».
+- **Pruebas técnicas (Chrome local, sin conexión):** `node --test tests/delta.test.mjs` **134/134** (128 + 6 nuevas «Etapa A»), `tests/browser.mjs`, `tests/cifrado-browser.mjs` y `tests/notas-browser.mjs` OK. Capturas antes/después a 360 y 412 px con datos ficticios (estados de captura simulados con clases CSS).
+- **Estado:** código guardado en la rama y PR abierto · prueba técnica: aprobada en local; CI del PR: ver el PR · **Motorola: sin probar**. Pendiente: revisión visual del usuario y su permiso para unir.
+- **Documentación nueva:** [traspaso a ChatGPT](docs/TRASPASO-A-CHATGPT-2026-11-16.md) y [pendientes del usuario y prueba en el Motorola](docs/PRUEBA-MOTOROLA-Y-PENDIENTES-USUARIO-2026-11-16.md).
+
 ## 16/11/2026 · Decisión: pestaña «Cuadernos» y audios cargados guardados con la nota (SOLO documentación)
 
 - **Responsable:** Claude. Rama: `docs-cuadernos-audios-importados-2026-11-16`. Base: `53441eb` (`main`, tras unir el PR #39 con commit de merge). **No modifica `index.html`, pruebas, AGENTS.md ni almacenamiento.**

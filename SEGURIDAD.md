@@ -1,3 +1,7 @@
+## 16/11/2026 · Etapa A estética (Claude, PR #41)
+
+Solo presentación en Audio, Anonimizar, Ajustes y encabezado: sin nuevos datos persistidos, claves, dependencias, orígenes ni cambios de CSP, cifrado, parámetros de Whisper o almacenamiento de audio. Sin `innerHTML` con datos del usuario; íconos SVG en línea. «Procesamiento local» pasa a verse también en el celular (el texto no cambia; nunca «sin nube»). `#audioBox` y las acciones de audio siguen siempre disponibles; la tarjeta repetida «Descargar audio» solo se muestra si hay un audio. Prueba técnica local; **sin prueba en el Motorola**. Sigue abierto el hallazgo 4 (proteger `main`): los pasos para el usuario están en [docs/PRUEBA-MOTOROLA-Y-PENDIENTES-USUARIO-2026-11-16.md](docs/PRUEBA-MOTOROLA-Y-PENDIENTES-USUARIO-2026-11-16.md).
+
 ## 16/11/2026 · Presentación clara y chat (ChatGPT)
 
 Sin nuevos datos persistidos, claves, dependencias, orígenes ni cambios de CSP, cifrado, parámetros de Whisper o almacenamiento de audio. El editor existente cambia de ubicación y sigue dentro de la barra protegida. Las notas/títulos siguen mostrándose con textContent. La anonimización con recuperación persistente de originales es un requisito de la etapa siguiente, no una garantía actual.
