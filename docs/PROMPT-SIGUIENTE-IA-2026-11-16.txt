@@ -1,0 +1,20 @@
+Quiero continuar el rediseño de mi aplicación DictaNota sin modificar todavía el código. Leé primero `CONTINUAR-AQUI.md` en la raíz y luego `docs/REDISENO-CONVERSACIONAL-2026-11-16.md` como especificación central.
+
+Repositorio: https://github.com/ignabidon/notas-voz
+Sitio: https://ignabidon.github.io/notas-voz/
+
+Primero verificá el HEAD actualizado de main y leé AGENTS.md, SEGURIDAD.md, README.md, CAMBIOS.md, DISENO-CIFRADO.md y el código/pruebas relevantes.
+
+Decisiones ya tomadas:
+- Diseño visual: Clínica contemporánea; enfoque móvil/Android a futuro.
+- Arquitectura propuesta: tres pestañas, Notas / Biblioteca / Ajustes. Texto y Anonimizar pasan a ser acciones contextuales, sin perder sus funciones.
+- Uso conversacional privado, NO mensajería real ni subida de contenido: cada audio o texto forma una burbuja dentro de una nota/conversación.
+- Bitácora rápida: al grabar desde la acción global, se crea por defecto una nota independiente y sin título obligatorio. Después puede renombrarse o moverse el mensaje a una conversación existente («Supermercado», «Días lunes»).
+- Al grabar dentro de una nota, se añade a ella. Nunca añadir automáticamente una captura global a la última conversación.
+- Cada burbuja debe mostrar fecha completa y hora originales, como metadatos no editables y separados del texto. Corregir, anonimizar, mover o renombrar NO cambia esa fecha. El usuario puede escribir aclaraciones manuales en el campo de texto.
+- Biblioteca es central: preservar acceso a notas, audios guardados, archivos, transcripciones, búsqueda, recuperación y exportaciones.
+- Conservar grabación/pausa/detener, Whisper local, correcciones y aprendizaje, protección, huella, códigos y anonimización.
+
+Tené especial cuidado: el modelo actual de notas es id/text/title/ts/tags y el almacenamiento de audio conserva un audio principal y un anterior. Una biblioteca histórica multi-audio NO existe todavía: exige nuevo diseño y migración. Los audios no están cifrados y las descargas salen en claro. Respetá vaultStore, claves existentes, CSP y tests.
+
+Entregá primero: (1) diagnóstico de compatibilidad con el código real, (2) propuesta de pantallas y flujos, (3) modelo de datos y migración segura, (4) fases de implementación y pruebas. Señalá qué es decisión confirmada y qué es sugerencia tuya. NO implementes, cambies archivos, generes commits ni publiques nada sin consultarme y recibir autorización explícita.
