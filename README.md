@@ -10,6 +10,18 @@ Esta es la **única versión web activa** del repositorio. La etapa vigente es *
 
 > **Prueba Delta 11 — experimental.** El usuario ya probó en Brave Android la grabación, Whisper, descarga TXT, recuperación del audio anterior y funcionamiento general de la interfaz. Las acciones nuevas de Delta 11 —Descargar audio visible, Compartir texto y accesos directos— **todavía necesitan prueba real en el Motorola**. Las 53 pruebas automáticas y la publicación GitHub Pages fueron satisfactorias. No usar datos reales de pacientes.
 
+
+## Notas en hojas (16/11/2026 · fase 3, sin probar en el Motorola)
+
+La pestaña **Notas** reemplaza a Texto. Cada hoja es como un chat privado (no se envía nada): sus mensajes muestran la **fecha y hora en que se guardaron**.
+
+- Grabá o escribí: el texto queda en el editor como **mensaje sin guardar**. Tocá **Guardar** para sumarlo a una hoja o **Descartar** para tirarlo (pide confirmación).
+- Grabar desde **Audio** crea siempre una hoja nueva. Con una hoja abierta en **Notas**, lo que grabes o escribas se agrega ahí.
+- En cada mensaje: Copiar, Editar, Mover, Borrar. En cada hoja: Renombrar, Copiar todo, Pasar todo a otra hoja, Descargar .txt.
+- Tus notas anteriores aparecen solas como hojas (una burbuja por nota); las originales se conservan aparte.
+
+**Prueba en el Motorola (datos inventados):** abrir Notas y ver las notas anteriores → escribir algo y Guardar (hoja nueva con fecha y hora) → con esa hoja abierta, Grabar y Guardar (se agrega ahí) → ir a Audio, grabar, volver a Notas y Guardar (hoja nueva) → Editar un mensaje y ver que la fecha no cambia → Mover y Deshacer → Pasar todo a otra hoja → Copiar todo y pegar en otra app → escribir algo, cerrar Brave sin guardar y volver a abrir (debe ofrecer Guardar o Descartar) → probar con letra Grande.
+
 ## Protección con contraseña y huella (16/11/2026)
 
 En **Ajustes → Privacidad y almacenamiento → Protección con contraseña y huella** podés cifrar en el celular las notas, el borrador, la copia para deshacer, la tabla de personas y el diccionario.

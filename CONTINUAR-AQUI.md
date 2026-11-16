@@ -1,7 +1,7 @@
 # CONTINUAR AQUÍ — Próxima IA de DictaNota
 
 > **Punto de entrada obligatorio para continuar el rediseño conversacional (16/11/2026).**
-> **Estado (16/11/2026, 09:14):** propuesta, maquetas, **fase 1** (modelo) y **fase 2** (guardado protegido, migración de notas viejas, sello = hora de guardado, mover/copiar hoja completa) hechas, sin cambios visibles: la app todavía no usa el bloque `CONV`. **Leer las secciones 2.5 y 2.6 de la especificación.** Próximo paso: **fase 3**, la pantalla Notas con burbujas y botón Guardar; necesita autorización explícita.
+> **Estado (16/11/2026, 09:52):** fases 1 a 3 hechas: la pestaña **Notas** ya muestra hojas con mensajes (ver CAMBIOS.md). **Leer las secciones 2.5 y 2.6 de la especificación** (Guardar, sello = hora de guardado, audio solo a pedido y fuera de las burbujas). Falta la prueba en el Motorola. Próximo paso sugerido: Ajustes reordenado, Anonimizar desde la hoja y vista Documento, con autorización del usuario.
 
 ## Lectura en orden
 

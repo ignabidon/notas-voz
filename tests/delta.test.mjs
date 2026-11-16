@@ -129,13 +129,16 @@ test('diagnósticos v2: motivo de la placa de video, hilos y duración de pausas
     assert.ok(html.includes(s), 'falta ' + s);
 });
 
-test('Guardar .txt solicita una descarga sin perder el guardado local', () => {
+test('Guardar agrega el mensaje a una hoja, sin descargar archivos ni usar las notas anteriores', () => {
   const handler = html.match(/\$\('save'\)\.onclick = \(\) => \{([\s\S]*?)\n\};/);
-  assert.ok(handler, 'falta acción de Guardar nota');
-  assert.match(handler[1], /const savedLocally = persist\(\)/);
-  assert.match(handler[1], /download\(makeTxt\(\)\)/);
-  assert.match(html, /<span>Guardar nota \.txt<\/span>/);
-  assert.doesNotMatch(handler[1], /fetch\(|XMLHttpRequest|sendBeacon\(/);
+  assert.ok(handler, 'falta acción de Guardar');
+  assert.match(handler[1], /convAddEntry\(/);
+  assert.match(handler[1], /savedAt: now/);
+  assert.match(handler[1], /const w = convStore\.save\(next\)/);
+  assert.match(handler[1], /if \(!w\.ok\) return flash\('No se guardó: '/, 'si falla no se limpia el editor');
+  assert.doesNotMatch(handler[1], /download\(|persist\(\)|fetch\(|XMLHttpRequest|sendBeacon\(/);
+  assert.match(html, /<span>Guardar<\/span><\/button>/);
+  assert.ok(html.includes("$('txt').onclick") && html.includes("$('doc').onclick"), 'exportar el mensaje sigue disponible');
 });
 
 test('el archivo de texto contiene título y transcripción ficticios', () => {
@@ -1376,17 +1379,36 @@ test('cifrado: un código de recuperación nuevo reemplaza al anterior (pide la 
 
 /* ---- Rediseño conversacional · modelo y guardado (fases 1 y 2, 16/11/2026). Datos ficticios. ---- */
 const convSrc = (html.match(/\/\*CONV-START\*\/([\s\S]*?)\/\*CONV-END\*\//) || [])[1];
-const conv = new Function(convSrc + ';return {CONV_KEY, convEmpty, convStamp, convValid, convEntriesOf, convAddEntry, convEditText, convRename, convMoveEntry, convMoveEntries, convMoveAll, convUndoMove, convIsEmpty, convCopyText, convCheckWrite, convFromLegacy, convToLegacyNotes, convMakeStore};')();
+const conv = new Function(convSrc + ';return {convDeleteEntry, convDeleteConversation, convSummaries, CONV_KEY, convEmpty, convStamp, convValid, convEntriesOf, convAddEntry, convEditText, convRename, convMoveEntry, convMoveEntries, convMoveAll, convUndoMove, convIsEmpty, convCopyText, convCheckWrite, convFromLegacy, convToLegacyNotes, convMakeStore};')();
 const BA = 180; // getTimezoneOffset() de Buenos Aires
 const T1042 = Date.UTC(2026, 10, 16, 13, 42); // 16/11/2026 10:42 en Argentina
 const seqIds = () => { let n = 0; return () => 'id' + (++n); };
 const guardar = (d, extra, ids) => conv.convAddEntry(d, {kind: 'audio', tzOffsetMin: BA, ...extra}, {newId: ids || seqIds()});
 
-test('conversaciones: el bloque está aislado y la app todavía no carga, migra ni guarda', () => {
+test('conversaciones: el bloque está aislado y la pantalla Notas lo usa con el almacén cifrado', () => {
   assert.ok(convSrc, 'falta el bloque CONV');
   assert.doesNotMatch(convSrc, /localStorage|vaultStore|indexedDB|innerHTML|document\.|\beval\b|new Function|fetch\(/);
-  const fuera = html.replace(convSrc, '');
-  for (const f of ['convAddEntry', 'convMoveEntries', 'convMoveAll', 'convFromLegacy', 'convMakeStore', 'convCopyText', 'convValid']) assert.ok(!fuera.includes(f + '('), f + ' no debe usarse fuera del bloque hasta la fase 3');
+  assert.match(html, /const convStore = convMakeStore\(vaultStore, \(\) => vault\.state === 'off' \|\| vault\.state === 'open'\);/);
+  assert.match(html, /renderList\(\); convInit\(\); restoreDraft\(\);/, 'se carga y migra al desbloquear, antes de recuperar el borrador');
+  assert.ok(!/localStorage\.(get|set|remove)Item\(CONV_KEY|localStorage\.(get|set|remove)Item\('notasvoz\.dictanota/.test(html), 'las hojas no se leen por fuera del almacén cifrado');
+  const ui = html.slice(html.indexOf('/* ---------- Notas en hojas'), html.indexOf('function convInit()'));
+  assert.ok(ui.length > 1000);
+  assert.doesNotMatch(ui, /\.innerHTML = (?!'')/, 'los textos del usuario van con textContent');
+  assert.doesNotMatch(ui, /insertAdjacentHTML|outerHTML|\beval\b/);
+});
+
+test('Notas: la captura global va a hoja nueva y dentro de una hoja abierta se agrega ahí', () => {
+  assert.match(html, /function prepareNew\(\)\{[\s\S]*?convStartPending\(true\);\n\}/);
+  assert.match(html, /convTargetId = fromAudio && document\.body\.dataset\.view !== 'transcripcion' \? null : convOpenId;/);
+  assert.match(html, /<span>Notas<\/span><\/a>/);
+  for (const id of ['convPanel', 'convList', 'convBubbles', 'convTarget', 'convDiscard', 'convCancelEdit', 'convMoveDialog', 'convMoveAllBtn', 'convCopyAll', 'convUndo', 'convRename']) assert.ok(ids.includes(id), 'falta #' + id);
+});
+
+test('Notas: descartar pide confirmación y la recuperación automática guarda el estado del mensaje', () => {
+  assert.match(html, /confirm\('¿Descartar este mensaje sin guardar\?'\)/);
+  assert.match(html, /const snap = \(\) => JSON\.stringify\(\{[^}]*conv: \{open: convOpenId, target: convTargetId, targetSet: convTargetSet, editing: convEditingId/);
+  assert.match(html, /Se recuperó un mensaje sin guardar\. Tocá Guardar o Descartar\./);
+  assert.match(html, /confirm\('¿Borrar este mensaje\? No se puede deshacer\.'\)/);
 });
 
 test('conversaciones: la clave nueva queda protegida por el cifrado', () => {
@@ -1580,4 +1602,18 @@ test('conversaciones: con la protección activada la hoja se guarda cifrada y bl
   await v2.unlockPassword('frase de prueba larga');
   assert.equal(s2.load().ok, true);
   assert.equal(s2.data.entries[0].text, 'Texto ficticio secreto.');
+});
+
+test('conversaciones: borrar un mensaje y solo hojas vacías; lista de hojas por actividad', () => {
+  const ids = seqIds();
+  let r = guardar(conv.convEmpty(), {savedAt: T1042, text: 'Uno.'}, ids);
+  const a = r.conversation.id;
+  r = guardar(r.data, {savedAt: T1042 + 6e4, text: 'Dos.'}, ids);
+  const b = r.conversation.id;
+  assert.deepEqual(conv.convSummaries(r.data).map(x => [x.id, x.count, x.lastSavedAt]), [[b, 1, T1042 + 6e4], [a, 1, T1042]]);
+  assert.throws(() => conv.convDeleteConversation(r.data, a), /mensajes/);
+  const sinMsg = conv.convDeleteEntry(r.data, r.data.entries[0].id);
+  assert.ok(conv.convIsEmpty(sinMsg, a));
+  assert.equal(conv.convDeleteConversation(sinMsg, a).conversations.length, 1);
+  assert.equal(conv.convCheckWrite(r.data, sinMsg), '');
 });
