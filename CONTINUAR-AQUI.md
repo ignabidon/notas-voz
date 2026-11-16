@@ -1,5 +1,9 @@
 # CONTINUAR AQUÍ — DictaNota
 
+> **▶ ESTADO AL 16/11/2026, 18:40 (Claude Fable 5.2).** En `main` ya están: la **Etapa N** (pestañas Dictar / Cuadernos; PR #43 de ChatGPT), la continuidad (PR #42) y el **diseño del almacenamiento cifrado** (PR #44). Los tres se unieron con permiso del usuario, con merge normal.
+> **PRÓXIMO PASO: E1**, por indicación del usuario. Todo lo necesario está en el tablero de nombre fijo **[docs/PLAN-ALMACENAMIENTO-CIFRADO.md](docs/PLAN-ALMACENAMIENTO-CIFRADO.md)**: qué incluye cada paso (E1 → E2 → K1 → E3 → K2 → T → AO), de qué depende, su estado y las trece decisiones del usuario. Un paso por vez; **plan corto y permiso explícito antes de programar**. La Etapa B sigue pendiente y E3 la espera.
+> Nada de lo unido hoy está probado en el Motorola. Los bloques de abajo son anteriores a estas uniones.
+
 > **Etapa N — ChatGPT (Codex), 16/11/2026:** rama `etapa-n-dictar-cuadernos`, base `3383584`. Textos visibles: Dictar / Cuadernos / Anonimizar / Ajustes; hoja pasa a cuaderno. No cambian ids, claves, datos guardados ni motores. PR #36 y #41 ya integrados; PR #42 documental separado. Validación automática en el PR; Motorola pendiente. Merge normal, sin squash, solo con permiso para publicar.
 
 > **Estado verificado por ChatGPT (Codex), 16/11/2026:** main = `3383584`. Los PR #36 (tema claro y chat) y #41 (Etapa A de Claude) ya están unidos. La rama `rediseno-04-clinica-chat-chatgpt` en `95bb587` no tiene trabajo pendiente de integrar. No repetir esas implementaciones.
