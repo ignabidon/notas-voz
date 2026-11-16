@@ -55,7 +55,7 @@ Anotá cada paso como **✔ bien** o **✘ falló** (y, si falló, sacá una cap
 3. ☐ En **Audio**, activá **Conservar audio**, tocá **Grabar**, leé el texto de arriba (20–30 s), tocá **Detener**.
 4. ☐ Aparece el texto transcripto (la primera vez tarda más porque descarga el modelo). Anotá cuánto tardó, aproximado.
 5. ☐ Repetí con **Small** (Ajustes → modelo Small; descarga otro modelo). Anotá si anduvo, si fue más lento y si hubo errores o el celular se puso muy lento.
-6. ☐ Durante una grabación, **Pausar** y **Reanudar** funcionan; la barra de abajo sigue visible; el punto es **rojo** al grabar y **ámbar** al pausar.
+6. ☐ Durante una grabación, **Pausar** y **Reanudar** funcionan; la barra de abajo sigue visible. (El punto de estado es **rojo** al grabar y **ámbar** al pausar solo si ya se unió la Etapa A; antes era ámbar en los dos casos.)
 
 ### 3.3 Audio guardado y MP3
 7. ☐ En «Tus audios guardados»: **Descargar audio** descarga un archivo y podés reproducirlo. Probá también **Transcribir este audio**.
