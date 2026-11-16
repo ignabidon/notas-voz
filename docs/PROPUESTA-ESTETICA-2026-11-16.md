@@ -4,7 +4,7 @@
 > **Base revisada:** `main` = `2f56388` (Delta 11, estética «Clínica contemporánea», PR #36).
 > **Para quién:** ChatGPT, que lo retoma **después de terminar** el trabajo de su rama `rediseno-04-clinica-chat-chatgpt` (nuevo PR, sin squash). Hasta entonces, **no tocar** esa rama ni las partes que ocupa (compositor y burbujas de Notas).
 > Lectura previa obligatoria: [AGENTS.md](../AGENTS.md), [SEGURIDAD.md](../SEGURIDAD.md), [CONTINUAR-AQUI.md](../CONTINUAR-AQUI.md).
-> **Actualizado el 16/11/2026 (13:22):** el usuario confirmó B2, eligió **«Dictar»** como nombre de la primera pestaña (nueva **Etapa N**) y aprobó un **reproductor de audio dentro de cada burbuja** (nueva **Etapa E**, que modifica una regla de AGENTS.md). **A las 13:31** eligió **«Cuadernos»** para la segunda pestaña y decidió que los **audios cargados desde un archivo también se guardan unidos a su nota**. Ver secciones 4 (N y E), 5 y 6.
+> **Actualizado el 16/11/2026 (13:22):** el usuario confirmó B2, eligió **«Dictar»** como nombre de la primera pestaña (nueva **Etapa N**) y aprobó un **reproductor de audio dentro de cada burbuja** (nueva **Etapa E**, que modifica una regla de AGENTS.md). **A las 13:31** eligió **«Cuadernos»** para la segunda pestaña y decidió que los **audios cargados desde un archivo también se guardan unidos a su nota**. **A las 13:43** precisó que esos audios, como las grabaciones, **no se guardan si «Conservar audio» está apagado**. Ver secciones 4 (N y E), 5 y 6.
 
 ---
 
@@ -169,7 +169,7 @@ Cada ítem indica: qué se ve hoy → cambio → dónde → criterio de aceptaci
   - La carga admite hoy hasta **15 minutos y 200 MB** (`IMPORT_MAX_SEC`, `IMPORT_MAX_BYTES`).
   - Un archivo cargado conserva su formato y puede pesar **mucho más** que una grabación de la app: un MP3 o M4A de 15 minutos ronda 10–15 MB; un WAV, entre 80 y 160 MB. Hay que mostrar el tamaño de cada audio y el espacio total, y permitir «Borrar audio».
   - Definir en el plan si se guarda el archivo original tal cual (lo más simple y fiel) o una versión comprimida.
-  - *Propuesta de Claude, a confirmar:* que los audios cargados también obedezcan al interruptor «Conservar audio» (apagado = no se guardan), igual que las grabaciones.
+  - **Interruptor «Conservar audio»: DECIDIDO (13:43).** Los audios cargados lo obedecen igual que las grabaciones: **apagado = no se guardan** (se transcriben y el archivo se descarta); encendido = se guardan unidos a su nota.
 
 *Privacidad (condición para activarla):*
 - El audio **no se puede anonimizar**: aunque el texto diga «[Persona 1]», la voz dice el nombre real. Por eso los audios guardados con cada nota deben quedar **cifrados con la protección del repositorio** (revisar `vaultStore` y SEGURIDAD.md), **antes o junto con** el reproductor, nunca después. Aviso breve junto a «Conservar audio»: guarda la voz real en este dispositivo.
@@ -214,6 +214,8 @@ En cada PR: pruebas Node + las tres de navegador (`browser.mjs`, `cifrado-browse
 10. **Segunda pestaña = «Cuadernos»** (13:31). En la interfaz, «hoja» pasa a «cuaderno» (Etapa N). Pestañas: **Dictar · Cuadernos · Anonimizar · Ajustes**.
 11. **Audios cargados desde un archivo:** se guardan **unidos a su nota** (Etapa E). Reemplaza la decisión previa de que los importados no se conservan.
 12. **PR #39 (documentación):** unión a `main` autorizada y hecha (commit de merge `53441eb`, sin squash).
+13. **Audios cargados e interruptor (13:43):** si «Conservar audio» está apagado, **no se guardan**, igual que las grabaciones. Quedó resuelto el último «a confirmar» de la Etapa E.
+14. **PR #40 (documentación):** unión a `main` autorizada (13:43). El nombre de ejemplo que se había quitado (era un ejemplo de prueba) no hace falta restituirlo.
 
 ## 7. Qué NO cambia esta propuesta
 
