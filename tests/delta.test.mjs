@@ -1657,3 +1657,79 @@ test('Etapa A: los íconos de Ajustes son SVG en línea y los módulos y claves 
 test('Etapa A: el selector de modelo conserva sus tres valores', () => {
   for (const v of ['Xenova/whisper-tiny', 'Xenova/whisper-base', 'Xenova/whisper-small']) assert.ok(html.includes('value="' + v + '"'));
 });
+
+/* ---------- Audio por nota, etapa E1 (apagado; datos inventados) ---------- */
+const anBlock = (html.match(/\/\*AUDIONOTA-START\*\/([\s\S]*?)\/\*AUDIONOTA-END\*\//) || [])[1];
+const an = () => new Function(anBlock + ';return {AN_DB,AN_STATES,anNewId,anNewMeta,anValidMeta,anCanMove,anSetState,anChunkKey,anChunkBounds,anFilePlan,anReview,anTakeLock};')();
+
+test('audio por nota E1: ficha y estados', () => {
+  assert.ok(anBlock, 'falta el bloque AUDIONOTA');
+  const a = an();
+  assert.equal(a.AN_DB, 'notasvoz-dictanota-audio');
+  assert.match(a.anNewId(), /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
+  assert.notEqual(a.anNewId(), a.anNewId());
+  const m = a.anNewMeta('x-1', 1763300000000);
+  assert.equal(m.state, 'grabando'); assert.equal(m.bytes, 0); assert.equal(m.parts, 0);
+  assert.equal(a.anSetState(m, 'cerrado').state, 'cerrado');
+  assert.equal(m.state, 'grabando', 'no modifica la ficha original');
+  for (const from of ['grabando', 'escribiendo', 'importando']) assert.equal(a.anCanMove(from, 'cerrado'), true);
+  assert.equal(a.anCanMove('cerrado', 'grabando'), false);
+  assert.equal(a.anCanMove('grabando', 'escribiendo'), false);
+  assert.throws(() => a.anSetState(a.anSetState(m, 'cerrado'), 'grabando'));
+  assert.throws(() => a.anSetState(m, 'inventado'));
+  for (const mala of [null, {}, {...m, id: ''}, {...m, state: 'x'}, {...m, createdAt: NaN}, {...m, bytes: -1}, {...m, parts: 1.5}, {...m, key: 'texto'}]) assert.equal(a.anValidMeta(mala), false);
+  assert.throws(() => a.anNewMeta('', 1));
+});
+
+test('audio por nota E1: claves de fragmentos y plan de partes de un archivo', () => {
+  const a = an();
+  assert.deepEqual(a.anChunkKey('x-1', 0, 5), ['x-1', 0, 5]);
+  for (const mala of [['', 0, 0], ['x', -1, 0], ['x', 0, 1.2], [5, 0, 0]]) assert.throws(() => a.anChunkKey(...mala));
+  const b = a.anChunkBounds('x-1');
+  assert.deepEqual(b.lower, ['x-1', 0, 0]); assert.deepEqual(b.upper, ['x-1', Infinity, Infinity]);
+  assert.deepEqual(a.anFilePlan(0), []);
+  assert.deepEqual(a.anFilePlan(10, 4), [{n: 0, start: 0, end: 4}, {n: 1, start: 4, end: 8}, {n: 2, start: 8, end: 10}]);
+  const grande = a.anFilePlan(30 * 1024 * 1024);
+  assert.equal(grande.length, 30); assert.equal(grande.at(-1).end, 30 * 1024 * 1024);
+  assert.throws(() => a.anFilePlan(-1)); assert.throws(() => a.anFilePlan(10, 0));
+});
+
+test('audio por nota E1: revisión al abrir solo mira y propone (tabla 2.5)', () => {
+  const a = an(), mk = (id, state, parts = 1) => ({...a.anNewMeta(id, 1), state, parts});
+  const metas = [mk('a', 'grabando'), mk('b', 'grabando'), mk('c', 'escribiendo'), mk('d', 'importando'), mk('e', 'cerrado'), mk('f', 'cerrado'), mk('g', 'cerrado'), mk('h', 'cerrado'), {id: 'roto', state: 'x'}];
+  const copia = JSON.stringify(metas);
+  const r = a.anReview(metas, {a: 3, c: 2, e: 4, f: 4, g: 0, h: 4}, ['e'], ['h']);
+  const acc = Object.fromEntries(r.audios.map(x => [x.id, x.action]));
+  assert.deepEqual(acc, {a: 'cerrar-interrumpida', b: 'descartar', c: 'descartar', d: 'limpiar-lote', e: 'ok', f: 'sin-nota', g: 'danado', h: 'ok', roto: 'danado'});
+  assert.equal(JSON.stringify(metas), copia, 'no modifica nada');
+  assert.deepEqual(a.anReview([mk('e', 'cerrado')], {e: 1}, ['e', 'no-existe', null], []).notasSinAudio, ['no-existe']);
+  // Mover una nota de cuaderno no cambia su audioId: el audio sigue «ok». Borrar la nota lo deja «sin-nota», nunca borrado solo.
+  assert.equal(a.anReview([mk('e', 'cerrado')], {e: 1}, ['e'], []).audios[0].action, 'ok');
+  assert.equal(a.anReview([mk('e', 'cerrado')], {e: 1}, [], []).audios[0].action, 'sin-nota');
+  assert.deepEqual(a.anReview(undefined, undefined, undefined, undefined), {audios: [], notasSinAudio: []});
+});
+
+test('audio por nota E1: candado de una sola pestaña', async () => {
+  const a = an();
+  const fake = () => { let held = false; return {locks: {request(name, opts, cb) { assert.equal(opts.ifAvailable, true); if (held) return Promise.resolve(cb(null)); held = true; const p = cb({name}); return p.then(() => { held = false; }); }}}; };
+  const nav = fake();
+  const uno = await a.anTakeLock(nav);
+  assert.equal(uno.ok, true);
+  const dos = await a.anTakeLock(nav);
+  assert.equal(dos.ok, false, 'la segunda pestaña no obtiene el candado');
+  uno.release(); await new Promise(r => setTimeout(r, 5));
+  assert.equal((await a.anTakeLock(nav)).ok, true, 'liberado, se puede volver a tomar');
+  const sin = await a.anTakeLock({});
+  assert.equal(sin.ok, true); assert.equal(sin.soportado, false);
+});
+
+test('audio por nota E1: está apagado y no toca lo existente', () => {
+  const fuera = html.replace(/\/\*AUDIONOTA-START\*\/[\s\S]*?\/\*AUDIONOTA-END\*\//, '');
+  assert.doesNotMatch(fuera, /\ban(NewId|NewMeta|ValidMeta|CanMove|SetState|ChunkKey|ChunkBounds|FilePlan|Review|TakeLock|Open|Tx|Start|PutMeta|GetMeta|ListMeta|PutChunk|GetChunk|CountChunks|Delete)\(/, 'nada de la app llama al bloque nuevo');
+  assert.doesNotMatch(fuera, /AN_(DB|LOCK_NAME|STATES|FILE_CHUNK)|notasvoz-dictanota-audio/, 'nada fuera del bloque lo nombra');
+  assert.equal((html.match(/notasvoz-gamma-audio/g) || []).length, 1, 'la base histórica sigue igual');
+  assert.doesNotMatch(anBlock, /localStorage|fetch\(|XMLHttpRequest|innerHTML|\beval\b|new Function|gamma|document\./);
+  assert.equal((anBlock.match(/indexedDB/g) || []).length, 1, 'solo el argumento por defecto de anOpen');
+  assert.equal((anBlock.match(/\.put\(/g) || []).length, 4, 'solo se escribe en meta y chunks');
+  assert.doesNotMatch(anBlock, /\.(clear|deleteObjectStore|deleteDatabase)\(/);
+});
