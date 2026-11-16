@@ -1,3 +1,11 @@
+## 16/11/2026 · Decisiones del usuario sobre pestañas y audio en la burbuja (SOLO documentación)
+
+- **Responsable:** Claude. Rama: `docs-audio-burbuja-pestanas-2026-11-16`. Base: `73780b7` (`main`). **No modifica `index.html`, pruebas, AGENTS.md ni almacenamiento.**
+- Actualiza [docs/PROPUESTA-ESTETICA-2026-11-16.md](docs/PROPUESTA-ESTETICA-2026-11-16.md) y [docs/PROMPT-CHATGPT-ESTETICA-2026-11-16.txt](docs/PROMPT-CHATGPT-ESTETICA-2026-11-16.txt) con tres decisiones del usuario del 16/11/2026: (1) **B2 confirmado**; (2) **primera pestaña = «Dictar»**, que reúne todo lo de grabar y cargar audios para transcribir; el nombre de la **segunda pestaña (las hojas) sigue pendiente** («Bitácora» descartado; alternativas en la Etapa N); (3) **audio dentro de la burbuja** (reproductor arriba, transcripción abajo, para volver a escuchar y corregir), sin resaltar la palabra que se escucha.
+- Nuevas **Etapa N** (nombres de pestañas) y **Etapa E** (audio en la burbuja, en tres subetapas: almacén por nota y vínculo → cifrado de los audios → reproductor, almacenamiento persistente y espacio usado). La Etapa E **toca almacenamiento y reemplaza** la frase de AGENTS.md «Audio solo a pedido, fuera de las burbujas»: exige plan y permiso explícito, y esa frase se actualiza en el PR que la implemente. Hoy las burbujas **no** llevan audio.
+- Estimación registrada: ≈14 MB por hora de audio (≈0,7 MB por nota de 3 minutos); sin costo extra de procesamiento. Riesgos a resolver: audio sin cifrar y sin anonimizar, duración/avance de los WebM y datos que el navegador puede borrar sin almacenamiento persistente.
+- Estado: documentación guardada; nada implementado ni probado en el Motorola.
+
 ## 16/11/2026 · Propuesta estética de Claude (SOLO documentación)
 
 - **Responsable:** Claude. Rama: `estetica-propuesta-claude-2026-11-16`. Base: `2f56388` (`main`). **No modifica `index.html`, pruebas ni almacenamiento.**
