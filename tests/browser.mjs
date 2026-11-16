@@ -59,6 +59,13 @@ try {
  await run('paused=false;updateDockRecording()');
  await call('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'reduce'}]});
  assert.equal(await run('getComputedStyle(document.querySelector(".capture-dot")).animationName'),'none');
+ for(const width of [320,412]){
+  await call('Emulation.setDeviceMetricsOverride',{width,height:850,deviceScaleFactor:1,mobile:true});
+  for(const view of ['grabacion','transcripcion','anonimizar','ajustes']){
+   await run('document.querySelector(\'[data-delta-view="'+view+'"]\').click()');await settle();
+   assert.ok(await run('(()=>{const r=document.getElementById("studioDockCapture").getBoundingClientRect();return r.height>0 && r.top>=0 && r.bottom<=innerHeight && document.documentElement.scrollWidth<=innerWidth+1})()'),'captura visible '+width+' '+view);
+  }
+ }
  await run('recording=false;updateDockRecording()');
  assert.equal(await run('document.getElementById("studioDockCapture").hidden'),true);
  // Resized visual viewport / keyboard layout simulation: last line can scroll above dock.
