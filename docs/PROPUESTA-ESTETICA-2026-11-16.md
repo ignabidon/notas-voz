@@ -42,7 +42,7 @@ Resumen de AGENTS.md/SEGURIDAD.md aplicado a esta propuesta (si hay conflicto, *
 - Objetivos táctiles ≥48 px en controles principales; **no recortar rótulos para que entren**.
 - **No poner nombres de IA ni créditos en la interfaz**; la autoría va solo en documentación.
 - Las **pestañas se mantienen en cuatro** y sus nombres definitivos los decide el usuario. Esta propuesta solo corrige rótulos viejos.
-- Funcionalidades nuevas (modo oscuro) **requieren autorización expresa**.
+- Funcionalidades nuevas **requieren autorización expresa**. Autorizado el 16/11/2026: **modo oscuro opcional** (D2).
 - Cada etapa: rama nueva desde `main` actualizado, pruebas, registro en CAMBIOS.md, **tres niveles de estado** (código guardado / pruebas técnicas / probado en el Motorola), **capturas al usuario antes de publicar** y **unión a `main` solo con su permiso**, sin squash.
 
 ## 4. Cambios propuestos
@@ -92,6 +92,7 @@ Cada ítem indica: qué se ve hoy → cambio → dónde → criterio de aceptaci
 - Audio: mostrar `#studioDockStart` **solo cuando `#rec` quedó fuera de la vista** (IntersectionObserver), para conservar el acceso al desplazarse sin duplicarlo.
 - Notas: «Guardar» relleno; «Grabar» como botón secundario (contorno o redondo con micrófono).
 ⚠ **Requiere visto bueno del usuario**: AGENTS.md describe hoy «Grabar» en la barra de Audio y Texto. Si no lo aprueba, aplicar solo la parte de Notas.
+**Estado (16/11, 13:02): pendiente.** El usuario pidió que se le explique mejor y no confirmó. Hasta que lo haga, **no implementar la parte de Audio**. Recomendación de Claude: sí, porque quita un botón repetido sin perder el acceso al desplazarse.
 *Pruebas a actualizar:* las que fijan `#studioDockStart{display:none/flex}` por vista (`tests/delta.test.mjs`).
 
 **B3. Burbujas y lista de hojas.**
@@ -99,7 +100,7 @@ Cada ítem indica: qué se ve hoy → cambio → dónde → criterio de aceptaci
 *Cambio:*
 - Burbuja limpia: texto + sello de hora + **menú ⋯** (≥48 px, `aria-haspopup`). «Copiar» puede quedar visible. Reservar la **pulsación larga** para «ver original» cuando exista la anonimización con original recuperable (idea del usuario).
 - Lista: segunda línea con cantidad de notas y **fecha relativa** («Hoy 12:44», «Ayer»), sin repetir la fecha. **El sello de guardado de cada nota sigue inmutable.**
-- *Vista previa del texto en la lista:* **no activarla por defecto.** En un uso clínico, mostrar la primera línea de una nota en una pantalla visible a terceros puede exponer contenido. Si se hace, que sea un interruptor en Ajustes, apagado hasta que el usuario decida, con `textContent`.
+- *Vista previa del texto en la lista:* **aprobada por el usuario (16/11, 13:02)**, que dejó el detalle a criterio de lo que mejor funcione. Criterio de Claude: **activada por defecto**, porque sin ella las hojas se distinguen solo por la fecha; **una línea, unos 60 caracteres**, armada con `textContent`; y un interruptor **«Mostrar vista previa en la lista»** en Ajustes, a un toque, cuyo texto de ayuda avise que la lista puede mostrar nombres reales mientras no se anonimicen. Con la protección activada queda cubierta por el bloqueo.
 
 ### Etapa C · Anonimización y contraste
 
@@ -127,7 +128,9 @@ Cada ítem indica: qué se ve hoy → cambio → dónde → criterio de aceptaci
 *Hoy:* `--surface-soft` vale lo mismo que `--bg` (`#F4F7F8`) y se usa **107 veces**; `.studio-dock{` se declara **14 veces** a lo largo de las capas Delta 07 → 11 → «Clínica contemporánea». Funciona, pero cada cambio exige pelear con capas anteriores.
 *Cambio:* una hoja ordenada con tokens (`--surface`, `--surface-raised`, `--border`, `--border-strong`, `--accent`, `--danger`, `--warn`), **sin diferencias visuales** (comparar capturas de las cuatro pantallas a 360/412 antes y después).
 
-**D2. Modo oscuro (opcional).** Hoy `color-scheme: light` y no hay `prefers-color-scheme`. Útil para grabar de noche, pero es **funcionalidad nueva**: solo con autorización del usuario y después de D1.
+**D2. Modo oscuro (opcional).** Hoy `color-scheme: light` y no hay `prefers-color-scheme`. **Autorizado por el usuario el 16/11/2026, como opción.**
+→ Ajustes → «Apariencia»: **Claro** (predeterminado, como hoy) / **Oscuro** / **Automático** (sigue al sistema). Se guarda como campo adicional opcional de la configuración existente (igual que `textSize`), **sin claves nuevas**. Se hace **después de D1**.
+*Criterio:* mismos mínimos de contraste que el tema claro (texto ≥4,5:1, bordes de controles ≥3:1); rojo de grabación y ámbar de pausa legibles; sin negro puro; capturas de las cuatro pantallas y de los estados de captura en ambos temas.
 
 ## 5. Orden y ramas sugeridos
 
@@ -141,12 +144,13 @@ Cada ítem indica: qué se ve hoy → cambio → dónde → criterio de aceptaci
 
 En cada PR: pruebas Node + las tres de navegador (`browser.mjs`, `cifrado-browser.mjs`, `notas-browser.mjs`), entrada en CAMBIOS.md (responsable, rama, SHA base, alcance, pruebas, pendientes) y capturas con datos ficticios a 360 y 412 px.
 
-## 6. Decisiones que le tocan al usuario
+## 6. Decisiones del usuario (16/11/2026, 13:02)
 
-1. **Nombres definitivos de las pestañas** (sigue pendiente; A1 no los cambia).
-2. **B2:** ¿«Grabar» en la barra de Audio solo cuando el círculo no se ve?
-3. **B3:** ¿menú ⋯ en cada burbuja? ¿vista previa del texto en la lista (apagada por defecto)?
-4. **D2:** ¿modo oscuro, sí o no?
+1. **Unir este documento a `main`:** autorizado (es solo documentación y no toca `index.html` ni lo que ocupa la rama de ChatGPT).
+2. **Nombres definitivos de las pestañas:** sigue **pendiente**; A1 no los cambia.
+3. **B2 (Grabar en la barra de Audio solo cuando el círculo no se ve):** **pendiente**; pidió una explicación más clara.
+4. **B3:** **aprobados** el menú ⋯ en las burbujas y la vista previa del texto en la lista; el detalle queda a criterio de lo que mejor funcione (ver B3).
+5. **D2:** **aprobado** un modo oscuro **opcional** (ver D2).
 
 ## 7. Qué NO cambia esta propuesta
 

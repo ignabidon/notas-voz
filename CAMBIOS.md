@@ -3,6 +3,7 @@
 - **Responsable:** Claude. Rama: `estetica-propuesta-claude-2026-11-16`. Base: `2f56388` (`main`). **No modifica `index.html`, pruebas ni almacenamiento.**
 - Nuevo [docs/PROPUESTA-ESTETICA-2026-11-16.md](docs/PROPUESTA-ESTETICA-2026-11-16.md): perspectiva de diseño y mejoras en cuatro etapas (A ajustes menores, B jerarquía y densidad, C anonimización y contraste, D cimientos de CSS), con mediciones, ids afectados, criterios de aceptación y restricciones del repositorio. Y [docs/PROMPT-CHATGPT-ESTETICA-2026-11-16.txt](docs/PROMPT-CHATGPT-ESTETICA-2026-11-16.txt), texto para pasarle el pedido a ChatGPT.
 - Orden acordado con el usuario: ChatGPT **termina primero** su rama `rediseno-04-clinica-chat-chatgpt`; recién después incorpora estas mejoras, cada etapa en su rama y con permiso del usuario para unir a `main`.
+- **Decisiones del usuario (16/11/2026, 13:02):** autorizó unir esta documentación a `main`; aprobó el menú ⋯ en las burbujas, la vista previa del texto en la lista (activada por defecto, con interruptor en Ajustes) y un **modo oscuro opcional** (después de consolidar el CSS). Siguen pendientes los nombres de las pestañas y el cambio de «Grabar» en la barra de Audio.
 - Revisión hecha en Chrome sin conexión (412×892 y 360×740, datos ficticios; estados de captura simulados con clases CSS). **Sin prueba en el Motorola.**
 
 ## 16/11/2026 · Clínica contemporánea y notas en chat — ChatGPT
