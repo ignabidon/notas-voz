@@ -464,6 +464,19 @@ body[data-view="transcripcion"] #studioDockNotes{grid-template-columns:minmax(0,
 .studio-nav a[data-badge]::after{content:"";position:absolute;top:4px;right:calc(50% - 22px);width:13px;height:13px;border-radius:50%;background:#2fd18f;border:2px solid #11242e;box-shadow:0 0 0 2px #2fd18f66}
 @media(max-width:760px){.c-anon{padding:22px 16px}}
 @media(max-width:380px){.studio-dock .studio-nav a{font-size:12px;letter-spacing:-.2px}}
+@media(min-width:480px){.editor-quick-actions{grid-template-columns:repeat(4,minmax(0,1fr))!important}}
+/* Revisión visual: menos altura, misma navegación y tamaños táctiles. */
+.c-rec #clock{font-size:56px;margin:12px 0}
+.c-rec #rec{width:120px;height:120px;min-height:120px;margin:14px auto 10px}
+.c-rec .screen-title{margin-bottom:16px}
+.editor-quick-actions{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:6px}
+#share,#selAll{background:transparent;border-color:#395560;font-size:max(14px,calc(14px * var(--text-scale)))}
+.studio-dock{padding:8px;border-radius:18px}
+.studio-dock .studio-nav a{min-height:48px;padding:5px 2px}
+.dock-actions button{min-height:48px}
+textarea#text{scroll-margin-bottom:var(--dock-space)}
+@media(min-width:761px){body[data-view="transcripcion"] .c-edit{padding-bottom:var(--dock-space)}}
+@media(max-width:760px){.studio-dock{border-radius:16px 16px 0 0;padding-bottom:calc(6px + env(safe-area-inset-bottom))}}
 </style>
 </head>
 <body data-view="grabacion">
@@ -507,7 +520,7 @@ body[data-view="transcripcion"] #studioDockNotes{grid-template-columns:minmax(0,
       <button type="button" class="audio-shortcut" id="audioShortcut" data-go-view="grabacion" data-go-target="audioBox">Mis grabaciones</button>
       <button type="button" id="loadAudioBtn">Cargar un audio para transcribir</button>
       <input type="file" id="loadAudioFile" accept="audio/*,.m4a,.mp3,.wav,.ogg,.opus,.aac,.amr,.webm" hidden>
-      <p class="hint" id="loadAudioHint">El archivo <b>no se guarda</b>: solo se transcribe en este celular. Los audios largos tardan más que su duración.</p>
+      <p class="hint" id="loadAudioHint">El archivo <b>no se guarda</b>: solo se transcribe en este celular. Máximo 200 MB y 15 minutos por archivo. Los audios largos tardan más que su duración.</p>
     </div>
     <div class="record-save-audio">
       <label class="chk" for="recordSaveAudio"><input type="checkbox" id="recordSaveAudio"><span><b>Conservar también el audio</b><small>Activalo antes de grabar. Tu voz queda guardada en Brave hasta que la descargues o borres.</small></span></label>
@@ -565,7 +578,7 @@ body[data-view="transcripcion"] #studioDockNotes{grid-template-columns:minmax(0,
       <section class="settings-module" id="settingsReading"><div class="settings-module-top"><span class="module-icon" aria-hidden="true">Aa</span><h3>Lectura y comodidad</h3></div>
         <label for="textSize">Tamaño del texto</label>
         <select id="textSize" aria-describedby="textSizeHelp"><option value="compact">Compacto</option><option value="normal" selected>Normal</option><option value="large">Grande</option></select>
-        <p class="hint" id="textSizeHelp">Ajusta la transcripción, los menús y los botones. Se conserva en este navegador; no cambia el texto de los archivos exportados.</p>
+        <p class="hint" id="textSizeHelp">Se conserva en este navegador. Los archivos exportados mantienen su formato.</p>
       </section>
       <section class="settings-module" id="settingsQuality"><div class="settings-module-top"><span class="module-icon">✦</span><h3>Calidad de transcripción</h3></div>
         <label for="model" style="margin-top:16px">Modelo de Whisper</label>
@@ -575,7 +588,7 @@ body[data-view="transcripcion"] #studioDockNotes{grid-template-columns:minmax(0,
         <option value="Xenova/whisper-small" selected>Small · más precisión, más lento</option>
       </select>
       <div class="hint" id="modelHint" role="status">Small: para mayor precisión. Requiere más memoria y tiempo de procesamiento.</div>
-      <div class="hint">Small suele reconocer mejor, pero consume más memoria. Cambiar de modelo puede requerir una descarga.</div>
+      <div class="hint">Cambiar de modelo puede requerir una descarga.</div>
       </section>
       <section class="settings-module" id="settingsAudio"><div class="settings-module-top"><span class="module-icon">◉</span><h3>Audio</h3></div>
         <label class="chk" style="margin-top:18px"><input type="checkbox" id="saveAudio">
@@ -751,7 +764,7 @@ body[data-view="transcripcion"] #studioDockNotes{grid-template-columns:minmax(0,
       </details>
     </div>
 
-    <details id="peopleBox" class="studio-patients" open>
+    <details id="peopleBox" class="studio-patients">
       <summary>Personas y códigos <small>· opcional: qué código lleva cada nombre</small></summary>
       <div class="anon-explain people-explain">
         <p><b>¿Qué es esto?</b> Una lista que le dice a DictaNota: «cuando aparezca <b>este nombre</b>, escribí <b>este código</b>». Así, en todas tus notas la misma persona tiene siempre el mismo código y vos sabés quién es.</p>
@@ -1228,10 +1241,21 @@ function sentenceStarters(text, S){
 const $ = id => document.getElementById(id);
 const KEY = 'notasvoz.gamma.v1', DKEY = 'notasvoz.gamma.dict.v1', CKEY = 'notasvoz.gamma.cfg.v1', DRAFT = 'notasvoz.gamma.draft.v1', UNDO = 'notasvoz.gamma.undo.v1';
 let notes = [], cur = null, tags = [], activeTag = null, anonBackup = null, baseline = '', clearBackup = null;
-try { notes = JSON.parse(localStorage.getItem(KEY) || '[]'); } catch (e) { notes = []; }
+function validNotes(value){
+  if (!Array.isArray(value)) return [];
+  return value.filter(n => n && typeof n === 'object' && typeof n.id === 'string' && typeof n.text === 'string')
+    .map(n => ({id:n.id, text:n.text, title:typeof n.title === 'string' ? n.title : '',
+      ts:Number.isFinite(n.ts) && Math.abs(n.ts) < 8640000000000000 ? n.ts : 0,
+      tags:Array.isArray(n.tags) ? n.tags.filter(t => typeof t === 'string') : []}));
+}
+let notesReadWarning = false;
+try { const raw = JSON.parse(localStorage.getItem(KEY) || '[]'); notes = validNotes(raw); notesReadWarning = !Array.isArray(raw) || raw.length !== notes.length || raw.some(n => typeof n.title !== 'string' || !Number.isFinite(n.ts) || !Array.isArray(n.tags) || n.tags.some(t => typeof t !== 'string'));  }
+catch (e) { notes = []; notesReadWarning = true; }
+// No sobrescribir un almacenamiento inválido silenciosamente al guardar una nota.
+
 const setStatus = s => $('status').textContent = s;
 let ft; const flash = s => { $('flash').textContent = s; clearTimeout(ft); ft = setTimeout(() => $('flash').textContent = '', 6000); };
-const persist = () => { try { localStorage.setItem(KEY, JSON.stringify(notes)); return true; } catch (e) { flash('No se pudo guardar en este navegador.'); return false; } };
+const persist = () => { if (notesReadWarning && !confirm('Hay datos locales con formato inválido. Guardar reemplaza esa lista por las notas recuperables. ¿Continuar?')) return false; try { localStorage.setItem(KEY, JSON.stringify(notes)); notesReadWarning = false; return true; } catch (e) { flash('No se pudo guardar en este navegador.'); return false; } };
 const eng = () => document.querySelector('input[name=eng]:checked').value;
 const nWords = s => (s.match(WORDS) || []).length;
 
@@ -2753,6 +2777,30 @@ $('retryTranscription').onclick = () => {
   refreshStatus();
 };
 $('aTx').onclick = () => transcribeSaved();
+/* Preflight de archivos importados: no decodificar a PCM antes de conocer duración.
+   La lectura de metadatos depende del navegador; no es un sandbox del códec. */
+const IMPORT_MAX_BYTES = 200 * 1024 * 1024, IMPORT_MAX_SEC = 15 * 60;
+function validateImport(size, duration){
+  if (size > IMPORT_MAX_BYTES) throw new Error('El archivo supera 200 MB. Cortalo en partes.');
+  if (!Number.isFinite(duration) || duration <= 0) throw new Error('No se pudo verificar la duración. Convertí el archivo a WAV o MP3.');
+  if (duration > IMPORT_MAX_SEC) throw new Error('El archivo supera 15 minutos. Cortalo en partes.');
+}
+function inspectImport(blob){
+  validateImport(blob.size, 1);
+  return new Promise((resolve, reject) => {
+    const audio = document.createElement('audio'), url = URL.createObjectURL(blob);
+    const finish = error => {
+      clearTimeout(timeout); audio.onloadedmetadata = audio.onerror = null;
+      audio.removeAttribute('src'); audio.load(); URL.revokeObjectURL(url);
+      error ? reject(error) : resolve();
+    };
+    const timeout = setTimeout(() => finish(new Error('No se pudo leer la duración a tiempo.')), 10000);
+    audio.preload = 'metadata';
+    audio.onloadedmetadata = () => { try { validateImport(blob.size, audio.duration); finish(); } catch (e) { finish(e); } };
+    audio.onerror = () => finish(new Error('El archivo de audio está dañado o no es compatible.'));
+    audio.src = url;
+  });
+}
 async function decodePcm(blob, rate){
   const buf = await withDeadline(blob.arrayBuffer(), 15000, 'lectura del archivo');
   const ctx = new OfflineAudioContext(1, 1, rate);
@@ -2804,10 +2852,10 @@ async function transcribeSaved(){
 }
 /* Transcribe un audio ya existente (guardado o cargado desde el celular) con el mismo proceso de siempre.
    El audio cargado NO se guarda: solo se lee, se transcribe y se descarta. */
-async function transcribeBlob(getBlob, ms, what){
+async function transcribeBlob(getBlob, ms, what, imported = false){
   audioMsg(''); feeding = true; lockUI(true); $('rec').disabled = true; recEng = 'whisper'; setStatus('Leyendo ' + what + '…');
   let pcm;
-  try { pcm = await decodePcm(await getBlob(), 16000); }
+  try { const blob = await getBlob(); if (imported) await inspectImport(blob); pcm = await decodePcm(blob, 16000); if (imported) validateImport(blob.size, pcm.length / 16000); }
   catch (e) { feeding = false; lockUI(false); $('rec').disabled = false; setStatus('No se pudo leer ' + what + ' (' + (e.message || e) + '). Probá abrirlo en otro reproductor o convertirlo a MP3.'); updProgress(); refreshRetry(); return; }
   if (pcm.length > LOAD_MAX_SEC * 16000) { feeding = false; lockUI(false); $('rec').disabled = false; setStatus('El audio dura más de ' + Math.round(LOAD_MAX_SEC / 60) + ' minutos: es demasiado largo para este celular. Cortalo en partes y cargalas de a una.'); updProgress(); refreshRetry(); return; }
   if (ms == null) ms = Math.round(pcm.length / 16 );
@@ -2835,10 +2883,11 @@ $('loadAudioFile').addEventListener('change', () => {
   $('loadAudioFile').value = '';
   if (!f) return;
   if (audioBusy()) return flash('Esperá a que termine lo que se está haciendo.');
+  if (f.size > IMPORT_MAX_BYTES) return flash('Ese archivo supera 200 MB. Cortalo en partes.');
   if (f.size > LOAD_MAX_BYTES) return flash('Ese archivo es demasiado grande (más de 200 MB). Probá con uno más corto.');
   if (f.type && !/^(audio|video)\//.test(f.type)) return flash('Ese archivo no parece un audio. Elegí un archivo de sonido (MP3, M4A, WAV, OGG…).');
   if (!confirm('¿Transcribir «' + f.name + '» (' + mb(f.size) + ')? El archivo no se guarda en DictaNota. Guardá antes las correcciones del editor: el texto actual se reemplaza si «Empezar de cero al grabar» está activado.')) return;
-  transcribeBlob(() => f, null, 'el audio cargado');
+  transcribeBlob(() => f, null, 'el audio cargado', true);
 });
 
 function updateDockRecording(){
@@ -3136,3 +3185,4 @@ function correctionCanRemember(text,start,end){
 </script>
 </body>
 </html>
+

@@ -1030,7 +1030,7 @@ test('Anonimizar: pantalla propia en la barra fija, con explicación sencilla y 
   assert.match(section[0], /nombres de personas, teléfonos, correos o fechas/);
   assert.match(section[0], /\[Persona 1\]/);
   assert.match(section[0], /\[madre de P-001\]/);
-  assert.match(section[0], /<details id="peopleBox" class="studio-patients" open>/);
+  assert.match(section[0], /<details id="peopleBox" class="studio-patients">/);
   assert.match(section[0], /Si dejás el código vacío/);
   assert.match(html, /<a href="#anonimizar" id="studioAnonLink" data-delta-view="anonimizar"/);
   assert.match(html, /body:not\(\[data-view="anonimizar"\]\) \.c-anon\{display:none!important\}/);
@@ -1140,12 +1140,34 @@ test('Audio: pestaña renombrada, aviso verde de grabación completa y puntos de
 });
 
 test('Audio cargado: se transcribe sin guardarse y con límites claros', () => {
-  assert.match(html, /async function transcribeBlob\(getBlob, ms, what\)/);
-  assert.match(html, /transcribeBlob\(\(\) => f, null, 'el audio cargado'\)/);
+  assert.match(html, /async function transcribeBlob\(getBlob, ms, what, imported = false\)/);
+  assert.match(html, /transcribeBlob\(\(\) => f, null, 'el audio cargado', true\)/);
   assert.match(html, /transcribeBlob\(\(\) => withDeadline\(audioGetBlob\(m\)/);
   const loader = html.match(/\$\('loadAudioFile'\)\.addEventListener\('change'[\s\S]*?\n\}\);/)[0];
   assert.doesNotMatch(loader, /audioPut|audioClear|IndexedDB|localStorage/, 'el audio cargado no se guarda');
   assert.match(html, /LOAD_MAX_SEC = 90 \* 60, LOAD_MAX_BYTES = 200 \* 1024 \* 1024/);
   assert.match(html, /no se guarda<\/b>: solo se transcribe/);
   assert.match(html, /accept="audio\/\*/);
+});
+
+
+test('seguridad: notas dañadas se filtran sin ejecutar contenido ni tocar almacenamiento', () => {
+  const src = html.slice(html.indexOf('function validNotes('), html.indexOf('let notesReadWarning'));
+  const run = value => new Script(src + ';validNotes(' + JSON.stringify(value) + ')').runInNewContext();
+  for (const bad of [null, {}, [null], [2], [{text:'hola'}]]) assert.equal(run(bad).length, 0);
+  const valid = run([{id:'a',text:'<script>ataque</script>',title:12,ts:1e99,tags:['bien',null,{}]}])[0];
+  assert.equal(valid.text, '<script>ataque</script>');
+  assert.equal(valid.title, ''); assert.equal(valid.ts, 0); assert.equal(valid.tags.length, 1);
+  assert.match(html, /notesReadWarning && !confirm/);
+});
+test('seguridad: importación valida bytes y duración antes de decodificar', () => {
+  const src = html.slice(html.indexOf('const IMPORT_MAX_BYTES'), html.indexOf('function inspectImport'));
+  const validate = new Script(src + ';validateImport').runInNewContext();
+  assert.doesNotThrow(() => validate(1024, 60));
+  assert.doesNotThrow(() => validate(200*1024*1024, 900));
+  for (const sec of [0, -1, Infinity, NaN, 901]) assert.throws(() => validate(1024, sec));
+  assert.throws(() => validate(200*1024*1024+1, 1));
+  assert.match(html, /if \(imported\) await inspectImport\(blob\); pcm = await decodePcm/);
+  const probe = html.slice(html.indexOf('function inspectImport'), html.indexOf('async function decodePcm'));
+  assert.match(probe, /URL.revokeObjectURL/); assert.match(probe, /clearTimeout/);
 });
