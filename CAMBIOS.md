@@ -1,3 +1,18 @@
+## 16/11/2026 · Rediseño conversacional · fase 3: pantalla Notas con hojas y mensajes
+
+Base: `main` en `4215fe9`; rama `rediseno-03-pantalla-notas-2026-11-16`. Autorizado por el usuario el 16/11/2026 (09:52: «continúe con los siguientes pasos»).
+
+- **La pestaña «Texto» pasa a llamarse «Notas»** (id interno `transcripcion` sin cambios). Arriba muestra **todas las hojas**; al abrir una se ven sus **mensajes como burbujas**, cada uno con la **fecha y hora de guardado**, «nota anterior» o «editado …» si corresponde.
+- **El editor es el mensaje sin guardar.** Una línea indica el destino: «se crea una hoja nueva» o «se agrega a «…»». **Guardar** (antes «Guardar nota .txt») lo agrega como burbuja; **ya no descarga un .txt** (exportar sigue en «Exportar este mensaje» y en la hoja). **Descartar** pide confirmación. Sin Guardar no queda en ninguna hoja.
+- **Destino:** grabar desde **Audio** (captura global) siempre crea una hoja nueva, aunque haya una hoja abierta en Notas; grabar o escribir con una hoja abierta en Notas la agrega ahí. El destino se fija al empezar el mensaje.
+- **En cada burbuja:** Copiar, Editar (vuelve al editor; Guardar cambia el texto, no la fecha), Mover (con Deshacer) y Borrar (con confirmación). **En cada hoja:** Renombrar, Copiar todo, Pasar todo a otra hoja (con Deshacer), Descargar .txt y Borrar hoja vacía.
+- **Notas anteriores:** al abrir la app se pasan solas a hojas, **una burbuja por nota**, con su fecha de último guardado. `notasvoz.gamma.v1` **no se modifica** y sirve de respaldo.
+- **Recuperación automática:** el borrador guarda también el destino y si se estaba editando; al volver ofrece «Guardar o Descartar».
+- **Audio (decisión del usuario, 09:52):** los mensajes son solo texto; el audio no va en las burbujas. Se conserva **solo a pedido** («Conservar audio», apagado por defecto); no se cambió esa parte.
+- Sin orígenes, dependencias ni cambios de CSP, Whisper, grabación o cifrado. Textos del usuario con `textContent`.
+- Pruebas: **128/128** Node; nueva `tests/notas-browser.mjs` (agregada al CI) en Chrome a 320/360/412 px con datos ficticios: migración, hoja nueva, agregar, captura global, editar sin cambiar la fecha, mover y deshacer, copiar y pasar todo, descartar, recuperación al recargar y textos hostiles. `browser.mjs` y `cifrado-browser.mjs` aprobadas.
+- **Motorola: pendiente.** Probar con datos ficticios (ver README, «Notas en hojas»).
+
 ## 16/11/2026 · Rediseño conversacional · fase 2: guardado protegido y migración (sin cambios visibles)
 
 Base: `main` en `7bd0240`; rama `rediseno-02-guardado-conversaciones-2026-11-16`. Autorizado por el usuario el 16/11/2026 (09:14).

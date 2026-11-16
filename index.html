@@ -57,9 +57,10 @@ html{scroll-padding-bottom:200px}
 .editor-area textarea#text{display:block;padding-bottom:70px}
 #quickCorrect{position:absolute;right:12px;bottom:12px;max-width:calc(100% - 24px);min-height:46px;z-index:2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;background:#b4cbff;color:#102449;border:1px solid #d0dfff;box-shadow:0 4px 16px #020c2288;font-size:13px}
 #quickCorrect:hover:not(:disabled){background:#d0dfff}
-#correctionDialog{width:min(460px,calc(100% - 24px));max-height:85dvh;overflow:auto;background:#14223a;color:var(--ink);border:1px solid #567197;border-radius:22px;padding:22px;box-shadow:0 24px 70px #0009}
-#correctionDialog::backdrop{background:#050b1bcc;backdrop-filter:blur(3px)}
-#correctionDialog h2{margin:0 0 8px}#correctionDialog label{margin-top:14px}
+.conv-panel{margin:0 0 6px;padding-bottom:14px;border-bottom:1px solid var(--line)}.conv-h{font-size:17px;margin:4px 0 8px;overflow-wrap:anywhere}.conv-msg:empty{display:none}.conv-msg{color:#ffd2a8}.conv-back{padding-left:0}.conv-item{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;text-align:left;margin-top:8px;min-height:56px}.conv-item span{overflow-wrap:anywhere}.conv-item small{color:var(--mut);font-weight:400;font-size:12px}.conv-tools{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}.conv-tools button{flex:1 1 auto;min-height:44px;font-size:12px}.conv-bubble{background:var(--acc-soft);border:1px solid var(--line);border-radius:16px 16px 4px 16px;padding:12px 14px;margin:10px 0 0 auto;max-width:94%}.conv-bubble.editing{outline:2px solid var(--acc)}.conv-text{white-space:pre-wrap;overflow-wrap:anywhere;margin:0;font-size:15px;line-height:1.55}.conv-meta{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center;margin-top:8px;padding-top:7px;border-top:1px solid var(--line);font-size:12px;color:var(--mut)}.conv-stamp{color:var(--acc);font-weight:700;font-variant-numeric:tabular-nums}.conv-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.conv-actions button{min-height:44px;font-size:12px;padding:6px 10px;flex:1 1 auto}.conv-undo{display:flex;gap:10px;align-items:center;justify-content:space-between;background:var(--bg2);border-radius:12px;padding:8px 12px;margin-top:10px;font-size:13px}.conv-target{font-size:13px;background:var(--bg2);border-radius:12px;padding:10px 12px;margin:14px 0 8px;overflow-wrap:anywhere}.conv-compose-actions{display:flex;gap:8px;justify-content:flex-end;margin-bottom:8px}.conv-compose-actions button{min-height:44px}
+#convMoveDialog,#correctionDialog{width:min(460px,calc(100% - 24px));max-height:85dvh;overflow:auto;background:#14223a;color:var(--ink);border:1px solid #567197;border-radius:22px;padding:22px;box-shadow:0 24px 70px #0009}
+#convMoveDialog::backdrop,#correctionDialog::backdrop{background:#050b1bcc;backdrop-filter:blur(3px)}
+#convMoveDialog h2,#correctionDialog h2{margin:0 0 8px}#convMoveDialog label,#correctionDialog label{margin-top:14px}
 #correctionDialog input{font-size:16px}#correctionOriginal{color:#c5d4ec!important;background:#0c1729!important}
 #correctionDialog .chk{font-size:13px;margin-bottom:8px}#correctionDialog .chk input{margin-top:3px}
 #correctionDialog .dialog-actions{display:flex;gap:10px;margin-top:20px}#correctionDialog .dialog-actions button{flex:1;min-height:48px}
@@ -749,7 +750,29 @@ input[type=password]{width:100%;min-width:0;background:#0b1426;color:var(--ink);
 
   <!-- 2 · Texto -->
   <section class="card c-edit" id="transcripcion">
-    <div class="screen-title text-screen-title"><span class="screen-overline">TU BORRADOR</span><h2>Transcripción</h2><p>Leé, corregí y guardá lo que grabaste.</p></div>
+    <div class="screen-title text-screen-title"><span class="screen-overline">NOTAS</span><h2>Tus hojas</h2><p>Grabá o escribí, corregí y tocá Guardar: queda como un mensaje con su fecha y hora.</p></div>
+    <div id="convPanel" class="conv-panel">
+      <p id="convMsg" class="warn conv-msg" role="alert"></p>
+      <div id="convListView">
+        <h3 class="conv-h">Todas las hojas</h3>
+        <div id="convList"></div>
+      </div>
+      <div id="convOpenView" hidden>
+        <button type="button" class="ghost conv-back" id="convBack">← Todas las hojas</button>
+        <h3 class="conv-h" id="convTitle"></h3>
+        <div class="conv-tools">
+          <button type="button" id="convRename">Renombrar</button>
+          <button type="button" id="convCopyAll">Copiar todo</button>
+          <button type="button" id="convMoveAllBtn">Pasar todo a otra hoja</button>
+          <button type="button" id="convTxt">Descargar .txt</button>
+          <button type="button" class="ghost danger" id="convDeleteEmpty" hidden>Borrar hoja vacía</button>
+        </div>
+        <div id="convBubbles" class="conv-bubbles"></div>
+      </div>
+      <div id="convUndoRow" class="conv-undo" role="status" hidden><span id="convUndoText"></span><button type="button" id="convUndo">Deshacer</button></div>
+    </div>
+    <p id="convTarget" class="conv-target" role="status"></p>
+    <div class="conv-compose-actions"><button type="button" class="ghost danger" id="convDiscard">Descartar</button><button type="button" class="ghost" id="convCancelEdit" hidden>Cancelar edición</button></div>
       <div class="editor-quick-actions">
         <button type="button" id="correctSelection" aria-haspopup="dialog">Corregir selección</button>
         <button type="button" class="ghost" id="copyAll">Copiar</button>
@@ -757,7 +780,7 @@ input[type=password]{width:100%;min-width:0;background:#0b1426;color:var(--ink);
         <button type="button" class="ghost" id="share">Compartir</button>
       </div>
     <div class="lbl-row">
-      <label for="text">Texto de la nota <span class="opt">(editable)</span></label>
+      <label for="text">Mensaje sin guardar <span class="opt">(editable)</span></label>
       <details class="text-tools"><summary>Otras herramientas</summary>
         <div class="tools">
           <button class="ghost danger" id="clear" title="Podés deshacer el borrado">Borrar texto</button>
@@ -769,7 +792,7 @@ input[type=password]{width:100%;min-width:0;background:#0b1426;color:var(--ink);
     <p class="hint selection-help" id="selectionHelp">Tocá una palabra o seleccioná una frase para corregirla.</p>
     <p class="hint" id="transcriptionHelp" hidden></p>
     <div class="editor-area">
-      <textarea aria-describedby="selectionHelp transcriptionHelp" id="text" placeholder="Acá aparecerá la transcripción. Con Whisper, el texto llega por fragmentos después de procesarlos."></textarea>
+      <textarea aria-describedby="selectionHelp transcriptionHelp" id="text" placeholder="Grabá o escribí acá. Con Whisper, el texto llega por fragmentos después de procesarlos. Tocá Guardar para sumarlo a una hoja."></textarea>
       <button type="button" id="quickCorrect" aria-haspopup="dialog" hidden>Corregir palabra</button>
     </div>
     <div id="nativeInterim" role="status" aria-live="polite" class="hint"></div>
@@ -778,7 +801,7 @@ input[type=password]{width:100%;min-width:0;background:#0b1426;color:var(--ink);
 
     <div id="learn"></div>
 
-    <details class="studio-workflow"><summary>Guardar, organizar y exportar la nota</summary><div class="studio-workflow-body"><p class="hint">Guardar nota .txt conserva una copia en este navegador y solicita descargar un archivo.</p><div class="note-details">
+    <details class="studio-workflow"><summary>Exportar este mensaje</summary><div class="studio-workflow-body"><p class="hint">Exporta solo el texto en edición. Para toda una hoja, usá «Copiar todo» o «Descargar .txt» en la hoja.</p><div id="legacyNoteFields" hidden><div class="note-details">
       <label for="title">Título de la nota <span class="opt">(opcional)</span></label>
       <input type="text" id="title" placeholder="Ej.: Nota de sesión · 15/11">
     </div>
@@ -794,6 +817,7 @@ input[type=password]{width:100%;min-width:0;background:#0b1426;color:var(--ink);
     <div class="row save-row">
 
       <button id="newn">Nota nueva</button>
+    </div>
     </div>
 
     <div class="group export-group">
@@ -913,7 +937,7 @@ input[type=password]{width:100%;min-width:0;background:#0b1426;color:var(--ink);
   <div id="flash" role="status" aria-live="polite"></div>
   <div class="dock-actions" id="studioDockNotes">
     <button type="button" id="studioDockStart" aria-label="Empezar a grabar"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4M8 22h8"/></svg><span>Grabar</span></button>
-    <button type="button" class="p" id="save" title="Conserva la nota en el navegador y solicita descargar un archivo .txt"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 3h12l4 4v14H3V3zM7 3v6h10V3M7 21v-8h10v8"/></svg><span>Guardar nota .txt</span></button>
+    <button type="button" class="p" id="save" title="Guarda el mensaje en la hoja, con la fecha y hora de guardado. No descarga archivos."><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 3h12l4 4v14H3V3zM7 3v6h10V3M7 21v-8h10v8"/></svg><span>Guardar</span></button>
   </div>
   <div id="studioDockCapture" hidden aria-label="Controles fijos de grabación">
     <div class="dock-capture-status" role="status" aria-live="off">
@@ -927,7 +951,7 @@ input[type=password]{width:100%;min-width:0;background:#0b1426;color:var(--ink);
   </div>
 <nav class="studio-nav" aria-label="Pantallas de DictaNota">
   <a href="#grabacion" data-delta-view="grabacion" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2.5" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3.5M8.5 21.5h7"/></svg><span>Audio</span></a>
-  <a href="#transcripcion" data-delta-view="transcripcion"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 2.5h8l4 4V21H7zM15 2.5v4h4M10 11h6M10 15h6M10 19h4"/></svg><span>Texto</span></a>
+  <a href="#transcripcion" data-delta-view="transcripcion"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 2.5h8l4 4V21H7zM15 2.5v4h4M10 11h6M10 15h6M10 19h4"/></svg><span>Notas</span></a>
   <a href="#anonimizar" id="studioAnonLink" data-delta-view="anonimizar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v6c0 4 8 9 8 9s8-5 8-9V6z"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg><span>Anonimizar</span></a>
   <a href="#ajustes" id="studioSettingsLink" data-delta-view="ajustes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h6M14 6h6M4 12h11M19 12h1M4 18h3M11 18h9"/><circle cx="12" cy="6" r="2"/><circle cx="17" cy="12" r="2"/><circle cx="9" cy="18" r="2"/></svg><span>Ajustes</span></a>
 </nav></aside>
@@ -943,6 +967,15 @@ input[type=password]{width:100%;min-width:0;background:#0b1426;color:var(--ink);
     <p id="correctionRuleNotice" hidden></p>
     <p id="correctionError" role="alert"></p>
     <div class="dialog-actions"><button id="correctionCancel" type="button">Cancelar</button><button class="p" type="submit">Aplicar</button></div>
+  </form>
+</dialog>
+<dialog id="convMoveDialog" aria-labelledby="convMoveTitle">
+  <form id="convMoveForm">
+    <h2 id="convMoveTitle">Mover a otra hoja</h2>
+    <p class="hint" id="convMoveHint"></p>
+    <label for="convMoveSelect">Hoja de destino</label>
+    <select id="convMoveSelect"></select>
+    <div class="dialog-actions"><button id="convMoveCancel" type="button">Cancelar</button><button class="p" type="submit">Mover</button></div>
   </form>
 </dialog>
 <div id="vaultLock" class="vault-lock" role="dialog" aria-modal="true" aria-labelledby="vaultLockTitle" hidden>
@@ -1037,7 +1070,7 @@ const VAULT_KEYS = {
   'notasvoz.gamma.undo.v1': 'deshacer',
   'notasvoz.gamma.people.v1': 'personas',
   'notasvoz.gamma.dict.v1': 'diccionario',
-  'notasvoz.dictanota.v2': 'conversaciones' // rediseño conversacional (fase 2); la app todavía no la usa
+  'notasvoz.dictanota.v2': 'conversaciones' // rediseño conversacional: hojas y mensajes de la pantalla Notas
 };
 const VAULT_B32 = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
 const vaultEnc = new TextEncoder(), vaultDec = new TextDecoder('utf-8', {fatal: true});
@@ -1798,7 +1831,7 @@ function sentenceStarters(text, S){
 /*PURE-END*/
 /*CONV-START*/
 /* ====================================================================
-   Rediseño conversacional · modelo de datos (fases 1 y 2, 16/11/2026).
+   Rediseño conversacional · modelo de datos (fases 1 a 3, 16/11/2026).
    Ver docs/REDISENO-CONVERSACIONAL-2026-11-16.md, secciones 2.5 y 2.6.
    - Nota = conversación (hoja); mensaje = burbuja.
    - Un mensaje existe solo después de tocar Guardar. savedAt (ms UTC, momento
@@ -1806,7 +1839,7 @@ function sentenceStarters(text, S){
      nunca cambia. recordedAt (inicio de la captura) es un dato técnico opcional.
    - Una nota nueva se titula con la fecha y hora de guardado.
    - Funciones puras salvo convMakeStore, que recibe el almacén desde afuera.
-     Hasta la fase 3 la app no carga, migra ni guarda conversaciones.
+     Desde la fase 3 la pantalla Notas las usa (ver «Notas en hojas»).
    ==================================================================== */
 const CONV_SCHEMA = 2;
 const CONV_KEY = 'notasvoz.dictanota.v2';
@@ -1931,6 +1964,24 @@ function convUndoMove(data, undo, now = Date.now()){
     entries: data.entries.map(x => back.has(x.id) ? {...x, conversationId: back.get(x.id)} : x)};
 }
 const convIsEmpty = (data, conversationId) => !data.entries.some(e => e.conversationId === conversationId);
+function convDeleteEntry(data, entryId){
+  if (!data.entries.some(e => e.id === entryId)) throw new Error('El mensaje no existe.');
+  return {...data, entries: data.entries.filter(e => e.id !== entryId)};
+}
+/* Solo se borra una hoja vacía: nunca se pierden mensajes al borrar una hoja. */
+function convDeleteConversation(data, conversationId){
+  if (!data.conversations.some(c => c.id === conversationId)) throw new Error('La hoja no existe.');
+  if (!convIsEmpty(data, conversationId)) throw new Error('La hoja todavía tiene mensajes.');
+  return {...data, conversations: data.conversations.filter(c => c.id !== conversationId)};
+}
+/* Lista de hojas para mostrar: la de actividad más reciente primero. */
+function convSummaries(data){
+  return data.conversations.map((c, i) => {
+    const es = data.entries.filter(e => e.conversationId === c.id);
+    const last = es.reduce((m, e) => convIsMs(e.savedAt) && e.savedAt > m ? e.savedAt : m, -Infinity);
+    return {id: c.id, title: c.title, count: es.length, lastSavedAt: last === -Infinity ? null : last, order: convIsMs(c.updatedAt) ? c.updatedAt : -Infinity, i};
+  }).sort((a, b) => (b.order - a.order) || (a.i - b.i)).map(({order, i, ...x}) => x);
+}
 /* Texto de toda una hoja para copiar o llevar a otro lado: título y, por mensaje, su fecha en una línea aparte. */
 function convCopyText(data, conversationId){
   const c = data.conversations.find(x => x.id === conversationId); if (!c) throw new Error('La hoja no existe.');
@@ -2067,21 +2118,205 @@ function renderList(){
     d.append(s, sm, o, x); l.append(d);
   });
 }
-$('save').onclick = () => {
-  const text = $('text').value.trim(); if (!text) return flash('No hay texto para guardar.');
-  if (!pendingOk()) return;
-  let n = notes.find(m => m.id === cur);
-  if (!n) { n = {id: Date.now().toString(36)}; notes.push(n); cur = n.id; }
-  n.title = $('title').value.trim() || ('Nota ' + fmt(Date.now())); n.text = $('text').value; n.tags = tags.slice(); n.ts = Date.now();
-  const savedLocally = persist(); renderList();
-  let requestedDownload = false;
-  try { download(makeTxt()); requestedDownload = true; } catch (e) {}
-  flash(requestedDownload
-    ? 'Descarga .txt solicitada. Buscá la nota en Descargas de Brave.' + (savedLocally ? '' : ' No se pudo guardar copia en el navegador.')
-    : 'No se pudo iniciar la descarga .txt.' + (savedLocally ? ' Quedó una copia en Brave.' : ' Copiá el texto antes de salir.'));
-  if ($('learnAuto').checked) learnFromEdits();
-  else { showSuggestions(suggest(baseline, $('text').value, D.rules.map(r => r.a.toLowerCase()))); baseline = $('text').value; }
+/* ---------- Notas en hojas (rediseño conversacional, fase 3) ----------
+   El editor es el «mensaje sin guardar». Guardar lo agrega como burbuja a una hoja, con la fecha y hora de
+   guardado; sin Guardar no queda en ninguna hoja (la recuperación automática del borrador se mantiene).
+   Grabar desde Audio (captura global) siempre va a una hoja nueva; grabar o escribir con una hoja abierta en
+   Notas la agrega ahí. Todo se muestra con textContent. Las notas anteriores (notasvoz.gamma.v1) no se tocan. */
+const convStore = convMakeStore(vaultStore, () => vault.state === 'off' || vault.state === 'open');
+let convOpenId = null, convTargetId = null, convTargetSet = false, convEditingId = null, convFromAudio = false, convRecordedAt = null;
+let convUndoData = null, convUndoTimer = null, convMoveMode = null;
+const convHas = id => !!(convStore.data && convStore.data.conversations.some(c => c.id === id));
+const convTitleOf = id => { const c = convStore.data && convStore.data.conversations.find(x => x.id === id); return c ? c.title : ''; };
+const convEntry = id => convStore.data && convStore.data.entries.find(e => e.id === id);
+function convDest(){
+  const e = convEditingId && convEntry(convEditingId); if (e) return e.conversationId;
+  if (convTargetSet) return convTargetId && convHas(convTargetId) ? convTargetId : null;
+  return convOpenId;
+}
+function convResetPending(){ convTargetId = null; convTargetSet = false; convEditingId = null; convFromAudio = false; convRecordedAt = null; }
+/* Al empezar un mensaje nuevo (grabación, archivo o primera letra) se fija su destino. */
+function convStartPending(fromAudio){
+  if (convEditingId) { if (fromAudio) convFromAudio = true; refreshConvTarget(); return; }
+  if (!convTargetSet || !$('text').value.trim()) {
+    convTargetId = fromAudio && document.body.dataset.view !== 'transcripcion' ? null : convOpenId;
+    convTargetSet = true; convRecordedAt = Date.now(); convFromAudio = !!fromAudio;
+  } else if (fromAudio) convFromAudio = true;
+  refreshConvTarget(); renderConv();
+}
+function refreshConvTarget(){
+  const t = $('convTarget');
+  $('convCancelEdit').hidden = !convEditingId;
+  $('convDiscard').hidden = !!convEditingId;
+  if (!convStore.data) { t.textContent = 'Las hojas no están disponibles todavía. Lo que escribas queda como borrador.'; return; }
+  const e = convEditingId && convEntry(convEditingId);
+  if (e) { t.textContent = 'Editando un mensaje de «' + convTitleOf(e.conversationId) + '». Guardar cambia el texto; la fecha y hora (' + (e.savedAt === null ? 'sin fecha' : convStamp(e.savedAt, e.tzOffsetMin)) + ') no cambian.'; return; }
+  const d = convDest();
+  t.textContent = d ? 'Al guardar, este mensaje se agrega a «' + convTitleOf(d) + '».' : 'Al guardar, se crea una hoja nueva con la fecha y hora.';
+}
+function convShowMsg(t){ $('convMsg').textContent = t || ''; }
+function convButton(label, fn, cls){ const b = document.createElement('button'); b.type = 'button'; b.textContent = label; if (cls) b.className = cls; b.onclick = fn; return b; }
+function renderConv(){
+  const data = convStore.data;
+  if (convOpenId && !convHas(convOpenId)) convOpenId = null;
+  $('convListView').hidden = !!convOpenId; $('convOpenView').hidden = !convOpenId;
+  const list = $('convList'); list.textContent = '';
+  if (!convOpenId) {
+    const sums = data ? convSummaries(data) : [];
+    if (!sums.length) { const p = document.createElement('p'); p.className = 'hint'; p.textContent = data ? 'Todavía no hay hojas. Grabá o escribí y tocá Guardar.' : 'Las hojas no están disponibles.'; list.append(p); }
+    sums.forEach(x => {
+      const b = convButton('', () => convOpen(x.id), 'conv-item');
+      const t = document.createElement('span'); t.textContent = x.title || 'Sin título';
+      const sm = document.createElement('small'); sm.textContent = x.count + (x.count === 1 ? ' mensaje' : ' mensajes') + (x.lastSavedAt !== null ? ' · último ' + convStamp(x.lastSavedAt) : '');
+      b.append(t, sm); list.append(b);
+    });
+    refreshConvTarget(); return;
+  }
+  $('convTitle').textContent = convTitleOf(convOpenId) || 'Sin título';
+  $('convDeleteEmpty').hidden = !convIsEmpty(data, convOpenId);
+  const box = $('convBubbles'); box.textContent = '';
+  const es = convEntriesOf(data, convOpenId);
+  if (!es.length) { const p = document.createElement('p'); p.className = 'hint'; p.textContent = 'Esta hoja está vacía.'; box.append(p); }
+  es.forEach(e => {
+    const d = document.createElement('div'); d.className = 'conv-bubble' + (e.id === convEditingId ? ' editing' : '');
+    const t = document.createElement('p'); t.className = 'conv-text'; t.textContent = e.text || '(sin texto)';
+    const m = document.createElement('div'); m.className = 'conv-meta';
+    const st = document.createElement('span'); st.className = 'conv-stamp';
+    st.textContent = e.savedAt === null ? 'Sin fecha' : convStamp(e.savedAt, e.tzOffsetMin);
+    m.append(st);
+    if (e.kind === 'heredado') { const h = document.createElement('span'); h.textContent = 'nota anterior'; m.append(h); }
+    if (e.textEditedAt !== null) { const h = document.createElement('span'); h.textContent = 'editado ' + convStamp(e.textEditedAt); m.append(h); }
+    const acts = document.createElement('div'); acts.className = 'conv-actions';
+    acts.append(convButton('Copiar', () => convCopy(e.text)), convButton('Editar', () => convEdit(e.id)),
+      convButton('Mover', () => convAskMove('one', e.id)), convButton('Borrar', () => convDelete(e.id), 'ghost danger'));
+    d.append(t, m, acts); box.append(d);
+  });
+  refreshConvTarget();
+}
+function convOpen(id){ convOpenId = id; if (!convTargetSet && !convEditingId) convTargetId = null; renderConv(); $('convPanel').scrollIntoView({block: 'start', behavior: 'smooth'}); }
+function convCommit(next, okMsg, undo){
+  const w = convStore.save(next);
+  if (!w.ok) { flash('No se guardó: ' + w.error); return false; }
+  renderConv(); if (okMsg) flash(okMsg);
+  if (undo) convOfferUndo(undo, okMsg);
+  return true;
+}
+function convOfferUndo(undo, text){
+  convUndoData = undo; $('convUndoText').textContent = text; $('convUndoRow').hidden = false;
+  clearTimeout(convUndoTimer); convUndoTimer = setTimeout(() => { $('convUndoRow').hidden = true; convUndoData = null; }, 15000);
+}
+$('convUndo').onclick = () => {
+  if (!convUndoData || !convStore.data) return;
+  let next; try { next = convUndoMove(convStore.data, convUndoData); } catch (e) { return flash(e.message); }
+  const back = convUndoData.moves[0].from;
+  if (convCommit(next, 'Listo: volvió a su hoja.')) { convUndoData = null; $('convUndoRow').hidden = true; convOpenId = back; renderConv(); }
 };
+async function convCopy(text){
+  if (!text.trim()) return flash('No hay texto para copiar.');
+  try { await navigator.clipboard.writeText(text); flash('Copiado (' + nWords(text) + ' palabras).'); }
+  catch (e) { flash('No se pudo copiar. Abrí el mensaje con «Editar» y copiá desde el editor.'); }
+}
+function convEdit(id){
+  const e = convEntry(id); if (!e) return;
+  if ($('text').value.trim() && !convEditingId) return flash('Primero guardá o descartá el mensaje que estás escribiendo.');
+  convEditingId = id; cur = null; $('text').value = e.text; baseline = e.text; resetEdit(); resetLive(); updWC(); saveDraft();
+  renderConv(); $('text').focus();
+}
+function convDelete(id){
+  if (!convStore.data || !confirm('¿Borrar este mensaje? No se puede deshacer.')) return;
+  let next; try { next = convDeleteEntry(convStore.data, id); } catch (e) { return flash(e.message); }
+  if (convEditingId === id) convClearComposer();
+  convCommit(next, 'Mensaje borrado.');
+}
+function convAskMove(mode, entryId){
+  if (!convStore.data || !convOpenId) return;
+  const sel = $('convMoveSelect'); sel.textContent = '';
+  convSummaries(convStore.data).filter(x => x.id !== convOpenId).forEach(x => { const o = document.createElement('option'); o.value = x.id; o.textContent = x.title || 'Sin título'; sel.append(o); });
+  if (!sel.options.length) return flash('No hay otra hoja. Guardá un mensaje nuevo para crear otra.');
+  if (mode === 'all' && convIsEmpty(convStore.data, convOpenId)) return flash('Esta hoja no tiene mensajes.');
+  convMoveMode = {mode, entryId, from: convOpenId};
+  $('convMoveTitle').textContent = mode === 'all' ? 'Pasar todo a otra hoja' : 'Mover a otra hoja';
+  $('convMoveHint').textContent = mode === 'all' ? 'Se mueven todos los mensajes de «' + convTitleOf(convOpenId) + '» con sus fechas. La hoja queda vacía (no se borra sola).' : 'Se mueve el mensaje (no se copia) y conserva su fecha y hora.';
+  $('convMoveDialog').showModal();
+}
+$('convMoveCancel').onclick = () => $('convMoveDialog').close();
+$('convMoveForm').addEventListener('submit', ev => {
+  ev.preventDefault();
+  const m = convMoveMode, to = $('convMoveSelect').value; $('convMoveDialog').close();
+  if (!m || !convStore.data || !to) return;
+  let r; try { r = m.mode === 'all' ? convMoveAll(convStore.data, m.from, to) : convMoveEntry(convStore.data, m.entryId, to); } catch (e) { return flash(e.message); }
+  if (!r.undo) return;
+  convCommit(r.data, (m.mode === 'all' ? 'Se pasó todo a «' : 'Se movió a «') + convTitleOf(to) + '».', r.undo);
+});
+$('convMoveAllBtn').onclick = () => convAskMove('all');
+$('convBack').onclick = () => { convOpenId = null; if (!convTargetSet && !convEditingId) convTargetId = null; renderConv(); };
+$('convRename').onclick = () => {
+  if (!convStore.data || !convOpenId) return;
+  const t = prompt('Nuevo nombre de la hoja', convTitleOf(convOpenId)); if (t === null) return;
+  let next; try { next = convRename(convStore.data, convOpenId, t); } catch (e) { return flash(e.message); }
+  convCommit(next, 'Hoja renombrada.');
+};
+$('convCopyAll').onclick = () => { if (convStore.data && convOpenId) convCopy(convCopyText(convStore.data, convOpenId)); };
+$('convTxt').onclick = () => {
+  if (!convStore.data || !convOpenId) return;
+  const name = (convTitleOf(convOpenId).replace(/[^\w\- áéíóúñÁÉÍÓÚÑ]/g, '').trim().replace(/\s+/g, '_') || 'hoja') + '.txt';
+  try { download(new File([convCopyText(convStore.data, convOpenId)], name, {type: 'text/plain;charset=utf-8'})); flash('Descarga solicitada. El archivo sale sin cifrar.'); }
+  catch (e) { flash('No se pudo iniciar la descarga.'); }
+};
+$('convDeleteEmpty').onclick = () => {
+  if (!convStore.data || !convOpenId) return;
+  let next; try { next = convDeleteConversation(convStore.data, convOpenId); } catch (e) { return flash(e.message); }
+  convOpenId = null; convCommit(next, 'Hoja vacía borrada.');
+};
+/* Limpia el editor después de guardar: no deja copia para deshacer (ya está guardado) ni borra los avisos de lo aprendido. */
+function convClearComposer(){
+  cur = null; $('title').value = ''; $('text').value = ''; baseline = ''; tags = []; renderChips();
+  anonBackup = null; $('undo').disabled = true; $('anon').disabled = false; $('anonRes').textContent = ''; $('susBox').innerHTML = '';
+  resetLive(); convResetPending(); updWC(); saveDraft(); renderConv();
+}
+$('convDiscard').onclick = () => {
+  if (!$('text').value.trim()) { convClearComposer(); return; }
+  if (!pendingOk() || !confirm('¿Descartar este mensaje sin guardar?')) return;
+  convClearComposer(); flash('Mensaje descartado.');
+};
+$('convCancelEdit').onclick = () => { convClearComposer(); flash('Edición cancelada: el mensaje guardado no cambió.'); };
+$('text').addEventListener('input', () => {
+  if (convEditingId) return;
+  if ($('text').value.trim()) { if (!convTargetSet) convStartPending(false); }
+  else if (convTargetSet) { convResetPending(); refreshConvTarget(); }
+});
+$('save').onclick = () => {
+  const text = $('text').value; if (!text.trim()) return flash('No hay texto para guardar.');
+  if (!pendingOk()) return;
+  if (!convStore.data) return flash('No se guardó: las hojas no están disponibles. ' + ($('convMsg').textContent || 'Desbloqueá la app y volvé a intentar.'));
+  const now = Date.now(), editing = convEditingId && convEntry(convEditingId);
+  let next, dest, savedAt;
+  try {
+    if (editing) { next = convEditText(convStore.data, editing.id, text, now); dest = editing.conversationId; savedAt = editing.savedAt; }
+    else {
+      const r = convAddEntry(convStore.data, {conversationId: convDest(), kind: convFromAudio ? 'audio' : 'texto', savedAt: now,
+        tzOffsetMin: new Date(now).getTimezoneOffset(), recordedAt: convRecordedAt, text});
+      next = r.data; dest = r.conversation.id; savedAt = now;
+    }
+  } catch (e) { return flash('No se guardó: ' + e.message); }
+  const w = convStore.save(next);
+  if (!w.ok) return flash('No se guardó: ' + w.error + ' El texto sigue en el editor.');
+  if ($('learnAuto').checked) learnFromEdits();
+  else { showSuggestions(suggest(baseline, text, D.rules.map(r => r.a.toLowerCase()))); baseline = text; }
+  convOpenId = dest; convClearComposer();
+  const when = convStamp(savedAt), where = convTitleOf(dest);
+  flash(editing ? 'Cambios guardados. La fecha no cambió.' : (where === when ? 'Guardado como hoja nueva · ' + when : 'Guardado en «' + where + '» · ' + when));
+};
+function convInit(){
+  const r = convStore.load();
+  if (!r.ok) convShowMsg(r.error);
+  else {
+    const m = convStore.migrate(notes);
+    if (!m.ok) convShowMsg('No se pudieron pasar las notas anteriores a hojas: ' + m.error);
+    else if (m.added) flash(m.added + (m.added === 1 ? ' nota anterior pasó' : ' notas anteriores pasaron') + ' a Notas. Las originales siguen guardadas aparte.');
+  }
+  renderConv();
+}
 $('newn').onclick = () => {
   if ($('text').value || $('title').value || tags.length) { doClear(false); flash('Nota nueva. Lo anterior se recupera con «Deshacer borrado».'); }
   else { cur = null; baseline = ''; resetEdit(); resetLive(); flash(''); }
@@ -2111,6 +2346,7 @@ function doClear(auto){
   learnFromEdits();
   stash();
   cur = null; $('title').value = ''; $('text').value = ''; baseline = ''; tags = []; renderChips(); resetEdit(); resetLive();
+  convResetPending(); renderConv();
   $('undoClear').style.display = '';
   flash(auto ? 'Se borró el texto anterior. Podés deshacerlo.' : 'Texto borrado. Podés deshacerlo.');
 }
@@ -2558,6 +2794,7 @@ function appendMachine(t, sep){
 function prepareNew(){
   if ($('replace').checked) doClear(true);
   baseline = $('text').value; resetEdit();
+  convStartPending(true);
 }
 
 /* Dictado del navegador: solo local, verificado antes de habilitar la opción. */
@@ -3470,7 +3707,7 @@ function showAudioDone(){
 $('audioDoneDownload').addEventListener('click', () => { $('aDown').click(); });
 $('audioDoneClose').addEventListener('click', hideAudioDone);
 /* Puntos de novedad en la barra inferior: se apagan al entrar en esa pantalla. */
-const NAV_NAMES = {grabacion: 'Audio', transcripcion: 'Texto'};
+const NAV_NAMES = {grabacion: 'Audio', transcripcion: 'Notas'};
 function notifyNav(view, text){
   const link = document.querySelector('[data-delta-view="' + view + '"]');
   if (!link || document.body.dataset.view === view) return;
@@ -3814,14 +4051,22 @@ document.querySelectorAll('input[name=eng]').forEach(r => r.addEventListener('ch
 
 /* ---------- Borrador autoguardado: sobrevive a recargas y cierres ---------- */
 let lastDraft = '';
-const snap = () => JSON.stringify({title: $('title').value, text: $('text').value, tags, cur, baseline});
+const snap = () => JSON.stringify({title: $('title').value, text: $('text').value, tags, cur, baseline,
+  conv: {open: convOpenId, target: convTargetId, targetSet: convTargetSet, editing: convEditingId, fromAudio: convFromAudio, recordedAt: convRecordedAt}});
 function saveDraft(){ const x = snap(); if (x === lastDraft) return; lastDraft = x; try { vaultStore.setItem(DRAFT, x); } catch (e) {} }
 function restoreDraft(){
   try {
     const d = JSON.parse(vaultStore.getItem(DRAFT) || 'null');
     if (d && ((d.text || '').trim() || (d.title || '').trim())) {
       cur = d.cur || null; $('title').value = d.title || ''; $('text').value = d.text || ''; baseline = d.baseline || ''; tags = d.tags || [];
-      renderChips(); if ((d.text || '').trim()) flash('Se recuperó el texto de la última vez.');
+      renderChips();
+      const c = d.conv && typeof d.conv === 'object' ? d.conv : {};
+      convOpenId = convHas(c.open) ? c.open : null;
+      convEditingId = typeof c.editing === 'string' && convEntry(c.editing) ? c.editing : null;
+      convTargetSet = !!c.targetSet; convTargetId = convHas(c.target) ? c.target : null;
+      convFromAudio = !!c.fromAudio; convRecordedAt = Number.isFinite(c.recordedAt) ? c.recordedAt : null;
+      renderConv();
+      if ((d.text || '').trim()) flash(convEditingId ? 'Se recuperó una edición sin guardar. Tocá Guardar o Cancelar edición.' : 'Se recuperó un mensaje sin guardar. Tocá Guardar o Descartar.');
     }
     const u = JSON.parse(vaultStore.getItem(UNDO) || 'null');
     if (u) { clearBackup = u; $('undoClear').style.display = ''; }
@@ -3868,7 +4113,7 @@ setInterval(updWC, 300);
 initErgonomics(); loadCfg(); $('recordSaveAudio').checked = $('saveAudio').checked; updateModelHint();
 // Protección cifrada: no bloquear mientras se graba o transcribe; guardar el borrador antes de bloquear.
 vaultSetHooks(() => recording || busy || outstanding > 0 || feeding, saveDraft);
-vaultWhenReady(() => { loadNotes(); loadDict(); loadPeople(); loadGenerator(); updateGeneratorUI(); renderList(); restoreDraft(); updWC(); });
+vaultWhenReady(() => { loadNotes(); loadDict(); loadPeople(); loadGenerator(); updateGeneratorUI(); renderList(); convInit(); restoreDraft(); updWC(); });
 refreshAudioBox();
 </script>
 <script>
