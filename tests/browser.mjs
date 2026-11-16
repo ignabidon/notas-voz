@@ -25,8 +25,11 @@ try {
  for(let i=0;i<100;i++){if(await run('document.readyState==="complete" && typeof updateDockRecording === "function"'))break;await new Promise(r=>setTimeout(r,50));}
  const settle=()=>run('new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)))');
  // Native keyboard activation of help controls.
+ await call('Page.bringToFront');
+ await call('Emulation.setFocusEmulationEnabled',{enabled:true});
  await run('document.querySelector(".info-toggle").focus()');
- for(const [key,hidden] of [['Enter',false],['Enter',true]]){await call('Input.dispatchKeyEvent',{type:'keyDown',key,code:'Enter',windowsVirtualKeyCode:13});await call('Input.dispatchKeyEvent',{type:'keyUp',key,code:'Enter',windowsVirtualKeyCode:13});assert.equal(await run('document.getElementById("retainHelp").hidden'),hidden); }
+ assert.equal(await run('document.activeElement.getAttribute("aria-controls")'),'retainHelp');
+ for(const [key,hidden] of [['Enter',false],['Enter',true]]){await call('Input.dispatchKeyEvent',{type:'keyDown',key,code:'Enter',text:'\r',windowsVirtualKeyCode:13});await call('Input.dispatchKeyEvent',{type:'keyUp',key,code:'Enter',windowsVirtualKeyCode:13});assert.equal(await run('document.getElementById("retainHelp").hidden'),hidden); }
  assert.equal(await run('document.getElementById("retainHelp").hidden'),true);
  await run('document.getElementById("recordSaveAudio").click()');
  assert.equal(await run('document.getElementById("saveAudio").checked'),true);
