@@ -210,4 +210,4 @@ En cada PR: pruebas Node + las tres de navegador (`browser.mjs`, `cifrado-browse
 
 ## 7. Qué NO cambia esta propuesta
 
-Captura, pausa, marcas y cronómetro; Whisper y su aviso único; correcciones y aprendizaje; diccionario; anonimización (lógica); protección cifrada; almacenamiento y claves; exportaciones; barra de navegación de cuatro pestañas (se renombran dos, ver Etapa N; los ids internos no cambian); paleta general.
+Captura, pausa, marcas y cronómetro; Whisper y su aviso único; correcciones y aprendizaje; diccionario; anonimización (lógica); protección cifrada; almacenamiento y claves (salvo el almacén nuevo de audios de la Etapa E, solo aditivo); exportaciones; barra de navegación de cuatro pestañas (se renombran dos, ver Etapa N; los ids internos no cambian); paleta general.
