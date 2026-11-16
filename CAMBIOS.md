@@ -8,7 +8,7 @@ Base: main `0bdd11d65d2e7c81e7da96f26de9fc399baebb54`; rama `mejora-claridad-mov
 - Descargar audio unificado; Guardar nota .txt mantiene copia local y descarga. Espacio dinámico de barra conservado, editor ajustado para teclado y renglón final con margen.
 - README y AGENTS corregidos: cuatro pantallas, Audio y límite vigente de 15 minutos inclusive / 200 MB. Historial anterior conserva sus fechas y resultados.
 - Sin cambios de claves, datos, Whisper, CSP, orígenes o dependencias. Importados nunca se guardan.
-- Verificación local: 99/99 pruebas Node. Chromium local no inicia por restricción de sockets del entorno. Se agrega prueba de interfaz sin dependencias usando Chrome del runner y CDP nativo de Node: anchos 320/360/412/760/1365, normal/grande, ayudas, sincronización, bloqueo, captura/pausa/fin y teclado simulado. Resultado CI y publicación se informan en la entrega.
+- Verificación local: 99/99 pruebas Node. Chromium local no inicia por restricción de sockets del entorno. Se agrega prueba de interfaz sin dependencias usando Chrome del runner y CDP nativo de Node: anchos 320/360/412/760/1365, normal/grande, ayudas, sincronización, bloqueo, captura/pausa/fin y teclado simulado. CI de la rama: 99/99 y prueba Chrome aprobadas (run 43795049824). Revisión de capturas: se reemplazó el glifo de información por SVG integrado y se compactó el encabezado. Se repiten verificaciones sobre ese ajuste final; publicación se informa en la entrega.
 - **Motorola real: pendiente.** No hubo micrófono ni teclado físico; probar con datos ficticios grabar → pausar → reanudar → cambiar de pantalla → detener → editar último renglón → descargar. La revisión anterior tampoco era prueba física.
 
 ## 15/11/2026 · Diseño compacto y controles de entrada

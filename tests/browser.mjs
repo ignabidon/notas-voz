@@ -26,7 +26,7 @@ try {
  const settle=()=>run('new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)))');
  // Native keyboard activation of help controls.
  await run('document.querySelector(".info-toggle").focus()');
- for(const key of ['Enter','Enter']){await call('Input.dispatchKeyEvent',{type:'keyDown',key,code:'Enter',windowsVirtualKeyCode:13});await call('Input.dispatchKeyEvent',{type:'keyUp',key,code:'Enter',windowsVirtualKeyCode:13}); }
+ for(const [key,hidden] of [['Enter',false],['Enter',true]]){await call('Input.dispatchKeyEvent',{type:'keyDown',key,code:'Enter',windowsVirtualKeyCode:13});await call('Input.dispatchKeyEvent',{type:'keyUp',key,code:'Enter',windowsVirtualKeyCode:13});assert.equal(await run('document.getElementById("retainHelp").hidden'),hidden); }
  assert.equal(await run('document.getElementById("retainHelp").hidden'),true);
  await run('document.getElementById("recordSaveAudio").click()');
  assert.equal(await run('document.getElementById("saveAudio").checked'),true);

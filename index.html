@@ -482,8 +482,8 @@ textarea#text{scroll-margin-bottom:var(--dock-space)}
 .record-head{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px;text-align:left}
 .record-head .record-overline,.record-head .rec-caption,.record-head .help-content{grid-column:1/-1}
 .record-head h2{margin:0}
-.audio-retention{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap;max-width:230px}
-.audio-retention>label{margin:0;font-size:14px}
+.audio-retention{display:grid;grid-template-columns:auto 48px;align-items:center;gap:0 8px;justify-items:end}.audio-retention>label[for]{grid-column:1/-1}
+.audio-retention>label{margin:0;font-size:calc(14px * var(--text-scale))}
 .retention-switch{position:relative;display:flex;align-items:center;gap:8px;min-height:48px;cursor:pointer}
 .retention-switch input{position:absolute;inset:0;width:100%;height:100%;opacity:0;margin:0;cursor:pointer}
 .switch-track{width:40px;height:24px;border-radius:20px;background:#52656b;padding:3px;pointer-events:none}
@@ -502,7 +502,8 @@ textarea#text{scroll-margin-bottom:var(--dock-space)}
 @media(prefers-reduced-motion:reduce){#studioDockCapture .capture-dot{animation:none!important}}
 textarea#text{padding-bottom:28px}
 body.keyboard-open textarea#text{min-height:120px;height:max(120px,calc(var(--visual-height) - var(--dock-height,180px) - 70px))}
-@media(max-width:380px){.audio-retention{max-width:195px;gap:4px}.audio-retention>label{font-size:13px}.record-head{gap:4px}}
+.title-with-help{display:flex;align-items:center;gap:12px}.anon-explain:has(>#anonHelp[hidden]){display:none}.info-toggle svg{display:block;margin:auto}
+@media(max-width:380px){.audio-retention{gap:0 4px}.record-head{gap:4px}}
 </style>
 </head>
 <body data-view="grabacion">
@@ -525,7 +526,7 @@ body.keyboard-open textarea#text{min-height:120px;height:max(120px,calc(var(--vi
 
   <!-- 1 · Grabar -->
   <section class="card c-rec" id="grabacion">
-    <div class="record-head"><span class="record-overline">ESTUDIO DE VOZ</span><h2>Audio</h2><div class="audio-retention"><label for="recordSaveAudio">Conservar audio</label><label class="retention-switch"><input type="checkbox" id="recordSaveAudio" role="switch" aria-label="Conservar audio" aria-describedby="retainHelp"><span class="switch-track" aria-hidden="true"></span><span id="recordSaveState" aria-hidden="true">No</span></label><button type="button" class="info-toggle" aria-label="Ayuda sobre conservar audio" aria-expanded="false" aria-controls="retainHelp">ⓘ</button></div><p class="hint help-content" id="retainHelp" hidden>Activá antes de grabar para conservar la voz en este navegador. Descargar crea un archivo aparte y no borra la copia local. El audio no está anonimizado ni cifrado.</p><p class="rec-caption">Grabá tu voz o cargá un audio para transcribirlo en tu dispositivo.</p>
+    <div class="record-head"><span class="record-overline">ESTUDIO DE VOZ</span><h2>Audio</h2><div class="audio-retention"><label for="recordSaveAudio">Conservar audio</label><label class="retention-switch"><input type="checkbox" id="recordSaveAudio" role="switch" aria-label="Conservar audio" aria-describedby="retainHelp"><span class="switch-track" aria-hidden="true"></span><span id="recordSaveState" aria-hidden="true">No</span></label><button type="button" class="info-toggle" aria-label="Ayuda sobre conservar audio" aria-expanded="false" aria-controls="retainHelp"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7v1"/></svg></button></div><p class="hint help-content" id="retainHelp" hidden>Activá antes de grabar para conservar la voz en este navegador. Descargar crea un archivo aparte y no borra la copia local. El audio no está anonimizado ni cifrado.</p><p class="rec-caption">Grabá tu voz o cargá un audio para transcribirlo en tu dispositivo.</p>
     </div>
     <div class="audio-done" id="audioDone" role="status" aria-live="polite" hidden>
       <span class="audio-done-check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7"/></svg></span>
@@ -604,7 +605,7 @@ body.keyboard-open textarea#text{min-height:120px;height:max(120px,calc(var(--vi
       <section class="settings-module" id="settingsReading"><div class="settings-module-top"><span class="module-icon" aria-hidden="true">Aa</span><h3>Lectura y comodidad</h3></div>
         <label for="textSize">Tamaño del texto</label>
         <select id="textSize" aria-describedby="textSizeHelp"><option value="compact">Compacto</option><option value="normal" selected>Normal</option><option value="large">Grande</option></select>
-        <button type="button" class="info-toggle" aria-label="Ayuda sobre tamaño del texto" aria-expanded="false" aria-controls="textSizeHelp">ⓘ</button><p class="hint help-content" id="textSizeHelp" hidden>Se conserva en este navegador. Los archivos exportados mantienen su formato.</p>
+        <button type="button" class="info-toggle" aria-label="Ayuda sobre tamaño del texto" aria-expanded="false" aria-controls="textSizeHelp"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7v1"/></svg></button><p class="hint help-content" id="textSizeHelp" hidden>Se conserva en este navegador. Los archivos exportados mantienen su formato.</p>
       </section>
       <section class="settings-module" id="settingsQuality"><div class="settings-module-top"><span class="module-icon">✦</span><h3>Calidad de transcripción</h3></div>
         <label for="model" style="margin-top:16px">Modelo de Whisper</label>
@@ -645,7 +646,7 @@ body.keyboard-open textarea#text{min-height:120px;height:max(120px,calc(var(--vi
       </details>
       </section>
       <section class="settings-module" id="settingsDictionary"><div class="settings-module-top"><span class="module-icon">Aa</span><h3>Diccionario</h3></div>
-        <label class="chk"><input type="checkbox" id="learnAuto" checked><span><b>Aprender de mis correcciones</b></span></label><button type="button" class="info-toggle" aria-label="Ayuda sobre aprendizaje de correcciones" aria-expanded="false" aria-controls="learnHelp">ⓘ</button><p class="hint help-content" id="learnHelp" hidden>Si corregís una palabra en «Texto», DictaNota la recuerda y la escribe bien la próxima vez, sin que toques ningún botón. Aprende solo palabras en minúscula que se parecen a lo que escribió Whisper; nunca nombres con mayúscula ni números. Aparece un aviso con «Deshacer» por si fue un error.</p>
+        <label class="chk"><input type="checkbox" id="learnAuto" checked><span><b>Aprender de mis correcciones</b></span></label><button type="button" class="info-toggle" aria-label="Ayuda sobre aprendizaje de correcciones" aria-expanded="false" aria-controls="learnHelp"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7v1"/></svg></button><p class="hint help-content" id="learnHelp" hidden>Si corregís una palabra en «Texto», DictaNota la recuerda y la escribe bien la próxima vez, sin que toques ningún botón. Aprende solo palabras en minúscula que se parecen a lo que escribió Whisper; nunca nombres con mayúscula ni números. Aparece un aviso con «Deshacer» por si fue un error.</p>
         <details class="studio-dictionary">
       <summary>Corregir palabras frecuentes <small>Opcional · para errores que se repiten</small></summary>
       <p class="hint" id="dictHelp">Escribí qué palabra sale mal y por cuál reemplazarla, una corrección por línea. No hace falta explicar el motivo.</p>
@@ -720,7 +721,7 @@ body.keyboard-open textarea#text{min-height:120px;height:max(120px,calc(var(--vi
 
     <div id="learn"></div>
 
-    <details class="studio-workflow"><summary>Guardar, organizar y exportar la nota</summary><div class="studio-workflow-body"><div class="note-details">
+    <details class="studio-workflow"><summary>Guardar, organizar y exportar la nota</summary><div class="studio-workflow-body"><p class="hint">Guardar nota .txt conserva una copia en este navegador y solicita descargar un archivo.</p><div class="note-details">
       <label for="title">Título de la nota <span class="opt">(opcional)</span></label>
       <input type="text" id="title" placeholder="Ej.: Nota de sesión · 15/11">
     </div>
@@ -753,10 +754,10 @@ body.keyboard-open textarea#text{min-height:120px;height:max(120px,calc(var(--vi
 
   <!-- 3 · Anonimizar -->
   <section class="card c-anon" id="anonimizar">
-    <div class="screen-title"><span class="screen-overline">PRIVACIDAD</span><h2>Anonimizar</h2><p>Ocultá nombres y datos personales antes de guardar o compartir.</p></div>
+    <div class="screen-title"><span class="screen-overline">PRIVACIDAD</span><h2 class="title-with-help">Anonimizar <button type="button" class="info-toggle" aria-label="Cómo funciona la anonimización" aria-expanded="false" aria-controls="anonHelp"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7v1"/></svg></button></h2><p>Ocultá nombres y datos personales antes de guardar o compartir.</p></div>
 
     <div class="anon-explain" id="anonExplain">
-      <button type="button" class="info-toggle" aria-label="Cómo funciona la anonimización" aria-expanded="false" aria-controls="anonHelp">ⓘ</button><div id="anonHelp" class="help-content" hidden>
+      <div id="anonHelp" class="help-content" hidden>
       <p>Al dictar, la nota puede incluir <b>nombres de personas, teléfonos, correos o fechas</b>. Anonimizar los <b>reemplaza por etiquetas o códigos</b>, para que el texto se pueda guardar o compartir sin mostrar quién es cada persona.</p>
       <details class="anon-example-box">
         <summary>Ver un ejemplo con datos inventados</summary>
