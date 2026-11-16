@@ -38,12 +38,12 @@ Resumen de AGENTS.md/SEGURIDAD.md aplicado a esta propuesta (si hay conflicto, *
 
 - **Nada de `innerHTML` con datos del usuario**, ni `eval`. Todo resaltado o vista previa se arma con `createElement`/`textContent`.
 - **Sin dependencias, fuentes, íconos ni servicios externos.** Íconos SVG **en línea** (como los de la barra inferior). Una dirección externa nueva exige CSP + SEGURIDAD.md + pruebas.
-- Almacenamiento: no renombrar claves «gamma»; datos protegidos solo con `vaultStore`. Esta propuesta **no necesita tocar almacenamiento**.
-- **No tocar** Whisper, captura, Worker, cola ni audio. El aviso de transcripción sigue siendo **único y global** en `.studio-dock`.
+- Almacenamiento: no renombrar claves «gamma»; datos protegidos solo con `vaultStore`. Las etapas A–D **no necesitan tocar almacenamiento**; la **Etapa E** (audio en la burbuja) sí, y exige plan y permiso explícito.
+- **No tocar** Whisper, captura, Worker ni cola. Tampoco el audio guardado, salvo en la Etapa E (con permiso explícito). El aviso de transcripción sigue siendo **único y global** en `.studio-dock`.
 - Objetivos táctiles ≥48 px en controles principales; **no recortar rótulos para que entren**.
 - **No poner nombres de IA ni créditos en la interfaz**; la autoría va solo en documentación.
-- Las **pestañas se mantienen en cuatro** y sus nombres definitivos los decide el usuario. Esta propuesta solo corrige rótulos viejos.
-- Funcionalidades nuevas **requieren autorización expresa**. Autorizado el 16/11/2026: **modo oscuro opcional** (D2).
+- Las **pestañas se mantienen en cuatro**. La primera se llama «Dictar» (decidido); el nombre de la segunda lo decide el usuario (Etapa N). Hasta entonces solo se corrigen rótulos viejos (A1).
+- Funcionalidades nuevas **requieren autorización expresa**. Autorizado el 16/11/2026: **modo oscuro opcional** (D2) y **audio en la burbuja** (E, con plan y permiso antes de programar).
 - Cada etapa: rama nueva desde `main` actualizado, pruebas, registro en CAMBIOS.md, **tres niveles de estado** (código guardado / pruebas técnicas / probado en el Motorola), **capturas al usuario antes de publicar** y **unión a `main` solo con su permiso**, sin squash.
 
 ## 4. Cambios propuestos
