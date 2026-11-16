@@ -1,3 +1,13 @@
+## 16/11/2026 · Rediseño conversacional · fase 1: modelo de datos (sin cambios visibles)
+
+Base: `main` en `65ec519`; rama `rediseno-01-modelo-conversaciones-2026-11-16`. Autorizado por el usuario el 16/11/2026 (fase 1).
+
+- Nuevo bloque `/*CONV-START*/ … /*CONV-END*/` en `index.html` con **funciones puras** del modelo nota/mensaje: crear mensaje (la captura global siempre crea una nota nueva; dentro de una nota se agrega ahí), editar texto, renombrar, mover con «Deshacer», control que impide cambiar la fecha y hora de registro, lectura defensiva y conversión de vuelta al formato anterior de notas planas.
+- Decisiones del usuario aplicadas: la nota nueva se titula con **la fecha y hora del registro** (`16/11/2026 · 10:42`); la nota se crea **solo si hay texto o audio válido**.
+- **La app todavía no usa este bloque**: no lee ni escribe almacenamiento, no crea claves nuevas, no toca `vaultStore`, IndexedDB, Whisper, la interfaz ni la CSP. Una prueba lo verifica.
+- Pendiente: migración de las notas viejas (falta la decisión del usuario sobre cómo mostrarlas), guardado real con `vaultStore` (clave nueva en `VAULT_KEYS`) y todo lo visible.
+- Pruebas: **118/118** Node (8 nuevas, datos ficticios); `tests/browser.mjs` y `tests/cifrado-browser.mjs` aprobadas en Chrome local. Motorola: no aplica todavía (sin cambios visibles).
+
 ## 16/11/2026 · Traspaso del rediseño conversacional (SOLO documentación)
 
 - Nuevo punto de entrada para agentes: [CONTINUAR-AQUI.md](CONTINUAR-AQUI.md), enlazado desde AGENTS.md, CLAUDE.md y README.md.

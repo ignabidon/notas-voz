@@ -69,6 +69,18 @@ Objetivos principales:
 
 ---
 
+### 2.5 Decisiones del usuario del 16/11/2026 (01:31, después de ver la propuesta)
+
+- **Título de una nota nueva:** la fecha y hora del registro (por ejemplo `16/11/2026 · 10:42`). Se puede renombrar.
+- **Cuándo se crea la nota:** solo cuando hay audio o texto válido. Un permiso denegado o una grabación sin nada no crean notas.
+- **Audios que el usuario no conserva:** se descartan. No hace falta mantener una copia temporal «recuperable»; a lo sumo, pedir confirmación antes de descartar. (Reemplaza, para el diseño nuevo, la lógica de «audio anterior recuperable»; aplicarlo en la fase de audio, no antes.)
+- **Audios y datos guardados hasta hoy:** son material de prueba. No hace falta migrar los audios viejos a la biblioteca nueva; el usuario puede borrarlos con el botón «Borrar» actual.
+- **Notas viejas → formato nuevo (01:43):** **una burbuja por nota**. Cada nota guardada es un mensaje dentro de la conversación (por ejemplo, la de un paciente ficticio: una burbuja por cada sesión), con la fecha en que se guardó. Lo que no se guarda no aparece en ningún lado.
+- **Cada burbuja:** transcribir, copiar el texto y llevarlo fácilmente a otro lado.
+- **Pedido nuevo:** poder trasladar **todo el conjunto** de mensajes de una conversación, no solo uno. Falta precisar si es copiar/exportar todo junto, unir con otra conversación, o ambas.
+- **Duda abierta:** la regla 2.3 fija como sello la hora de inicio de la grabación; el usuario habló de «la fecha en que se guardó». Confirmar si hay un paso explícito de Guardar (y si sin él se descarta) y qué hora muestra el sello.
+- **Fase 1 (modelo de datos, sin cambios visibles):** autorizada e implementada en la rama `rediseno-01-modelo-conversaciones-2026-11-16`.
+
 ## 3. Nueva arquitectura de información propuesta
 
 Se propone pasar de las **cuatro pestañas actuales** `Audio / Texto / Anonimizar / Ajustes` a **tres destinos principales**:

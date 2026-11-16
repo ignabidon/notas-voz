@@ -1373,3 +1373,117 @@ test('cifrado: un código de recuperación nuevo reemplaza al anterior (pide la 
   assert.ok(html.includes('id="vaultRecoveryCopy"') && html.includes('id="vaultNewCode"'));
   assert.doesNotMatch(html, /\.vault-code\{[^}]*user-select:all/, 'el código tiene que poder seleccionarse en Android');
 });
+
+/* ---- Rediseño conversacional · fase 1: modelo de datos (16/11/2026). Datos ficticios. ---- */
+const convSrc = (html.match(/\/\*CONV-START\*\/([\s\S]*?)\/\*CONV-END\*\//) || [])[1];
+const conv = new Function(convSrc + ';return {convEmpty, convStamp, convValid, convEntriesOf, convAddEntry, convEditText, convRename, convMoveEntry, convUndoMove, convIsEmpty, convCheckWrite, convToLegacyNotes};')();
+const BA = 180; // getTimezoneOffset() de Buenos Aires
+const T1042 = Date.UTC(2026, 10, 16, 13, 42); // 16/11/2026 10:42 en Argentina
+const seqIds = () => { let n = 0; return () => 'id' + (++n); };
+
+test('conversaciones: el modelo está aislado y la app todavía no lo usa', () => {
+  assert.ok(convSrc, 'falta el bloque CONV');
+  assert.doesNotMatch(convSrc, /localStorage|vaultStore|indexedDB|innerHTML|document\.|\beval\b|new Function|fetch\(/);
+  const fuera = html.replace(convSrc, '');
+  for (const f of ['convAddEntry', 'convMoveEntry', 'convEditText', 'convToLegacyNotes', 'convValid']) assert.ok(!fuera.includes(f + '('), f + ' no debe usarse fuera del bloque en la fase 1');
+  assert.ok(!html.includes('notasvoz.dictanota'), 'la fase 1 no crea claves de almacenamiento');
+});
+
+test('conversaciones: la nota nueva se titula con la fecha y hora de registro', () => {
+  assert.equal(conv.convStamp(T1042, BA), '16/11/2026 · 10:42');
+  assert.equal(conv.convStamp(Date.UTC(2026, 0, 1, 2, 5), BA), '31/12/2025 · 23:05');
+  const r = conv.convAddEntry(conv.convEmpty(), {kind: 'audio', recordedAt: T1042, tzOffsetMin: BA, text: 'Comprar yerba.'}, {newId: seqIds(), now: T1042 + 60000});
+  assert.equal(r.created, true);
+  assert.equal(r.conversation.title, '16/11/2026 · 10:42');
+  assert.equal(r.conversation.createdAt, T1042);
+});
+
+test('conversaciones: sin texto ni audio no se crea ninguna nota', () => {
+  const d = conv.convEmpty();
+  for (const text of ['', '   \n ']) {
+    const r = conv.convAddEntry(d, {kind: 'audio', recordedAt: T1042, tzOffsetMin: BA, text}, {newId: seqIds()});
+    assert.equal(r.entry, null); assert.equal(r.data, d); assert.equal(r.data.conversations.length, 0);
+  }
+  const conAudio = conv.convAddEntry(d, {kind: 'audio', recordedAt: T1042, text: '', audioId: 'a1'}, {newId: seqIds()});
+  assert.equal(conAudio.created, true, 'un audio válido sin transcribir sí crea la nota');
+  assert.throws(() => conv.convAddEntry(d, {kind: 'audio', text: 'x'}), /fecha/);
+  assert.throws(() => conv.convAddEntry(d, {kind: 'heredado', recordedAt: T1042, text: 'x'}), /Tipo/);
+});
+
+test('conversaciones: dos capturas globales son dos notas; grabar dentro de una nota agrega ahí', () => {
+  const ids = seqIds();
+  let r = conv.convAddEntry(conv.convEmpty(), {kind: 'audio', recordedAt: T1042, tzOffsetMin: BA, text: 'Uno.'}, {newId: ids});
+  const primera = r.conversation.id;
+  r = conv.convAddEntry(r.data, {kind: 'audio', recordedAt: T1042 + 120000, tzOffsetMin: BA, text: 'Dos.'}, {newId: ids});
+  assert.notEqual(r.conversation.id, primera);
+  assert.equal(r.data.conversations.length, 2);
+  r = conv.convAddEntry(r.data, {conversationId: primera, kind: 'texto', recordedAt: T1042 + 300000, tzOffsetMin: BA, text: 'Tres.'}, {newId: ids});
+  assert.equal(r.created, false);
+  assert.equal(r.data.conversations.length, 2);
+  assert.deepEqual(conv.convEntriesOf(r.data, primera).map(e => [e.text, e.recordedAt]), [['Uno.', T1042], ['Tres.', T1042 + 300000]]);
+  assert.throws(() => conv.convAddEntry(r.data, {conversationId: 'no-existe', kind: 'texto', recordedAt: T1042, text: 'x'}), /no existe/);
+});
+
+test('conversaciones: editar, renombrar y mover nunca cambian la fecha y hora de registro', () => {
+  const ids = seqIds();
+  let r = conv.convAddEntry(conv.convEmpty(), {kind: 'audio', recordedAt: T1042, tzOffsetMin: BA, text: 'Pasiente ficticio.', audioId: 'aud-1', durationMs: 48000}, {newId: ids});
+  const e = r.entry, origen = r.conversation.id;
+  r = conv.convAddEntry(r.data, {kind: 'texto', recordedAt: T1042 + 9e5, tzOffsetMin: BA, text: 'Lista ficticia.'}, {newId: ids});
+  const destino = r.conversation.id;
+  const antes = r.data;
+  let d = conv.convEditText(antes, e.id, 'Paciente ficticio.', T1042 + 1e6);
+  d = conv.convRename(d, destino, 'Supermercado');
+  const m = conv.convMoveEntry(d, e.id, destino, T1042 + 2e6);
+  const movido = m.data.entries.find(x => x.id === e.id);
+  assert.equal(movido.recordedAt, T1042); assert.equal(movido.tzOffsetMin, BA);
+  assert.equal(movido.text, 'Paciente ficticio.'); assert.equal(movido.textEditedAt, T1042 + 1e6);
+  assert.equal(movido.audioId, 'aud-1'); assert.equal(movido.durationMs, 48000);
+  assert.equal(movido.conversationId, destino);
+  assert.equal(m.data.entries.length, antes.entries.length, 'mover no duplica');
+  assert.ok(conv.convIsEmpty(m.data, origen), 'la nota de origen queda vacía pero no se borra sola');
+  assert.ok(m.data.conversations.some(c => c.id === origen));
+  assert.equal(conv.convCheckWrite(antes, m.data), '');
+  const vuelta = conv.convUndoMove(m.data, m.undo);
+  assert.equal(vuelta.entries.find(x => x.id === e.id).conversationId, origen);
+  assert.throws(() => conv.convMoveEntry(d, e.id, 'no-existe'), /no existe/);
+  assert.equal(d.entries.find(x => x.id === e.id).conversationId, origen, 'un fallo no modifica el origen');
+  assert.throws(() => conv.convRename(d, destino, '   '), /vacío/);
+});
+
+test('conversaciones: el control de escritura rechaza cambiar fechas o duplicar mensajes', () => {
+  const r = conv.convAddEntry(conv.convEmpty(), {kind: 'texto', recordedAt: T1042, tzOffsetMin: BA, text: 'Hola.'}, {newId: seqIds()});
+  const alterada = {...r.data, entries: r.data.entries.map(e => ({...e, recordedAt: e.recordedAt + 1}))};
+  assert.match(conv.convCheckWrite(r.data, alterada), /fecha y hora/);
+  const zona = {...r.data, entries: r.data.entries.map(e => ({...e, tzOffsetMin: 0}))};
+  assert.match(conv.convCheckWrite(r.data, zona), /zona/);
+  const dup = {...r.data, entries: r.data.entries.concat(r.data.entries)};
+  assert.match(conv.convCheckWrite(r.data, dup), /duplicado/);
+});
+
+test('conversaciones: lectura defensiva descarta lo dañado sin ejecutar contenido', () => {
+  const raw = {schema: 2, conversations: [{id: 'c1', title: '<img src=x onerror=alert(1)>', createdAt: T1042, tags: ['a', 3]}, {id: 'c1', title: 'repetida'}, {title: 'sin id'}],
+    entries: [{id: 'e1', conversationId: 'c1', kind: 'audio', recordedAt: T1042, text: 'ok'},
+      {id: 'e2', conversationId: 'c1', kind: 'audio', recordedAt: 'ayer', text: 'fecha mala'},
+      {id: 'e3', conversationId: 'cX', kind: 'texto', recordedAt: T1042, text: 'sin nota'},
+      {id: 'e4', conversationId: 'c1', kind: 'heredado', recordedAt: null, text: 'vieja', legacySavedAt: T1042},
+      {id: 'e5', conversationId: 'c1', kind: 'raro', recordedAt: T1042, text: 'x'}]};
+  const v = conv.convValid(raw);
+  assert.equal(v.ok, false); assert.equal(v.dropped, 5);
+  assert.deepEqual(v.data.entries.map(e => e.id), ['e1', 'e4']);
+  assert.deepEqual(v.data.conversations[0].tags, ['a']);
+  assert.equal(conv.convValid(null).ok, true);
+  assert.equal(conv.convValid({schema: 1}).ok, false);
+  assert.deepEqual(conv.convEntriesOf(v.data, 'c1').map(e => e.id), ['e4', 'e1'], 'lo heredado sin fecha va primero');
+});
+
+test('conversaciones: volver al formato anterior produce notas planas válidas', () => {
+  const ids = seqIds();
+  let r = conv.convAddEntry(conv.convEmpty(), {kind: 'audio', recordedAt: T1042, tzOffsetMin: BA, text: 'Uno.'}, {newId: ids, now: T1042});
+  const c = r.conversation.id;
+  r = conv.convAddEntry(r.data, {conversationId: c, kind: 'texto', recordedAt: T1042 + 6e4, tzOffsetMin: BA, text: 'Dos.'}, {newId: ids, now: T1042 + 6e4});
+  r = conv.convAddEntry(r.data, {kind: 'audio', recordedAt: T1042 + 7e4, text: '', audioId: 'a9'}, {newId: ids, now: T1042 + 7e4});
+  const notas = conv.convToLegacyNotes(r.data);
+  assert.equal(notas.length, 1, 'una nota solo con audio sin transcribir no genera nota de texto vacía');
+  assert.deepEqual(notas[0], {id: c, title: '16/11/2026 · 10:42', text: 'Uno.\n\nDos.', ts: T1042 + 6e4, tags: []});
+  assert.ok(!notas[0].text.includes('16/11/2026'), 'las fechas no se meten en el texto');
+});
