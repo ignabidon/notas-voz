@@ -1,3 +1,14 @@
+## 16/11/2026 · Protección cifrada con contraseña y huella
+
+Base: main `702cedd`; rama `seguridad-02-cifrado-2026-11-16`. Pedido del usuario: cifrar toda la app, desbloquear con huella y contraseña, autobloqueo a los 15 minutos y audios en una segunda etapa. Pensado para que sirva también a una futura app de Android.
+
+- Nuevo en Ajustes → Privacidad y almacenamiento: «Protección con contraseña y huella». Permite activar, ver el código de recuperación una sola vez, activar o quitar la huella, bloquear ahora, cambiar la contraseña y quitar la protección (con contraseña). Se agrega un botón «Bloquear» en el encabezado y una pantalla de bloqueo que deja la app inutilizable detrás (`inert`).
+- Cifrado: AES-GCM de 256 bits por registro. La clave de datos se envuelve con la contraseña (PBKDF2-SHA256, 600.000 iteraciones), con el código de recuperación (HKDF) y con la huella (passkey con WebAuthn PRF + HKDF). Detalle y límites en DISENO-CIFRADO.md.
+- La app usa `vaultStore` en lugar de `localStorage` para notas, borrador, deshacer, personas y diccionario. La carga de esos datos se hace en `vaultWhenReady`. **Sin la protección activada, el comportamiento es el mismo que antes.**
+- Sin orígenes nuevos, sin cambios en la CSP ni en Whisper, la grabación o los audios. Las claves históricas `gamma` se conservan.
+- Pruebas: 109/109 en Node (10 nuevas de cifrado) y `tests/cifrado-browser.mjs` (nueva, agregada al CI) en Chrome real a 412 px con autenticador virtual con PRF. Se ajustaron dos pruebas existentes: el borrado de textos ahora usa `vaultStore`, y el conteo de la clave del diccionario excluye la lista de claves protegidas. `tests/browser.mjs` sigue aprobada.
+- **Motorola: pendiente.** Probar con datos ficticios: activar → anotar el código → activar la huella → recargar → desbloquear con huella → bloquear → contraseña → dejar 15 minutos sin uso con la pantalla apagada → volver. Medir cuánto tarda el desbloqueo con contraseña.
+
 ## 15/11/2026 · Claridad visual y uso con una mano
 
 Base: main `0bdd11d65d2e7c81e7da96f26de9fc399baebb54`; rama `mejora-claridad-movil`.

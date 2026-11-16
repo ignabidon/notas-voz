@@ -25,6 +25,13 @@
 6. Anonimización posterior (pantalla Anonimizar con explicación visible), revisar antes de compartir, deshacer, códigos/alias de personas. El audio guardado debe seguir siempre visible en la pestaña Audio (`#audioBox`, botón «Mis grabaciones») con accesos desde Texto y Ajustes. Un audio cargado desde el celular se transcribe pero **nunca se guarda** (decisión del usuario).
 7. Advertencias al guardar mientras se graba o transcribe.
 
+## Protección cifrada (16/11/2026; leer `DISENO-CIFRADO.md`)
+- Notas, borrador, deshacer, personas y diccionario se leen y escriben **solo con `vaultStore`** (misma forma que `localStorage`). Nunca usar `localStorage` directo para esas claves: hay una prueba que lo exige.
+- Lo que lee esos datos al arrancar va dentro de `vaultWhenReady(...)`, porque con la protección activada se carga recién al desbloquear.
+- No bloquear mientras se graba o transcribe: lo controla `vaultSetHooks`. Si se agrega otro trabajo largo, sumarlo ahí.
+- No cambiar el formato (`notasvoz.boveda.v1`, AAD y parámetros) sin versión nueva y migración. Una futura app de Android depende de él.
+- Audios todavía sin cifrar: no decir lo contrario en la interfaz.
+
 ## Almacenamiento: preservarlo
 Las claves de localStorage e IndexedDB mantienen nombres históricos con «gamma». **No renombrarlas por estética ni borrarlas.** Ejemplos: `notasvoz.gamma.v1`, `notasvoz.gamma.dict.v1`, `notasvoz.gamma.cfg.v1`, `notasvoz.gamma.draft.v1`, `notasvoz.gamma.undo.v1`, IndexedDB `notasvoz-gamma-audio`.
 Son datos vinculados al origen de GitHub Pages, no al nombre de la carpeta. Cualquier migración exige plan, copia de seguridad y pruebas.

@@ -8,6 +8,16 @@ Esta es la **única versión web activa** del repositorio. La etapa vigente es *
 
 > **Prueba Delta 11 — experimental.** El usuario ya probó en Brave Android la grabación, Whisper, descarga TXT, recuperación del audio anterior y funcionamiento general de la interfaz. Las acciones nuevas de Delta 11 —Descargar audio visible, Compartir texto y accesos directos— **todavía necesitan prueba real en el Motorola**. Las 53 pruebas automáticas y la publicación GitHub Pages fueron satisfactorias. No usar datos reales de pacientes.
 
+## Protección con contraseña y huella (16/11/2026)
+
+En **Ajustes → Privacidad y almacenamiento → Protección con contraseña y huella** podés cifrar en el celular las notas, el borrador, la copia para deshacer, la tabla de personas y el diccionario.
+
+1. Tocá **Activar protección** y elegí una contraseña de al menos 8 caracteres (mejor una frase).
+2. Anotá en papel el **código de recuperación**. Se muestra una sola vez y sirve si olvidás la contraseña. **Sin la contraseña ni el código, nadie puede recuperar las notas.**
+3. Tocá **Activar huella**. El celular crea una llave de acceso «DictaNota» y desde ahí abrís con la huella.
+
+Se bloquea a los 15 minutos sin uso (nunca mientras grabás o transcribís) o con el botón **Bloquear** de arriba. **Los audios guardados todavía no se cifran**, y lo que descargás, copiás o compartís sale sin cifrar. Estado: probado en Chrome de laboratorio con una huella simulada; **falta probarlo en el Motorola**. Detalles en [DISENO-CIFRADO.md](DISENO-CIFRADO.md).
+
 ## Funciones
 - Grabación de voz, cronómetro, pausa/reanudación, marcas y detención.
 - **Cuatro pantallas:** Audio, Texto, **Anonimizar** y Ajustes, accesibles desde la barra inferior. Mientras se graba, mantiene **Pausar/Reanudar** y **Detener** sin importar qué pantalla esté abierta.
@@ -144,6 +154,8 @@ Se usa VisualViewport cuando está disponible y el navegador puede aceptar `inte
 | `AGENTS.md` | Reglas comunes para ChatGPT, Claude y otras IA. |
 | `CLAUDE.md` | Indicaciones para Claude y referencia a AGENTS.md. |
 | `CAMBIOS.md` | Historial de cambios y problemas pendientes. |
+| `DISENO-CIFRADO.md` | Cómo funciona la protección cifrada, sus límites y el plan para Android. |
+| `tests/cifrado-browser.mjs` | Prueba de la protección cifrada en Chrome con huella simulada. |
 | `tests/delta.test.mjs` | Pruebas automáticas básicas sin dependencias. |
 | `.github/workflows/verificar-delta.yml` | Ejecuta pruebas en GitHub Actions. |
 
