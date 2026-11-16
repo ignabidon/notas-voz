@@ -1,6 +1,6 @@
 # AGENTS.md — Instrucciones para ChatGPT, Claude y otras IA
 
-> **▶ CONTINUIDAD ACTUAL — LEER PRIMERO: [CONTINUAR-AQUI.md](CONTINUAR-AQUI.md)** y el [informe de continuidad del 16/11/2026](docs/INFORME-CONTINUIDAD-2026-11-16.md). Rediseño conversacional: fases 1–3 hechas (datos, guardado protegido, pestaña Notas); pendientes la estética clara aprobada, el aspecto de chat, la navegación final y la prueba en el Motorola. Pedir permiso del usuario antes de unir a `main`.
+> **▶ ESTADO ACTUAL:** leer [CONTINUAR-AQUI.md](CONTINUAR-AQUI.md). Main verificado en `3383584`: PR #36 (tema claro y chat) y #41 (Etapa A) ya unidos. No repetirlos. Próxima etapa: nombres Dictar/Cuadernos; los ids y claves se preservan. Nuevos PR desde main actualizado; merge normal, sin squash. Prueba física Motorola pendiente.
 
 > **⚠ SEGURIDAD — LEER PRIMERO: [SEGURIDAD.md](SEGURIDAD.md).** Hay una revisión de seguridad («pen testing») en curso desde el 15/11/2026, con reglas obligatorias para editar el código (política CSP, orígenes permitidos, huella de la librería MP3, prohibición de `eval`/`innerHTML` con datos), hallazgos abiertos y pendientes. La CSP y la huella MP3 **no están confirmadas en el Motorola**. No lo ignores ni repitas la revisión desde cero: continuala.
 
