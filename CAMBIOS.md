@@ -1,3 +1,7 @@
+## 16/11/2026 · Informe de continuidad (SOLO documentación)
+
+- Tras probar la fase 3, el usuario notó que **la estética no cambió**: es correcto, la estética clara «Clínica contemporánea» se aprobó y se mostró en maquetas, pero no se implementó. Nuevo [informe de continuidad](docs/INFORME-CONTINUIDAD-2026-11-16.md) con lo hecho, lo que falta y el orden recomendado; `CONTINUAR-AQUI.md`, `CLAUDE.md`, `AGENTS.md` y `README.md` apuntan a él. Sin cambios en la app.
+
 ## 16/11/2026 · Rediseño conversacional · fase 3: pantalla Notas con hojas y mensajes
 
 Base: `main` en `4215fe9`; rama `rediseno-03-pantalla-notas-2026-11-16`. Autorizado por el usuario el 16/11/2026 (09:52: «continúe con los siguientes pasos»).

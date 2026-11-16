@@ -1,6 +1,6 @@
 # CLAUDE.md — DictaNota
 
-> **▶ PRIMER PASO PARA LA PRÓXIMA IA: [CONTINUAR-AQUI.md](CONTINUAR-AQUI.md)** y el [informe completo de rediseño](docs/REDISENO-CONVERSACIONAL-2026-11-16.md). La nueva arquitectura Notas / Biblioteca / Ajustes **no está implementada**. Solo está autorizada la publicación de documentación; **no programar sin aprobación explícita**. Leer SEGURIDAD.md antes de tocar código.
+> **▶ PRIMER PASO PARA LA PRÓXIMA IA: [CONTINUAR-AQUI.md](CONTINUAR-AQUI.md)** → [informe de continuidad del 16/11/2026](docs/INFORME-CONTINUIDAD-2026-11-16.md). Fases 1–3 del rediseño hechas (pestaña Notas con hojas y mensajes); **falta la estética clara «Clínica contemporánea»**, el aspecto de chat y la prueba en el Motorola. Programar y unir a `main` solo con permiso del usuario. Leer SEGURIDAD.md antes de tocar código.
 
 **⚠ SEGURIDAD — leé primero SEGURIDAD.md** (revisión de seguridad en curso desde el 15/11/2026: reglas obligatorias, CSP, hallazgos abiertos y pendientes; la CSP y la huella MP3 aún no están confirmadas en el Motorola).
 
