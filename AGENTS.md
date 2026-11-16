@@ -1,5 +1,7 @@
 # AGENTS.md — Instrucciones para ChatGPT, Claude y otras IA
 
+> **⚠ SEGURIDAD — LEER PRIMERO: [SEGURIDAD.md](SEGURIDAD.md).** Hay una revisión de seguridad («pen testing») en curso desde el 15/11/2026, con reglas obligatorias para editar el código (política CSP, orígenes permitidos, huella de la librería MP3, prohibición de `eval`/`innerHTML` con datos), hallazgos abiertos y pendientes. La CSP y la huella MP3 **no están confirmadas en el Motorola**. No lo ignores ni repitas la revisión desde cero: continuala.
+
 **Leer también README.md y CAMBIOS.md antes de editar.**
 
 ## Una sola versión oficial
@@ -30,7 +32,8 @@ Son datos vinculados al origen de GitHub Pages, no al nombre de la carpeta. Cual
 ## Forma de trabajo
 - Inspeccionar el último commit y el código de la función afectada antes de tocarlo.
 - Explicar brevemente el cambio y limitarlo a lo necesario; no reescribir toda la aplicación.
-- No incorporar telemetría, servicios externos o dependencias sin permiso.
+- No incorporar telemetría, servicios externos o dependencias sin permiso. Cualquier dirección externa nueva exige actualizar la política CSP de `index.html`, la tabla de orígenes de SEGURIDAD.md y las pruebas de seguridad (fallan solas si se olvida).
+- Datos del usuario (notas, títulos, etiquetas, personas, texto transcripto) nunca con `innerHTML`; solo `textContent`/`createElement`. Sin `eval` ni `new Function`.
 - No usar datos reales de pacientes en ninguna prueba, captura o registro. No incluir conversaciones en diagnósticos.
 - No prometer anonimización infalible ni cifrado seguro: son funciones experimentales.
 - Probar con `node --test tests/delta.test.mjs` y revisar el CI en GitHub Actions. Sumar pruebas cuando se modifique una función crítica.
@@ -47,7 +50,7 @@ Son datos vinculados al origen de GitHub Pages, no al nombre de la carpeta. Cual
 - **Delta 11, todavía sin validación real en Android:** «Conservar también el audio» y «Guardar audio» en Grabar; «Compartir» texto mediante menú Android o copia alternativa; acciones visibles «Seleccionar todo», «Copiar» y «Corregir selección». El código y **53/53 pruebas automáticas** pasaron y GitHub Pages se publicó, pero estas interacciones deben probarse con datos ficticios antes de darlas por solucionadas en el teléfono.
 - **Rendimiento conocido:** el usuario midió unos **2:10 de procesamiento para 1:10 de audio con Whisper Small**. No se conoce causa específica ni se demostró regresión. Comparar Base y Small con el *mismo* audio ficticio, mismo dispositivo y configuración; registrar backend CPU/GPU, duración por parte y eventuales errores sin registrar texto o audio. No modificar Whisper sin diagnóstico.
 - **Diseño actual:** tres vistas Grabar / Texto / Ajustes; progreso único de Whisper sobre la barra inferior. No duplicar mensajes de procesamiento en las vistas ni cambiar íconos a estilos inconsistentes.
-- **Seguridad pendiente:** localStorage, IndexedDB y TXT descargados no están cifrados. No probar con datos de pacientes reales. Decidir estrategia de copia de seguridad, cifrado y retención antes de habilitar uso sensible.
+- **Seguridad pendiente (detalle y estado en SEGURIDAD.md):** localStorage, IndexedDB y TXT descargados no están cifrados. No probar con datos de pacientes reales. Decidir estrategia de copia de seguridad, cifrado y retención antes de habilitar uso sensible.
 - **Audio:** hay un principal y una sola copia temporal recuperable. Conservar esa lógica, sin borrados previos a permisos ni migraciones de datos no solicitadas.
 - **Método de continuidad:** cada IA crea una rama de cambio desde el `main` actualizado, toca solo los archivos necesarios, agrega tests, documenta en CAMBIOS.md, ejecuta CI y fusiona si corresponde. No sobrescribir cambios de otras ramas ni borrar respaldos. Confirmar por separado fusión, CI, publicación en Pages y prueba física.
 - **Próximos pasos aconsejados:** validar Delta 11 en Brave; comparar rendimiento Base/Small; después continuar con mejoras pedidas por el usuario. No asumir que están autorizadas funcionalidades nuevas que no se hayan acordado.

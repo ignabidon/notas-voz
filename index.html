@@ -2,6 +2,8 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
+<!-- SEGURIDAD (ver SEGURIDAD.md): política que limita desde dónde puede cargar código y a qué servidores puede conectarse la página. Si una función deja de andar por un bloqueo, el motivo queda en la consola del navegador («Content Security Policy»). No agregar orígenes sin documentarlo en SEGURIDAD.md. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob: https://cdn.jsdelivr.net; worker-src 'self' blob: https://cdn.jsdelivr.net; connect-src 'self' blob: data: https://cdn.jsdelivr.net https://huggingface.co https://*.huggingface.co https://*.hf.co; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob: data:; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'; manifest-src 'none'">
 <meta name="viewport" content="width=device-width,initial-scale=1,interactive-widget=resizes-content">
 <meta name="color-scheme" content="dark">
 
@@ -2542,6 +2544,9 @@ function loadLame(){
   return lameP = new Promise((res, rej) => {
     const s = document.createElement('script');
     s.src = 'https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js';
+    /* Huella SHA-384 del archivo exacto: si el servicio externo entregara otro contenido, el navegador lo rechaza (ver SEGURIDAD.md). */
+    s.integrity = 'sha384-xuasJXVcyv3hZq0eYpelEkBC8l4yufatZXDsKuyCU2rqfhDCb+ftuE/mSfZAteiK';
+    s.crossOrigin = 'anonymous';
     s.onload = () => window.lamejs ? res() : (lameP = null, rej(new Error('no se cargó el conversor')));
     s.onerror = () => { lameP = null; rej(new Error('hace falta internet para cargar el conversor')); };
     document.head.append(s);
