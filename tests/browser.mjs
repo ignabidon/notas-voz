@@ -26,7 +26,7 @@ try {
  const settle=()=>run('new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)))');
  // Native keyboard activation of help controls.
  await run('document.querySelector(".info-toggle").focus()');
- for(const key of ['Enter','Enter']){await call('Input.dispatchKeyEvent',{type:'keyDown',key,code:'Enter',windowsVirtualKeyCode:13});await call('Input.dispatchKeyEvent',{type:'keyUp',key,code:'Enter',windowsVirtualKeyCode:13});if(key){} }
+ for(const key of ['Enter','Enter']){await call('Input.dispatchKeyEvent',{type:'keyDown',key,code:'Enter',windowsVirtualKeyCode:13});await call('Input.dispatchKeyEvent',{type:'keyUp',key,code:'Enter',windowsVirtualKeyCode:13}); }
  assert.equal(await run('document.getElementById("retainHelp").hidden'),true);
  await run('document.getElementById("recordSaveAudio").click()');
  assert.equal(await run('document.getElementById("saveAudio").checked'),true);
@@ -59,9 +59,23 @@ try {
  await run('recording=false;updateDockRecording()');
  assert.equal(await run('document.getElementById("studioDockCapture").hidden'),true);
  // Resized visual viewport / keyboard layout simulation: last line can scroll above dock.
- await call('Emulation.setDeviceMetricsOverride',{width:412,height:420,deviceScaleFactor:1,mobile:true});
- await run('document.querySelector(\'[data-delta-view="transcripcion"]\').click();document.body.classList.add("keyboard-open");const editor=document.getElementById("text");editor.value="Línea ficticia\\n".repeat(150);editor.focus();editor.setSelectionRange(editor.value.length,editor.value.length);editor.scrollTop=editor.scrollHeight;editor.scrollIntoView({block:"end"})');
+ await call('Emulation.setTouchEmulationEnabled',{enabled:true});
+ await call('Emulation.setDeviceMetricsOverride',{width:412,height:850,deviceScaleFactor:1,mobile:true});
+ await run('document.querySelector(\'[data-delta-view="transcripcion"]\').click();document.getElementById("text").focus()');
  await settle();
- assert.ok(await run('(()=>{const t=document.getElementById("text"),d=document.querySelector(".studio-dock");return t.getBoundingClientRect().bottom<=d.getBoundingClientRect().top && t.scrollTop+t.clientHeight>=t.scrollHeight-2})()'),'última línea libre de barra');
+ await call('Emulation.setDeviceMetricsOverride',{width:412,height:420,deviceScaleFactor:1,mobile:true});
+ await settle();
+ assert.equal(await run('document.body.classList.contains("keyboard-open")'),true,'teclado detectado por geometría');
+ await run('const editor=document.getElementById("text");editor.value="Línea ficticia\\n".repeat(150);editor.setSelectionRange(editor.value.length,editor.value.length);editor.scrollIntoView({block:"end",behavior:"instant"});editor.scrollTop=editor.scrollHeight');
+ await settle();
+ const geometry=await run('(()=>{const t=document.getElementById("text"),d=document.querySelector(".studio-dock");return {bottom:t.getBoundingClientRect().bottom,dock:d.getBoundingClientRect().top,scroll:t.scrollTop,client:t.clientHeight,height:t.scrollHeight}})()');
+ console.log('Editor geometry',geometry);
+ assert.ok(geometry.bottom<=geometry.dock && geometry.scroll+geometry.client>=geometry.height-2,'última línea libre de barra');
+ // Capturas de laboratorio con datos exclusivamente ficticios para revisión visual.
+ for(const view of ['grabacion','anonimizar','transcripcion']){
+  await call('Emulation.setDeviceMetricsOverride',{width:412,height:850,deviceScaleFactor:1,mobile:true});
+  await run('document.activeElement.blur();document.querySelector(\'[data-delta-view="'+view+'"]\').click();window.scrollTo({top:0,behavior:"instant"})');await settle();
+  console.log('SCREENSHOT_'+view+' '+(await call('Page.captureScreenshot',{format:'jpeg',quality:55})).data);
+ }
  console.log('UI OK: 320/360/412/760/1365, normal/grande, ayudas, sincronización, bloqueo, captura, movimiento reducido y teclado simulado.');
 } finally {ws?.close();chrome.kill();server.close();setTimeout(()=>rmSync(profile,{recursive:true,force:true}),500).unref();}
