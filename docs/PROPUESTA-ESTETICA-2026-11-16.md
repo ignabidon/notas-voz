@@ -71,6 +71,11 @@ Cada ítem indica: qué se ve hoy → cambio → dónde → criterio de aceptaci
 → Mostrar la misma señal en una línea compacta bajo el logo (ícono de candado SVG).
 ⚠ **Mantener el texto «Procesamiento local».** No escribir «sin nube» ni «todo en tu celular»: el motor se carga desde `cdn.jsdelivr.net` y los modelos desde `huggingface.co` (ver CSP), y los audios aún no están cifrados. Si hay protección activada, se puede sumar «Protegida».
 
+**A6. Pantalla Audio sin repeticiones.**
+*Hoy:* casi la misma frase aparece **dos veces** en el estado vacío («Activá «Conservar audio» antes de grabar», en `#recordAudioHint` y en `#audioEmpty`); hay **tres botones «Descargar audio»** (`#recordDownloadAudio`, `#aDown`, `#audioDoneDownload`) y el primero queda **deshabilitado** aunque no haya nada que bajar; y en el encabezado de la tarjeta la etiqueta «Conservar audio» queda flotando sobre el interruptor, separada del título.
+*Cambio:* mantener `#audioBox` y «Mis grabaciones» **siempre visibles** (AGENTS.md lo exige), pero dejar **un solo mensaje** de estado vacío; mostrar `#recordDownloadAudio` solo cuando hay un audio para descargar (o unificarlo con `#aDown`); poner «Conservar audio» en una fila propia (etiqueta e interruptor en la misma línea, ayuda debajo).
+*Criterio:* en el estado vacío no hay frases repetidas ni botones deshabilitados sin motivo; con audio guardado se conservan todas las acciones actuales (descargar, convertir a MP3, transcribir, borrar, recuperar anterior). Actualizar las pruebas que fijen esos ids.
+
 ### Etapa B · Jerarquía y densidad (impacto alto; toca el compositor y las burbujas)
 
 > Esperar a que **termine y se integre** la rama de ChatGPT: B1 y B3 modifican exactamente esas partes.

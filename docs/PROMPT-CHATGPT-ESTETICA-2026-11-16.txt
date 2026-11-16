@@ -8,7 +8,7 @@ Sitio: https://ignabidon.github.io/notas-voz/
 Verificá primero el HEAD actualizado de `main` y los PR abiertos. Esa propuesta se midió sobre `main` = `2f56388`: si cambió, volvé a medir antes de aplicar.
 
 Qué hacer:
-- Etapa A (ajustes menores): rótulos viejos «Texto» → «Notas» (sin renombrar pestañas), mismo estilo en los dos accesos de Audio, orden visual de Ajustes, punto rojo de grabación, «Procesamiento local» visible en el celular.
+- Etapa A (ajustes menores): rótulos viejos «Texto» → «Notas» (sin renombrar pestañas), mismo estilo en los dos accesos de Audio, orden visual de Ajustes, punto rojo de grabación, «Procesamiento local» visible en el celular, pantalla Audio sin repeticiones.
 - Etapa B (barra más baja en Notas, una acción principal por pantalla, burbujas y lista de hojas más limpias): empezala solo cuando mi PR anterior esté integrado.
 - Etapas C y D (anonimización visible, contraste, tokens de CSS): en ese orden y cada una en su rama.
 
