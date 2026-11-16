@@ -1055,7 +1055,7 @@ test('Audios: siempre a la vista, con acceso directo desde Grabar, Texto y Ajust
   assert.match(html, /id="audioShortcut"/);
   // el cuadro de audio está antes del estado de transcripción y de los detalles técnicos
   assert.ok(html.indexOf('id="audioBox"') < html.indexOf('id="keepOn"'));
-  assert.equal((html.match(/data-go-target="audioBox"/g) || []).length, 4, 'accesos desde Grabar, Texto, Ajustes y el aviso fijo');
+  assert.equal((html.match(/data-go-target="audioBox"/g) || []).length, 3, 'accesos desde Audio, Texto y Ajustes');
   assert.match(html, /link\.dataset\.goTarget/);
   for (const id of ['aDown','aMp3','aTx','aDel','aUndoAudio','audioUndoRow']) assert.ok(ids.includes(id), 'falta #' + id);
   assert.match(html, /\$\('audioReady'\)\.hidden = !m; \$\('audioEmpty'\)\.hidden = !!m;/);
@@ -1119,15 +1119,33 @@ test('Aprendizaje: el aviso usa textContent y la corrección del diálogo tambi�
   assert.match(html, /else \{ flash\('Corrección aplicada\.'\); learnFromEdits\(\); \}/);
 });
 
-test('Audios: aviso fijo verde en la barra de abajo al terminar de guardar, hasta tocarlo o cerrarlo', () => {
-  const aside = html.match(/<aside class="studio-dock"[\s\S]*?<\/aside>/)[0];
-  assert.match(aside, /id="audioNotice" hidden/);
-  assert.match(aside, /id="audioNoticeGo" data-go-view="grabacion" data-go-target="audioBox"/);
-  assert.match(aside, /id="audioNoticeClose"/);
-  assert.ok(aside.indexOf('id="audioNotice"') < aside.indexOf('id="flash"'));
-  assert.match(html, /\.audio-notice-go\{[^}]*background:#a8ead8/);
-  assert.match(html, /Tu audio quedó guardado \(' \+ fmtClock\(audioLastMs\)/);
-  assert.match(html, /\.then\(refreshAudioBox\)\.then\(\(\) => \{ if \(!audioSaveFailed && audioN\) showAudioNotice\(\); \}\)/);
-  assert.match(html, /mr\.start\(10000\); hideAudioNotice\(\);/);
-  assert.doesNotMatch(html, /botón verde de arriba/, 'ya no hay un mensaje que apunte a un botón que puede no estar a la vista');
+test('Audio: pestaña renombrada, aviso verde de grabación completa y puntos de novedad', () => {
+  const nav = html.match(/<nav class="studio-nav"[\s\S]*?<\/nav>/)[0];
+  assert.match(nav, /data-delta-view="grabacion"[\s\S]*?<span>Audio<\/span>/);
+  assert.match(html, /<h2>Audio<\/h2>/);
+  for (const id of ['audioDone','audioDoneText','audioDoneDownload','audioDoneClose','audioDoneWait','audioShortcut','loadAudioBtn','loadAudioFile'])
+    assert.ok(ids.includes(id), 'falta #' + id);
+  assert.doesNotMatch(html, /id="audioNotice"/, 'el aviso fijo de la barra se reemplazó por el de la pestaña Audio');
+  assert.match(html, /\.audio-done\{[^}]*linear-gradient\(135deg,#1f9d6b,#2fd18f\)/);
+  assert.match(html, /\.then\(refreshAudioBox\)\.then\(\(\) => \{ if \(!audioSaveFailed && audioN\) showAudioDone\(\); \}\)/);
+  assert.match(html, /mr\.start\(10000\); hideAudioDone\(\);/);
+  // botón «Mis grabaciones» debajo del micrófono grande, antes de «Conservar también el audio»
+  assert.ok(html.indexOf('id="rec"') < html.indexOf('id="audioShortcut"') && html.indexOf('id="audioShortcut"') < html.indexOf('id="recordSaveAudio"'));
+  // puntos de novedad
+  assert.match(html, /a\[data-badge\]::after/);
+  assert.match(html, /notifyNav\('grabacion', 'audio guardado'\)/);
+  assert.match(html, /notifyNav\('transcripcion', 'transcripción lista'\)/);
+  assert.match(html, /function clearNavBadge\(view\)/);
+  assert.match(html, /attributeFilter: \['data-view'\]\}\);\nlet armTextBadge/);
+});
+
+test('Audio cargado: se transcribe sin guardarse y con límites claros', () => {
+  assert.match(html, /async function transcribeBlob\(getBlob, ms, what\)/);
+  assert.match(html, /transcribeBlob\(\(\) => f, null, 'el audio cargado'\)/);
+  assert.match(html, /transcribeBlob\(\(\) => withDeadline\(audioGetBlob\(m\)/);
+  const loader = html.match(/\$\('loadAudioFile'\)\.addEventListener\('change'[\s\S]*?\n\}\);/)[0];
+  assert.doesNotMatch(loader, /audioPut|audioClear|IndexedDB|localStorage/, 'el audio cargado no se guarda');
+  assert.match(html, /LOAD_MAX_SEC = 90 \* 60, LOAD_MAX_BYTES = 200 \* 1024 \* 1024/);
+  assert.match(html, /no se guarda<\/b>: solo se transcribe/);
+  assert.match(html, /accept="audio\/\*/);
 });

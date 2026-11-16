@@ -437,18 +437,31 @@ body[data-view="transcripcion"] #studioDockNotes{grid-template-columns:minmax(0,
 .anon-formpreview:empty{display:none}
 .anon-list-title{font-size:calc(15px * var(--text-scale));margin:18px 0 4px;color:#d4f7ec}
 .audio-shortcut{width:100%;margin-top:12px;min-height:48px;text-align:left;border-color:#4c8e86;color:#d9fff4;background:#173c3a}
-.audio-notice{display:flex;gap:8px;align-items:stretch;margin-bottom:10px}
-.audio-notice[hidden]{display:none!important}
-.audio-notice-go{flex:1;min-height:52px;text-align:left;background:#a8ead8;color:#07312e;border:2px solid #cbf8e9;font-weight:800;line-height:1.3;font-size:max(15px,calc(15px * var(--text-scale)))}
-.audio-notice-go::before{content:"♪ ";font-size:1.2em}
-.audio-notice-go:hover:not(:disabled){background:#cbf8e9}
-.audio-notice-close{flex:none;width:52px;min-height:52px;font-size:20px;padding:0;background:#173c3a;border-color:#4c8e86;color:#d9fff4}
 .where-audio{margin:10px 0 0}
 .where-audio button{min-height:48px;margin-top:6px}
 #audioBox{scroll-margin-top:14px;margin-top:20px}
 #audioEmpty{margin:4px 0 0}
 #learn .learned{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:#132f2d;border:1px solid #3d7a6f;border-radius:12px;padding:10px 12px;margin:8px 0}
 #learn .learned span{flex:1 1 220px;overflow-wrap:anywhere}
+
+/* Pestaña Audio: aviso de grabación completa, accesos y puntos de novedad en la barra */
+.audio-tools{display:grid;gap:10px;margin:14px 0 6px}
+.audio-tools button{min-height:52px;font-weight:700}
+.audio-shortcut{border-color:#4c8e86;color:#d9fff4;background:#173c3a}
+.audio-done{display:flex;gap:14px;align-items:flex-start;margin:16px 0 4px;padding:16px;border-radius:18px;background:linear-gradient(135deg,#1f9d6b,#2fd18f);color:#05261a;box-shadow:0 8px 26px #1f9d6b55;border:2px solid #b7ffdf}
+.audio-done[hidden]{display:none!important}
+.audio-done-check{flex:none;width:46px;height:46px;border-radius:50%;background:#05261a;color:#7dffc2;display:grid;place-items:center}
+.audio-done-check svg{width:28px;height:28px}
+.audio-done-body{flex:1;min-width:0;display:grid;gap:4px}
+.audio-done-body strong{font-size:calc(19px * var(--text-scale));font-weight:900}
+.audio-done-body #audioDoneText{font-size:max(15px,calc(15px * var(--text-scale)));font-weight:600}
+.audio-done-body small{font-size:max(14px,calc(14px * var(--text-scale)));font-weight:600}
+.audio-done-actions{display:flex;gap:8px;margin-top:8px}
+#audioDoneDownload{flex:1;min-height:52px;background:#05261a;color:#e8fff4;border:0;font-weight:800;font-size:max(16px,calc(16px * var(--text-scale)))}
+#audioDoneDownload:disabled{opacity:.55}
+#audioDoneClose{flex:none;width:52px;min-height:52px;padding:0;background:#ffffff40;color:#05261a;border:1px solid #05261a66;font-size:20px}
+.studio-nav a{position:relative}
+.studio-nav a[data-badge]::after{content:"";position:absolute;top:4px;right:calc(50% - 22px);width:13px;height:13px;border-radius:50%;background:#2fd18f;border:2px solid #11242e;box-shadow:0 0 0 2px #2fd18f66}
 @media(max-width:760px){.c-anon{padding:22px 16px}}
 @media(max-width:380px){.studio-dock .studio-nav a{font-size:12px;letter-spacing:-.2px}}
 </style>
@@ -473,8 +486,13 @@ body[data-view="transcripcion"] #studioDockNotes{grid-template-columns:minmax(0,
 
   <!-- 1 · Grabar -->
   <section class="card c-rec" id="grabacion">
-    <div class="record-head"><span class="record-overline">ESTUDIO DE VOZ</span><h2>Grabación</h2><p class="rec-caption">Listo para transcribir en tu dispositivo.</p>
-      <button type="button" class="ghost audio-shortcut" id="audioShortcut" data-go-view="grabacion" data-go-target="audioBox" hidden></button>
+    <div class="record-head"><span class="record-overline">ESTUDIO DE VOZ</span><h2>Audio</h2><p class="rec-caption">Grabá tu voz o cargá un audio para transcribirlo en tu dispositivo.</p>
+    </div>
+    <div class="audio-done" id="audioDone" role="status" aria-live="polite" hidden>
+      <span class="audio-done-check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7"/></svg></span>
+      <div class="audio-done-body"><strong>Grabación completa</strong><span id="audioDoneText"></span>
+        <div class="audio-done-actions"><button type="button" id="audioDoneDownload">Descargar audio</button><button type="button" id="audioDoneClose" aria-label="Cerrar este aviso">✕</button></div>
+        <small id="audioDoneWait" hidden>Podrás descargarlo cuando termine la transcripción.</small></div>
     </div>
     <div class="recrow">
       <div class="record-clock"><div id="clock" aria-label="Tiempo de grabación">00:00</div><span class="record-caption-label" id="recordLabel">Tocá el micrófono para empezar</span></div>
@@ -485,6 +503,12 @@ body[data-view="transcripcion"] #studioDockNotes{grid-template-columns:minmax(0,
       </div>
     </div>
     <p class="mark-help">«Marcar» señala un momento en la transcripción.</p>
+    <div class="audio-tools">
+      <button type="button" class="audio-shortcut" id="audioShortcut" data-go-view="grabacion" data-go-target="audioBox">Mis grabaciones</button>
+      <button type="button" id="loadAudioBtn">Cargar un audio para transcribir</button>
+      <input type="file" id="loadAudioFile" accept="audio/*,.m4a,.mp3,.wav,.ogg,.opus,.aac,.amr,.webm" hidden>
+      <p class="hint" id="loadAudioHint">El archivo <b>no se guarda</b>: solo se transcribe en este celular. Los audios largos tardan más que su duración.</p>
+    </div>
     <div class="record-save-audio">
       <label class="chk" for="recordSaveAudio"><input type="checkbox" id="recordSaveAudio"><span><b>Conservar también el audio</b><small>Activalo antes de grabar. Tu voz queda guardada en Brave hasta que la descargues o borres.</small></span></label>
       <button type="button" id="recordDownloadAudio" disabled>Guardar audio</button>
@@ -653,7 +677,7 @@ body[data-view="transcripcion"] #studioDockNotes{grid-template-columns:minmax(0,
     </div>
     <div id="nativeInterim" role="status" aria-live="polite" class="hint"></div>
     <div class="meta"><span id="wc">0 palabras</span><span id="cc"></span></div>
-    <p class="hint where-audio">¿Buscás el audio? Está en <b>Grabar → Tus audios guardados</b>. <button type="button" class="ghost" data-go-view="grabacion" data-go-target="audioBox">Ver audios guardados</button></p>
+    <p class="hint where-audio">¿Buscás el audio? Está en <b>Audio → Tus audios guardados</b>. <button type="button" class="ghost" data-go-view="grabacion" data-go-target="audioBox">Ver audios guardados</button></p>
 
     <div id="learn"></div>
 
@@ -789,10 +813,6 @@ body[data-view="transcripcion"] #studioDockNotes{grid-template-columns:minmax(0,
     <div id="transcriptionDockBar" class="transcription-dock-bar" role="progressbar" aria-label="Avance de Whisper" aria-valuemin="0" aria-valuemax="100"><i id="transcriptionDockBarFill"></i></div>
     <button type="button" id="transcriptionDockCancel" hidden>Cancelar transcripción</button>
   </section>
-  <div class="audio-notice" id="audioNotice" hidden>
-    <button type="button" class="audio-notice-go" id="audioNoticeGo" data-go-view="grabacion" data-go-target="audioBox"></button>
-    <button type="button" class="audio-notice-close" id="audioNoticeClose" aria-label="Cerrar el aviso de audio guardado">✕</button>
-  </div>
   <div id="flash" role="status" aria-live="polite"></div>
   <div class="dock-actions" id="studioDockNotes">
     <button type="button" id="studioDockStart" aria-label="Empezar a grabar"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4M8 22h8"/></svg><span>Grabar</span></button>
@@ -809,7 +829,7 @@ body[data-view="transcripcion"] #studioDockNotes{grid-template-columns:minmax(0,
     </div>
   </div>
 <nav class="studio-nav" aria-label="Pantallas de DictaNota">
-  <a href="#grabacion" data-delta-view="grabacion" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2.5" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3.5M8.5 21.5h7"/></svg><span>Grabar</span></a>
+  <a href="#grabacion" data-delta-view="grabacion" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2.5" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3.5M8.5 21.5h7"/></svg><span>Audio</span></a>
   <a href="#transcripcion" data-delta-view="transcripcion"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 2.5h8l4 4V21H7zM15 2.5v4h4M10 11h6M10 15h6M10 19h4"/></svg><span>Texto</span></a>
   <a href="#anonimizar" id="studioAnonLink" data-delta-view="anonimizar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v6c0 4 8 9 8 9s8-5 8-9V6z"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg><span>Anonimizar</span></a>
   <a href="#ajustes" id="studioSettingsLink" data-delta-view="ajustes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h6M14 6h6M4 12h11M19 12h1M4 18h3M11 18h9"/><circle cx="12" cy="6" r="2"/><circle cx="17" cy="12" r="2"/><circle cx="9" cy="18" r="2"/></svg><span>Ajustes</span></a>
@@ -2314,6 +2334,7 @@ function maybeDone(){
   refreshAudioBox(); // habilita Guardar audio cuando terminaron Whisper y la captura
   clearInterval(timer); timer = null; lockUI(false); $('rec').disabled = false;
   if (dead) return;
+  if (armTextBadge && gotText) { armTextBadge = false; notifyNav('transcripcion', 'transcripción lista'); }
   if (failedParts) { setStatus('Terminó, pero ' + failedParts + ' parte(s) del audio no se pudieron transcribir: buscá «⚠ falta una parte» en el texto.'); return; }
   if (warnParts) { setStatus('Terminó, pero ' + warnParts + ' parte(s) dieron muy poco texto para su duración: puede faltar algo. Mirá los detalles técnicos de la grabación.'); return; }
   if (oddParts) { setStatus('Terminó, pero ' + oddParts + ' parte(s) tienen texto repetitivo o casi solo números: revisalo con cuidado. Mirá los detalles técnicos de la grabación.'); return; }
@@ -2364,6 +2385,7 @@ async function pump(){
 }
 const skipDiag = info => logDiag('Parte descartada sin voz: ' + info.sec.toFixed(1) + ' s · volumen máx ' + info.maxRms.toFixed(3) + ' · ruido ' + info.noise.toFixed(3) + ' · corte: ' + (WHY[info.why] || info.why));
 function onSegment(blocks, rate, info){
+  armTextBadge = true;
   retainRetryAudio(blocks, rate, info);
   if (dead) return;
   outstanding++;
@@ -2623,21 +2645,35 @@ function startAudioSave(stream){
     audioQ = audioQ.then(async () => {
       if (audioSaveFailed || !audioN) return;
       await audioPutMeta(meta);
-    }).then(refreshAudioBox).then(() => { if (!audioSaveFailed && audioN) showAudioNotice(); }).catch(audioErr);
+    }).then(refreshAudioBox).then(() => { if (!audioSaveFailed && audioN) showAudioDone(); }).catch(audioErr);
   };
-  try { mr.start(10000); hideAudioNotice(); $('audioReady').hidden = true; $('audioShortcut').hidden = true; $('audioEmpty').hidden = false; $('audioEmpty').textContent = 'Grabando… el audio nuevo aparecerá acá cuando termines.'; logDiag('Audio: se guarda en este dispositivo (' + audioMime + ')'); }
+  try { mr.start(10000); hideAudioDone(); $('audioReady').hidden = true; $('audioEmpty').hidden = false; $('audioEmpty').textContent = 'Grabando… el audio nuevo aparecerá acá cuando termines.'; logDiag('Audio: se guarda en este dispositivo (' + audioMime + ')'); }
   catch (e) { mr = null; flash('Este navegador no puede guardar el audio.'); logDiag('Audio: ' + (e.message || e)); }
 }
 let audioLastMs = 0;
-/* Aviso fijo (barra de abajo, visible en todas las pantallas) cuando termina de guardarse una grabación nueva.
-   No se va solo: se cierra al tocarlo, con la ✕ o al empezar otra grabación. */
-const hideAudioNotice = () => { $('audioNotice').hidden = true; };
-function showAudioNotice(){
-  $('audioNoticeGo').textContent = 'Tu audio quedó guardado (' + fmtClock(audioLastMs) + ') · Tocá para descargarlo';
-  $('audioNotice').hidden = false;
+/* Aviso verde dentro de la pestaña Audio al terminar de guardarse una grabación nueva (solo si se conservó el audio).
+   Se cierra con la ✕, al descargar o al empezar otra grabación. Si no se está en Audio, la barra muestra un punto. */
+const hideAudioDone = () => { $('audioDone').hidden = true; };
+function showAudioDone(){
+  $('audioDoneText').textContent = 'Tu audio quedó guardado (' + fmtClock(audioLastMs) + ').';
+  $('audioDone').hidden = false;
+  notifyNav('grabacion', 'audio guardado');
 }
-$('audioNoticeGo').addEventListener('click', hideAudioNotice);
-$('audioNoticeClose').addEventListener('click', hideAudioNotice);
+$('audioDoneDownload').addEventListener('click', () => { $('aDown').click(); });
+$('audioDoneClose').addEventListener('click', hideAudioDone);
+/* Puntos de novedad en la barra inferior: se apagan al entrar en esa pantalla. */
+const NAV_NAMES = {grabacion: 'Audio', transcripcion: 'Texto'};
+function notifyNav(view, text){
+  const link = document.querySelector('[data-delta-view="' + view + '"]');
+  if (!link || document.body.dataset.view === view) return;
+  link.dataset.badge = '1'; link.setAttribute('aria-label', NAV_NAMES[view] + ' · ' + text);
+}
+function clearNavBadge(view){
+  const link = document.querySelector('[data-delta-view="' + view + '"]');
+  if (link) { delete link.dataset.badge; link.removeAttribute('aria-label'); }
+}
+new MutationObserver(() => clearNavBadge(document.body.dataset.view)).observe(document.body, {attributes: true, attributeFilter: ['data-view']});
+let armTextBadge = false;
 async function refreshAudioBox(){
   const box = $('audioBox'); let m = null, previous = null;
   try { [m, previous] = await Promise.all([audioGetMeta(), audioGetPrevious()]); } catch (e) {}
@@ -2646,8 +2682,9 @@ async function refreshAudioBox(){
     ? 'Audio guardado en Brave (' + fmtClock(m.ms) + '). Tocá «Guardar audio» para descargarlo.'
     : ($('saveAudio').checked ? 'Se conservará el audio de la próxima grabación.' : 'Activá «Conservar también el audio» antes de grabar.');
   $('audioReady').hidden = !m; $('audioEmpty').hidden = !!m;
-  $('audioShortcut').hidden = !m;
-  if (m) { audioLastMs = m.ms; $('audioShortcut').textContent = 'Audio guardado · ' + fmtClock(m.ms) + ' · Ver, descargar o recuperar'; }
+  $('audioShortcut').textContent = m ? 'Mis grabaciones · ' + fmtClock(m.ms) : 'Mis grabaciones';
+  if (m) audioLastMs = m.ms;
+  $('audioDoneDownload').disabled = !m || audioBusy(); $('audioDoneWait').hidden = !m || !audioBusy();
   if (!m) {
     $('audioEmpty').textContent = $('saveAudio').checked
       ? 'Todavía no hay audio guardado. El audio de la próxima grabación quedará acá.'
@@ -2676,6 +2713,7 @@ $('saveAudio').addEventListener('change', () => {
 });
 $('aDown').onclick = async () => {
   if (audioBusy()) return audioMsg('Esperá a que termine la grabación y la transcripción.');
+  hideAudioDone();
   audioBtns(true);
   try {
     const m = await audioGetMeta(); if (!m) return;
@@ -2762,15 +2800,22 @@ async function transcribeSaved(){
   let m = null; try { m = await withDeadline(audioGetMeta(), 15000, 'lectura de la grabación'); } catch (e) { audioMsg(e.message); return; }
   if (!m) return refreshAudioBox();
   if (!confirm('¿Transcribir el audio guardado? Guardá antes las correcciones del editor.')) return;
-  audioMsg(''); feeding = true; lockUI(true); $('rec').disabled = true; recEng = 'whisper'; setStatus('Leyendo el audio guardado…');
+  return transcribeBlob(() => withDeadline(audioGetBlob(m), 15000, 'lectura del audio guardado'), m.ms, 'el audio guardado');
+}
+/* Transcribe un audio ya existente (guardado o cargado desde el celular) con el mismo proceso de siempre.
+   El audio cargado NO se guarda: solo se lee, se transcribe y se descarta. */
+async function transcribeBlob(getBlob, ms, what){
+  audioMsg(''); feeding = true; lockUI(true); $('rec').disabled = true; recEng = 'whisper'; setStatus('Leyendo ' + what + '…');
   let pcm;
-  try { pcm = await decodePcm(await withDeadline(audioGetBlob(m), 15000, 'lectura del audio guardado'), 16000); }
-  catch (e) { feeding = false; lockUI(false); $('rec').disabled = false; setStatus('No se pudo leer el audio guardado (' + (e.message || e) + '). Descargalo y probá abrirlo en otro reproductor.'); updProgress(); refreshRetry(); return; }
+  try { pcm = await decodePcm(await getBlob(), 16000); }
+  catch (e) { feeding = false; lockUI(false); $('rec').disabled = false; setStatus('No se pudo leer ' + what + ' (' + (e.message || e) + '). Probá abrirlo en otro reproductor o convertirlo a MP3.'); updProgress(); refreshRetry(); return; }
+  if (pcm.length > LOAD_MAX_SEC * 16000) { feeding = false; lockUI(false); $('rec').disabled = false; setStatus('El audio dura más de ' + Math.round(LOAD_MAX_SEC / 60) + ' minutos: es demasiado largo para este celular. Cortalo en partes y cargalas de a una.'); updProgress(); refreshRetry(); return; }
+  if (ms == null) ms = Math.round(pcm.length / 16 );
   clearRetryAudio(); resetPipeline();
   const epoch = processingEpoch;
   feed.len = pcm.length; prepareNew(); lockWake();
   const rate = 16000, sg = makeSegmenter(rate, (blocks, info) => onSegment(blocks, rate, info), {onSkip: skipDiag});
-  logDiag('Transcribiendo el audio guardado · ' + fmtClock(m.ms) + ' · modelo ' + $('model').value.replace('Xenova/', ''));
+  logDiag('Transcribiendo ' + what + ' · ' + fmtClock(ms) + ' · modelo ' + $('model').value.replace('Xenova/', ''));
   ensureModel().catch(() => {});
   timer = setInterval(refreshStatus, 500); refreshStatus();
   for (let i = 0; i < pcm.length && !dead && epoch === processingEpoch; i += 4096) {
@@ -2783,6 +2828,18 @@ async function transcribeSaved(){
   feed.pos = pcm.length; sg.flush(); feeding = false; unlockWake();
   if (!busy && outstanding === 0) maybeDone();
 }
+const LOAD_MAX_SEC = 90 * 60, LOAD_MAX_BYTES = 200 * 1024 * 1024;
+$('loadAudioBtn').onclick = () => { if (audioBusy()) return flash('Esperá a que termine la grabación y la transcripción.'); $('loadAudioFile').click(); };
+$('loadAudioFile').addEventListener('change', () => {
+  const f = $('loadAudioFile').files && $('loadAudioFile').files[0];
+  $('loadAudioFile').value = '';
+  if (!f) return;
+  if (audioBusy()) return flash('Esperá a que termine lo que se está haciendo.');
+  if (f.size > LOAD_MAX_BYTES) return flash('Ese archivo es demasiado grande (más de 200 MB). Probá con uno más corto.');
+  if (f.type && !/^(audio|video)\//.test(f.type)) return flash('Ese archivo no parece un audio. Elegí un archivo de sonido (MP3, M4A, WAV, OGG…).');
+  if (!confirm('¿Transcribir «' + f.name + '» (' + mb(f.size) + ')? El archivo no se guarda en DictaNota. Guardá antes las correcciones del editor: el texto actual se reemplaza si «Empezar de cero al grabar» está activado.')) return;
+  transcribeBlob(() => f, null, 'el audio cargado');
+});
 
 function updateDockRecording(){
   const capture=$('studioDockCapture'),active=recording;
