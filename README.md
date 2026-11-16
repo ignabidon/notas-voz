@@ -18,11 +18,11 @@ Esta es la **única versión web activa** del repositorio. La etapa vigente es *
 
 ## Anonimizar, audios y aprendizaje (16/11/2026)
 
-**Barra inferior:** Grabar · Texto · **Anonimizar** · Ajustes.
+**Barra inferior:** Audio · Texto · **Anonimizar** · Ajustes. La primera pestaña (antes «Grabar») se llama **Audio**: grabás, cargás un audio o abrís tus grabaciones.
 
 **Anonimizar** reemplaza nombres de personas, teléfonos, correos y fechas del texto por etiquetas (`[Persona 1]`, `[número]`…) o por códigos que elegís, para poder guardar o compartir la nota sin mostrar quién es cada persona. En esa pantalla encontrás: qué hace (con un ejemplo inventado), el botón «Anonimizar transcripción», «Deshacer anonimizado», una vista del texto tal como queda y la lista **Personas y códigos**: escribís el nombre (y apodos), quién es (madre, hermano… o vacío si es el paciente) y un código tuyo o generado (`P-001`); debajo se ve cómo se va a escribir (`[madre de P-001]`). Sin lista, los nombres se ocultan como `[Persona 1]`, `[Persona 2]`… La lista se guarda solo en este navegador y **no está cifrada**. La anonimización es automática y puede fallar: revisá siempre el resultado.
 
-**Audios:** «Tus audios guardados» está en Grabar, justo debajo de «Conservar también el audio». Si hay un audio guardado, aparece un botón arriba de todo en Grabar para ir directo; también hay accesos en Texto y en Ajustes → Audio. Desde ahí descargás, convertís a MP3, transcribís de nuevo, borrás o recuperás el audio anterior.
+**Audios:** en la pestaña Audio, debajo del micrófono, el botón **Mis grabaciones** lleva a «Tus audios guardados» (también hay accesos en Texto y en Ajustes → Audio). Al terminar de guardarse una grabación aparece un **aviso verde «Grabación completa»** con el botón «Descargar audio», y un punto verde en la pestaña Audio si estás en otra pantalla. Cuando termina una transcripción, aparece un punto en la pestaña Texto. **Cargar un audio:** el botón «Cargar un audio para transcribir» transcribe un archivo del celular (hasta 200 MB y 90 minutos) y **no lo guarda**. Desde ahí descargás, convertís a MP3, transcribís de nuevo, borrás o recuperás el audio anterior.
 
 **Aprendizaje automático:** cuando corregís una palabra del texto, DictaNota la recuerda sola (sin botón) y la usa en próximas transcripciones. Verás el aviso «Aprendí tu corrección…» con **Deshacer**. Solo aprende errores de transcripción parecidos (palabras que se escriben o suenan casi igual), nunca nombres con mayúscula, números ni cambios de contenido, y no aprende de la anonimización. Lo aprendido queda en Ajustes → Diccionario, bajo «Aprendido de tus correcciones», donde podés borrarlo. Se apaga con «Aprender de mis correcciones».
 

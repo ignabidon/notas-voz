@@ -1,5 +1,19 @@
 # Registro de cambios — Grabador de voz Delta
 
+## DictaNota · Pestaña «Audio»: cargar un audio, aviso verde de grabación completa y puntos de novedad — 16/11/2026
+
+Base: `main` en `61969cf`. Pedido del usuario tras probar en el celular (decisiones acordadas en la conversación): cerrar el circuito «audio → transcripción → anonimizar».
+
+- **La primera pestaña de la barra se llama «Audio»** (antes «Grabar»; el botón Grabar de la barra de acciones y los identificadores internos, incluido `#grabacion`, no cambian). Reúne grabar, cargar un audio y las grabaciones guardadas.
+- **Cargar un audio para transcribir:** botón «Cargar un audio para transcribir» (selector de archivos de audio). Usa el mismo proceso de transcripción que «Transcribir este audio» (`transcribeBlob`, extraído de `transcribeSaved` sin cambiar el motor, el Worker ni la cola). **El audio cargado NO se guarda**: se lee, se transcribe y se descarta; no toca el audio principal ni la copia temporal. Límites: 200 MB y 90 minutos; avisa si el archivo no es un audio o no se puede leer. Pide confirmación y recuerda que el texto del editor se reemplaza si «Empezar de cero al grabar» está activado. El archivo no sale del dispositivo; sin orígenes nuevos.
+- **Aviso verde «Grabación completa»** dentro de la pestaña Audio (tilde, degradado verde vibrante, botón «Descargar audio» y ✕): aparece al terminar de guardarse una grabación nueva, solo si «Conservar también el audio» estaba activado. El botón de descarga queda desactivado, con una nota, hasta que termine la transcripción. Se cierra con la ✕, al descargar o al empezar otra grabación. Reemplaza al aviso fijo de la barra de abajo (quitado).
+- **«Mis grabaciones»:** botón debajo del micrófono grande que lleva al cuadro «Tus audios guardados» (muestra la duración si hay audio).
+- **Puntos de novedad en la barra:** un punto verde en «Texto» cuando termina una transcripción y en «Audio» cuando queda un audio nuevo, solo si se está en otra pantalla; se apagan al entrar. Con texto accesible (`aria-label`, p. ej. «Texto · transcripción lista»).
+
+### Verificación
+- **Pruebas automáticas:** 95/95 en local. **Navegador de laboratorio** (datos ficticios): aviso verde, punto en la barra y su desaparición, botón «Mis grabaciones», carga de un WAV sintético (se lee y decodifica, pide confirmación y llega a preparar el modelo; la descarga del modelo no es posible en el laboratorio sin internet), rechazo de un archivo no sonoro. **No se probó una transcripción real de un archivo cargado.**
+- **Motorola/Brave: NO confirmado.** Probar: cargar un audio corto ficticio (MP3/M4A/WAV) y comprobar que se transcribe y que no aparece en «Tus audios guardados»; grabar con «Conservar también el audio» y mirar el aviso verde y los puntos de la barra; probar con letra Normal y Grande.
+
 ## DictaNota · Anonimizar como pantalla propia, audios a la vista y aprendizaje automático de correcciones — 16/11/2026
 
 Base: `main` en `7ba0289e827244f50cb35630ff9256506d6b5c89` (verificado antes de editar), rama `claude/notavoz-ux-improvements-o95axk`. Pedido del usuario: (1) el audio está muy escondido; (2) la barra fija debe incluir Anonimizar (Grabar · Texto · Anonimizar · Ajustes); (3) explicar con palabras simples qué hace Anonimizar; (4) las correcciones del usuario deben aprenderse solas, sin un botón extra, y Anonimizar debe permitir asociar nombre ↔ código.
