@@ -21,3 +21,6 @@ jobs:
           node-version: '22'
       - name: Comprobar código
         run: node --test tests/delta.test.mjs
+      - name: Verificar interfaz en Chrome (estados simulados)
+        run: node tests/browser.mjs
+        timeout-minutes: 3

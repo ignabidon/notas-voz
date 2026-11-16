@@ -4,13 +4,13 @@
 
 > **⚠ Seguridad:** hay una revisión de seguridad («pen testing») en curso. Leé [SEGURIDAD.md](SEGURIDAD.md): qué está confirmado, qué no, riesgos abiertos y reglas para editar. Hasta ahora las notas **no están cifradas**: no uses datos reales.
 
-Esta es la **única versión web activa** del repositorio. La etapa vigente es **Delta 11**, con navegación Android de tres pantallas (Grabar / Texto / Ajustes), estado global de transcripción y acciones accesibles de audio y texto.
+Esta es la **única versión web activa** del repositorio. La etapa vigente es **Delta 11**, con navegación Android de cuatro pantallas (Audio / Texto / Anonimizar / Ajustes), estado global de transcripción y acciones accesibles de audio y texto.
 
-> **Prueba Delta 11 — experimental.** El usuario ya probó en Brave Android la grabación, Whisper, descarga TXT, recuperación del audio anterior y funcionamiento general de la interfaz. Las acciones nuevas de Delta 11 —Guardar audio visible, Compartir texto y accesos directos— **todavía necesitan prueba real en el Motorola**. Las 53 pruebas automáticas y la publicación GitHub Pages fueron satisfactorias. No usar datos reales de pacientes.
+> **Prueba Delta 11 — experimental.** El usuario ya probó en Brave Android la grabación, Whisper, descarga TXT, recuperación del audio anterior y funcionamiento general de la interfaz. Las acciones nuevas de Delta 11 —Descargar audio visible, Compartir texto y accesos directos— **todavía necesitan prueba real en el Motorola**. Las 53 pruebas automáticas y la publicación GitHub Pages fueron satisfactorias. No usar datos reales de pacientes.
 
 ## Funciones
 - Grabación de voz, cronómetro, pausa/reanudación, marcas y detención.
-- **Cuatro pantallas:** Grabar, Texto, **Anonimizar** y Ajustes, accesibles desde la barra inferior. Mientras se graba, mantiene **Pausar/Reanudar** y **Detener** sin importar qué pantalla esté abierta.
+- **Cuatro pantallas:** Audio, Texto, **Anonimizar** y Ajustes, accesibles desde la barra inferior. Mientras se graba, mantiene **Pausar/Reanudar** y **Detener** sin importar qué pantalla esté abierta.
 - Transcripción local con Whisper. Descargar o cambiar de modelo puede requerir conexión a internet.
 - Corrección contextual de palabras o frases. **DictaNota aprende sola de lo que corregís** (se puede apagar en Ajustes → Diccionario) y también podés escribir reglas a mano en el diccionario.
 - Edición de texto; pantalla **Anonimizar** (explica para qué sirve, asocia cada nombre con un código y permite deshacer; revisar siempre).
@@ -20,13 +20,13 @@ Esta es la **única versión web activa** del repositorio. La etapa vigente es *
 
 **Barra inferior:** Audio · Texto · **Anonimizar** · Ajustes. La primera pestaña (antes «Grabar») se llama **Audio**: grabás, cargás un audio o abrís tus grabaciones.
 
-**Anonimizar** reemplaza nombres de personas, teléfonos, correos y fechas del texto por etiquetas (`[Persona 1]`, `[número]`…) o por códigos que elegís, para poder guardar o compartir la nota sin mostrar quién es cada persona. En esa pantalla encontrás: qué hace (con un ejemplo inventado), el botón «Anonimizar transcripción», «Deshacer anonimizado», una vista del texto tal como queda y la lista **Personas y códigos**: escribís el nombre (y apodos), quién es (madre, hermano… o vacío si es el paciente) y un código tuyo o generado (`P-001`); debajo se ve cómo se va a escribir (`[madre de P-001]`). Sin lista, los nombres se ocultan como `[Persona 1]`, `[Persona 2]`… La lista se guarda solo en este navegador y **no está cifrada**. La anonimización es automática y puede fallar: revisá siempre el resultado.
+**Anonimizar** reemplaza nombres de personas, teléfonos, correos y fechas del texto por etiquetas (`[Persona 1]`, `[número]`…) o por códigos que elegís, para poder guardar o compartir la nota sin mostrar quién es cada persona. En esa pantalla encontrás: ayuda ⓘ sobre qué hace (con un ejemplo inventado), el botón «Anonimizar transcripción», «Deshacer anonimizado», una vista del texto tal como queda y la lista **Personas y códigos**: escribís el nombre (y apodos), quién es (madre, hermano… o vacío si es el paciente) y un código tuyo o generado (`P-001`); debajo se ve cómo se va a escribir (`[madre de P-001]`). Sin lista, los nombres se ocultan como `[Persona 1]`, `[Persona 2]`… La lista se guarda solo en este navegador y **no está cifrada**. La anonimización es automática y puede fallar: revisá siempre el resultado.
 
-**Audios:** en la pestaña Audio, debajo del micrófono, el botón **Mis grabaciones** lleva a «Tus audios guardados» (también hay accesos en Texto y en Ajustes → Audio). Al terminar de guardarse una grabación aparece un **aviso verde «Grabación completa»** con el botón «Descargar audio», y un punto verde en la pestaña Audio si estás en otra pantalla. Cuando termina una transcripción, aparece un punto en la pestaña Texto. **Cargar un audio:** el botón «Cargar un audio para transcribir» transcribe un archivo del celular (hasta 200 MB y 90 minutos) y **no lo guarda**. Desde ahí descargás, convertís a MP3, transcribís de nuevo, borrás o recuperás el audio anterior.
+**Audios:** en la pestaña Audio, debajo del micrófono, el botón **Mis grabaciones** lleva a «Tus audios guardados» (también hay accesos en Texto y en Ajustes → Audio). Al terminar de guardarse una grabación aparece un **aviso verde «Grabación completa»** con el botón «Descargar audio», y un punto verde en la pestaña Audio si estás en otra pantalla. Cuando termina una transcripción, aparece un punto en la pestaña Texto. **Cargar un audio:** el botón «Cargar un audio para transcribir» transcribe un archivo del celular (hasta 200 MB y 15 minutos inclusive) y **no lo guarda**. Desde ahí descargás, convertís a MP3, transcribís de nuevo, borrás o recuperás el audio anterior.
 
 **Aprendizaje automático:** cuando corregís una palabra del texto, DictaNota la recuerda sola (sin botón) y la usa en próximas transcripciones. Verás el aviso «Aprendí tu corrección…» con **Deshacer**. Solo aprende errores de transcripción parecidos (palabras que se escriben o suenan casi igual), nunca nombres con mayúscula, números ni cambios de contenido, y no aprende de la anonimización. Lo aprendido queda en Ajustes → Diccionario, bajo «Aprendido de tus correcciones», donde podés borrarlo. Se apaga con «Aprender de mis correcciones».
 
-**Cómo probarlo en el celular (datos ficticios):** (1) Abrí Anonimizar y leé la explicación; cargá una persona con código, volvé a Texto con un texto de prueba y anonimizá; deshacé. (2) En Texto corregí una palabra mal transcripta, cerrá el teclado y buscá el aviso «Aprendí…»; revisalo en Ajustes → Diccionario. (3) Grabá con «Conservar también el audio» y recuperalo desde Grabar, Texto y Ajustes. Estado: pruebas automáticas y navegador de laboratorio; **sin prueba en el Motorola todavía**.
+**Cómo probarlo en el celular (datos ficticios):** (1) Abrí Anonimizar y leé la explicación; cargá una persona con código, volvé a Texto con un texto de prueba y anonimizá; deshacé. (2) En Texto corregí una palabra mal transcripta, cerrá el teclado y buscá el aviso «Aprendí…»; revisalo en Ajustes → Diccionario. (3) Grabá con «Conservar audio» y recuperalo desde Audio, Texto y Ajustes. Estado: pruebas automáticas y navegador de laboratorio; **sin prueba en el Motorola todavía**.
 
 ## Corrección de bloqueo en Firefox (15/11/2026)
 
@@ -34,15 +34,15 @@ Whisper trabaja localmente con muestras PCM mono a 16 kHz enviadas a un Worker. 
 
 En Firefox se usa CPU y, sin aislamiento entre orígenes, un hilo WASM; Android conserva su selección de aceleración. La carga del modelo y cada petición de transcripción tienen un límite absoluto de **5 minutos por petición**. Activar AudioContext tiene 10 segundos y preparar AudioWorklet, 15. La preparación PCM tiene 15 segundos; leer el archivo, 15 segundos; decodificarlo, 30 segundos. Un plazo agotado termina el Worker y habilita un nuevo intento. Una descarga muy lenta o Small en un equipo lento pueden superar esos límites: probá Base/Tiny. Los temporizadores pueden demorarse si el navegador suspende la pestaña o el sistema.
 
-Al terminar, fallar o cancelar aparece **Reintentar transcripción del audio en memoria**, si quedó una copia completa de las partes con voz. Pide confirmación y reemplaza el editor; guardá antes cualquier corrección. La copia es temporal, se pierde al recargar o comenzar otra grabación, y se limita a 32 MB para no aumentar sin límite la memoria en Android. Si se supera el límite, se descarta toda esa copia temporal y se informa en los detalles técnicos; nunca se ofrece como si fuese el audio completo. Para grabaciones largas activá **Conservar también el audio**: podés usar **Transcribir este audio** sobre el archivo guardado, incluso después de volver a abrir la página. No se agregaron nuevos registros de consola con audio o texto.
+Al terminar, fallar o cancelar aparece **Reintentar transcripción del audio en memoria**, si quedó una copia completa de las partes con voz. Pide confirmación y reemplaza el editor; guardá antes cualquier corrección. La copia es temporal, se pierde al recargar o comenzar otra grabación, y se limita a 32 MB para no aumentar sin límite la memoria en Android. Si se supera el límite, se descarta toda esa copia temporal y se informa en los detalles técnicos; nunca se ofrece como si fuese el audio completo. Para grabaciones largas activá **Conservar audio**: podés usar **Transcribir este audio** sobre el archivo guardado, incluso después de volver a abrir la página. No se agregaron nuevos registros de consola con audio o texto.
 
 ### Cómo verificar en Firefox y Android
 
 1. Abrí https://ignabidon.github.io/notas-voz/ y recargá para traer el último código. No borres los datos del sitio. En Detalles técnicos debe aparecer «corrección Firefox» al grabar.
-2. Elegí Whisper Base y activá Conservar también el audio. Con internet disponible, grabá 20–30 segundos de una frase ficticia, pausá, reanudá y detené. Comprobá que aparece el texto y desaparece el aviso de transcripción.
+2. Elegí Whisper Base y activá Conservar audio. Con internet disponible, grabá 20–30 segundos de una frase ficticia, pausá, reanudá y detené. Comprobá que aparece el texto y desaparece el aviso de transcripción.
 3. Descargá y reproducí el audio; luego usá Transcribir este audio. Comprobá que contiene también el final de la frase. En Firefox los detalles deben indicar modo compatible con procesador.
 4. Guardá el texto y probá el reintento en memoria: debe completar sin volver a usar el micrófono. Para comprobar recuperación después de una interrupción, iniciá otra transcripción, cancelala y reintentá. Si el modelo ya está en caché, cortar internet puede no causar ningún error.
-5. Repetí los pasos en Brave del Motorola, incluyendo cambiar entre Grabar / Texto / Ajustes mientras graba. Anotá versión del navegador, modelo, duración y etapa del error, sin copiar contenido privado. Si falla, copiá los detalles técnicos.
+5. Repetí los pasos en Brave del Motorola, incluyendo cambiar entre Audio / Texto / Anonimizar / Ajustes mientras graba. Anotá versión del navegador, modelo, duración y etapa del error, sin copiar contenido privado. Si falla, copiá los detalles técnicos.
 
 **Estado de validación:** ver CAMBIOS.md. El usuario confirmó después de la publicación que Whisper ya funciona en Firefox. Esto no valida por extensión el dictado del navegador ni las demás funciones; las pruebas del entorno Linux se detallan en CAMBIOS.md.
 
@@ -67,7 +67,7 @@ Fuentes consultadas el 15/11/2026: [compatibilidad de SpeechRecognition](https:/
 1. Recargá https://ignabidon.github.io/notas-voz/ sin borrar los datos del sitio. Abrí **Ajustes → Otras opciones → Cómo transcribir**. Ahora dice «Dictado del navegador · solo local».
 2. Si está deshabilitado, leé el motivo y el código entre corchetes. Abrí **Diagnóstico del dictado del navegador** para ver API, paquetes consultados y errores. En ese caso usá Whisper; conceder micrófono no agrega una API o idioma que el navegador no tiene.
 3. Si ofrece Preparar, aceptá la descarga solo si querés probarlo. La opción se habilita únicamente después de verificar el paquete instalado. Si el navegador informa downloading, esperá y volvé a comprobar; Delta no promete que la descarga avance.
-4. Si está disponible, seleccionalo, volvé a Grabar y tocá el botón. Permití el micrófono del sitio y de Brave en Android si se solicitan. Debe aparecer «Escuchando» solo después del evento de inicio. No se borra el editor anterior antes de esa confirmación.
+4. Si está disponible, seleccionalo, volvé a Audio y tocá el botón. Permití el micrófono del sitio y de Brave en Android si se solicitan. Debe aparecer «Escuchando» solo después del evento de inicio. No se borra el editor anterior antes de esa confirmación.
 5. Decí una frase ficticia. En **Texto**, el provisional aparece debajo del editor; las frases confirmadas se agregan al editor. El navegador puede no emitir provisionales, aunque Delta los solicite.
 6. Probá Pausar/Reanudar y Detener. El cierre espera resultados finales hasta 8 segundos y no reinicia en bucle. Si el navegador termina por su cuenta, hay que volver a tocar Grabar; ante cierre inmediato vuelve a exigir comprobar compatibilidad.
 7. Ante un error, conservá el código (por ejemplo `not-allowed`, `service-not-allowed`, `language-not-supported`, `audio-capture`, `no-speech`, `network`, o el nombre de la excepción). El diagnóstico no incluye transcripción ni audio. El inicio tiene un plazo de 20 segundos, consultas de disponibilidad 8 segundos y descarga solicitada 5 minutos; el navegador puede continuar descargando después de un plazo agotado.
@@ -100,14 +100,14 @@ Referencias: [WhisperTextStreamer en Transformers.js 3.8.1](https://huggingface.
 1. Recargá Delta sin borrar datos. Con Whisper y contenido ficticio, empezá a grabar y abrí Texto inmediatamente: el campo puede seguir vacío, pero debe explicar la espera; abajo debe verse «Grabación en curso · Whisper por partes» aunque aún no haya un fragmento preparado.
 2. Grabá 5–10 s y detené. Debe indicar procesamiento y luego mostrar la frase, conservando las advertencias reales si aparecen. El tiempo depende del modelo/dispositivo; no se promete una demora fija.
 3. Probá 45–60 s de habla ficticia continua. Si el dispositivo alcanza a procesar cada parte, aparecerán bloques antes de detener; si procesa más lento, pueden llegar después. Las partes nuevas se suman sin reemplazar las anteriores. No se usa otro modelo para una vista previa.
-4. Probá Pausar/Reanudar y cambiá entre Grabar/Texto/Ajustes. El mensaje debe seguir el estado; solo aparece barra de procesamiento si hay trabajo pendiente o preparación del modelo. No deben entrar palabras como «Grabando audio» en la nota ni en el TXT.
+4. Probá Pausar/Reanudar y cambiá entre Audio/Texto/Anonimizar/Ajustes. El mensaje debe seguir el estado; solo aparece barra de procesamiento si hay trabajo pendiente o preparación del modelo. No deben entrar palabras como «Grabando audio» en la nota ni en el TXT.
 5. En un navegador que admita dictado local, comprobá provisionales bajo el editor y frases finales sin duplicados. No insistir en esa vía si la opción permanece deshabilitada.
 
 Pruebas automáticas e interfaz en Firefox/Linux con estados simulados satisfactorias. Posteriormente el usuario informó que probó esa nueva versión, sin detallar dispositivo ni cada caso. Esa confirmación no valida por extensión el ajuste ergonómico posterior ni mide batería.
 
 ## Lectura y uso con una mano (15/11/2026)
 
-Se conservan Grabar / Texto / Ajustes, los colores oscuros y los mismos comandos de grabación y edición. En **Ajustes → Lectura y comodidad → Tamaño del texto** elegí:
+Se conservan Audio / Texto / Anonimizar / Ajustes, los colores oscuros y los mismos comandos de grabación y edición. En **Ajustes → Lectura y comodidad → Tamaño del texto** elegí:
 
 | Tamaño | Transcripción aproximada | Uso |
 | --- | --- | --- |
@@ -117,7 +117,7 @@ Se conservan Grabar / Texto / Ajustes, los colores oscuros y los mismos comandos
 
 El ajuste se aplica inmediatamente y se guarda en la configuración existente del navegador. No cambia el contenido, el tamaño de letra de TXT/Word ni el zoom del navegador. Si no se permite guardar ajustes se informa; el tamaño elegido sigue aplicado durante la sesión. No se deshabilitó el zoom por gestos.
 
-**Controles al alcance:** Grabar ahora está también en la barra inferior de Texto, junto a Anonimizar y Guardar .txt. Usa el mismo comando: si tenés «Empezar de cero al grabar» activado se aplica igual que antes; desactivalo si querés agregar a la nota. Durante la captura la barra mantiene Pausar/Reanudar y Detener, aunque cambies de pantalla o desplaces una nota larga. No se agregó otro grabador.
+**Controles al alcance:** Grabar ahora está también en la barra inferior de Texto, junto a Guardar nota .txt. Usa el mismo comando: si tenés «Empezar de cero al grabar» activado se aplica igual que antes; desactivalo si querés agregar a la nota. Durante la captura la barra mantiene Pausar/Reanudar y Detener, aunque cambies de pantalla o desplaces una nota larga. No se agregó otro grabador.
 
 La barra de Corregir selección / Copiar / Seleccionar todo / Compartir queda visible al desplazar la página dentro de Texto cuando hay suficiente espacio vertical. Se aumentan áreas táctiles principales a 48 px como mínimo y separaciones a 10–12 px. Los rótulos pueden ocupar dos líneas antes que quedar recortados.
 
@@ -128,8 +128,8 @@ Se usa VisualViewport cuando está disponible y el navegador puede aceptar `inte
 ### Evaluación desde el celular
 
 1. Recargá Delta sin borrar datos. Probá Normal y Grande en Ajustes; volvé a Texto y confirmá legibilidad. Recargá otra vez y comprobá que se conserva la elección.
-2. Con una nota ficticia larga, desplazá tanto la página como el interior del editor. Comprobá que podés llegar al final y que Grabar, Anonimizar y Guardar .txt siguen accesibles abajo. Probá Copiar, Seleccionar todo y Corregir selección; no uses datos privados.
-3. Grabá una frase ficticia desde Grabar o desde Texto. Cambiá de vista y desplazá la página: Pausar/Reanudar y Detener deben seguir visibles y responder. Revisá antes la opción Empezar de cero si querés conservar el texto actual.
+2. Con una nota ficticia larga, desplazá tanto la página como el interior del editor. Comprobá que podés llegar al final y que Grabar, Anonimizar y Guardar nota .txt siguen accesibles abajo. Probá Copiar, Seleccionar todo y Corregir selección; no uses datos privados.
+3. Grabá una frase ficticia desde Audio o desde Texto. Cambiá de vista y desplazá la página: Pausar/Reanudar y Detener deben seguir visibles y responder. Revisá antes la opción Empezar de cero si querés conservar el texto actual.
 4. Abrí el teclado tocando la transcripción. Revisá que se vean lo que escribís y los controles; corregí una palabra en el cuadro de corrección. Cerrá el teclado con el botón Atrás de Android y comprobá que se restaura la barra completa sin saltos ni pérdida de texto.
 5. Repetí en horizontal y con letra Grande. En computadora comprobá teclado físico, selección con mouse y navegación por Tab. Si hay un solapamiento, informá navegador, orientación, tamaño de letra y si el teclado estaba abierto; evitá capturas con notas reales.
 
@@ -153,108 +153,30 @@ Los prototipos web (`gamma-studio`, `gamma-profesional`, `gamma`, `prueba` y la 
 
 La URL del repositorio permanece como **ignabidon/notas-voz** para no cambiar los enlaces. El nombre visible de la app es **DictaNota**.
 
-## Guardar en Descargas (Delta 02)
+## Guardar y descargar
 
-Al tocar **Guardar .txt** se solicita al navegador descargar un archivo de texto con el título y la transcripción actual. En Android, buscá el archivo en **Descargas de Brave** o en la carpeta de descargas configurada en el dispositivo. El navegador puede consultar dónde guardarlo. La aplicación no puede comprobar desde la página que el archivo terminó de guardarse: abrí el archivo para verificarlo.
+**Conservar audio** mantiene la grabación en este navegador, sin cifrar ni anonimizar. El interruptor está arriba a la derecha en Audio, con Sí/No, sincronizado con Ajustes → Audio. Elegilo antes de grabar: queda bloqueado durante la captura y el procesamiento. Durante la captura, la barra fija muestra la preferencia elegida. Se conserva un audio principal y una sola copia anterior recuperable.
 
-Este botón también conserva la copia local anterior como respaldo; no borra ni migra contenido. La lista interna de notas guardadas sigue oculta en este cambio. La descarga TXT es únicamente de la nota actual; no incluye audio, diccionario, claves o ajustes. No usar información sensible real antes de validar el proceso.
+**Descargar audio** solicita un archivo en el dispositivo. No borra la copia del navegador. En Audio → Tus audios guardados también podés convertir a MP3, retranscribir, recuperar el anterior o borrar. Un archivo importado solo se transcribe: nunca se guarda; máximo 200 MB y 15 minutos inclusive.
 
+**Guardar nota .txt** conserva una copia local y solicita descargar título y texto. El borrador también se guarda automáticamente. La web no puede confirmar que el archivo terminó de guardarse: abrilo desde Descargas para verificarlo. El TXT no incluye audio, diccionario ni ajustes. Word y descarga TXT están en Texto → Guardar, organizar y exportar la nota.
 
-## Guardar audio y compartir texto (Delta 11)
+**Compartir** usa el menú del dispositivo; si no está disponible intenta copiar, y como última alternativa selecciona el texto. Conserva las advertencias de transcripción incompleta y revisión de datos personales.
 
-En Grabar, activá «Conservar también el audio» antes de empezar. Está sincronizado con Ajustes → Audio. Al terminar y completarse Whisper, tocá «Guardar audio» para descargar el audio guardado en Brave en su formato nativo (normalmente WebM, M4A u Ogg). Si no activaste la opción, no existe audio para descargar y el botón queda desactivado. El audio original no está anonimizado ni cifrado: evitá datos sensibles reales. La opción MP3 y la recuperación del último audio anterior siguen disponibles.
+## Interfaz y ayudas
 
-En Texto, sobre el editor, están a la vista «Corregir selección», «Copiar», «Seleccionar todo» y «Compartir». Compartir utiliza el menú nativo de Android para texto plano; si Brave falla o no tiene soporte, intenta copiar al portapapeles y, si eso también falla, selecciona el texto. Antes de compartir exige revisar si hay datos identificatorios y si la transcripción está incompleta. TXT y Word siguen disponibles.
+Cuatro pantallas: **Audio / Texto / Anonimizar / Ajustes**. Cambiar de pantalla no corta la grabación. En Texto están Corregir selección, Copiar, Seleccionar todo y Compartir; abajo, Grabar y Guardar nota .txt. Anonimizar tiene pantalla propia con vista previa, deshacer y Personas y códigos. Revisá siempre el resultado: puede fallar.
 
-En una prueba real, Whisper Small tardó 2:10 para transcribir ~1:10 de audio. Puede ser normal en un teléfono, pero para evaluar la diferencia con Base conviene transcribir exactamente el mismo archivo ficticio con ambos modelos.
+La barra fija muestra **Grabando** con punto amarillo suave, o **En pausa** con punto fijo. Al detener desaparece el indicador de captura; Whisper puede seguir procesando. Con movimiento reducido el punto no parpadea. Los puntos verdes de Audio/Texto indican contenido nuevo y se apagan al entrar a su pantalla.
 
-## Un solo estado de transcripción y cómo investigar una demora (Delta 10)
+Los botones **ⓘ** abren la explicación debajo de la opción; otro toque la cierra. Funcionan también con Tab y Enter/Espacio. Nombres, valores, errores, progreso, límites de importación y advertencias de pérdida permanecen visibles. En Ajustes → Lectura y comodidad podés elegir tamaño Compacto, Normal o Grande.
 
-El estado de Whisper queda **exclusivamente en la barra inferior fija** mientras la transcripción está en marcha. Ya no repite «Procesando», tiempo, barra de progreso o «Cancelar procesamiento» dentro de la pantalla Grabar o del editor. Los mensajes de finalización, errores y advertencias importantes se conservan al terminar. El cartel global también funciona si cambiás de Grabar a Texto o Ajustes.
+El espacio inferior se mide según la altura real de la barra. Con teclado detectado, las herramientas dejan de ser fijas y el editor reduce su altura para poder desplazar el último renglón. La detección depende de foco y geometría: requiere validación en cada navegador/dispositivo.
 
-Si parece que tarda más, abrí **Ajustes → Calidad de transcripción** y comprobá el modelo: **Small** suele exigir mucho más tiempo y memoria que **Base**. Para comparar sin cambiar la grabación, activá Guardar audio, conservá el TXT actual y retranscribí **el mismo audio ficticio** con Base y Small. Consultá **Grabar → Detalles técnicos de la última grabación**: se informan nombre del modelo, método GPU/CPU, partes y tiempo de proceso sin guardar lo que dijiste en esos detalles. El tiempo que muestra la barra es transcurrido de espera, no una medida del rendimiento de cada modelo.
+## Validación y continuidad
 
-El motor de inferencia y los modelos no cambiaron en esta etapa. Se redujeron escrituras visuales repetidas; no está demostrado que eso explique ni corrija una diferencia de velocidad. Las comparaciones confiables requieren el mismo audio, el mismo modelo y condiciones similares de teléfono.
+- **Código:** consultar el commit actual de main y el historial de PR; el detalle de cada cambio está en CAMBIOS.md.
+- **Pruebas técnicas:** `node --test tests/delta.test.mjs` (99 pruebas). GitHub Actions también ejecuta `node tests/browser.mjs` usando Chrome instalado y CDP nativo, sin dependencias nuevas. Revisa 320/360/412/760/1365 px, letra normal/grande, ayudas, sincronización, bloqueo, captura/pausa/fin, movimiento reducido y teclado simulado. No transcribe voz real en esa prueba.
+- **Motorola G56 5G:** las mejoras de claridad visual necesitan prueba física; la revisión visual/de código previa no demuestra funcionamiento real del teléfono. Hay confirmaciones anteriores parciales de grabar/transcribir, descargar TXT y recuperar audio; no se extrapolan a nuevas funciones. CSP y huella MP3 siguen pendientes en el Motorola; consultar SEGURIDAD.md.
 
-## Progreso visible en cualquier pantalla (Delta 09)
-
-Al transcribir con Whisper, un **cartel fijo sobre la barra inferior** informa que la transcripción sigue en marcha tanto en Grabar como en Texto o Ajustes. Tras detener la grabación muestra «Esperá mientras se completa la transcripción», tiempo y fragmentos pendientes. Mientras estás grabando con Whisper, el mensaje indica que podés seguir grabando o consultar Texto. Si no puede calcular un porcentaje, usa una animación sin número para evitar estimaciones falsas. Puede ofrecer **Cancelar transcripción**, reutilizando el control original y su confirmación de pérdida de las partes todavía sin transcribir.
-
-Los iconos de navegación ahora tienen un estilo uniforme: micrófono para Grabar, hoja para Texto y **sliders** para Ajustes. El indicador desaparece al finalizar, cancelar o fallar el procesamiento. La transcripción y el reconocimiento no cambian.
-
-**Prueba:** con contenido ficticio, grabá y detené; mientras Whisper termina, entrá a Texto, revisá que el aviso continúe arriba de la navegación y que las últimas palabras aparezcan. Volvé a Ajustes y comprobá que el aviso persiste y que el símbolo es de sliders. Al completarse, el indicador debe desaparecer. No hace falta probar «Cancelar» si querés conservar la transcripción completa.
-
-## Navegación en tres pantallas (Delta 08)
-
-El rediseño crea tres vistas distintas, sin instalar otra app: **Grabar** (micrófono grande, cronómetro, estado y audio conservado), **Texto** (editor amplio, corregir, copiar, anonimizar y Guardar .txt) y **Ajustes** (calidad de Whisper, audio, privacidad, diccionario y opciones avanzadas). La barra inferior cambia las acciones disponibles según la pantalla. Durante una grabación, los controles fijos Pausar y Detener se mantienen visibles incluso si entrás en Texto para consultar la transcripción.
-
-Todos los controles originales siguen existiendo y sus datos permanecen en Brave. Las tres pantallas son distintas vistas del **mismo** documento web: cambiar entre ellas no debe detener el micrófono, reiniciar Whisper, borrar texto ni alterar datos. Privacidad está dentro de Ajustes, y el enlace directo `#localPrivacy` sigue funcionando.
-
-### Prueba recomendada en Brave Android
-
-1. Abrí la web, verificá que aparece **Grabar** como pantalla inicial y que la barra inferior tiene tres destinos.
-2. Grabá una frase ficticia; mientras grabás, entrá en **Texto** y regresá a **Grabar**, sin detener la sesión. Probá Pausar, Marcar y Detener.
-3. En Texto, corregí una palabra y guardá un TXT; comprobá la descarga.
-4. En Ajustes, comprobá que podés elegir Base/Small, activar Guardar audio, abrir Privacidad y consultar el Diccionario.
-5. Verificá que el audio anterior todavía puede recuperarse y que los textos no desaparecen al cambiar de pestaña.
-
-La rama de recuperación de la interfaz previa es [respaldo-delta-07-antes-de-delta-08](https://github.com/ignabidon/notas-voz/tree/respaldo-delta-07-antes-de-delta-08). No se modificó la lógica de Whisper ni el almacenamiento.
-
-## Diseño cómodo para una mano (Delta 07)
-
-La interfaz móvil de Delta ahora utiliza textos y controles más grandes, mayor contraste y explicaciones breves. En teléfonos, la barra fija queda pegada al borde inferior del dispositivo y permite **Grabar**, **Anonimizar** y **Guardar .txt** sin estirar el pulgar hasta arriba. Durante una grabación se reemplaza por **Pausar/Reanudar** y **Detener**, igual que antes. Los controles principales no se duplican funcionalmente: los botones inferiores accionan los mismos comandos de Delta.
-
-En la navegación inferior aparecen **Grabar**, **Texto**, **Ajustes** y **Privacidad**. Privacidad abre directamente la sección «Privacidad y datos guardados» aunque Ajustes esté cerrado. También se movió esa sección al principio de Ajustes. Las opciones avanzadas y los detalles técnicos siguen disponibles cuando los necesitás, y las advertencias sobre información sensible se conservan.
-
-La revisión es visual y de navegación: no cambia el reconocimiento de voz, el segmentador, la persistencia de audio y notas, los modelos ni el cifrado. Se validan las rutas mediante pruebas automáticas; todavía hace falta comprobar legibilidad, desplazamiento y alcance del pulgar en Brave Android, con datos ficticios.
-
-## Privacidad del texto y limpieza optativa (Delta 06a)
-
-La descarga **Guardar .txt** no está cifrada y el navegador también conserva una copia local. El borrador de trabajo se guarda automáticamente; la opción **Deshacer borrado** puede contener otra copia del texto. Brave puede conservar estos datos aunque se cierre. Tampoco se cifran todavía el audio guardado, las asociaciones de personas o el diccionario. Los archivos TXT/Word descargados quedan fuera del control de la aplicación.
-
-En **Ajustes de transcripción → Privacidad y almacenamiento local** podés consultar la cantidad de notas guardadas y si existen copias de borrador/deshacer, sin mostrar el contenido. El botón **Borrar notas y borradores de Brave** pide confirmación y borra solo los textos de las notas, el borrador y la copia para deshacer, además de vaciar el editor visible. **No borra** audios de IndexedDB, nombres/códigos, diccionario, ajustes, modelos o archivos de Descargas. No se realiza ninguna limpieza automática.
-
-Este borrado no equivale a destrucción segura de datos del dispositivo, y no protege los archivos descargados. No guardar información clínica real hasta que se evalúen cifrado, protección del dispositivo y política de retención.
-
-## Precisión de Whisper: prueba Base contra Small
-
-La aplicación ya ofrece **Whisper Small** en Ajustes. Para comparar con Base, activá «Guardar el audio» y grabá material ficticio. Descargá primero el texto Base como archivo TXT, cambiá a Small y elegí «Transcribir este audio» sobre el audio guardado; el texto del editor puede reemplazarse. Verificá errores en términos técnicos, omisiones de frases, tiempo de procesamiento y posibles avisos de memoria. Si ambos modelos omiten exactamente las mismas frases, conviene revisar el segmentador de pausas antes de instalar modelos más grandes. No se modifica el motor ni se promete mejor precisión sin esa comparación.
-
-## Grabaciones largas (Delta 05)
-
-Si vas a grabar durante varios minutos, elegí Whisper y activá «Guardar el audio de la grabación» antes de empezar. Mantené la pantalla encendida y preferentemente Brave en primer plano. Delta solicitará guardar fragmentos parciales al pausar, marcar momentos o pasar la página al fondo. Si el micrófono deja de enviar muestras o Whisper tiene muchos fragmentos pendientes, la aplicación mostrará un aviso. En el segundo caso, pausá la grabación para permitir que la transcripción alcance lo ya grabado.
-
-Los avisos **no interrumpen automáticamente la grabación**, ni sustituyen una copia descargada del audio. La transcripción de una sesión muy larga todavía puede agotar memoria; la continuidad con pantalla apagada no está garantizada. Después de la prueba, comprobá las primeras y últimas frases, los mensajes de aviso, los fragmentos pendientes y la descarga del audio.
-
-## Audio: un principal y recuperación temporal (Delta 04)
-
-Si activás «Guardar el audio», Delta conserva **un audio principal** y, cuando lo reemplazás, una **única copia temporal del audio anterior**. Al iniciar una nueva grabación, el anterior no se borra anticipadamente: se reemplaza recién cuando el navegador guarda el primer fragmento de audio nuevo. Si falla la captura antes de eso, sigue disponible el anterior.
-
-En «Audio guardado» aparece **Recuperar audio anterior** cuando existe esa copia temporal. El botón intercambia cuál es el audio principal y permite deshacer el cambio. Cuando guardás otra grabación, se descarta la copia más antigua; no es un historial ni una copia de seguridad permanente. La copia temporal sigue ocupando espacio en el navegador. «Borrar audio» elimina tanto el principal como la copia temporal, con confirmación.
-
-Las grabaciones se almacenan en IndexedDB, no en GitHub. La grabación breve puede no producir fragmentos si falla antes de que MediaRecorder entregue audio, y el sistema operativo puede borrar datos del navegador. Descargar el audio sigue siendo la forma de conservarlo fuera de Brave. Probar recuperación únicamente con audios ficticios en Android antes de usar información sensible.
-
-## Notas y almacenamiento
-
-La web almacena información en localStorage e IndexedDB. Las claves técnicas existentes (algunas llevan el término «gamma») **se conservaron deliberadamente** para no ocultar las notas, ajustes, audio y diccionario guardados en Brave. GitHub Pages usa el mismo origen en la nueva URL raíz. **No borres los datos del sitio en Brave.** Antes de hacer cambios grandes, exportá copias de notas ficticias que quieras conservar.
-
-Este prototipo no ha sido auditado para procesar información identificatoria real. La anonimización automática puede equivocarse y el almacenamiento local no supone cifrado seguro o control biométrico.
-
-## Cómo continuar con cualquier IA
-
-1. Pedir que lea `README.md`, `AGENTS.md` y `CAMBIOS.md`.
-2. Trabajar sobre la única app: `index.html`.
-3. Realizar cambios pequeños, con commit identificable y explicación sencilla.
-4. Ejecutar: `node --test tests/delta.test.mjs`.
-5. Confirmar con información ficticia en el Motorola: grabar, pausar, desplazarse, detener, terminar transcripción, corregir, guardar, anonimizar, recuperar al reabrir.
-6. Registrar en `CAMBIOS.md` qué cambió, qué pasó las pruebas y qué queda pendiente.
-
-**Tres estados distintos:** código subido a GitHub ≠ pruebas automáticas aprobadas ≠ funcionamiento confirmado en Android.
-
-## Problemas pendientes
-
-- Investigar números inesperados y errores observados al grabar en el Motorola. Necesitamos «Detalles técnicos de la última grabación» para confirmar el origen.
-- Validar Whisper, almacenamiento y permisos en sesiones largas.
-- Confirmar recuperación de borrador y diccionario al abrir la URL raíz.
-- Mejorar la estética de la barra fija sin perder claridad ni controles.
-- La app Android nativa sigue siendo una idea futura, no la versión web oficial.
+Con datos ficticios: elegir Conservar audio → grabar → pausar → reanudar → recorrer las cuatro pantallas → detener → esperar transcripción → editar el último renglón con teclado abierto → anonimizar y revisar → guardar TXT → descargar y reproducir audio. Repetir con letra Grande. No borrar los datos del sitio para actualizar: recargá la página.

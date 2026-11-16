@@ -1,3 +1,16 @@
+## 15/11/2026 · Claridad visual y uso con una mano
+
+Base: main `0bdd11d65d2e7c81e7da96f26de9fc399baebb54`; rama `mejora-claridad-movil`.
+
+- Conservar audio arriba a la derecha, interruptor con Sí/No, configuración existente sincronizada y bloqueada durante captura/procesamiento. Ayuda distingue copia local de descarga.
+- Barra global: punto amarillo suave mientras graba, fijo con «En pausa», oculto al detener; preferencia de conservación visible. Sin temporizadores nuevos; movimiento reducido sin animación. Puntos verdes de novedades intactos.
+- Ayudas ⓘ desplegables debajo, con botón nativo, nombre accesible, aria-expanded y aria-controls. Anonimizar conserva advertencia visible; errores, estados y límites de importación siguen visibles.
+- Descargar audio unificado; Guardar nota .txt mantiene copia local y descarga. Espacio dinámico de barra conservado, editor ajustado para teclado y renglón final con margen.
+- README y AGENTS corregidos: cuatro pantallas, Audio y límite vigente de 15 minutos inclusive / 200 MB. Historial anterior conserva sus fechas y resultados.
+- Sin cambios de claves, datos, Whisper, CSP, orígenes o dependencias. Importados nunca se guardan.
+- Verificación local: 99/99 pruebas Node. Chromium local no inicia por restricción de sockets del entorno. Se agrega prueba de interfaz sin dependencias usando Chrome del runner y CDP nativo de Node: anchos 320/360/412/760/1365, normal/grande, ayudas, sincronización, bloqueo, captura/pausa/fin y teclado simulado. CI de la rama: 99/99 y prueba Chrome aprobadas (run 43795049824). Revisión de capturas: se reemplazó el glifo de información por SVG integrado y se compactó el encabezado. Ajuste final aprobado en run 43795311185 (99 pruebas + Chrome). Capturas a 412 px con letra Grande revisadas. La prueba incluye captura global en las cuatro pantallas. Publicación se informa en la entrega.
+- **Motorola real: pendiente.** No hubo micrófono ni teclado físico; probar con datos ficticios grabar → pausar → reanudar → cambiar de pantalla → detener → editar último renglón → descargar. La revisión anterior tampoco era prueba física.
+
 ## 15/11/2026 · Diseño compacto y controles de entrada
 
 - Audio más compacto; herramientas de Texto en una fila desde 480 px, acciones secundarias menos destacadas; barra inferior más pequeña con medidas dinámicas existentes; Personas y códigos cerrado inicialmente; explicaciones de Ajustes abreviadas.
