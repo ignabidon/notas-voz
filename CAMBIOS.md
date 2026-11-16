@@ -1,8 +1,8 @@
 # Registro de cambios — Grabador de voz Delta
 
-## DictaNota · Aviso de audio guardado más visible — 16/11/2026
+## DictaNota · Aviso de audio guardado en la barra fija — 16/11/2026
 
-Pedido tras la prueba del usuario en el celular: el aviso «Audio guardado» era demasiado sutil. Ahora es un botón verde de acento, más alto y en negrita, con el texto «Tu audio quedó guardado (01:05) · Tocá para descargarlo o recuperarlo», y al terminar de guardarse un audio nuevo aparece además un mensaje en la barra de abajo. Solo cambia la presentación; el audio y su almacenamiento no se tocan. Pruebas: 94/94 en local y revisión en navegador de laboratorio. Motorola: pendiente.
+Pedido tras la prueba del usuario en el celular: el aviso «Audio guardado» era demasiado sutil y un mensaje pasajero no servía si se estaba en Texto o Ajustes. Decisión acordada con el usuario: **un solo aviso**. Al terminar de guardarse una grabación (solo si «Conservar también el audio» estaba activado) aparece en la barra fija de abajo, visible en todas las pantallas y encima del botón Grabar, un botón verde «Tu audio quedó guardado (01:05) · Tocá para descargarlo». Lleva a «Tus audios guardados». **No se va solo**: se cierra al tocarlo, con la ✕ o al empezar otra grabación. El botón de arriba de Grabar sigue como acceso permanente discreto. Se quitó el mensaje pasajero. El audio y su almacenamiento no cambian. Motorola: pendiente.
 
 ## DictaNota · Anonimizar como pantalla propia, audios a la vista y aprendizaje automático de correcciones — 16/11/2026
 

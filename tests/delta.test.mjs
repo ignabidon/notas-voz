@@ -1055,7 +1055,7 @@ test('Audios: siempre a la vista, con acceso directo desde Grabar, Texto y Ajust
   assert.match(html, /id="audioShortcut"/);
   // el cuadro de audio está antes del estado de transcripción y de los detalles técnicos
   assert.ok(html.indexOf('id="audioBox"') < html.indexOf('id="keepOn"'));
-  assert.equal((html.match(/data-go-target="audioBox"/g) || []).length, 3, 'accesos desde Grabar, Texto y Ajustes');
+  assert.equal((html.match(/data-go-target="audioBox"/g) || []).length, 4, 'accesos desde Grabar, Texto, Ajustes y el aviso fijo');
   assert.match(html, /link\.dataset\.goTarget/);
   for (const id of ['aDown','aMp3','aTx','aDel','aUndoAudio','audioUndoRow']) assert.ok(ids.includes(id), 'falta #' + id);
   assert.match(html, /\$\('audioReady'\)\.hidden = !m; \$\('audioEmpty'\)\.hidden = !!m;/);
@@ -1119,9 +1119,15 @@ test('Aprendizaje: el aviso usa textContent y la corrección del diálogo tambi�
   assert.match(html, /else \{ flash\('Corrección aplicada\.'\); learnFromEdits\(\); \}/);
 });
 
-test('Audios: el aviso de audio guardado es llamativo y avisa cuando aparece uno nuevo', () => {
-  assert.match(html, /\.audio-shortcut\{[^}]*background:#a8ead8[^}]*font-weight:800/);
-  assert.match(html, /Tu audio quedó guardado \(/);
-  assert.match(html, /let audioSeenTs;/);
-  assert.match(html, /if \(audioSeenTs !== undefined && m && m\.ts !== audioSeenTs\) flash\(/);
+test('Audios: aviso fijo verde en la barra de abajo al terminar de guardar, hasta tocarlo o cerrarlo', () => {
+  const aside = html.match(/<aside class="studio-dock"[\s\S]*?<\/aside>/)[0];
+  assert.match(aside, /id="audioNotice" hidden/);
+  assert.match(aside, /id="audioNoticeGo" data-go-view="grabacion" data-go-target="audioBox"/);
+  assert.match(aside, /id="audioNoticeClose"/);
+  assert.ok(aside.indexOf('id="audioNotice"') < aside.indexOf('id="flash"'));
+  assert.match(html, /\.audio-notice-go\{[^}]*background:#a8ead8/);
+  assert.match(html, /Tu audio quedó guardado \(' \+ fmtClock\(audioLastMs\)/);
+  assert.match(html, /\.then\(refreshAudioBox\)\.then\(\(\) => \{ if \(!audioSaveFailed && audioN\) showAudioNotice\(\); \}\)/);
+  assert.match(html, /mr\.start\(10000\); hideAudioNotice\(\);/);
+  assert.doesNotMatch(html, /botón verde de arriba/, 'ya no hay un mensaje que apunte a un botón que puede no estar a la vista');
 });
