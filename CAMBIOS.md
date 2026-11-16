@@ -1,3 +1,11 @@
+## 15/11/2026 · Diseño compacto y controles de entrada
+
+- Audio más compacto; herramientas de Texto en una fila desde 480 px, acciones secundarias menos destacadas; barra inferior más pequeña con medidas dinámicas existentes; Personas y códigos cerrado inicialmente; explicaciones de Ajustes abreviadas.
+- validNotes valida estructura de notas y etiquetas al leer; un guardado que sustituya datos inválidos requiere confirmación. No cambia claves ni elimina automáticamente el almacenamiento original.
+- Importaciones: máximo 32 MB y 10 minutos, comprobados con metadatos y plazo de 10 s ANTES de decodeAudioData; se verifica nuevamente duración del PCM. Los archivos sin duración verificable se rechazan. Grabaciones propias conservan comportamiento previo.
+- Límite: los metadatos y la decodificación dependen del navegador. Esto reduce exposición, no garantiza una cota de memoria frente a códecs o archivos maliciosos. El timeout no cancela decodeAudioData. No se implementó cifrado, copia propia de Whisper ni cambios de acceso.
+- Verificación local: 97/97 pruebas Node. Pruebas nuevas de almacenamiento malformado, tamaños, duraciones inválidas y orden de validación. Validación física Motorola pendiente.
+
 # Registro de cambios — Grabador de voz Delta
 
 ## DictaNota · Pestaña «Audio»: cargar un audio, aviso verde de grabación completa y puntos de novedad — 16/11/2026
@@ -379,3 +387,4 @@ Referencias técnicas: [VisualViewport](https://developer.mozilla.org/en-US/docs
 
 ### Origen
 Gamma Studio Diseño 06: corrección contextual. Diseño 07: barra inferior fija Detener/Pausar.
+
