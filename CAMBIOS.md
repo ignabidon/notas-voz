@@ -1,3 +1,11 @@
+## 16/11/2026 · Diseño del almacenamiento cifrado: Etapa E + original recuperable (SOLO documentación)
+
+- **Responsable:** Claude (Fable 5.2). Rama: `docs-diseno-almacenamiento-cifrado-2026-11-16`. Base: `3383584` (`main`). **No toca `index.html` ni las pruebas.** Sin datos persistidos nuevos, claves, orígenes ni dependencias.
+- **Qué agrega:** [docs/DISENO-ALMACENAMIENTO-CIFRADO-2026-11-16.md](docs/DISENO-ALMACENAMIENTO-CIFRADO-2026-11-16.md): un solo modelo de datos y de cifrado para los audios por nota (Etapa E) y la anonimización con original recuperable; copia cifrada exportable y versionada (Brave → app de Android); migración aditiva desde Delta 11; espacio; casos de falla; plan de pruebas con datos inventados; subetapas E1 → E2 → K1 → E3 → K2 → AO.
+- **Verificado en el código y a tener en cuenta:** el código de recuperación sigue valiendo después de usarse; `convStore.save` comprueba contra la copia en memoria, no contra el disco; el texto cifrado vive en `localStorage` (cupo chico); `convCleanEntry` descarta campos desconocidos; los mensajes ya tienen `audioId`, que nada escribe todavía.
+- **Pendiente del usuario:** doce decisiones (D1–D12) con recomendación, en la Parte 1 y la Parte 3 del documento. **No se programa nada sin su permiso explícito**, y recién cuando le toque a la Etapa E (orden: N → B → E → C → D).
+- **Estado:** documento guardado en la rama y PR abierto · pruebas técnicas: no corresponde (no hay código) · **Motorola: nada probado**. No unir a `main` sin permiso del usuario (merge normal, sin squash). Puede cruzarse en este archivo con el PR #43 (Etapa N, ChatGPT).
+
 ## 16/11/2026 · Etapa A estética: ajustes menores de presentación (PR #41)
 
 - **Responsable:** Claude. Rama: `estetica-a-ajustes-2026-11-16`. Base: `e89d0a1` (`main`). **Toca `index.html` y `tests/delta.test.mjs`. Solo presentación**: sin datos persistidos nuevos, claves, orígenes, dependencias ni cambios de CSP, cifrado, Whisper, captura ni almacenamiento de audio. Detalle de cada ítem y de lo que **no** se hizo: [docs/TRASPASO-A-CHATGPT-2026-11-16.md](docs/TRASPASO-A-CHATGPT-2026-11-16.md).
