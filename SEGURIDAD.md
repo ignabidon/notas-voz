@@ -1,3 +1,7 @@
+## 15/11/2026 · Claridad visual
+
+Cambio de presentación y ayudas; sin datos persistentes nuevos, claves nuevas, orígenes, dependencias ni cambios de CSP/Whisper. Advertencias de anonimización, importación y borrado siguen visibles. Prueba física de CSP/MP3 en Motorola sigue pendiente.
+
 ## 15/11/2026 · Diseño compacto y controles de entrada
 
 - Audio más compacto; herramientas de Texto en una fila desde 480 px, acciones secundarias menos destacadas; barra inferior más pequeña con medidas dinámicas existentes; Personas y códigos cerrado inicialmente; explicaciones de Ajustes abreviadas.

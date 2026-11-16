@@ -134,7 +134,7 @@ test('Guardar .txt solicita una descarga sin perder el guardado local', () => {
   assert.ok(handler, 'falta acción de Guardar nota');
   assert.match(handler[1], /const savedLocally = persist\(\)/);
   assert.match(handler[1], /download\(makeTxt\(\)\)/);
-  assert.match(html, /<span>Guardar \.txt<\/span>/);
+  assert.match(html, /<span>Guardar nota \.txt<\/span>/);
   assert.doesNotMatch(handler[1], /fetch\(|XMLHttpRequest|sendBeacon\(/);
 });
 
@@ -589,7 +589,7 @@ test('Delta 11: guardar audio accesible en Grabar reutiliza audio existente', ()
   assert.match(html, /\$\('recordDownloadAudio'\)\.onclick = \(\) => \{/);
   assert.match(html, /\$\('aDown'\)\.click\(\)/);
   assert.match(html, /\$\('recordDownloadAudio'\)\.disabled = !m \|\| audioBusy\(\)/);
-  assert.match(html, /refreshAudioBox\(\); \/\/ habilita Guardar audio/);
+  assert.match(html, /refreshAudioBox\(\); \/\/ habilita Descargar audio/);
   assert.match(html, /audioGetBlob\(m\)/);
 });
 
@@ -1026,7 +1026,7 @@ test('Anonimizar: pantalla propia en la barra fija, con explicación sencilla y 
   assert.ok(section, 'falta la sección Anonimizar');
   for (const id of ['anon','undo','anonRes','susBox','hideX','keepX','peopleBox','pName','pRel','pCode','pAdd','pApply','pList','pFormPreview','anonPreview','privacidad'])
     assert.match(section[0], new RegExp('id="' + id + '"'), 'falta #' + id + ' dentro de Anonimizar');
-  assert.match(section[0], /¿Para qué sirve\?/);
+  assert.match(section[0], /Cómo funciona la anonimización/);
   assert.match(section[0], /nombres de personas, teléfonos, correos o fechas/);
   assert.match(section[0], /\[Persona 1\]/);
   assert.match(section[0], /\[madre de P-001\]/);
@@ -1130,7 +1130,7 @@ test('Audio: pestaña renombrada, aviso verde de grabación completa y puntos de
   assert.match(html, /\.then\(refreshAudioBox\)\.then\(\(\) => \{ if \(!audioSaveFailed && audioN\) showAudioDone\(\); \}\)/);
   assert.match(html, /mr\.start\(10000\); hideAudioDone\(\);/);
   // botón «Mis grabaciones» debajo del micrófono grande, antes de «Conservar también el audio»
-  assert.ok(html.indexOf('id="rec"') < html.indexOf('id="audioShortcut"') && html.indexOf('id="audioShortcut"') < html.indexOf('id="recordSaveAudio"'));
+  assert.ok(html.indexOf('id="rec"') < html.indexOf('id="audioShortcut"') && html.indexOf('id="recordSaveAudio"') < html.indexOf('id="rec"'));
   // puntos de novedad
   assert.match(html, /a\[data-badge\]::after/);
   assert.match(html, /notifyNav\('grabacion', 'audio guardado'\)/);
@@ -1170,4 +1170,36 @@ test('seguridad: importación valida bytes y duración antes de decodificar', ()
   assert.match(html, /if \(imported\) await inspectImport\(blob\); pcm = await decodePcm/);
   const probe = html.slice(html.indexOf('function inspectImport'), html.indexOf('async function decodePcm'));
   assert.match(probe, /URL.revokeObjectURL/); assert.match(probe, /clearTimeout/);
+});
+
+test('captura global: grabando, pausa y fin, con preferencia de conservación', () => {
+  const source = html.match(/function updateDockRecording\(\)\{[\s\S]*?\n\}/)[0];
+  const elements = Object.fromEntries(['studioDockCapture','studioDockNotes','studioDockMode','studioDockRetention','studioDockClock','studioDockPause','studioDockStop','pause','rec','saveAudio'].map(id=>[id,{classList:{toggle(){}},checked:true,disabled:false}]));
+  const context = { $:id=>elements[id], recording:true, paused:false, elapsedMs:()=>3000, fmtClock:()=> '00:03' };
+  new Script(source+';updateDockRecording()').runInNewContext(context);
+  assert.equal(elements.studioDockCapture.hidden,false);
+  assert.equal(elements.studioDockMode.textContent,'Grabando');
+  assert.equal(elements.studioDockRetention.textContent,'Conservar audio: Sí');
+  context.paused=true; elements.saveAudio.checked=false;
+  new Script(source+';updateDockRecording()').runInNewContext(context);
+  assert.equal(elements.studioDockMode.textContent,'En pausa');
+  assert.equal(elements.studioDockRetention.textContent,'Conservar audio: No');
+  context.recording=false;
+  new Script(source+';updateDockRecording()').runInNewContext(context);
+  assert.equal(elements.studioDockCapture.hidden,true);
+  assert.doesNotMatch(source,/setInterval|setTimeout/);
+});
+
+test('ayudas accesibles: controles únicos, destino debajo y advertencias fuera', () => {
+  const buttons=[...html.matchAll(/<button[^>]*class="info-toggle"[^>]*aria-expanded="false"[^>]*aria-controls="([^"]+)"/g)];
+  assert.ok(buttons.length>=4);
+  for(const m of buttons){
+    assert.ok(ids.includes(m[1]));
+    assert.ok(html.indexOf('id="'+m[1]+'"')>m.index);
+    assert.match(m[0],/aria-label=/);
+  }
+  assert.match(html, /#studioDockCapture:not\(\[hidden\]\):not\(.paused\) .capture-dot\{animation:capturePulse/);
+  assert.match(html, /prefers-reduced-motion:reduce\)\{#studioDockCapture .capture-dot\{animation:none!important/);
+  assert.match(html, /id="loadAudioHint">[\s\S]*?200 MB y 15 minutos/);
+  assert.match(html,/La anonimización es automática y puede fallar: revisá siempre/);
 });
