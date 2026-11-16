@@ -1,5 +1,8 @@
 # CONTINUAR AQUÍ — Próxima IA de DictaNota
 
+> **Trabajo posterior en revisión:** ChatGPT implementó estética clara y chat en `rediseno-04-clinica-chat-chatgpt`, desde `089ebbec`. Consultar esa rama/PR antes de repetir el trabajo. Aún no equivale a publicación en main; ver CAMBIOS.md y resultado de CI. El informe de las 10:15 describe la base anterior.
+> Vocabulario vigente: nota = texto escrito o transcripto; hoja = contenedor de notas. Inicio listo para grabar y acceso a hojas. Anonimización de nota/hoja con original recuperable: próxima etapa, no implementada en este cambio.
+
 > **Actualizado: 16/11/2026, 10:15.** `main` = `bb89314`, publicado.
 > **Primer documento para leer: [docs/INFORME-CONTINUIDAD-2026-11-16.md](docs/INFORME-CONTINUIDAD-2026-11-16.md)**: qué está hecho, qué falta, en qué orden y por qué el usuario «no ve cambios».
 

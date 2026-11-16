@@ -69,7 +69,7 @@ try {
  assert.equal(await run('document.querySelectorAll("#convBubbles .conv-bubble").length'),2);
  // 5) Renombrar y editar: el sello no cambia; queda «editado».
  await run('document.getElementById("convBack").click()');
- await run('[...document.querySelectorAll("#convList .conv-item")].find(b=>b.textContent.includes("2 mensajes")).click()');
+ await run('[...document.querySelectorAll("#convList .conv-item")].find(b=>b.textContent.includes("2 notas")).click()');
  await run('document.getElementById("convRename").click()');
  assert.equal(await run('document.getElementById("convTitle").textContent'),'Supermercado');
  const before=await run('JSON.stringify(convStore.data.entries.map(e=>[e.id,e.savedAt]))');
@@ -134,6 +134,25 @@ try {
   }
   await run('document.querySelector("#convList .conv-item").click()');
  }
+ // Nueva nota global desde la hoja: conserva pendientes y separa destinos.
+ await run('convClearComposer();document.getElementById("convNewFromSheet").click()');
+ assert.equal(await run('convDest()'),null);
+ assert.equal(await run('document.body.classList.contains("conv-composing")'),true);
+ await type('Nota independiente ficticia.');
+ await run('document.getElementById("save").click()');
+ const independent=await run('convOpenId');
+ assert.notEqual(independent,dest);
+ await type('Borrador que debe quedarse en esta hoja.');
+ await run('document.getElementById("convNewFromSheet").click()');
+ assert.equal(await run('convDest()'),independent);
+ assert.equal(await run('document.getElementById("text").value'),'Borrador que debe quedarse en esta hoja.');
+ await run('document.getElementById("save").click();recording=true;');
+ await run('document.getElementById("convNewFromSheet").click()');
+ assert.equal(await run('convOpenId'),independent,'no cambia de hoja durante captura');
+ await run('recording=false;document.getElementById("convBack").click()');
+ assert.equal(await run('document.body.classList.contains("conv-composing")'),false,'lista sin editor cuando no hay borrador');
+ await run('document.getElementById("convNewNote").click()');
+ assert.equal(await run('getComputedStyle(document.getElementById("convComposer")).display'),'block');
  // 13) Las notas viejas siguen intactas al final.
  assert.equal(await run('localStorage.getItem("notasvoz.gamma.v1")'),JSON.stringify(viejas));
  console.log('NOTAS OK: migración, hoja nueva, agregar, captura global, editar sin cambiar la fecha, mover y deshacer, copiar y pasar todo, descartar, recuperación, textos hostiles y anchos 320/360/412.');
