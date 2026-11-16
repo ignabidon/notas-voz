@@ -4,7 +4,7 @@
 > **Base revisada:** `main` = `2f56388` (Delta 11, estética «Clínica contemporánea», PR #36).
 > **Para quién:** ChatGPT, que lo retoma **después de terminar** el trabajo de su rama `rediseno-04-clinica-chat-chatgpt` (nuevo PR, sin squash). Hasta entonces, **no tocar** esa rama ni las partes que ocupa (compositor y burbujas de Notas).
 > Lectura previa obligatoria: [AGENTS.md](../AGENTS.md), [SEGURIDAD.md](../SEGURIDAD.md), [CONTINUAR-AQUI.md](../CONTINUAR-AQUI.md).
-> **Actualizado el 16/11/2026 (13:22):** el usuario confirmó B2, eligió **«Dictar»** como nombre de la primera pestaña (nueva **Etapa N**) y aprobó un **reproductor de audio dentro de cada burbuja** (nueva **Etapa E**, que modifica una regla de AGENTS.md). El nombre de la segunda pestaña sigue pendiente. Ver secciones 4 (N y E), 5 y 6.
+> **Actualizado el 16/11/2026 (13:22):** el usuario confirmó B2, eligió **«Dictar»** como nombre de la primera pestaña (nueva **Etapa N**) y aprobó un **reproductor de audio dentro de cada burbuja** (nueva **Etapa E**, que modifica una regla de AGENTS.md). **A las 13:31** eligió **«Cuadernos»** para la segunda pestaña y decidió que los **audios cargados desde un archivo también se guardan unidos a su nota**. Ver secciones 4 (N y E), 5 y 6.
 
 ---
 
@@ -42,7 +42,7 @@ Resumen de AGENTS.md/SEGURIDAD.md aplicado a esta propuesta (si hay conflicto, *
 - **No tocar** Whisper, captura, Worker ni cola. Tampoco el audio guardado, salvo en la Etapa E (con permiso explícito). El aviso de transcripción sigue siendo **único y global** en `.studio-dock`.
 - Objetivos táctiles ≥48 px en controles principales; **no recortar rótulos para que entren**.
 - **No poner nombres de IA ni créditos en la interfaz**; la autoría va solo en documentación.
-- Las **pestañas se mantienen en cuatro**. La primera se llama «Dictar» (decidido); el nombre de la segunda lo decide el usuario (Etapa N). Hasta entonces solo se corrigen rótulos viejos (A1).
+- Las **pestañas se mantienen en cuatro**. La primera se llama «Dictar» y la segunda «Cuadernos» (decididos; Etapa N). Hasta que se implemente esa etapa solo se corrigen rótulos viejos (A1).
 - Funcionalidades nuevas **requieren autorización expresa**. Autorizado el 16/11/2026: **modo oscuro opcional** (D2) y **audio en la burbuja** (E, con plan y permiso antes de programar).
 - Cada etapa: rama nueva desde `main` actualizado, pruebas, registro en CAMBIOS.md, **tres niveles de estado** (código guardado / pruebas técnicas / probado en el Motorola), **capturas al usuario antes de publicar** y **unión a `main` solo con su permiso**, sin squash.
 
@@ -133,27 +133,27 @@ Cada ítem indica: qué se ve hoy → cambio → dónde → criterio de aceptaci
 → Ajustes → «Apariencia»: **Claro** (predeterminado, como hoy) / **Oscuro** / **Automático** (sigue al sistema). Se guarda como campo adicional opcional de la configuración existente (igual que `textSize`), **sin claves nuevas**. Se hace **después de D1**.
 *Criterio:* mismos mínimos de contraste que el tema claro (texto ≥4,5:1, bordes de controles ≥3:1); rojo de grabación y ámbar de pausa legibles; sin negro puro; capturas de las cuatro pantallas y de los estados de captura en ambos temas.
 
-### Etapa N · Nombres y alcance de las pestañas (decidida en parte, 16/11/2026)
+### Etapa N · Nombres y alcance de las pestañas (decidida, 16/11/2026)
 
 *Decisión del usuario:*
 - **Pestaña 1 = «Dictar»** (reemplaza a «Audio»). Reúne **todo lo que tiene que ver con grabar o cargar audios para transcribir**: el círculo `#rec`, pausa, marcas y cronómetro, la carga de un archivo de audio, el estado de la transcripción, «Conservar audio» y «Mis grabaciones» (`#audioBox`).
-- **Pestaña 2 = el lugar de las hojas**: conjuntos de notas relacionadas (p. ej. todas las notas sobre una misma persona o tema, tomadas en distintos días) y, al abrir una, sus notas en burbujas. **Nombre pendiente.** «Bitácora» queda descartado por demasiado formal; «Hojas» es exacto, pero al usuario le preocupa que no se entienda en el uso diario.
+- **Pestaña 2 = «Cuadernos»** (decidido el 16/11, 13:31): el lugar de los conjuntos de notas relacionadas (p. ej. todas las notas sobre una misma persona o tema, tomadas en distintos días) y, al abrir uno, sus notas en burbujas. Se descartaron «Bitácora» (demasiado formal) y «Hojas» (exacto, pero poco claro en el uso diario).
 - **Pestañas 3 y 4:** Anonimizar y Ajustes, sin cambios.
 
-*Alternativas para la pestaña 2 (propuestas por Claude, a elección del usuario):* **Cuadernos** (recomendada: cada cuaderno reúne las notas de una persona o tema, se lee natural en «Mis cuadernos» y no repite «Notas»), Carpetas, Hilos, Temas y, como último recurso, Hojas. Si se elige otro nombre, cambia también la palabra «hoja» en toda la interfaz.
+*Vocabulario resultante (se aplica en la interfaz al implementar esta etapa):* **nota** = cada texto escrito o transcripto; **cuaderno** = conjunto de notas con nombre (lo que hoy se llama «hoja»). Hay que cambiar todos los textos que dicen «hoja» (p. ej. «Ver hojas guardadas», «se crea una hoja nueva con la fecha y hora», «Guardado como hoja nueva»). Mientras no se implemente, la app y estos documentos siguen diciendo «hoja»; **no mezclar** las dos palabras en la interfaz.
 
 *Dónde se toca:* etiquetas de la barra inferior, títulos, mensajes y ayudas de la interfaz, AGENTS.md (punto 2 de las pantallas y vocabulario vigente), README.md, CONTINUAR-AQUI.md y las pruebas que fijan esas cadenas. **No cambian** los ids internos (`grabacion`, `transcripcion`) ni las claves de almacenamiento.
 *Cuidado:* en la app ya existe el «dictado local» del navegador; al llamar «Dictar» a la pestaña, revisar los mensajes de ese modo para que no se confundan.
-*Orden:* después de terminar la rama de ChatGPT y **cuando el usuario fije el nombre de la pestaña 2**; hasta entonces no se renombra nada. Puede ir junto con la Etapa A (misma familia de textos).
+*Orden:* después de terminar la rama de ChatGPT, con plan breve y permiso del usuario; **los nombres ya están decididos**. Hasta entonces no se renombra nada. Puede ir junto con la Etapa A (misma familia de textos).
 
 ### Etapa E · Audio dentro de la burbuja (aprobada el 16/11/2026)
 
 *Idea del usuario:* en cada burbuja de una hoja, como en WhatsApp: arriba un **reproductor** (botón de reproducir/pausar, barra de avance y duración) y **debajo la transcripción**. Si la transcripción salió mal, se vuelve a escuchar el propio audio y se corrige.
 *No se quiere:* resaltar en el texto la palabra que se está escuchando. El usuario lo descartó: no proponerlo ni implementarlo.
-*Cambia una regla:* AGENTS.md dice «Audio solo a pedido, fuera de las burbujas». Esta etapa la reemplaza; **actualizar esa frase en el PR que la implemente**. Hasta entonces las burbujas no llevan audio.
+*Cambia una regla:* AGENTS.md dice «Audio solo a pedido, fuera de las burbujas». Esta etapa la reemplaza; **actualizar esa frase en el PR que la implemente**. También reemplaza la decisión de las 09:52 registrada en `docs/REDISENO-CONVERSACIONAL-2026-11-16.md` («el audio no hace falta en las burbujas»); **se mantiene** lo demás de esa decisión: el audio solo se guarda a pedido («Conservar audio»), nunca solo. Hasta entonces las burbujas no llevan audio.
 
 *Alcance:*
-- El reproductor aparece **solo en las notas que tienen audio guardado**, es decir, las grabadas con «Conservar audio» activado. Las notas escritas, o dictadas sin conservar audio, se ven como hoy.
+- El reproductor aparece **solo en las notas que tienen audio guardado**, es decir, las grabadas o cargadas desde un archivo con «Conservar audio» activado. Las notas escritas, o dictadas sin conservar audio, se ven como hoy.
 - Se reproduce con el elemento de audio del navegador y una dirección `blob:` (la CSP ya permite `media-src 'self' blob: data:`), sin librerías ni servicios externos.
 - Suena **un solo audio a la vez**; el audio se carga **recién al tocar reproducir**, no al abrir la hoja, y se libera el `blob:` (`URL.revokeObjectURL`) al terminar o salir de la hoja.
 - Accesibilidad: botón ≥48 px con nombre que cambia («Reproducir» / «Pausar»), barra de avance operable con teclado, respetar «reducir movimiento».
@@ -161,11 +161,15 @@ Cada ítem indica: qué se ve hoy → cambio → dónde → criterio de aceptaci
 - Sugerido (a confirmar con el usuario): en el menú ⋯ de la burbuja, «Descargar audio» y «Borrar audio» (sin borrar el texto).
 
 *Almacenamiento y datos (la parte delicada):*
-- Hoy hay solo dos audios sueltos (`last` y `previous`, en la base `notasvoz-gamma-audio`), **sin vínculo con ninguna nota**. Hace falta un **almacén nuevo de audios por nota**, enlazado por el identificador de la nota, **sin renombrar ni tocar** lo existente (`chunks`, `meta`, claves históricas). Migración solo aditiva, con prueba de que las notas y el audio actuales quedan intactos.
+- Hoy hay solo dos audios sueltos (`last` y `previous`, en la base `notasvoz-gamma-audio`), **sin vínculo con ninguna nota**. Hace falta una **base nueva de IndexedDB** para los audios por nota (nombre sugerido: `notasvoz-dictanota-audio`), con el identificador de la nota como vínculo. **No** se sube la versión de la base vieja (una pestaña abierta con la app anterior fallaría) ni se le agregan archivos: el documento de rediseño advierte no sumar varios archivos al almacén histórico. Los dos audios actuales **no se migran** (ese documento los trata como material de prueba que el usuario borra con «Borrar»). Con pruebas de que las notas y el audio existentes quedan intactos.
 - Reglas: **mover** una nota a otra hoja conserva su audio; **borrar una nota** borra su audio (la confirmación lo avisa); **borrar una hoja** borra los audios de sus notas.
 - Tamaño: grabación a 32 kbps ≈ **14 MB por hora**, ≈ **0,7 MB** por una nota de 3 minutos; 100 notas ≈ 70 MB y 1000 ≈ 700 MB (el texto ocupa unos KB). **Procesamiento:** sin costo extra; reproducir no usa Whisper.
 - Riesgo: sin almacenamiento persistente, el navegador puede borrar datos si falta espacio. Pedir `navigator.storage.persist()` y mostrar en Ajustes cuánto ocupan los audios (`navigator.storage.estimate()`), con aviso cuando quede poco.
-- Los audios **cargados desde archivo hoy no se conservan**. **Decisión pendiente del usuario:** ¿conservarlos también, vinculados a su nota?
+- **Audios cargados desde un archivo: DECIDIDO (16/11, 13:31): se guardan unidos a su nota**, como las grabaciones. Reemplaza la decisión anterior («un archivo importado para transcripción no se conserva», `docs/REDISENO-CONVERSACIONAL-2026-11-16.md`). Consecuencias:
+  - La carga admite hoy hasta **15 minutos y 200 MB** (`IMPORT_MAX_SEC`, `IMPORT_MAX_BYTES`).
+  - Un archivo cargado conserva su formato y puede pesar **mucho más** que una grabación de la app: un MP3 o M4A de 15 minutos ronda 10–15 MB; un WAV, entre 80 y 160 MB. Hay que mostrar el tamaño de cada audio y el espacio total, y permitir «Borrar audio».
+  - Definir en el plan si se guarda el archivo original tal cual (lo más simple y fiel) o una versión comprimida.
+  - *Propuesta de Claude, a confirmar:* que los audios cargados también obedezcan al interruptor «Conservar audio» (apagado = no se guardan), igual que las grabaciones.
 
 *Privacidad (condición para activarla):*
 - El audio **no se puede anonimizar**: aunque el texto diga «[Persona 1]», la voz dice el nombre real. Por eso los audios guardados con cada nota deben quedar **cifrados con la protección del repositorio** (revisar `vaultStore` y SEGURIDAD.md), **antes o junto con** el reproductor, nunca después. Aviso breve junto a «Conservar audio»: guarda la voz real en este dispositivo.
@@ -173,7 +177,7 @@ Cada ítem indica: qué se ve hoy → cambio → dónde → criterio de aceptaci
 - Pruebas con audios ficticios; nada de datos reales de pacientes.
 
 *Subetapas, en este orden:*
-1. **E1** · almacén por nota y vínculo (sin pantalla nueva); pruebas de migración, mover y borrar.
+1. **E1** · base nueva de audios por nota y vínculo, para grabaciones y archivos cargados (sin pantalla nueva); pruebas de mover y borrar, y de que lo existente queda intacto.
 2. **E2** · cifrado de los audios guardados (puede ir junto con E1).
 3. **E3** · reproductor en la burbuja, almacenamiento persistente y espacio usado en Ajustes.
 
@@ -185,7 +189,7 @@ Cada ítem indica: qué se ve hoy → cambio → dónde → criterio de aceptaci
 |---|---|---|
 | 0 | Terminar el trabajo de `rediseno-04-clinica-chat-chatgpt` (PR nuevo, sin squash) | Con permiso del usuario para unir |
 | 1 | **Etapa A** en una rama (p. ej. `estetica-a-ajustes-2026-11-16`) | Riesgo bajo; mostrar capturas |
-| 2 | **Etapa N** (nombres de pestañas) | Cuando el usuario fije el nombre de la pestaña 2; puede ir junto con A |
+| 2 | **Etapa N** (pestañas «Dictar» y «Cuadernos»; «hoja» pasa a «cuaderno») | Nombres decididos; tras 0, con plan y permiso; puede ir junto con A |
 | 3 | **Etapa B** (B1, B2, B3), una rama o PR por ítem | Tras 0; coordinar con el usuario |
 | 4 | **Etapa E** (audio en la burbuja): E1 → E2 → E3 | Tras B3; permiso explícito por tocar almacenamiento |
 | 5 | **Etapa C** | C1 antes de la anonimización con original recuperable |
@@ -196,17 +200,20 @@ En cada PR: pruebas Node + las tres de navegador (`browser.mjs`, `cifrado-browse
 ## 6. Decisiones del usuario (16/11/2026, 13:02)
 
 1. **Unir este documento a `main`:** autorizado (es solo documentación y no toca `index.html` ni lo que ocupa la rama de ChatGPT).
-2. **Nombres definitivos de las pestañas:** *(actualizado, ver punto 7)* A1 no los cambia; la Etapa N los resuelve.
+2. **Nombres definitivos de las pestañas:** *(resuelto, ver puntos 7 y 10)* A1 no los cambia; la Etapa N los aplica.
 3. **B2 (Grabar en la barra de Audio solo cuando el círculo no se ve):** *(actualizado)* pidió una explicación más clara y después **confirmó**.
 4. **B3:** **aprobados** el menú ⋯ en las burbujas y la vista previa del texto en la lista; el detalle queda a criterio de lo que mejor funcione (ver B3).
 5. **D2:** **aprobado** un modo oscuro **opcional** (ver D2).
 
-**Decisiones posteriores (16/11/2026, hasta las 13:22):**
+**Decisiones posteriores (16/11/2026, hasta las 13:31):**
 
 6. **B2 confirmado** («Sí, confirmo lo de grabar»): se aplica en las dos partes (Audio y Notas).
-7. **Pestañas:** la primera se llama **«Dictar»** y reúne todo lo de grabar y cargar audios para transcribir. La segunda contiene las hojas; **su nombre sigue pendiente** (descartado «Bitácora»; ver Etapa N).
+7. **Pestañas:** la primera se llama **«Dictar»** y reúne todo lo de grabar y cargar audios para transcribir. La segunda contiene las hojas; su nombre se decidió después (punto 10).
 8. **Audio en la burbuja:** **aprobado** un reproductor estilo WhatsApp sobre la transcripción de cada nota, para volver a escuchar y corregir (Etapa E). **No** se quiere el resaltado de la palabra que se escucha.
 9. **Orden:** la Etapa E va **después del trabajo de ChatGPT** y de B3; antes de programar, plan breve y permiso explícito, porque toca almacenamiento y reemplaza la frase de AGENTS.md «Audio solo a pedido, fuera de las burbujas».
+10. **Segunda pestaña = «Cuadernos»** (13:31). En la interfaz, «hoja» pasa a «cuaderno» (Etapa N). Pestañas: **Dictar · Cuadernos · Anonimizar · Ajustes**.
+11. **Audios cargados desde un archivo:** se guardan **unidos a su nota** (Etapa E). Reemplaza la decisión previa de que los importados no se conservan.
+12. **PR #39 (documentación):** unión a `main` autorizada y hecha (commit de merge `53441eb`, sin squash).
 
 ## 7. Qué NO cambia esta propuesta
 

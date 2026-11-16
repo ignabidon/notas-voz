@@ -1,3 +1,11 @@
+## 16/11/2026 · Decisión: pestaña «Cuadernos» y audios cargados guardados con la nota (SOLO documentación)
+
+- **Responsable:** Claude. Rama: `docs-cuadernos-audios-importados-2026-11-16`. Base: `53441eb` (`main`, tras unir el PR #39 con commit de merge). **No modifica `index.html`, pruebas, AGENTS.md ni almacenamiento.**
+- **Decisiones del usuario (16/11/2026, 13:31):** (1) la **segunda pestaña se llama «Cuadernos»**; las pestañas quedan **Dictar · Cuadernos · Anonimizar · Ajustes** y, en la interfaz, «hoja» pasa a «cuaderno» (Etapa N, aún no implementada: hoy la app sigue diciendo «hoja»); (2) los **audios cargados desde un archivo también se guardan unidos a su nota** (Etapa E), lo que **reemplaza** la decisión previa de que un archivo importado no se conserva; (3) autorizó unir el PR #39 a `main`.
+- [docs/PROPUESTA-ESTETICA-2026-11-16.md](docs/PROPUESTA-ESTETICA-2026-11-16.md): la Etapa E pasa a prever una **base nueva de IndexedDB** para los audios por nota (sin subir la versión de `notasvoz-gamma-audio`) y deja anotado que un archivo cargado puede pesar mucho más que una grabación de la app (hasta 200 MB y 15 minutos por archivo). Pendiente de confirmar por el usuario: que los audios cargados obedezcan también al interruptor «Conservar audio».
+- Quitado un nombre propio de ejemplo de la propuesta (el repositorio es público).
+- Estado: documentación guardada; nada implementado ni probado en el Motorola.
+
 ## 16/11/2026 · Decisiones del usuario sobre pestañas y audio en la burbuja (SOLO documentación)
 
 - **Responsable:** Claude. Rama: `docs-audio-burbuja-pestanas-2026-11-16`. Base: `73780b7` (`main`). **No modifica `index.html`, pruebas, AGENTS.md ni almacenamiento.**
