@@ -120,7 +120,6 @@ textarea#text{font-size:17px;line-height:1.65;background:var(--surface-soft);bor
   h1{font-size:23px;letter-spacing:-.6px}
   .logo{width:40px;height:40px;flex:none}
   .sub{margin:3px 0 0;font-size:14px}
-  .pill{display:none}
   .layout{gap:14px}
   .card{padding:17px;border-radius:18px}
   .c-rec h2{font-size:23px}
@@ -266,7 +265,6 @@ footer{color:var(--ink);font-size:11px;padding:18px 0;letter-spacing:.4px}
  .top{margin:0 0 14px;padding:0 4px 14px}
  .logo{width:40px;height:40px}
  h1{font-size:19px}
- .pill{display:none}
  .card{padding:19px;border-radius:20px}
  .c-rec{padding:22px 18px 16px;min-height:calc(100svh - 310px)}
  .record-head h2,.screen-title h2{font-size:25px}
@@ -435,7 +433,7 @@ body[data-view="transcripcion"] #studioDockNotes{grid-template-columns:minmax(0,
 .anon-steps{margin:6px 0 0;padding-left:22px;display:grid;gap:7px;line-height:1.55}
 .anon-preview-label{margin:16px 0 6px;font-weight:700;color:var(--ink)}
 .anon-preview{white-space:pre-wrap;overflow-wrap:anywhere;background:var(--surface-soft);color:var(--ink);border:1px solid var(--line);border-radius:14px;padding:14px;max-height:34vh;overflow:auto;font-size:max(15px,calc(16px * var(--text-scale)));line-height:1.6;margin:0 0 12px}
-.anon-preview:empty::before{content:"Todavía no hay texto. Grabá o escribí algo en «Texto».";color:var(--ink)}
+.anon-preview:empty::before{content:"Todavía no hay texto. Grabá o escribí una nota para verla acá.";color:var(--ink)}
 .anon-formpreview{margin:0 0 12px;padding:10px 12px;border-radius:12px;background:var(--surface-soft);border:1px dashed var(--line);color:var(--ink);overflow-wrap:anywhere}
 .anon-formpreview:empty{display:none}
 .anon-list-title{font-size:calc(15px * var(--text-scale));margin:18px 0 4px;color:var(--ink)}
@@ -554,7 +552,7 @@ label,.hint,.warn,.sub,.section-hint,.selection-help,.mark-help,.record-caption-
 .audio-shortcut{background:var(--acc-soft);color:var(--acc);border-color:var(--line)}
 .capture-shortcuts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:24px;text-align:center}
 .capture-shortcuts button{min-height:52px}
-#openSheets{background:var(--acc-soft);color:var(--acc)}
+#openSheets,#writeNewNote{background:var(--acc-soft);color:var(--ink)}
 #captureWarning,#vaultWarn,#vaultSaveError,#vaultLockMsg,#correctionRuleNotice,.conv-msg{color:var(--note-ink)}
 #captureWarning{background:var(--note-bg);border-color:var(--note-ink)}
 #correctionError{color:var(--error)}
@@ -575,7 +573,8 @@ label,.hint,.warn,.sub,.section-hint,.selection-help,.mark-help,.record-caption-
 #studioDockStop,#transcriptionDockCancel{background:var(--error-bg);color:var(--error);border-color:var(--error)}
 #studioDockPause{background:var(--card);color:var(--ink)}
 .dock-capture-status,.dock-capture-status .capture-clock,#studioDockRetention{color:var(--ink)}
-.dock-capture-status .capture-dot,#studioDockCapture.paused .capture-dot{background:var(--note-ink);box-shadow:0 0 0 3px var(--note-bg)}
+.dock-capture-status .capture-dot{background:var(--error);box-shadow:0 0 0 3px var(--error-bg)}
+#studioDockCapture.paused .capture-dot{background:var(--note-ink);box-shadow:0 0 0 3px var(--note-bg)}
 .transcription-dock{background:var(--acc-soft);box-shadow:none}
 .transcription-dock-top strong,#transcriptionDockTime,#transcriptionDockMessage,.transcription-dock-bottom{color:var(--acc)}
 .transcription-dock-bar i,.transcription-dock.awaiting-audio .transcription-spinner{background:var(--acc)}
@@ -623,6 +622,19 @@ body.delta-recording #convComposer{display:none!important}
 @media(max-height:540px){#convComposer textarea#text{min-height:56px;height:64px}#convComposer #transcriptionHelp,#convComposer .meta{display:none}}
 @media(min-width:761px){.studio-dock{width:min(720px,calc(100% - 32px))}.wrap{max-width:720px}.top{padding-top:12px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.transcription-spinner,.transcription-dock-bar.indeterminate i{animation:none}}
+/* Etapa A · ajustes menores (Claude, 16/11/2026). Solo presentación: sin datos, claves ni orígenes nuevos. */
+.label-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.label-row>label{margin:0;flex:1 1 auto}
+.chk-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.chk-row>.chk{flex:1 1 auto;min-width:0}
+.module-icon svg{display:block;width:20px;height:20px}
+.record-head .audio-retention{grid-column:1/-1;display:flex;align-items:center;gap:8px;justify-items:initial}
+.record-head .audio-retention>label[for]{flex:1 1 auto;margin:0;font-size:max(15px,calc(16px * var(--text-scale)))}
+@media(max-width:760px){
+  .top{flex-wrap:wrap}
+  .pill{order:3;flex:0 0 100%;display:flex;align-items:center;gap:6px;padding:0;font-size:14px;line-height:1.3;color:var(--mut)}
+  .pill svg{width:15px;height:15px;flex:none}
+}
 </style>
 </head>
 <body data-view="grabacion">
@@ -670,7 +682,7 @@ body.delta-recording #convComposer{display:none!important}
       <input type="file" id="loadAudioFile" accept="audio/*,.m4a,.mp3,.wav,.ogg,.opus,.aac,.amr,.webm" hidden>
       <p class="hint" id="loadAudioHint">El archivo <b>no se guarda</b>: solo se transcribe en este celular. Máximo 200 MB y 15 minutos por archivo. Los audios largos tardan más que su duración.</p>
     </div>
-    <div class="record-save-audio">
+    <div class="record-save-audio" id="recordDownloadCard" hidden>
 
       <button type="button" id="recordDownloadAudio" disabled>Descargar audio</button>
       <p class="hint" id="recordAudioHint" role="status">Activá «Conservar audio» antes de grabar.</p>
@@ -723,22 +735,22 @@ body.delta-recording #convComposer{display:none!important}
     <div class="body">
       <div class="screen-title"><span class="screen-overline">PERSONALIZACIÓN</span><h2>Ajustes</h2><p>Configurá DictaNota a tu manera.</p></div>
 
-      <section class="settings-module" id="settingsReading"><div class="settings-module-top"><span class="module-icon" aria-hidden="true">Aa</span><h3>Lectura y comodidad</h3></div>
-        <label for="textSize">Tamaño del texto</label>
+      <section class="settings-module" id="settingsReading"><div class="settings-module-top"><span class="module-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 19 8.5 6l5 13M5.5 14.5h6"/><path d="m14.5 19 3-8 3 8M15.7 16.5h4.6"/></svg></span><h3>Lectura y comodidad</h3></div>
+        <div class="label-row"><label for="textSize">Tamaño del texto</label><button type="button" class="info-toggle" aria-label="Ayuda sobre tamaño del texto" aria-expanded="false" aria-controls="textSizeHelp"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7v1"/></svg></button></div>
         <select id="textSize" aria-describedby="textSizeHelp"><option value="compact">Compacto</option><option value="normal" selected>Normal</option><option value="large">Grande</option></select>
-        <button type="button" class="info-toggle" aria-label="Ayuda sobre tamaño del texto" aria-expanded="false" aria-controls="textSizeHelp"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7v1"/></svg></button><p class="hint help-content" id="textSizeHelp" hidden>Se conserva en este navegador. Los archivos exportados mantienen su formato.</p>
+        <p class="hint help-content" id="textSizeHelp" hidden>Se conserva en este navegador. Los archivos exportados mantienen su formato.</p>
       </section>
-      <section class="settings-module" id="settingsQuality"><div class="settings-module-top"><span class="module-icon">✦</span><h3>Calidad de transcripción</h3></div>
+      <section class="settings-module" id="settingsQuality"><div class="settings-module-top"><span class="module-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 3.5 12.8 9 18.5 11l-5.7 2L11 18.5 9.2 13 3.5 11 9.2 9z"/><path d="m19 15.5.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7z"/></svg></span><h3>Calidad de transcripción</h3></div>
         <label for="model" style="margin-top:16px">Modelo de Whisper</label>
       <select id="model">
-        <option value="Xenova/whisper-tiny">Tiny · más liviano (para pruebas)</option>
-        <option value="Xenova/whisper-base">Base · equilibrio entre velocidad y precisión</option>
-        <option value="Xenova/whisper-small" selected>Small · más precisión, más lento</option>
+        <option value="Xenova/whisper-tiny">Tiny · más liviano</option>
+        <option value="Xenova/whisper-base">Base · equilibrado</option>
+        <option value="Xenova/whisper-small" selected>Small · más preciso</option>
       </select>
       <div class="hint" id="modelHint" role="status">Small: para mayor precisión. Requiere más memoria y tiempo de procesamiento.</div>
       <div class="hint">Cambiar de modelo puede requerir una descarga.</div>
       </section>
-      <section class="settings-module" id="settingsAudio"><div class="settings-module-top"><span class="module-icon">◉</span><h3>Audio</h3></div>
+      <section class="settings-module" id="settingsAudio"><div class="settings-module-top"><span class="module-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10v4M8 7v10M12 4v16M16 8v8M20 11v2"/></svg></span><h3>Audio</h3></div>
         <label class="chk" style="margin-top:18px"><input type="checkbox" id="saveAudio">
         <span><b>Conservar audio</b><small>Permite recuperar o descargar la voz original. No está anonimizada ni cifrada.</small></span></label>
         <button type="button" class="ghost" data-go-view="grabacion" data-go-target="audioBox">Ver, descargar o recuperar audios guardados</button>
@@ -756,7 +768,7 @@ body.delta-recording #convComposer{display:none!important}
       </select>
       <div class="hint">Para comparar, grabá el mismo párrafo con cada opción.</div></div></details>
       </section>
-      <section class="settings-module" id="settingsPrivacy"><div class="settings-module-top"><span class="module-icon">◇</span><h3>Privacidad y almacenamiento</h3></div>
+      <section class="settings-module" id="settingsPrivacy"><div class="settings-module-top"><span class="module-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span><h3>Privacidad y almacenamiento</h3></div>
         <section class="vault-panel" id="vaultPanel" aria-labelledby="vaultTitle">
           <h4 id="vaultTitle">Protección con contraseña y huella</h4>
           <p class="hint" id="vaultStatus" role="status"></p>
@@ -801,8 +813,8 @@ body.delta-recording #convComposer{display:none!important}
         <p class="hint">No garantiza una eliminación segura de los datos. No uses información sensible real hasta contar con una protección adecuada.</p>
       </details>
       </section>
-      <section class="settings-module" id="settingsDictionary"><div class="settings-module-top"><span class="module-icon">Aa</span><h3>Diccionario</h3></div>
-        <label class="chk"><input type="checkbox" id="learnAuto" checked><span><b>Aprender de mis correcciones</b></span></label><button type="button" class="info-toggle" aria-label="Ayuda sobre aprendizaje de correcciones" aria-expanded="false" aria-controls="learnHelp"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7v1"/></svg></button><p class="hint help-content" id="learnHelp" hidden>Si corregís una palabra en «Texto», DictaNota la recuerda y la escribe bien la próxima vez, sin que toques ningún botón. Aprende solo palabras en minúscula que se parecen a lo que escribió Whisper; nunca nombres con mayúscula ni números. Aparece un aviso con «Deshacer» por si fue un error.</p>
+      <section class="settings-module" id="settingsDictionary"><div class="settings-module-top"><span class="module-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4.5h10.5A2.5 2.5 0 0 1 18 7v12.5H7.5A2.5 2.5 0 0 1 5 17z"/><path d="M5 17a2.5 2.5 0 0 1 2.5-2.5H18"/></svg></span><h3>Diccionario</h3></div>
+        <div class="chk-row"><label class="chk"><input type="checkbox" id="learnAuto" checked><span><b>Aprender de mis correcciones</b></span></label><button type="button" class="info-toggle" aria-label="Ayuda sobre aprendizaje de correcciones" aria-expanded="false" aria-controls="learnHelp"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7v1"/></svg></button></div><p class="hint help-content" id="learnHelp" hidden>Si corregís una palabra en el texto de una nota, DictaNota la recuerda y la escribe bien la próxima vez, sin que toques ningún botón. Aprende solo palabras en minúscula que se parecen a lo que escribió Whisper; nunca nombres con mayúscula ni números. Aparece un aviso con «Deshacer» por si fue un error.</p>
         <details class="studio-dictionary">
       <summary>Corregir palabras frecuentes <small>Opcional · para errores que se repiten</small></summary>
       <p class="hint" id="dictHelp">Escribí qué palabra sale mal y por cuál reemplazarla, una corrección por línea. No hace falta explicar el motivo.</p>
@@ -948,9 +960,9 @@ body.delta-recording #convComposer{display:none!important}
       <div class="warn" id="anonRes" role="status" style="margin-top:8px"></div>
       <div id="susBox"></div>
       <div class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 2.5 20h19L12 3z"/><path d="M12 10v4M12 17.5v.01"/></svg><span>La anonimización es automática y puede fallar: revisá siempre el texto antes de guardarlo o exportarlo.</span></div>
-      <p class="anon-preview-label" id="anonPreviewLabel">Así queda tu texto ahora <span class="opt">(solo lectura; se edita en «Texto»)</span></p>
+      <p class="anon-preview-label" id="anonPreviewLabel">Así queda tu texto ahora <span class="opt">(solo lectura; la nota se edita aparte)</span></p>
       <div id="anonPreview" class="anon-preview" tabindex="0" role="region" aria-labelledby="anonPreviewLabel"></div>
-      <button type="button" class="ghost" data-go-view="transcripcion">Ir a Texto para editarlo</button>
+      <button type="button" class="ghost" data-go-view="transcripcion">Ir a la nota para editarla</button>
       <details id="studioAnonConfig">
         <summary>Más opciones de anonimización</summary>
         <label for="hideX" style="margin-top:10px">Ocultar también estas palabras <span class="opt">(separadas por coma)</span></label>
@@ -3070,7 +3082,7 @@ function startNative(resume = false){
       $('rec').classList.add('on'); $('rec').classList.remove('paused'); $('rec').textContent = 'Detener'; $('rec').disabled = false;
       $('pause').textContent = 'Pausar'; $('pause').classList.remove('p');
       setCtl(true); updateDockRecording();
-      setStatus('Escuchando… dictado local ' + nativeLang + '. Los resultados aparecen en Texto; puede haber texto provisional.'); nativeDiag('Evento start recibido');
+      setStatus('Escuchando… dictado local ' + nativeLang + '. Los resultados aparecen en la nota; puede haber texto provisional.'); nativeDiag('Evento start recibido');
     };
     rec.onresult = e => {
       if (nativeSession !== session || !session.started) return;
@@ -3847,6 +3859,7 @@ async function refreshAudioBox(){
   $('recordSaveState').textContent = $('saveAudio').checked ? 'Sí' : 'No';
   const box = $('audioBox'); let m = null, previous = null;
   try { [m, previous] = await Promise.all([audioGetMeta(), audioGetPrevious()]); } catch (e) {}
+  $('recordDownloadCard').hidden = !m;
   $('recordDownloadAudio').disabled = !m || audioBusy();
   $('recordAudioHint').textContent = m
     ? 'Audio guardado en Brave (' + fmtClock(m.ms) + '). Tocá «Descargar audio» para descargarlo.'

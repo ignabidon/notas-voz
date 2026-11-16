@@ -1,4 +1,4 @@
-Retomá el trabajo de DictaNota. Antes de empezar algo nuevo, terminá lo que quedó en tu rama `rediseno-04-clinica-chat-chatgpt` (nuevo PR, sin squash, solo con mi permiso para unir a `main`).
+Retomá el trabajo de DictaNota. Primero leé `docs/TRASPASO-A-CHATGPT-2026-11-16.md`. Tu rama `rediseno-04-clinica-chat-chatgpt` no tiene commits sin unir (todo está en `main` por el PR #36); verificalo y, si hay algo más, hacelo en un PR nuevo, sin squash y solo con mi permiso para unir a `main`.
 
 Cuando eso esté terminado e integrado, incorporá las mejoras estéticas que propuso Claude tras revisar la app. Leé en este orden: `CONTINUAR-AQUI.md`, `AGENTS.md`, `SEGURIDAD.md` y `docs/PROPUESTA-ESTETICA-2026-11-16.md` (el documento central de este pedido).
 
@@ -8,7 +8,7 @@ Sitio: https://ignabidon.github.io/notas-voz/
 Verificá primero el HEAD actualizado de `main` y los PR abiertos. Esa propuesta se midió sobre `main` = `2f56388`: si cambió, volvé a medir antes de aplicar.
 
 Qué hacer:
-- Etapa A (ajustes menores): rótulos viejos «Texto» → «Notas» (sin renombrar pestañas), mismo estilo en los dos accesos de Audio, orden visual de Ajustes, punto rojo de grabación, «Procesamiento local» visible en el celular, pantalla Audio sin repeticiones.
+- Etapa A (ajustes menores): **ya la hizo Claude en el PR #41** (rama `estetica-a-ajustes-2026-11-16`). No la rehagas: verificá si el usuario la unió a `main` y leé `docs/TRASPASO-A-CHATGPT-2026-11-16.md`, que explica qué se hizo, qué quedó fuera y el orden de lo que falta.
 - Etapa B (barra más baja en Notas, una acción principal por pantalla, burbujas y lista de hojas más limpias): empezala solo cuando mi PR anterior esté integrado.
 - Etapa N (nombres de pestañas): la primera pestaña pasa a llamarse «Dictar» (todo lo de grabar y cargar audios para transcribir) y la segunda «Cuadernos» (donde hoy están las hojas); en la interfaz «hoja» pasa a «cuaderno». Ya decidí los dos nombres, pero igual mostrame un plan y esperá mi permiso antes de programar. Los ids internos y las claves de almacenamiento no cambian.
 - Etapa E (audio dentro de la burbuja, estilo WhatsApp: reproductor arriba, transcripción abajo, para volver a escuchar y corregir): la aprobé, pero va después de B3 y toca almacenamiento. Mostrame un plan y esperá mi permiso explícito antes de programarla. No quiero resaltar la palabra que se está escuchando. Los audios, tanto grabados como cargados desde un archivo, se guardan unidos a su nota solo si «Conservar audio» está activado (apagado = no se guardan, ni grabados ni cargados), en una base nueva sin tocar la actual, y deben quedar cifrados antes o junto con el reproductor.

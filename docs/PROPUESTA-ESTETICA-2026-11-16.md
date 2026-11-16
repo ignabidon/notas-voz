@@ -5,6 +5,7 @@
 > **Para quién:** ChatGPT, que lo retoma **después de terminar** el trabajo de su rama `rediseno-04-clinica-chat-chatgpt` (nuevo PR, sin squash). Hasta entonces, **no tocar** esa rama ni las partes que ocupa (compositor y burbujas de Notas).
 > Lectura previa obligatoria: [AGENTS.md](../AGENTS.md), [SEGURIDAD.md](../SEGURIDAD.md), [CONTINUAR-AQUI.md](../CONTINUAR-AQUI.md).
 > **Actualizado el 16/11/2026 (13:22):** el usuario confirmó B2, eligió **«Dictar»** como nombre de la primera pestaña (nueva **Etapa N**) y aprobó un **reproductor de audio dentro de cada burbuja** (nueva **Etapa E**, que modifica una regla de AGENTS.md). **A las 13:31** eligió **«Cuadernos»** para la segunda pestaña y decidió que los **audios cargados desde un archivo también se guardan unidos a su nota**. **A las 13:43** precisó que esos audios, como las grabaciones, **no se guardan si «Conservar audio» está apagado**. Ver secciones 4 (N y E), 5 y 6.
+> **Actualizado el 16/11/2026 (tarde):** la **Etapa A está implementada por Claude en el PR #41** (rama `estetica-a-ajustes-2026-11-16`, sin unir a `main`, sin probar en el Motorola). Qué se hizo y qué quedó fuera: [docs/TRASPASO-A-CHATGPT-2026-11-16.md](TRASPASO-A-CHATGPT-2026-11-16.md). Pendientes del usuario: [docs/PRUEBA-MOTOROLA-Y-PENDIENTES-USUARIO-2026-11-16.md](PRUEBA-MOTOROLA-Y-PENDIENTES-USUARIO-2026-11-16.md).
 
 ---
 
@@ -51,6 +52,8 @@ Resumen de AGENTS.md/SEGURIDAD.md aplicado a esta propuesta (si hay conflicto, *
 Cada ítem indica: qué se ve hoy → cambio → dónde → criterio de aceptación. Los nombres de ids/clases son los del `index.html` actual.
 
 ### Etapa A · Ajustes menores (riesgo bajo)
+
+> **Estado (16/11/2026): implementada en el PR #41, pendiente de revisión y permiso del usuario.** Diferencias con lo propuesto: **A4** quedó en rojo fijo (sin pulso); **A6** no unifica los tres botones «Descargar audio» cuando hay un audio (se resuelve con la Etapa E); no se agregó la etiqueta «Protegida» de A5. El resto se hizo como está descrito abajo.
 
 **A1. Rótulos viejos «Texto».** La pestaña es «Notas», pero la interfaz sigue diciendo «Texto» en cinco lugares:
 `.anon-preview:empty::before` («…algo en «Texto»»), `#learnHelp` («Si corregís una palabra en «Texto»…»), `#anonPreviewLabel` («se edita en «Texto»»), el botón `data-go-view="transcripcion"` («Ir a Texto para editarlo») y el mensaje de estado del dictado local («Los resultados aparecen en Texto»).
@@ -187,8 +190,8 @@ Cada ítem indica: qué se ve hoy → cambio → dónde → criterio de aceptaci
 
 | Paso | Qué | Notas |
 |---|---|---|
-| 0 | Terminar el trabajo de `rediseno-04-clinica-chat-chatgpt` (PR nuevo, sin squash) | Con permiso del usuario para unir |
-| 1 | **Etapa A** en una rama (p. ej. `estetica-a-ajustes-2026-11-16`) | Riesgo bajo; mostrar capturas |
+| 0 | Terminar el trabajo de `rediseno-04-clinica-chat-chatgpt` (PR nuevo, sin squash) | Con permiso del usuario para unir. **Verificado el 16/11: esa rama no tiene commits sin unir** (todo está en `main` por el PR #36) |
+| 1 | **Etapa A** en una rama (p. ej. `estetica-a-ajustes-2026-11-16`) | **Hecha por Claude: PR #41**, pendiente del permiso del usuario para unir |
 | 2 | **Etapa N** (pestañas «Dictar» y «Cuadernos»; «hoja» pasa a «cuaderno») | Nombres decididos; tras 0, con plan y permiso; puede ir junto con A |
 | 3 | **Etapa B** (B1, B2, B3), una rama o PR por ítem | Tras 0; coordinar con el usuario |
 | 4 | **Etapa E** (audio en la burbuja): E1 → E2 → E3 | Tras B3; permiso explícito por tocar almacenamiento |

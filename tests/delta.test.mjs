@@ -1617,3 +1617,43 @@ test('conversaciones: borrar un mensaje y solo hojas vacías; lista de hojas por
   assert.equal(conv.convDeleteConversation(sinMsg, a).conversations.length, 1);
   assert.equal(conv.convCheckWrite(r.data, sinMsg), '');
 });
+
+/* Etapa A (Claude, 16/11/2026): ajustes estéticos menores. Solo presentación; no tocan datos ni claves. */
+test('Etapa A: no quedan referencias a la pestaña vieja «Texto» en el texto visible', () => {
+  assert.ok(!html.includes('se edita en «Texto»'));
+  assert.ok(!html.includes('Ir a Texto para editarlo'));
+  assert.ok(!html.includes('Grabá o escribí algo en «Texto»'));
+  assert.ok(!html.includes('Los resultados aparecen en Texto'));
+  assert.ok(!html.includes('Si corregís una palabra en «Texto»'));
+});
+
+test('Etapa A: «Procesamiento local» sigue en el encabezado y ya no se oculta en el celular', () => {
+  assert.ok(html.includes('Procesamiento local'));
+  assert.ok(!html.includes('sin nube'));
+  assert.ok(!/\.pill\{display:none\}/.test(html), 'ninguna regla vuelve a ocultar la leyenda de privacidad');
+});
+
+test('Etapa A: el punto de grabación es rojo y el de pausa es ámbar', () => {
+  assert.ok(html.includes('.dock-capture-status .capture-dot{background:var(--error);box-shadow:0 0 0 3px var(--error-bg)}'));
+  assert.ok(html.includes('#studioDockCapture.paused .capture-dot{background:var(--note-ink);box-shadow:0 0 0 3px var(--note-bg)}'));
+});
+
+test('Etapa A: la tarjeta repetida de «Descargar audio» se muestra solo si hay audio y los ids siguen', () => {
+  assert.ok(html.includes('id="recordDownloadCard"'));
+  assert.ok(html.includes("$('recordDownloadCard').hidden = !m;"));
+  for (const id of ['recordDownloadAudio', 'recordAudioHint', 'audioBox', 'audioReady', 'audioEmpty', 'aDown', 'aMp3', 'aTx', 'aDel']) {
+    assert.ok(html.includes('id="' + id + '"'), 'falta #' + id);
+  }
+});
+
+test('Etapa A: los íconos de Ajustes son SVG en línea y los módulos y claves siguen', () => {
+  for (const id of ['settingsReading', 'settingsQuality', 'settingsAudio', 'settingsPrivacy', 'settingsDictionary', 'model', 'learnAuto', 'textSize']) {
+    assert.ok(html.includes('id="' + id + '"'), 'falta #' + id);
+  }
+  assert.ok(!/<span class="module-icon">[^<]/.test(html), 'ya no hay íconos de texto suelto en los módulos');
+  assert.ok(!/https?:\/\/[^"' ]*\.(svg|woff2?|ttf)/.test(html.replace(/xmlns="[^"]*"/g, '')), 'sin fuentes ni íconos externos');
+});
+
+test('Etapa A: el selector de modelo conserva sus tres valores', () => {
+  for (const v of ['Xenova/whisper-tiny', 'Xenova/whisper-base', 'Xenova/whisper-small']) assert.ok(html.includes('value="' + v + '"'));
+});
