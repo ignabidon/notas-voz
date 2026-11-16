@@ -1,5 +1,7 @@
 # DictaNota — Prueba Delta
 
+> **📌 CONTINUIDAD DEL PROYECTO PARA OTRAS IA:** comenzá por **[CONTINUAR-AQUI.md](CONTINUAR-AQUI.md)** y el [informe de rediseño conversacional](docs/REDISENO-CONVERSACIONAL-2026-11-16.md). Describe el próximo diseño propuesto (Notas / Biblioteca / Ajustes, bitácora y biblioteca multi-audio), **aún sin implementar**. No modificar la aplicación sin autorización explícita.
+
 **Aplicación oficial:** https://ignabidon.github.io/notas-voz/
 
 > **⚠ Seguridad:** hay una revisión de seguridad («pen testing») en curso. Leé [SEGURIDAD.md](SEGURIDAD.md): qué está confirmado, qué no, riesgos abiertos y reglas para editar. Hasta ahora las notas **no están cifradas**: no uses datos reales.

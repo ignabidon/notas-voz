@@ -1,5 +1,7 @@
 # AGENTS.md — Instrucciones para ChatGPT, Claude y otras IA
 
+> **▶ CONTINUIDAD ACTUAL — LEER PRIMERO: [CONTINUAR-AQUI.md](CONTINUAR-AQUI.md).** Nueva especificación de rediseño conversacional en [docs/REDISENO-CONVERSACIONAL-2026-11-16.md](docs/REDISENO-CONVERSACIONAL-2026-11-16.md). Decisiones UX documentadas, **todavía no implementadas**. El usuario autorizó publicar documentación, **no modificar la aplicación**; pedir aprobación explícita antes de programar. Antes de tocar código, leer también SEGURIDAD.md.
+
 > **⚠ SEGURIDAD — LEER PRIMERO: [SEGURIDAD.md](SEGURIDAD.md).** Hay una revisión de seguridad («pen testing») en curso desde el 15/11/2026, con reglas obligatorias para editar el código (política CSP, orígenes permitidos, huella de la librería MP3, prohibición de `eval`/`innerHTML` con datos), hallazgos abiertos y pendientes. La CSP y la huella MP3 **no están confirmadas en el Motorola**. No lo ignores ni repitas la revisión desde cero: continuala.
 
 **Leer también README.md y CAMBIOS.md antes de editar.**
