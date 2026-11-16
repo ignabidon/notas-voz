@@ -1,6 +1,6 @@
 # CLAUDE.md — DictaNota
 
-> **▶ PRIMER PASO PARA LA PRÓXIMA IA: [CONTINUAR-AQUI.md](CONTINUAR-AQUI.md)** → [informe de continuidad del 16/11/2026](docs/INFORME-CONTINUIDAD-2026-11-16.md). Fases 1–3 del rediseño hechas (pestaña Notas con hojas y mensajes); **falta la estética clara «Clínica contemporánea»**, el aspecto de chat y la prueba en el Motorola. Programar y unir a `main` solo con permiso del usuario. Leer SEGURIDAD.md antes de tocar código.
+> **▶ ESTADO ACTUAL:** leer [CONTINUAR-AQUI.md](CONTINUAR-AQUI.md). Main verificado en `3383584`: PR #36 (tema claro y chat) y #41 (Etapa A) ya unidos. No repetirlos. Próxima etapa: nombres Dictar/Cuadernos; los ids y claves se preservan. Nuevos PR desde main actualizado; merge normal, sin squash. Prueba física Motorola pendiente.
 
 **⚠ SEGURIDAD — leé primero SEGURIDAD.md** (revisión de seguridad en curso desde el 15/11/2026: reglas obligatorias, CSP, hallazgos abiertos y pendientes; la CSP y la huella MP3 aún no están confirmadas en el Motorola).
 
