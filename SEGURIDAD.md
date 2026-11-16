@@ -1,3 +1,11 @@
+## 15/11/2026 · Diseño compacto y controles de entrada
+
+- Audio más compacto; herramientas de Texto en una fila desde 480 px, acciones secundarias menos destacadas; barra inferior más pequeña con medidas dinámicas existentes; Personas y códigos cerrado inicialmente; explicaciones de Ajustes abreviadas.
+- validNotes valida estructura de notas y etiquetas al leer; un guardado que sustituya datos inválidos requiere confirmación. No cambia claves ni elimina automáticamente el almacenamiento original.
+- Importaciones: máximo 32 MB y 10 minutos, comprobados con metadatos y plazo de 10 s ANTES de decodeAudioData; se verifica nuevamente duración del PCM. Los archivos sin duración verificable se rechazan. Grabaciones propias conservan comportamiento previo.
+- Límite: los metadatos y la decodificación dependen del navegador. Esto reduce exposición, no garantiza una cota de memoria frente a códecs o archivos maliciosos. El timeout no cancela decodeAudioData. No se implementó cifrado, copia propia de Whisper ni cambios de acceso.
+- Verificación local: 97/97 pruebas Node. Pruebas nuevas de almacenamiento malformado, tamaños, duraciones inválidas y orden de validación. Validación física Motorola pendiente.
+
 # SEGURIDAD.md — Revisión de seguridad («pen testing») de DictaNota
 
 **Leer antes de tocar `index.html`.** Este archivo es el registro vivo de la revisión de seguridad iniciada el 15 de noviembre de 2026. Otras IA: no repitan la revisión desde cero; continúen la lista de pendientes de abajo y actualicen este archivo y `CAMBIOS.md`.
@@ -86,3 +94,4 @@ Todo lo demás está en `default-src 'none'` (sin objetos, sin marcos, sin formu
 - [ ] Decisión del usuario sobre la «bóveda» cifrada opcional (punto 1; PR de diseño abierto).
 - [ ] Evaluar CSP más estricta (huellas/nonce en lugar de `'unsafe-inline'`) cuando el código se estabilice.
 - [ ] Agregar fecha y resultado a este archivo cuando se complete cada punto.
+
