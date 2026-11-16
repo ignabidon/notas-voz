@@ -24,3 +24,5 @@ El rediseño conversacional tiene hechos los datos, el guardado protegido y una 
 3. Después: navegación Notas / Biblioteca / Ajustes, Anonimizar desde la hoja, vista Documento.
 
 Cada paso va en su rama, con pruebas, CI y **permiso del usuario para unir a `main`**. Sin datos reales de pacientes.
+
+> **Actualización del 16/11/2026 (mediodía): leer [docs/DECISIONES-USUARIO-2026-11-16.md](docs/DECISIONES-USUARIO-2026-11-16.md) antes de seguir.** El PR #36 **ya está unido a `main`** (la estética clara está publicada; lo de arriba que dice lo contrario quedó viejo). Ese documento fija: anonimización con original recuperable, motor Whisper propio, autoría del creador en Ajustes y protección de `main`.
