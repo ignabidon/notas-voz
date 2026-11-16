@@ -4,6 +4,7 @@
 > **Responsable:** Claude (Fable 5.2), 16/11/2026. Rama `docs-diseno-almacenamiento-cifrado-2026-11-16`, base `main` = `3383584`.
 > **Estado en tres niveles:** código guardado: **ninguno** (solo este documento) · pruebas técnicas: **ninguna** · probado en el Motorola: **nada**.
 > **Condición:** toca almacenamiento. No se programa nada de esto sin **permiso explícito de Ignacio**, y recién cuando le toque a la Etapa E (orden vigente: N → B → E → C → D). ChatGPT tiene en curso la Etapa N (PR #43, rama `etapa-n-dictar-cuadernos`): este documento no la toca.
+> **Decisiones de Ignacio (16/11/2026, 17:30–17:50): las trece están tomadas** (tabla de la Parte 1). Dos difieren de lo recomendado: el código de recuperación **no** cambia solo (D10) y la app **sí** se bloquea aunque esté sonando un audio (D11). Se sumó una decisión nueva: mudar el texto al depósito grande (D13).
 > Todo lo afirmado sobre el código se verificó leyendo `index.html` de `main` (`3383584`). Donde algo no se pudo comprobar, lo dice.
 
 ---
@@ -23,26 +24,30 @@
 - **Sin contraseña ni código de recuperación (y sin huella) no hay forma de recuperar nada.** Es el precio del cifrado. La copia cifrada tampoco se abre sin ellos.
 - **Si se borran los «datos del sitio» en Brave se pierde todo**, como hoy. La única defensa es la copia cifrada guardada fuera del navegador.
 - **El audio no se puede anonimizar:** la voz dice el nombre real. Por eso se propone que solo exista cifrado.
-- **Límite del texto:** las notas (no los audios) viven en un depósito chico del navegador, de unos 5 MB en total (valor habitual; sin medir en tu Motorola). Alcanza para cientos de notas, no para miles. Guardar originales lo llena más rápido. No es urgente, pero hay que medirlo y planear el cambio antes de llegar a la mitad.
-- **Archivos cargados muy pesados** (un WAV de 15 minutos puede pesar 160 MB) pueden dejar al celular sin memoria al reproducirlos.
+- **Límite del texto:** las notas (no los audios) viven en un depósito chico del navegador, de unos 5 MB en total (valor habitual; sin medir en tu Motorola). Alcanza para cientos de notas, no para miles. Guardar originales lo llena más rápido. **Decidido (D13): se muda el texto al depósito grande**, antes de guardar originales.
+- **Archivos cargados muy pesados:** resuelto con el tope de 30 MB (D4). Un WAV largo ya no se puede cargar.
 - **Nada de esto está probado en el Motorola.** En particular: huella real, grabar con cifrado en simultáneo, reproducir, y descargar una copia grande.
 
-### Decisiones que te tocan
+### Decisiones tomadas (Ignacio, 16/11/2026)
 
-| # | Pregunta | Recomendación |
+| # | Tema | Decisión |
 |---|---|---|
-| D1 | ¿Guardar originales solo con la protección cifrada activa? | **Sí.** Sin protección, anonimizar funciona como hoy y la app ofrece activarla. |
-| D2 | ¿Guardar audios por nota solo con la protección activa? | **Sí.** Sin protección, «Conservar audio» sigue como hoy (un audio suelto, sin cifrar, con su aviso). |
-| D3 | Si quitás la protección habiendo originales y audios, ¿qué pasa? | Que la app te ofrezca primero una copia cifrada y después te haga elegir: los audios por nota se borran, y por los originales elegís «volver al original» o «quedarme con la anonimizada». |
-| D4 | Archivos cargados: ¿se guarda el archivo tal cual? | **Tal cual hasta 30 MB.** Si pesa más, se transcribe pero no se guarda el audio (con aviso). Comprimir queda para más adelante. |
-| D5 | ¿La copia cifrada incluye los audios? | **Elegir cada vez** («Completa» o «Solo texto»), mostrando el tamaño. |
-| D6 | Al restaurar una copia, ¿se mezcla con lo que hay? | **No, por ahora.** Solo en una app vacía, o reemplazando todo con doble confirmación. |
-| D7 | El audio viejo suelto (sin cifrar) que ya está guardado | **No migrarlo.** Aviso en Ajustes con «Descargar» y «Borrar». |
-| D8 | Audios que quedaron sin nota (por un corte o por descartar) | **No borrarlos solos.** Lista en Ajustes: «Crear nota» o «Borrar». |
-| D9 | Exportar «anonimizada» cuando hay notas que nunca anonimizaste | **Avisar cuántas son y dejarte decidir.** No anonimizar sola en el momento (saldría sin revisar). |
-| D10 | Después de usar el código de recuperación | **Dar uno nuevo en el acto.** Hoy el usado sigue valiendo (verificado en el código). |
-| D11 | ¿La app se bloquea mientras suena un audio? | **No.** Escuchar cuenta como uso, igual que grabar. |
-| D12 | ¿Cuándo va la copia cifrada? | **Apenas termina el cifrado de audios (E2), antes del reproductor**, si preferís tener respaldo cuanto antes. Si no, después de E3. |
+| D1 | Originales | Solo con la protección cifrada activa |
+| D2 | Audios por nota | Solo con la protección cifrada activa. Sin protección, «Conservar audio» sigue como hoy |
+| D3 | Quitar la protección | La app ofrece una copia cifrada, borra los audios por nota y pregunta si volver al original o quedarse con la versión anonimizada |
+| D4 | Archivos cargados | **Tope de 30 MB para cargar** (antes 200 MB). Se limita por tamaño, no por formato |
+| D5 | Copia cifrada | Elegir cada vez: «Completa» o «Solo texto» |
+| D6 | Restaurar | Solo en app vacía, o reemplazando todo con doble confirmación |
+| D7 | Audio suelto viejo | No se migra. Aviso en Ajustes con «Descargar» y «Borrar» |
+| D8 | Audios sin nota | No se borran solos. Lista en Ajustes: «Crear nota» o «Borrar» |
+| D9 | Exportar «anonimizada» con notas sin anonimizar | Avisar cuántas son y dejar decidir |
+| D10 | Código de recuperación | **Es único. Solo cambia si el usuario pide uno nuevo, con su contraseña** (como funciona hoy) |
+| D11 | Autobloqueo y reproducción | **Se bloquea igual** a los 15 minutos sin tocar la pantalla, aunque esté sonando un audio |
+| D12 | Orden | La copia cifrada va **antes** del reproductor |
+| D13 | Texto de las notas | **Se muda al depósito grande** (el de los audios), antes de los originales |
+
+**Descartado en la misma conversación:** entrar con una cuenta (Gmail u otra), ligar la huella a la cuenta de Google, guardar la copia en Google Drive y un botón de exportación directa a Google Docs (los cuatro exigen conectar la app con un servicio externo). Para llevar texto a Google Docs quedan copiar y pegar, o «Descargar Word» y abrir ese archivo.
+**Distribución de la futura app de Android:** entre conocidos y como experimental, pasando el archivo de instalación. Sin Google Play por ahora.
 
 ---
 
@@ -62,7 +67,7 @@
 
 **Diferencias con lo documentado o detalles a tener en cuenta:**
 
-1. `unlockRecovery` cambia la contraseña pero **no rota el código**: el código usado sigue abriendo (ver D10).
+1. `unlockRecovery` cambia la contraseña pero **no rota el código**: el código usado sigue abriendo. **Se mantiene así por decisión del usuario (D10):** solo cambia con `newRecovery`, que ya pide la contraseña.
 2. Las rutas de desbloqueo no ponen en cero la DEK en bruto después de importarla (`openWith(await vaultUnwrap…)`); `enable` la devuelve para ofrecer la huella.
 3. `convStore.save` «comprueba» releyendo de `vaultStore`, que con protección activa es la **copia en memoria**, no el disco. No confirma que el cifrado llegó a `localStorage`.
 4. `convDeleteConversation` solo borra hojas **vacías**. La regla de la propuesta «borrar una hoja borra los audios de sus notas» hoy no puede ocurrir.
@@ -154,7 +159,7 @@ huella ─PRF+HKDF───┘                    │
 - **Por qué una clave por audio:** (a) rotar la DEK en el futuro solo re-envuelve claves chicas, sin recifrar gigas; (b) borrar un audio es borrar su clave; (c) la copia exportable lleva los fragmentos **tal como están**, sin recifrar.
 - **Rotación:**
   - Cambiar contraseña: re-envuelve la DEK (ya existe). No toca datos.
-  - Código de recuperación usado: generar uno nuevo en el acto con la DEK que ya está en mano y mostrarlo (D10). No toca datos.
+  - Código de recuperación: **no cambia al usarse (D10)**. Solo con «código nuevo» pedido por el usuario con su contraseña (`newRecovery`, ya existe). Conviene decirlo en la pantalla de recuperación: «este código sigue valiendo; si alguien más lo vio, pedí uno nuevo».
   - Huella: quitar y volver a registrar (ya existe).
   - Rotar la DEK (sospecha de exposición): **queda diseñado, no se implementa en la Etapa E.** Sería: DEK nueva, recifrar los registros de texto, re-envolver las CEK, conservar `id`.
   - Ojo: una copia exportada antes de cambiar la contraseña **se sigue abriendo con la contraseña vieja**. Decirlo en la pantalla de la copia.
@@ -162,7 +167,8 @@ huella ─PRF+HKDF───┘                    │
   - Abierta: en memoria están el texto de todos los registros (como hoy, ahora también los originales), `K_audio` (no extraíble) y, como máximo, **un** audio descifrado: el que suena.
   - Reproducir: se descifra recién al tocar «reproducir», a un `Blob` y una dirección `blob:`; se revoca al terminar, al pausar más de un rato, al cambiar de nota o al salir de la hoja.
   - Bloqueo (15 min o manual): `location.reload()`, como hoy. Se va todo: texto, claves, `Blob` y direcciones `blob:`. JavaScript no puede garantizar el borrado de memoria; la recarga es el mecanismo.
-  - **Sumar a `vaultSetHooks`** como «ocupado»: reproducción en curso (D11), cifrado de un archivo cargado, exportación, verificación y restauración de una copia. Si no, el autobloqueo las corta por la mitad.
+  - **Sumar a `vaultSetHooks`** como «ocupado»: cifrado de un archivo cargado, exportación, verificación y restauración de una copia. Si no, el autobloqueo las corta por la mitad.
+  - **La reproducción NO cuenta como uso (D11):** si pasan 15 minutos sin tocar la pantalla, la app se bloquea aunque esté sonando un audio, y el audio se corta. Con el tope de 15 minutos por archivo esto solo alcanza a grabaciones largas de la app.
   - Grabando: los fragmentos se cifran a medida que llegan. La app nunca se bloquea grabando, así que la CEK está disponible hasta el final.
 - **Límites que no cambian:** no protege una sesión abierta, ni el micrófono, ni lo exportado, ni código comprometido (hallazgo 2 de SEGURIDAD.md). No prometer «cifrado seguro» en la interfaz.
 
@@ -233,17 +239,18 @@ bloque × N:  tipo (u8) · largo del nombre (u32) · nombre · largo de datos (u
 |---|---|
 | Grabación de la app (32 kbps) | ≈14 MB por hora · ≈0,7 MB una nota de 3 min · 100 notas ≈ 70 MB |
 | Archivo cargado MP3/M4A de 15 min | ≈10–15 MB |
-| Archivo cargado WAV de 15 min | ≈80–160 MB (tope actual: 200 MB) |
+| Archivo cargado WAV de 15 min | ≈80–160 MB: **ya no entra** (tope nuevo de 30 MB, D4) |
 | Costo del cifrado | 28 bytes por fragmento: despreciable |
 | Texto | KB por nota, pero en `localStorage` (≈5 MB en total) |
 
 - **Almacenamiento persistente:** llamar a `navigator.storage.persist()` la primera vez que se guarda un audio por nota. Chromium decide solo, sin preguntar, y **puede negarlo**; mostrar el resultado en Ajustes («Protegido contra la limpieza automática: Sí/No») y, si es No, recomendar la copia cifrada. Comportamiento en Brave: sin probar.
 - **Ajustes → Datos:** espacio de audios (suma de `meta.bytes`), cantidad, estimación libre (`navigator.storage.estimate()`), y **uso del texto** en `localStorage` con aviso al 50 % y al 80 % del cupo medido. Lista de audios ordenable por tamaño, con «Borrar audio».
-- **Antes de guardar un archivo cargado:** si el tamaño supera el tope de D4, o `estimate()` no da margen (tamaño + 20 %), se transcribe y **no se guarda**, con aviso. No se intenta y falla a la mitad.
+- **Tope de carga (D4):** `IMPORT_MAX_BYTES` baja de 200 MB a **30 MB**; un archivo más pesado se rechaza antes de decodificar, con el mensaje de «cortalo en partes». Los 15 minutos (`IMPORT_MAX_SEC`) no cambian. El manejador de carga compara también contra `LOAD_MAX_BYTES` (200 MB, línea ≈4038): revisar qué más usa esa constante antes de tocarla.
+- **Antes de guardar un archivo cargado:** si `estimate()` no da margen (tamaño + 20 %), se transcribe y **no se guarda**, con aviso. No se intenta y falla a la mitad.
 - **Sin lugar en plena grabación** (`QuotaExceededError`): prioridad al texto. La transcripción sigue, el audio queda con lo recibido, marcado «incompleto», y se avisa una vez (es lo que ya hace `audioErr`).
 - **Sin lugar para el texto:** ya contemplado por la bóveda (`pending` + aviso «Liberá espacio»). Con originales, ese caso llega antes: de ahí el medidor.
-- **Riesgo de fondo:** el texto en `localStorage` tiene techo. Pasar el texto a IndexedDB es una migración aparte, que **no** entra en la Etapa E; el formato de la copia no depende de dónde viva el texto.
-- **Reproducción:** con el tope de 30 MB (D4) el audio descifrado entra en memoria. Sin tope, un WAV de 160 MB puede cerrar la pestaña en el celular.
+- **El texto en `localStorage` tiene techo: se muda a IndexedDB (D13, sección 2.13).** El formato de la copia no depende de dónde viva el texto.
+- **Reproducción:** con el tope de 30 MB (D4) el audio descifrado entra en memoria.
 
 ### 2.8 «Conservar audio» apagado
 
@@ -256,7 +263,7 @@ bloque × N:  tipo (u8) · largo del nombre (u32) · nombre · largo de datos (u
 
 ### 2.9 Migración desde Delta 11
 
-No hay conversión de datos: todo es aditivo.
+En la Etapa E no hay conversión de datos: todo es aditivo. La única migración real del plan es la mudanza del texto (D13, sección 2.13), que va aparte y con su propio permiso.
 
 | Dato existente | Qué pasa |
 |---|---|
@@ -281,13 +288,13 @@ No hay conversión de datos: todo es aditivo.
 | Corte al anonimizar | Original guardado y nota sin cambiar, o ambos bien. Nunca la nota anonimizada sin su original |
 | Contraseña perdida | Código de recuperación → contraseña nueva. Con huella se puede seguir entrando |
 | Contraseña y código perdidos, sin huella | **Irrecuperable**, también las copias. Decirlo al activar y al exportar |
-| Código de recuperación usado | Se entra, se pide contraseña nueva y se muestra un código nuevo (D10) |
+| Código de recuperación usado | Se entra y se pide contraseña nueva. **El código sigue siendo el mismo (D10)**; la pantalla recuerda que se puede pedir uno nuevo |
 | Borrado de «datos del sitio» | Se pierde todo. Solo se recupera desde una copia cifrada |
 | Se pierde IndexedDB pero no `localStorage` | Notas con «audio no disponible»; el texto intacto |
 | Se pierde la cabecera pero quedan audios | Indescifrables sin una copia (que trae la cabecera). No se borran solos |
 | Exportación a medias | El original no se modifica. El archivo cortado no pasa «Verificar copia» |
 | Restauración a medias | No se confirma (falta la cabecera); se limpia el lote y se reintenta |
-| Autobloqueo durante una tarea larga | No ocurre: la tarea figura como «ocupado» |
+| Autobloqueo durante una tarea larga | No ocurre al grabar, transcribir, cifrar un archivo, exportar, verificar o restaurar. **Sí ocurre reproduciendo (D11):** el audio se corta y hay que desbloquear |
 | Fragmento o registro alterado | No se usa, no se sobrescribe, se avisa |
 | Dos pestañas | La segunda no escribe (candado) |
 | Falta espacio | Ver 2.7: el texto primero, el audio se marca incompleto |
@@ -309,7 +316,9 @@ El repositorio es público: **ningún** nombre, voz ni texto real. Usar siempre 
 - Grabar con micrófono simulado, guardar, recargar, desbloquear, comprobar que el audio descifrado coincide byte a byte y que en IndexedDB no aparece ninguna cabecera WebM/MP4 en claro.
 - Cerrar la pestaña en plena grabación y en pleno guardado de archivo: revisar la tabla de 2.5.
 - «Conservar audio» apagado: la base nueva no se crea o queda vacía, con grabación y con archivo.
-- Autobloqueo: no bloquea reproduciendo ni exportando; al bloquear no quedan direcciones `blob:` utilizables.
+- Autobloqueo: no bloquea exportando ni cifrando un archivo; **sí bloquea reproduciendo** a los 15 minutos sin interacción (D11); al bloquear no quedan direcciones `blob:` utilizables.
+- Código de recuperación: después de usarlo sigue abriendo; cambia solo con «código nuevo» y contraseña (D10).
+- Tope de carga: un archivo de 30 MB + 1 byte se rechaza antes de decodificar (D4).
 - Cupo: simular `QuotaExceededError` en el `put` de un fragmento y en `localStorage`.
 - Exportar → borrar todo → restaurar → comparar. Restauración interrumpida a propósito.
 - Dos pestañas: la segunda avisa y no escribe.
@@ -317,7 +326,8 @@ El repositorio es público: **ningún** nombre, voz ni texto real. Usar siempre 
 
 **Motorola (Brave), con datos inventados; lo hace Ignacio:**
 - Grabar 1, 10 y 60 minutos con protección activa: que no se corte, batería y temperatura razonables.
-- Cargar un M4A de 15 min y uno que supere el tope.
+- Cargar un M4A de 15 min y uno que supere los 30 MB.
+- Dejar sonando una grabación larga sin tocar la pantalla: a los 15 minutos tiene que bloquearse.
 - Reproducir, adelantar, pausar; apagar la pantalla durante la reproducción.
 - Estado de `persist()` y números de espacio creíbles.
 - Descargar una copia completa de más de 200 MB, verificarla y restaurarla en otro perfil o navegador.
@@ -331,19 +341,41 @@ Cada una en su rama desde el `main` actualizado, con plan corto, permiso de Igna
 |---|---|---|---|
 | **E1** · Base nueva y vínculo | Módulo de la IndexedDB nueva, funciones puras (partes, estados, revisión de consistencia), candado de una pestaña. **Sin activar para el usuario** | Bajo | **Sí, total.** La base ni siquiera se crea en el celular |
 | **E2** · Cifrado de audios | K_audio, CEK, fragmentos cifrados; se activa el guardado por nota (grabado y cargado) con protección abierta e interruptor encendido; `dek.fill(0)`; tareas largas como «ocupado» | **Medio/alto:** cifrar mientras se graba es lo más delicado para el celular | El código sí. Los audios ya guardados quedan cifrados y sin usar, no se pierden; al volver a activar se leen |
-| **K1** · Copia cifrada: exportar y verificar (D12) | Formato 1, archivo de ejemplo fijo, «Verificar copia» | Medio (descargas grandes en Android) | **Sí.** Solo agrega; no modifica datos |
+| **K1** · Copia cifrada: exportar y verificar (va antes del reproductor, D12) | Formato 1, archivo de ejemplo fijo, «Verificar copia» | Medio (descargas grandes en Android) | **Sí.** Solo agrega; no modifica datos |
 | **E3** · Reproductor, persistencia y espacio | Reproductor en la burbuja, `persist()`, panel de espacio, audios sin nota, aviso del audio suelto viejo | Medio (duración y avance en WebM; memoria) | **Sí** (interfaz). `persist()` no se revierte, pero es inofensivo |
 | **K2** · Restaurar | Restauración en app vacía o con reemplazo | **Alto: es lo único que puede borrar datos** | El código sí; un reemplazo hecho, **no**. Exigir «Verificar» y doble confirmación |
+| **T** · Texto al depósito grande (D13, ver 2.13) | Los registros cifrados pasan de `localStorage` a IndexedDB | **Alto: es la única migración de datos del plan** | **No fácilmente.** Exige K1 hecha y una copia verificada antes |
 | **AO** · Original recuperable | Registro «originales», mantener apretado, diálogo de exportación, comportamiento al quitar la protección (D3) | Medio (llena antes el cupo de texto) | **Sí.** Una versión anterior ignora el registro |
-| Aparte | Código de recuperación nuevo tras usarlo (D10) | Bajo | Sí |
 
-- **AO** va después de C1, como indica la propuesta estética. No depende de E1–E3 y podría adelantarse si Ignacio lo pide.
+- **Orden decidido:** E1 → E2 → K1 → E3 → K2 → T → AO. **AO** va después de C1 (propuesta estética) y después de T (D13).
+- En E2 entra también el tope de carga de 30 MB (D4).
 - **No se deshace:** audios borrados al quitar la protección (D3), «reemplazar todo» al restaurar y cualquier «Borrar audio». Los tres llevan confirmación explícita y oferta de copia previa.
 - **Coordinación:** este PR y el #43 (Etapa N) agregan una entrada arriba de CAMBIOS.md; el segundo que se una puede tener que resolver ese cruce a mano.
 
+### 2.13 Mudanza del texto al depósito grande (D13)
+
+**Por qué:** `localStorage` tiene un cupo chico (≈5 MB habituales, sin medir en Brave), cada guardado recifra el registro entero y los originales lo duplicarían. IndexedDB comparte el cupo grande de los audios.
+
+**Alcance propuesto:** solo los **registros cifrados** (`notasvoz.boveda.v1.r.*`). La cabecera `notasvoz.boveda.v1` queda en `localStorage` (es chica y decide el estado al arrancar). Con la protección apagada todo sigue en `localStorage` como hoy; quien implemente puede proponer ampliarlo, con otro permiso.
+
+- Base nueva `notasvoz-dictanota-datos` v1, almacén `registros` (clave = nombre del registro; valor = el mismo JSON cifrado de hoy, sin recifrar).
+- `vaultStore` no cambia hacia afuera: sigue siendo sincrónico sobre la copia en memoria. Cambia solo adónde escribe `flush` y de dónde lee `openWith`. La app ya espera el desbloqueo con `vaultWhenReady`.
+- De paso se corrige el punto 3 de 2.1: `convStore.save` (y el guardado de originales) confirman recién cuando el `flush` terminó en disco.
+- **Pasos de la migración, al desbloquear:**
+  1. Exigir una copia cifrada verificada reciente (K1) o confirmación explícita de seguir sin ella.
+  2. Copiar cada registro a IndexedDB, releerlo y **descifrarlo** para comprobarlo.
+  3. Escribir en la cabecera una marca `datos: "idb"`. Es el punto de confirmación (`vaultParseHeader` conserva campos que no conoce; verificado).
+  4. Recién entonces borrar los registros de `localStorage`.
+  Si se corta antes del paso 3, se sigue leyendo de `localStorage` y se reintenta. Si se corta entre 3 y 4, al abrir se borran las copias viejas que coincidan; si difieren, **no se borran** y se avisa (misma política que las «copias en claro que quedaron»).
+- **Vuelta atrás:** una versión anterior de la app no sabe leer IndexedDB y vería la bóveda sin notas (no las borra, pero no las muestra). Por eso es el paso menos reversible del plan y va después de K1/K2.
+- **Pruebas propias:** datos de Delta 11 sembrados → migrar → comparar byte a byte; corte en cada paso; cupo lleno en IndexedDB; dos pestañas; restaurar una copia hecha antes de la mudanza.
+- Actualizar SEGURIDAD.md (regla 7), AGENTS.md y DISENO-CIFRADO.md («Dónde queda cada cosa»).
+
 ---
 
-## PARTE 3 · Decisiones abiertas, con opciones
+## PARTE 3 · Decisiones: opciones consideradas y qué se eligió
+
+> **Todas resueltas por Ignacio el 16/11/2026.** Lo elegido figura en la tabla de la Parte 1. En D1–D9 y D12 coincidió con la opción marcada como recomendada. En **D10** eligió (b): el código no cambia solo. En **D11** eligió (b): bloquear igual. **D13** (texto al depósito grande, antes de los originales) se agregó en la misma conversación; las opciones descartadas fueron «solo medir por ahora» y «esperar a la app de Android». En **D4** el tope de 30 MB vale para **cargar**, no solo para guardar.
 
 **D1 · Originales y protección.** (a) Solo con protección activa — *recomendada*: nunca quedan nombres reales en claro junto a la versión anonimizada. (b) Permitir sin protección con un aviso fuerte: más simple de usar, pero anula el sentido de anonimizar en el dispositivo.
 
