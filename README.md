@@ -1,5 +1,13 @@
 # DictaNota — Prueba Delta
 
+## Rediseño claro en revisión (16/11/2026)
+
+Esta rama incorpora la estética Clínica contemporánea y disposición de chat. Inicio: grabar, «Ver hojas guardadas» o «Escribir una nota». Una nota es un texto escrito o transcripto; una hoja reúne notas y se puede renombrar. Dentro de una hoja, Grabar/Guardar agrega una nota allí. «Nueva nota» inicia una hoja independiente al guardar y protege cualquier borrador pendiente.
+
+Las herramientas del editor están en «Herramientas de la nota»; las acciones de la hoja en «Opciones de esta hoja». Se conservan las cuatro pestañas en esta etapa. Navegación final, anonimización de toda la hoja y recuperación persistente de originales quedan pendientes. La publicación depende de revisión visual. Prueba física en Motorola pendiente.
+
+**Prueba breve:** nueva nota → escribir → Guardar → renombrar hoja → escribir otra → Guardar → Nueva nota → guardar aparte → Mover a la primera hoja → Deshacer. Repetir con grabación ficticia, letra Grande y teclado abierto. Verificar Pausar/Detener, corrección, protección y reabrir el borrador.
+
 > **📌 CONTINUIDAD DEL PROYECTO PARA OTRAS IA:** comenzá por **[CONTINUAR-AQUI.md](CONTINUAR-AQUI.md)** y el **[informe de continuidad del 16/11/2026](docs/INFORME-CONTINUIDAD-2026-11-16.md)**. La pestaña Notas (hojas con mensajes) ya está publicada; la estética clara y el aspecto de chat **todavía no**. No modificar la aplicación sin autorización explícita.
 
 **Aplicación oficial:** https://ignabidon.github.io/notas-voz/

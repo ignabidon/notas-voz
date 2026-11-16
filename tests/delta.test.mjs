@@ -427,7 +427,7 @@ test('Delta 08: Grabar Texto Ajustes comparten acciones sin duplicar ni borrar e
 
 test('Delta 08: editor protagonista y herramientas secundarias accesibles', () => {
   assert.match(html,/class="screen-title text-screen-title"/);
-  assert.match(html,/textarea#text\{background:#0e1a24/);
+  assert.match(html,/textarea#text\{background:var\(--surface-soft\)/);
   assert.match(html,/min-height:48svh;font-size:18px/);
   assert.match(html,/<details class="text-tools">/);
   for(const id of ['correctSelection','copyAll','selAll','clear','undoClear','quickCorrect','text','anon','undo','title','doc','txt'])
@@ -449,7 +449,7 @@ test('Delta 08: ajustes agrupados y privacidad, audio y diccionario intactos', (
 
 test('Delta 08: nuevo sistema visual y diseño móvil adaptable', () => {
   assert.match(html,/\/\* DELTA 08: three real screens/);
-  assert.match(html,/--bg:#090f18/);
+  assert.match(html,/--bg:#F4F7F8/);
   assert.match(html,/#rec\{width:154px;height:154px/);
   assert.match(html,/#clock\{font-size:64px/);
   assert.match(html,/\.studio-dock \.studio-nav\{display:grid;grid-template-columns:repeat\(4,1fr\)/);
@@ -910,7 +910,7 @@ test('texto: actualizar la explicación no escribe mensajes en la nota ni altera
   const render=new Function('$','editorFeedbackState',`let recEng='whisper',recording=true,paused=false,busy=false,outstanding=0,feeding=false,modelLoading=false,dead=false,modelErr='',nativeSession=null;${code};return refreshEditorFeedback;`)(id=>id==='text'?text:help,feedback);
   render();render();assert.equal(writes,1);assert.match(placeholder,/Grabando/);assert.equal(help.hidden,false);
   assert.equal(text.value,'Texto ficticio confirmado y editado.');
-  assert.match(html,/aria-describedby="selectionHelp transcriptionHelp"/);
+  assert.match(html,/aria-describedby="transcriptionHelp convTarget"/);
 });
 test('aviso único: permanece durante la captura sin trabajos pendientes y no simula inferencia activa',()=>{
   const f=new Function(html.match(/function transcriptionDockState\([\s\S]*?\n\}/)[0]+';return transcriptionDockState;')();
@@ -1127,11 +1127,11 @@ test('Aprendizaje: el aviso usa textContent y la corrección del diálogo tambi�
 test('Audio: pestaña renombrada, aviso verde de grabación completa y puntos de novedad', () => {
   const nav = html.match(/<nav class="studio-nav"[\s\S]*?<\/nav>/)[0];
   assert.match(nav, /data-delta-view="grabacion"[\s\S]*?<span>Audio<\/span>/);
-  assert.match(html, /<h2>Audio<\/h2>/);
+  assert.match(html, /<h2>Nueva nota<\/h2>/);
   for (const id of ['audioDone','audioDoneText','audioDoneDownload','audioDoneClose','audioDoneWait','audioShortcut','loadAudioBtn','loadAudioFile'])
     assert.ok(ids.includes(id), 'falta #' + id);
   assert.doesNotMatch(html, /id="audioNotice"/, 'el aviso fijo de la barra se reemplazó por el de la pestaña Audio');
-  assert.match(html, /\.audio-done\{[^}]*linear-gradient\(135deg,#1f9d6b,#2fd18f\)/);
+  assert.match(html, /\.audio-done\{background:var\(--success-bg\)/);
   assert.match(html, /\.then\(refreshAudioBox\)\.then\(\(\) => \{ if \(!audioSaveFailed && audioN\) showAudioDone\(\); \}\)/);
   assert.match(html, /mr\.start\(10000\); hideAudioDone\(\);/);
   // botón «Mis grabaciones» debajo del micrófono grande, antes de «Conservar también el audio»
@@ -1405,10 +1405,10 @@ test('Notas: la captura global va a hoja nueva y dentro de una hoja abierta se a
 });
 
 test('Notas: descartar pide confirmación y la recuperación automática guarda el estado del mensaje', () => {
-  assert.match(html, /confirm\('¿Descartar este mensaje sin guardar\?'\)/);
+  assert.match(html, /confirm\('¿Descartar esta nota sin guardar\?'\)/);
   assert.match(html, /const snap = \(\) => JSON\.stringify\(\{[^}]*conv: \{open: convOpenId, target: convTargetId, targetSet: convTargetSet, editing: convEditingId/);
   assert.match(html, /Se recuperó un mensaje sin guardar\. Tocá Guardar o Descartar\./);
-  assert.match(html, /confirm\('¿Borrar este mensaje\? No se puede deshacer\.'\)/);
+  assert.match(html, /confirm\('¿Borrar esta nota\? No se puede deshacer\.'\)/);
 });
 
 test('conversaciones: la clave nueva queda protegida por el cifrado', () => {

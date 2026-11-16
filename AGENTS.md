@@ -6,6 +6,13 @@
 
 **Leer también README.md y CAMBIOS.md antes de editar.**
 
+## Coordinación y autoría (acordado con el usuario, 16/11/2026)
+
+- Registrar **solo en documentación** quién implementó cada entrega: ChatGPT, Claude u otro responsable confirmado, rama/PR, SHA base, alcance, pruebas y pendientes. Usar CAMBIOS.md y el informe de continuidad. No poner nombres de IA, créditos ni identificación del agente en la interfaz.
+- Antes de comenzar, revisar main y PRs abiertos; no trabajar sobre una rama de otra IA ni atribuirle retrospectivamente cambios sin evidencia. Si hay trabajo concurrente, documentar qué archivos/área ocupa cada rama y coordinar a través del usuario/documentación. No afirmar comunicación directa entre agentes externos.
+- Vocabulario vigente: **nota** = cada texto escrito o transcripto; **hoja** = conjunto de notas con nombre editable. Fecha/hora inicial del título, y sello de guardado inmutable por nota. Audio solo a pedido, fuera de las burbujas.
+- Primera etapa autorizada: tema claro y disposición de chat; inicio listo para grabar, acceso fácil a hojas. Navegación final y anonimización de hoja con original recuperable son siguientes etapas. Ver el estado de rama en CONTINUAR-AQUI.md.
+
 ## Una sola versión oficial
 - Repositorio: ignabidon/notas-voz, rama activa: **main**.
 - Única aplicación web: **/index.html**.

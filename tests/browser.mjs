@@ -71,16 +71,31 @@ try {
  // Resized visual viewport / keyboard layout simulation: last line can scroll above dock.
  await call('Emulation.setTouchEmulationEnabled',{enabled:true});
  await call('Emulation.setDeviceMetricsOverride',{width:412,height:850,deviceScaleFactor:1,mobile:true});
- await run('document.querySelector(\'[data-delta-view="transcripcion"]\').click();document.getElementById("text").focus()');
+ await run('document.querySelector(\'[data-delta-view="transcripcion"]\').click();document.getElementById("convNewNote").click();document.getElementById("text").focus()');
  await settle();
  await call('Emulation.setDeviceMetricsOverride',{width:412,height:420,deviceScaleFactor:1,mobile:true});
  await settle();
  assert.equal(await run('document.body.classList.contains("keyboard-open")'),true,'teclado detectado por geometría');
  await run('const editor=document.getElementById("text");editor.value="Línea ficticia\\n".repeat(150);editor.setSelectionRange(editor.value.length,editor.value.length);editor.scrollIntoView({block:"end",behavior:"instant"});editor.scrollTop=editor.scrollHeight');
  await settle();
- const geometry=await run('(()=>{const t=document.getElementById("text"),d=document.querySelector(".studio-dock");return {bottom:t.getBoundingClientRect().bottom,dock:d.getBoundingClientRect().top,scroll:t.scrollTop,client:t.clientHeight,height:t.scrollHeight}})()');
+ const geometry=await run('(()=>{const t=document.getElementById("text"),d=document.querySelector(".studio-dock");return {bottom:t.getBoundingClientRect().bottom,dock:document.getElementById("studioDockNotes").getBoundingClientRect().top,top:t.getBoundingClientRect().top,scroll:t.scrollTop,client:t.clientHeight,height:t.scrollHeight}})()');
  console.log('Editor geometry',geometry);
- assert.ok(geometry.bottom<=geometry.dock && geometry.scroll+geometry.client>=geometry.height-2,'última línea libre de barra');
+ assert.ok(geometry.top>=0 && geometry.bottom<=geometry.dock && geometry.scroll+geometry.client>=geometry.height-2,'última línea libre de barra');
+ // Tema, contraste y composición: verificaciones sobre estilos calculados.
+ await call('Emulation.setDeviceMetricsOverride',{width:412,height:850,deviceScaleFactor:1,mobile:true});
+ await run('document.activeElement.blur();applyTextSize("normal");convClearComposer();');
+ assert.equal(await run('getComputedStyle(document.documentElement).colorScheme'),'light');
+ const ratios=await run(`(()=>{
+   const lum=c=>{const v=c.match(/[\\d.]+/g).slice(0,3).map(Number).map(n=>{n/=255;return n<=.04045?n/12.92:((n+.055)/1.055)**2.4});return v[0]*.2126+v[1]*.7152+v[2]*.0722};
+   return ['#save','#studioDockStart','#rec','#studioDockStop','#convTarget'].map(id=>{
+    const e=document.querySelector(id),s=getComputedStyle(e);let bg=s.backgroundColor,p=e;
+    while(bg==='rgba(0, 0, 0, 0)'&&(p=p.parentElement))bg=getComputedStyle(p).backgroundColor;
+    const a=lum(s.color),b=lum(bg);return {id,ratio:(Math.max(a,b)+.05)/(Math.min(a,b)+.05)};
+   });
+ })()`);
+ assert.ok(ratios.every(x=>x.ratio>=4.5),JSON.stringify(ratios));
+ await run('convBeginNew();document.getElementById("text").value="Primera nota de ejemplo. Recordar las ideas para la próxima reunión.";document.getElementById("text").dispatchEvent(new Event("input"));document.getElementById("save").click();convCommit(convRename(convStore.data,convOpenId,"Luciano · ejemplo ficticio"));');
+ await run('document.getElementById("text").value="Segunda nota: revisar lo pendiente y preparar el encuentro del lunes.";document.getElementById("text").dispatchEvent(new Event("input"));document.getElementById("save").click();');
  // Capturas de laboratorio con datos exclusivamente ficticios para revisión visual.
  for(const view of ['grabacion','anonimizar','transcripcion']){
   await call('Emulation.setDeviceMetricsOverride',{width:412,height:850,deviceScaleFactor:1,mobile:true});

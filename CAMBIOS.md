@@ -1,3 +1,14 @@
+## 16/11/2026 · Clínica contemporánea y notas en chat — ChatGPT
+
+- **Responsable:** ChatGPT (Codex). Rama: `rediseno-04-clinica-chat-chatgpt`. Base: `089ebbecfccf596fa8e5505d44224909bebb6b11`. Autorización: el usuario pidió comenzar con la estética clara y disposición de chat; navegación final y ampliación de anonimización quedan para la siguiente etapa.
+- Paleta clara unificada, azul petróleo, controles y estados de error/captura/protección adaptados. Sin nuevas fuentes, dependencias ni conexiones.
+- Inicio listo para grabar con accesos «Ver hojas guardadas» y «Escribir una nota». Lista de hojas separada de la hoja abierta; notas como burbujas y editor en la barra inferior, junto a Grabar y Guardar. La misma medida de barra reserva espacio para el contenido y teclado.
+- «Nueva nota» desde una hoja inicia un destino independiente. Si hay borrador, edición, grabación o transcripción activa, conserva el contenido y destino y explica cómo continuar. Herramientas de corrección, selección, copia y exportación agrupadas; ninguna eliminada.
+- **Terminología del usuario:** nota = una grabación transcripta o texto manual. Hoja = contenedor con nombre (fecha/hora inicial salvo nombre elegido). Las notas nuevas dentro de una hoja se agregan a ella; una nota independiente se puede mover después. El sello de cada nota continúa siendo la hora de guardado.
+- **Anonimización acordada para próxima etapa:** actúa sobre la nota que se transcribe; añadir después acción para toda la hoja. El original debe ser recuperable incluso después de guardar/reabrir. El Deshacer actual no garantiza esa recuperación persistente: no presentar ese requisito como implementado por esta entrega.
+- Pruebas locales: 128/128 Node. Chromium local no pudo arrancar por restricciones de sockets del entorno; suites de navegador y capturas se ejecutan mediante CI en esta rama. Registrar resultado final antes de integrar.
+- **Publicación:** pendiente de revisión visual del usuario; no unir a main en esta entrega. **Motorola:** sin probar; el usuario confirmó que todavía no probó la fase anterior.
+
 ## 16/11/2026 · Informe de continuidad (SOLO documentación)
 
 - Tras probar la fase 3, el usuario notó que **la estética no cambió**: es correcto, la estética clara «Clínica contemporánea» se aprobó y se mostró en maquetas, pero no se implementó. Nuevo [informe de continuidad](docs/INFORME-CONTINUIDAD-2026-11-16.md) con lo hecho, lo que falta y el orden recomendado; `CONTINUAR-AQUI.md`, `CLAUDE.md`, `AGENTS.md` y `README.md` apuntan a él. Sin cambios en la app.

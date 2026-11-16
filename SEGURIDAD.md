@@ -1,3 +1,7 @@
+## 16/11/2026 · Presentación clara y chat (ChatGPT)
+
+Sin nuevos datos persistidos, claves, dependencias, orígenes ni cambios de CSP, cifrado, parámetros de Whisper o almacenamiento de audio. El editor existente cambia de ubicación y sigue dentro de la barra protegida. Las notas/títulos siguen mostrándose con textContent. La anonimización con recuperación persistente de originales es un requisito de la etapa siguiente, no una garantía actual.
+
 ## 15/11/2026 · Claridad visual
 
 Cambio de presentación y ayudas; sin datos persistentes nuevos, claves nuevas, orígenes, dependencias ni cambios de CSP/Whisper. Advertencias de anonimización, importación y borrado siguen visibles. Prueba física de CSP/MP3 en Motorola sigue pendiente.
