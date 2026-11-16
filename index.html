@@ -1037,6 +1037,7 @@ body.delta-recording #convComposer{display:none!important}
     <button type="button" id="transcriptionDockCancel" hidden>Cancelar transcripción</button>
   </section>
   <div id="flash" role="status" aria-live="polite"></div>
+  <p id="tabLockWarn" class="warn" role="alert" hidden></p>
   <div id="convComposer" aria-label="Escribir una nota">    <p id="convTarget" class="conv-target" role="status"></p>
     <div class="conv-compose-actions"><button type="button" id="convToolsToggle">Herramientas</button><button type="button" class="ghost danger" id="convDiscard">Descartar</button><button type="button" class="ghost" id="convCancelEdit" hidden>Cancelar edición</button></div>
 <label for="text">Nota sin guardar</label>
@@ -1286,7 +1287,8 @@ async function vaultOpenRecord(key, id, name, raw){
    y escritura cifrada en segundo plano. Bloqueada, no lee ni escribe nada protegido. */
 function createVault(storage){
   const v = {state: 'off', header: null, key: null, audioKey: null, cache: new Map(), pending: new Set(), queue: Promise.resolve(), scheduled: false,
-    error: '', leftovers: [], damaged: [], frozen: new Set(), onError: () => {}};
+    error: '', leftovers: [], damaged: [], frozen: new Set(), onError: () => {},
+    readOnly: false, disableGuard: null};
   try {
     const raw = storage.getItem(VAULT_HEADER);
     if (raw !== null) { v.state = 'locked'; try { v.header = vaultParseHeader(raw); } catch (e) { v.state = 'broken'; } }
@@ -1294,8 +1296,15 @@ function createVault(storage){
   const isProtected = k => Object.prototype.hasOwnProperty.call(VAULT_KEYS, k);
   const recKey = k => VAULT_REC_PREFIX + VAULT_KEYS[k];
   v.setError = msg => { v.error = msg; v.onError(msg); };
+  /* Una sola pestaña escribe (diseño 2.5). La otra queda en «solo lectura»: ve los datos pero no guarda nada protegido,
+     ni notas, ni borrador, ni personas, ni diccionario, ni la cabecera. Así no pisa lo que guarda la primera. */
+  const readOnlyError = () => { const e = new Error('DictaNota está abierta en otra pestaña: en esta no se guarda nada. Cerrala y recargá esta.'); e.name = 'OtraPestana'; return e; };
+  const assertWritable = () => { if (v.readOnly) throw readOnlyError(); };
+  // ¿Llegó cifrado al almacenamiento? (no basta con la copia en memoria: diseño 2.1, punto 3)
+  v.saved = k => !v.pending.has(k) && !v.frozen.has(k);
   v.flush = () => {
     v.queue = v.queue.then(async () => {
+      if (v.readOnly) return;
       const keys = [...v.pending]; v.pending.clear();
       for (const k of keys) {
         if (v.frozen.has(k)) { v.setError('Hay datos cifrados dañados que no se pueden reemplazar sin espacio libre; los cambios de esa parte no se guardan.'); continue; }
@@ -1311,8 +1320,8 @@ function createVault(storage){
   const schedule = k => { v.pending.add(k); if (!v.scheduled) { v.scheduled = true; setTimeout(() => { v.scheduled = false; v.flush(); }, 0); } };
   v.store = {
     getItem(k){ if (!isProtected(k) || v.state === 'off') return storage.getItem(k); if (v.state !== 'open') return null; return v.cache.has(k) ? v.cache.get(k) : null; },
-    setItem(k, value){ if (!isProtected(k) || v.state === 'off') return storage.setItem(k, value); if (v.state !== 'open') return; v.cache.set(k, String(value)); schedule(k); },
-    removeItem(k){ if (!isProtected(k) || v.state === 'off') return storage.removeItem(k); if (v.state !== 'open') return; v.cache.delete(k); schedule(k); }
+    setItem(k, value){ if (!isProtected(k) || v.state === 'off') return storage.setItem(k, value); if (v.state !== 'open') return; assertWritable(); v.cache.set(k, String(value)); schedule(k); },
+    removeItem(k){ if (!isProtected(k) || v.state === 'off') return storage.removeItem(k); if (v.state !== 'open') return; assertWritable(); v.cache.delete(k); schedule(k); }
   };
   // Recibe la clave de datos en bruto y la pone en cero al terminar, salga bien o mal (diseño 2.4).
   async function openWith(dek){
@@ -1354,6 +1363,8 @@ function createVault(storage){
   v.unlockBio = async prfOutput => { await openWith(await vaultUnwrapBio(v.header, prfOutput)); };
   v.enable = async password => {
     if (v.state !== 'off') throw new Error('La protección ya está activada.');
+    // Otra pestaña pudo activarla mientras esta seguía sin protección: nunca reemplazar su cabecera (perdería sus datos y audios).
+    if (storage.getItem(VAULT_HEADER) !== null) throw new Error('La protección ya se activó en otra pestaña. Recargá esta página.');
     const {header, dek, recovery} = await vaultCreate(password);
     const key = await vaultImportDataKey(dek), audioKey = await vaultDeriveAudioKey(dek, header.id);
     const cache = new Map(), records = new Map();
@@ -1379,16 +1390,19 @@ function createVault(storage){
   };
   v.checkPassword = password => vaultUnwrapPassword(v.header, password);
   v.changePassword = async (current, next) => {
+    assertWritable();
     const dek = await vaultUnwrapPassword(v.header, current);
     const header = await vaultWithPassword(v.header, dek, next); dek.fill(0);
     storage.setItem(VAULT_HEADER, JSON.stringify(header)); v.header = header;
   };
   v.addBio = async (dek, credId, prfSalt, prfOutput) => {
+    assertWritable();
     const header = await vaultWithBio(v.header, dek, credId, prfSalt, prfOutput);
     if (!(await vaultUnwrapBio(header, prfOutput)).every((x, i) => x === dek[i])) throw new Error('La verificación de la huella falló.');
     storage.setItem(VAULT_HEADER, JSON.stringify(header)); v.header = header;
   };
   v.newRecovery = async password => {
+    assertWritable();
     const dek = await vaultUnwrapPassword(v.header, password);
     const recovery = vaultNewRecoveryCode(), salt = vaultRandom(16);
     const kek = await vaultKekFromSecret(vaultEnc.encode(vaultNormalizeRecovery(recovery)), salt, 'dictanota recuperacion v1');
@@ -1397,8 +1411,13 @@ function createVault(storage){
     dek.fill(0); storage.setItem(VAULT_HEADER, JSON.stringify(header)); v.header = header;
     return recovery;
   };
-  v.removeBio = () => { const header = {...v.header, bio: null}; storage.setItem(VAULT_HEADER, JSON.stringify(header)); v.header = header; };
+  v.removeBio = () => { assertWritable(); const header = {...v.header, bio: null}; storage.setItem(VAULT_HEADER, JSON.stringify(header)); v.header = header; };
+  /* Quitar la protección borra la cabecera, y con ella la única forma de abrir los audios cifrados por nota.
+     Hasta que exista el recorrido completo (copia + borrar audios, D3/AO), disableGuard lo impide si hay audios. */
   v.disable = async password => {
+    assertWritable();
+    const why = v.disableGuard ? await v.disableGuard() : '';
+    if (why) throw new Error(why);
     (await vaultUnwrapPassword(v.header, password)).fill(0);
     await v.flush();
     if (v.pending.size) throw new Error('Hay cambios sin guardar; no se quitó la protección.');
@@ -1435,7 +1454,20 @@ function vaultShowLock(){
   vaultEl('vaultBioUnlock').hidden = broken || !(vault.header && vault.header.bio);
   if (!broken && !(vault.header && vault.header.bio)) setTimeout(() => vaultEl('vaultLockPass').focus(), 50);
 }
+/* Candado de una sola pestaña (diseño 2.5): la primera pestaña que abre la protección es la única que escribe.
+   Se toma ANTES de cargar notas y borrador; si otra pestaña lo tiene, esta queda en solo lectura (vault.readOnly). */
+let vaultTabLockP = null;
+function vaultTakeTabLock(){
+  if (!vaultTabLockP) vaultTabLockP = anTakeLock().catch(() => ({ok: true, soportado: false, release(){}})).then(l => {
+    vault.readOnly = !l.ok;
+    const w = vaultEl('tabLockWarn');
+    if (w) { w.hidden = l.ok; w.textContent = l.ok ? '' : 'DictaNota está abierta en otra pestaña. En esta podés leer, pero no se guarda nada (ni notas, ni borrador, ni audios). Cerrá la otra pestaña y recargá esta.'; }
+    return l.ok;
+  });
+  return vaultTabLockP;
+}
 async function vaultAfterUnlock(){
+  await vaultTakeTabLock();
   vaultEl('vaultLock').hidden = true; vaultSetInert(false);
   vaultEl('vaultLockPass').value = ''; vaultEl('vaultRecCode').value = ''; vaultEl('vaultRecNew').value = ''; vaultEl('vaultRecNew2').value = '';
   vaultLastActivity = Date.now();
@@ -1578,6 +1610,7 @@ function vaultInitUI(){
     try {
       try { vaultBeforeLock(); } catch (e) {}
       const {recovery, dek} = await vault.enable(vaultEl('vaultNew').value);
+      await vaultTakeTabLock();
       vaultEl('vaultNew').value = ''; vaultEl('vaultNew2').value = ''; vaultEl('vaultSetup').hidden = true;
       vaultShowRecovery(recovery, true);
       vaultEl('vaultRecoveryDone').onclick = () => {
@@ -1615,6 +1648,9 @@ function vaultInitUI(){
   });
   vaultEl('vaultDisable').addEventListener('click', async () => {
     if (vaultBusy()) { vaultPanelMsg('Primero detené y terminá de transcribir.'); return; }
+    if (vault.readOnly) { vaultPanelMsg('DictaNota está abierta en otra pestaña: desde esta no se puede quitar la protección.'); return; }
+    const why = vault.disableGuard ? await vault.disableGuard() : '';
+    if (why) { vaultPanelMsg(why); return; }
     if (!confirm('¿Quitar la protección? Las notas, el borrador, las personas y el diccionario vuelven a guardarse SIN cifrar en este navegador.')) return;
     const pw = await vaultAskPassword('Confirmá tu contraseña para quitar la protección'); if (pw === null) return;
     try { await vault.disable(pw); vaultRefreshPanel(); vaultPanelMsg('Protección quitada. Los datos quedaron sin cifrar en este navegador.'); } catch (e) { vaultPanelMsg(vaultFriendly(e)); }
@@ -2095,6 +2131,10 @@ function convSetAudio(data, entryId, audioId, durationMs){
   if (!data.entries.some(e => e.id === entryId)) throw new Error('El mensaje no existe.');
   return {...data, entries: data.entries.map(x => x.id === entryId ? convCleanEntry({...x, audioId, durationMs}) : x)};
 }
+/* ¿Alguna nota (salvo exceptEntryId) usa este audio? Borrar o reasignar un audio en uso cruzaría audios entre notas. */
+function convAudioInUse(data, audioId, exceptEntryId){
+  return typeof audioId === 'string' && !!audioId && data.entries.some(e => e.audioId === audioId && e.id !== exceptEntryId);
+}
 function convDeleteEntry(data, entryId){
   if (!data.entries.some(e => e.id === entryId)) throw new Error('El mensaje no existe.');
   return {...data, entries: data.entries.filter(e => e.id !== entryId)};
@@ -2181,10 +2221,16 @@ function convMakeStore(store, ready){
       if (readWarning) return {ok: false, error: 'Hay datos de conversaciones dañados: no se sobrescriben.'};
       const err = convCheckWrite(data, next); if (err) return {ok: false, error: err};
       const json = JSON.stringify(next);
-      try { store.setItem(CONV_KEY, json); } catch (e) { return {ok: false, error: 'No se pudo guardar en este navegador.'}; }
+      try { store.setItem(CONV_KEY, json); } catch (e) { return {ok: false, error: e && e.name === 'OtraPestana' ? e.message : 'No se pudo guardar en este navegador.'}; }
       let back; try { back = store.getItem(CONV_KEY); } catch (e) { back = null; }
       if (back !== json) return {ok: false, error: 'No se pudo comprobar el guardado.'};
       data = next; return {ok: true};
+    },
+    /* Vuelve al estado anterior a un save() cuyo cifrado no llegó al almacenamiento (falta de espacio).
+       prevRaw: lo que había en el almacén antes; null si no había nada. */
+    revert(prevData, prevRaw){
+      data = prevData;
+      try { if (prevRaw === null) store.removeItem(CONV_KEY); else store.setItem(CONV_KEY, prevRaw); } catch (e) {}
     },
     migrate(notes){
       if (data === null) return {ok: false, added: 0, error: 'Las conversaciones no están cargadas.'};
@@ -2258,6 +2304,10 @@ const convStore = convMakeStore(vaultStore, () => vault.state === 'off' || vault
 let convOpenId = null, convTargetId = null, convTargetSet = false, convEditingId = null, convFromAudio = false, convRecordedAt = null;
 let convComposeNew = false;
 let convAudioId = null, convAudioMs = null;   // E2: audio cifrado pendiente de unir a la nota que se está escribiendo o editando
+// E2 (correcciones): convAudioBase = cuántas partes tenía el audio de la nota en edición antes de grabarle encima (null: no se agregó nada).
+// convCtx cambia cada vez que el editor pasa a otra nota: un audio que termina de guardarse tarde solo se une si sigue siendo la misma.
+let convAudioBase = null, convCtx = 0, convSaving = false;
+const convAudioWork = () => recording || busy || outstanding > 0 || feeding || anBusyN > 0 || convSaving;
 let convUndoData = null, convUndoTimer = null, convMoveMode = null;
 const convHas = id => !!(convStore.data && convStore.data.conversations.some(c => c.id === id));
 const convTitleOf = id => { const c = convStore.data && convStore.data.conversations.find(x => x.id === id); return c ? c.title : ''; };
@@ -2354,18 +2404,29 @@ async function convCopy(text){
 }
 function convEdit(id){
   const e = convEntry(id); if (!e) return;
-  if ($('text').value.trim() && !convEditingId) return flash('Primero guardá o descartá la nota que estás escribiendo.');
+  if (convEditingId === id) { $('text').focus(); return; }
+  if (convAudioWork()) return flash('Esperá a que termine la grabación, la transcripción o el guardado antes de editar otra nota.');
+  if (!convEditingId && ($('text').value.trim() || convAudioId)) return flash('Primero guardá o descartá la nota que estás escribiendo.');
+  // Pasar de editar una nota a otra: solo si la actual no tiene cambios ni audio agregado (nunca se lleva el audio a la otra).
+  if (convEditingId && (convAudioId || $('text').value !== baseline)) return flash('Primero guardá o cancelá la edición de la nota actual. Su audio y sus cambios no pasan a otra nota.');
+  convCtx++; convAudioId = null; convAudioMs = null; convAudioBase = null;
   convEditingId = id; cur = null; $('text').value = e.text; baseline = e.text; resetEdit(); resetLive(); updWC(); saveDraft();
   renderConv(); $('text').focus();
 }
 function convDelete(id){
   const e = convEntry(id), audioId = e && e.audioId;
-  if (!convStore.data || !confirm(audioId ? '¿Borrar esta nota y su audio? No se puede deshacer.' : '¿Borrar esta nota? No se puede deshacer.')) return;
-  if (audioId && anBusyN > 0) return flash('Esperá a que termine de guardarse el audio cifrado.');
+  if (!convStore.data || !e) return;
+  if (convEditingId === id && convAudioWork()) return flash('Esperá a que termine la grabación o el guardado de esta nota.');
+  if (audioId && (anBusyN > 0 || convSaving)) return flash('Esperá a que termine de guardarse el audio cifrado.');
+  // Nunca borrar un audio que todavía usa otra nota, o que está unido a la nota que se edita en el editor.
+  const shared = !!audioId && (convAudioInUse(convStore.data, audioId, id) || (convAudioId === audioId && convEditingId !== id));
+  const own = !!audioId && !shared;
+  if (!confirm(own ? '¿Borrar esta nota y su audio? No se puede deshacer.' : '¿Borrar esta nota? No se puede deshacer.')) return;
   let next; try { next = convDeleteEntry(convStore.data, id); } catch (e) { return flash(e.message); }
   if (convEditingId === id) convClearComposer();
   // Primero se borra la nota; recién después su audio (si se corta en el medio, queda un audio sin nota, nunca una nota rota).
-  if (convCommit(next, 'Nota borrada.') && audioId) vault.flush().then(() => { if (!vault.pending.size) anDeleteAudio(audioId); });
+  if (!convCommit(next, shared ? 'Nota borrada. Su audio lo usa otra nota y se conserva.' : 'Nota borrada.') || !own) return;
+  vault.flush().then(() => { if (vault.saved(CONV_KEY) && !convAudioInUse(convStore.data, audioId) && convAudioId !== audioId) anDeleteAudio(audioId); });
 }
 function convAskMove(mode, entryId){
   if (!convStore.data || !convOpenId) return;
@@ -2391,7 +2452,7 @@ $('convMoveAllBtn').onclick = () => convAskMove('all');
 $('convBack').onclick = () => { convComposeNew = false; convOpenId = null; if (!convTargetSet && !convEditingId) convTargetId = null; renderConv(); };
 /* Nueva nota global: nunca cambia silenciosamente el destino de un borrador o captura. */
 function convBeginNew(){
-  if (recording || busy || outstanding > 0 || feeding || anBusyN > 0) { flash('Terminá la grabación o transcripción antes de crear otra nota.'); return false; }
+  if (convAudioWork()) { flash('Terminá la grabación o transcripción antes de crear otra nota.'); return false; }
   if ($('text').value.trim() || convEditingId) {
     document.querySelector('[data-delta-view="transcripcion"]').click();
     renderConv(); flash('Primero guardá o descartá la nota pendiente. Su cuaderno de destino no cambió.'); return false;
@@ -2430,30 +2491,53 @@ $('convDeleteEmpty').onclick = () => {
 function convClearComposer(){
   cur = null; $('title').value = ''; $('text').value = ''; baseline = ''; tags = []; renderChips();
   anonBackup = null; $('undo').disabled = true; $('anon').disabled = false; $('anonRes').textContent = ''; $('susBox').innerHTML = '';
-  convAudioId = null; convAudioMs = null;
+  convAudioId = null; convAudioMs = null; convAudioBase = null; convCtx++;
   resetLive(); convResetPending(); updWC(); saveDraft(); renderConv();
 }
 $('convDiscard').onclick = () => {
-  if (anBusyN > 0) return flash('Esperá a que termine de guardarse el audio cifrado.');
-  // El audio pendiente solo se borra si es de una nota nueva; si se estaba editando, queda «sin nota» (D8).
-  const pendingAudio = !convEditingId && convAudioId;
-  if (!$('text').value.trim() && !pendingAudio) { convComposeNew = false; convClearComposer(); return; }
+  if (anBusyN > 0 || convSaving) return flash('Esperá a que termine de guardarse el audio cifrado.');
+  if (convEditingId) return;   // editando, el botón es «Cancelar edición»
+  // El audio pendiente de una nota nueva se borra, salvo que (por un dato viejo) ya lo use otra nota.
+  const pendingAudio = convAudioId && !(convStore.data && convAudioInUse(convStore.data, convAudioId)) ? convAudioId : null;
+  if (!$('text').value.trim() && !convAudioId) { convComposeNew = false; convClearComposer(); return; }
   if (!pendingOk() || !confirm(pendingAudio ? '¿Descartar esta nota sin guardar? También se borra su audio.' : '¿Descartar esta nota sin guardar?')) return;
-  convComposeNew = false; convClearComposer(); flash('Nota descartada.');
+  convComposeNew = false; convClearComposer(); flash(pendingAudio ? 'Nota descartada, con su audio.' : 'Nota descartada.');
   if (pendingAudio) anDeleteAudio(pendingAudio);
 };
-$('convCancelEdit').onclick = () => { convClearComposer(); flash('Edición cancelada: la nota guardado no cambió.'); };
+/* Cancelar edición: la nota guardada no cambia, y tampoco su audio. Lo grabado o cargado durante la edición se quita:
+   las partes agregadas al audio de la nota, o el audio nuevo si la nota no tenía. El mensaje dice exactamente eso. */
+$('convCancelEdit').onclick = async () => {
+  if (convAudioWork()) return flash('Esperá a que termine la grabación, la transcripción o el guardado del audio.');
+  const e = convEditingId && convEntry(convEditingId), audio = convAudioId, base = convAudioBase;
+  const onNote = !!(e && audio && audio === e.audioId);
+  const added = !!audio && (!onNote || base !== null);
+  if (added && !confirm('¿Cancelar la edición? La nota guardada no cambia y se quita el audio grabado o cargado durante la edición.')) return;
+  if (added && onNote) {
+    convSaving = true;
+    let ok = false; try { ok = await anTruncateAudio(audio, base); } finally { convSaving = false; }
+    if (!ok) return flash('No se pudo quitar el audio agregado durante la edición. La edición sigue abierta: probá de nuevo, o guardá para conservarlo.');
+  }
+  convClearComposer();
+  if (!added) return flash('Edición cancelada: la nota guardada no cambió.');
+  if (!onNote && !(convStore.data && convAudioInUse(convStore.data, audio))) await anDeleteAudio(audio);
+  flash('Edición cancelada: la nota guardada no cambió y se quitó el audio agregado durante la edición.');
+};
 $('text').addEventListener('input', () => {
   if (convEditingId) return;
   if ($('text').value.trim()) { if (!convTargetSet) convStartPending(false); }
   else if (convTargetSet) { convResetPending(); refreshConvTarget(); }
 });
-$('save').onclick = () => {
+$('save').onclick = async () => {
+  if (convSaving) return;
   const text = $('text').value; if (!text.trim()) return flash('No hay texto para guardar.');
   if (anBusyN > 0) return flash('Esperá unos segundos: se está guardando el audio cifrado.');
   if (!pendingOk()) return;
   if (!convStore.data) return flash('No se guardó: los cuadernos no están disponibles. ' + ($('convMsg').textContent || 'Desbloqueá la app y volvé a intentar.'));
+  if (vault.readOnly) return flash('No se guardó: DictaNota está abierta en otra pestaña. El texto sigue en el editor; cerrá la otra pestaña y recargá esta.');
   const now = Date.now(), editing = convEditingId && convEntry(convEditingId);
+  // Un audio pendiente solo se une a SU nota: nunca a otra que ya tiene audio ni a uno que use otra nota.
+  if (convAudioId && (convAudioInUse(convStore.data, convAudioId, editing ? editing.id : null) || (editing && editing.audioId && editing.audioId !== convAudioId)))
+    return flash('No se guardó: el audio pendiente pertenece a otra nota. El texto sigue en el editor; copialo y cancelá o descartá.');
   let next, dest, savedAt;
   try {
     if (editing) {
@@ -2465,11 +2549,20 @@ $('save').onclick = () => {
       next = r.data; dest = r.conversation.id; savedAt = now;
     }
   } catch (e) { return flash('No se guardó: ' + e.message); }
-  const linked = convAudioId;
+  const before = convStore.data;
+  let prevRaw = null; try { prevRaw = vaultStore.getItem(CONV_KEY); } catch (e) {}
   const w = convStore.save(next);
   if (!w.ok) return flash('No se guardó: ' + w.error + ' El texto sigue en el editor.');
-  // Con audio: confirmar que la nota llegó cifrada al almacenamiento (2.5, paso 4). Si no, el audio no se pierde: queda sin nota.
-  if (linked && vault.state === 'open') vault.flush().then(() => { if (vault.pending.size) flash('Atención: la nota con audio todavía no se pudo guardar cifrada (falta espacio). No cierres la app.'); });
+  // Recién se da por guardado cuando llegó cifrado al almacenamiento (2.5, paso 4). Mientras, el editor no cambia.
+  if (vault.state === 'open') {
+    convSaving = true; $('text').readOnly = true;
+    let ok = false;
+    try { await vault.flush(); ok = vault.saved(CONV_KEY); } finally { convSaving = false; $('text').readOnly = false; }
+    if (!ok) {
+      convStore.revert(before, prevRaw); renderConv();
+      return flash('No se guardó: no hay espacio para guardar cifrado. El texto' + (convAudioId ? ' y su audio siguen' : ' sigue') + ' en el editor; liberá espacio y tocá Guardar de nuevo.');
+    }
+  }
   if ($('learnAuto').checked) learnFromEdits();
   else { showSuggestions(suggest(baseline, text, D.rules.map(r => r.a.toLowerCase()))); baseline = text; }
   convComposeNew = false; convOpenId = dest; convClearComposer();
@@ -3810,7 +3903,7 @@ function anReview(metas, chunkCounts, noteAudioIds, draftAudioIds){
   const notasSinAudio = [...used].filter(id => !seen.has(id));
   return {audios, notasSinAudio};
 }
-/* Candado de una sola pestaña (2.5). Sin conectar a la app en E1. */
+/* Candado de una sola pestaña (2.5). Desde las correcciones de E2 lo usa toda la app (vaultTakeTabLock): notas, borrador, personas, diccionario, cabecera y audios. */
 function anTakeLock(nav){
   nav = nav || globalThis.navigator;
   if (!nav || !nav.locks || typeof nav.locks.request !== 'function') return Promise.resolve({ok: true, soportado: false, release(){}});
@@ -3934,7 +4027,8 @@ async function anOpenChunk(cek, hid, audioId, part, n, blob){
 function anValidDetail(d){
   return !!d && typeof d === 'object' && Array.isArray(d.parts) && d.parts.every(p => p && typeof p === 'object' &&
     typeof p.mime === 'string' && p.mime.length < 100 && anIsInt(p.chunks) && anIsInt(p.bytes) && (p.ms === null || anIsInt(p.ms)) &&
-    (p.origin === 'grabado' || p.origin === 'cargado') && typeof p.complete === 'boolean' && (p.name == null || (typeof p.name === 'string' && p.name.length <= 255)));
+    (p.origin === 'grabado' || p.origin === 'cargado') && typeof p.complete === 'boolean' && (p.name == null || (typeof p.name === 'string' && p.name.length <= 255)) &&
+    (p.incompleta === undefined || typeof p.incompleta === 'boolean') && (p.interrumpida === undefined || typeof p.interrumpida === 'boolean'));
 }
 const anSealDetail = async (kAudio, hid, audioId, detail) => { if (!anValidDetail(detail)) throw new Error('detalle de audio inválido'); return anBoxSeal(kAudio, anEnc.encode(JSON.stringify(detail)), anAadMeta(hid, audioId)); };
 async function anOpenDetail(kAudio, hid, audioId, box){
@@ -3942,13 +4036,19 @@ async function anOpenDetail(kAudio, hid, audioId, box){
   if (!anValidDetail(d)) throw new Error('detalle de audio inválido');
   return d;
 }
-const anTotalMs = detail => detail.parts.reduce((t, p) => t + (p.ms || 0), 0);
+/* Duración total, solo si se conoce la de todas las partes. Una parte incompleta (sin lugar, error) o cortada sin
+   duración devuelve null: nunca se muestra una duración «completa» que el audio guardado no tiene. */
+const anTotalMs = detail => detail.parts.some(p => !anIsInt(p.ms) || p.incompleta) ? null : detail.parts.reduce((t, p) => t + p.ms, 0);
+const anIsIncomplete = detail => detail.parts.some(p => p.incompleta || p.interrumpida || !anIsInt(p.ms));
 /* Dónde va una grabación o un archivo nuevo: ¿parte nueva de un audio que ya existe, o audio nuevo?
    Editando una nota con audio → parte nueva de ese audio. Nota sin guardar con audio pendiente cuyo texto
    se conserva → parte nueva. En cualquier otro caso, audio nuevo (el anterior, si lo había, queda «sin nota»:
-   nunca se borra solo, D8). Vale igual para grabaciones y archivos cargados. */
+   nunca se borra solo, D8). Vale igual para grabaciones y archivos cargados.
+   Editando una nota SIN audio: la primera grabación crea uno nuevo y las siguientes de esa misma edición se suman
+   como partes (antes cada una creaba otro y la anterior quedaba sin nota). «obligatorio»: si el audio de la nota
+   no se puede ampliar (dañado, cortado), no se crea otro en su lugar. */
 function anPickTarget(s){
-  if (s.editing) return s.editingAudioId ? {mode: 'parte', id: s.editingAudioId} : {mode: 'nuevo'};
+  if (s.editing) return s.editingAudioId ? {mode: 'parte', id: s.editingAudioId, obligatorio: true} : (s.pendingAudioId ? {mode: 'parte', id: s.pendingAudioId} : {mode: 'nuevo'});
   if (s.pendingAudioId && !s.replace) return {mode: 'parte', id: s.pendingAudioId};
   return {mode: 'nuevo'};
 }
@@ -3961,6 +4061,16 @@ function anCloseDetail(detail, parts, lastCount, lastBytes){
     else out.parts.splice(i, 1);
   }
   return out;
+}
+/* Detalle recortado a las primeras «keep» partes (cancelar una edición que agregó partes). */
+function anTruncateDetail(detail, keep){
+  if (!anIsInt(keep) || keep < 1 || !detail || !Array.isArray(detail.parts) || keep > detail.parts.length) throw new Error('recorte inválido');
+  return {parts: detail.parts.slice(0, keep).map(p => ({...p}))};
+}
+/* Recorta un audio: la ficha y el borrado de los fragmentos sobrantes van juntos, o ninguno. */
+function anTruncate(db, meta, keep){
+  if (!anValidMeta(meta) || meta.parts !== keep) return Promise.reject(new Error('ficha de audio inválida'));
+  return anTx(db, ['meta', 'chunks'], 'readwrite', t => { t.objectStore('meta').put(meta); t.objectStore('chunks').delete(IDBKeyRange.bound(anChunkKey(meta.id, keep, 0), [meta.id, Infinity, Infinity])); });
 }
 /* Lee y descifra un audio entero, parte por parte. Comprueba que no falte ni sobre ningún fragmento. */
 async function anReadAudio(db, kAudio, hid, id){
@@ -3981,46 +4091,67 @@ async function anReadAudio(db, kAudio, hid, id){
 /* ---------- Audio por nota en uso (E2) ----------
    Solo con la protección abierta y «Conservar audio» encendido. Con la protección apagada,
    «Conservar audio» sigue usando la base histórica, como antes (D2). El reproductor llega en E3. */
-let anDbP = null, anLockP = null, anBusyN = 0;
+let anDbP = null, anBusyN = 0;
 const anUsable = () => vault.state === 'open' && !!vault.audioKey && !!vault.header;
 function anDb(){
   if (!anDbP) { const p = anDbP = anOpen(); p.catch(() => { if (anDbP === p) anDbP = null; }); }
   return anDbP;
 }
-/* Candado de una sola pestaña: la primera que abre la bóveda es la única que escribe audios. */
-function anLock(){ if (!anLockP) anLockP = anTakeLock().catch(() => ({ok: true, soportado: false, release(){}})); return anLockP; }
+/* Candado de una sola pestaña: es el mismo de toda la app (vaultTakeTabLock). En la otra pestaña no se escriben audios. */
 let anLockWarned = false;
 async function anLockOk(){
-  const l = await anLock();
-  if (!l.ok && !anLockWarned) { anLockWarned = true; flash('DictaNota está abierta en otra pestaña: en esta no se guardan audios. Cerrá la otra y recargá.'); }
-  return l.ok;
+  const ok = await vaultTakeTabLock();
+  if (!ok && !anLockWarned) { anLockWarned = true; flash('DictaNota está abierta en otra pestaña: en esta no se guardan audios. Cerrá la otra y recargá.'); }
+  return ok;
 }
 function anTargetNow(){
   const e = convEditingId && convEntry(convEditingId);
   return anPickTarget({editing: !!e, editingAudioId: e ? e.audioId : null, pendingAudioId: convAudioId, replace: $('replace').checked});
 }
 const anErrName = e => (e && e.name) || (typeof e === 'string' ? e : 'Error de almacenamiento');
-/* Cuando el audio quedó guardado: se anota en el borrador para unirlo a la nota al tocar Guardar. */
-function anLinkPending(id, ms){ convAudioId = id; convAudioMs = ms; saveDraft(); }
+/* Cuando el audio quedó guardado: se anota en el borrador para unirlo a la nota al tocar Guardar.
+   Solo si el editor sigue en la misma nota en la que empezó (convCtx): si no, queda «sin nota» (D8) y no se cruza. */
+function anLinkPending(job, id, ms){
+  if (job.ctx !== convCtx) {
+    logDiag('Audio cifrado: terminó de guardarse después de cambiar de nota; queda sin nota.');
+    if (!job.unlinkedWarned) { job.unlinkedWarned = true; flash('El audio terminó de guardarse cuando ya estabas en otra nota: quedó guardado aparte, sin unirse a ninguna.'); }
+    return false;
+  }
+  if (job.baseParts != null && convAudioBase === null && convEditingId) convAudioBase = job.baseParts;
+  convAudioId = id; convAudioMs = ms; saveDraft(); return true;
+}
+/* Prepara la parte nueva de un audio que ya existe. Si el audio está dañado o no se puede abrir, no lo toca. */
+async function anOpenForPart(db, kAudio, hid, target){
+  const m = await anGetMeta(db, target.id);
+  if (m && anValidMeta(m) && m.state === 'cerrado' && m.key && m.sealed) {
+    try { return {m, old: await anOpenDetail(kAudio, hid, m.id, m.sealed), cek: await anOpenCek(kAudio, hid, m.id, m.key)}; }
+    catch (e) { anDamaged.add(m.id); }
+  }
+  return null;
+}
+const AN_DAMAGED_MSG = 'El audio de esta nota está dañado o incompleto: se conserva como está, sin cambios. Lo nuevo no se guarda como audio (el texto sí).';
 
 function anBeginRecording(mime){
   anBusyN++;
-  const r = {id: null, part: 0, saved: 0, bytes: 0, base: null, detail: null, cek: null, failed: false, warned: false, mime, hid: vault.header.id, kAudio: vault.audioKey};
+  const r = {id: null, part: 0, saved: 0, bytes: 0, base: null, detail: null, cek: null, failed: false, warned: false, mime, hid: vault.header.id, kAudio: vault.audioKey,
+    ctx: convCtx, baseParts: null};
   const target = anTargetNow();
   r.q = (async () => {
     if (!(await anLockOk())) { r.failed = true; r.warned = true; return; }
     const db = r.db = await anDb();
     const part = {mime: String(mime || 'audio/webm').slice(0, 99), chunks: 0, bytes: 0, ms: null, origin: 'grabado', complete: false};
     if (target.mode === 'parte') {
-      const m = await anGetMeta(db, target.id);
-      if (m && anValidMeta(m) && m.state === 'cerrado' && m.key && m.sealed) {
-        const old = await anOpenDetail(r.kAudio, r.hid, m.id, m.sealed);
-        r.id = m.id; r.part = m.parts; r.cek = await anOpenCek(r.kAudio, r.hid, m.id, m.key);
-        r.detail = {parts: old.parts.concat(part)};
-        r.base = {...anSetState(m, 'grabando'), parts: m.parts + 1, sealed: await anSealDetail(r.kAudio, r.hid, m.id, r.detail)};
+      const o = await anOpenForPart(db, r.kAudio, r.hid, target);
+      if (o) {
+        r.id = o.m.id; r.part = o.m.parts; r.cek = o.cek;
+        if (target.obligatorio) r.baseParts = o.m.parts;
+        r.detail = {parts: o.old.parts.concat(part)};
+        r.base = {...anSetState(o.m, 'grabando'), parts: o.m.parts + 1, sealed: await anSealDetail(r.kAudio, r.hid, o.m.id, r.detail)};
         return;
       }
-      logDiag('Audio: el audio de la nota no se pudo ampliar; se guarda uno nuevo.');
+      // El audio de una nota guardada nunca se reemplaza por otro: se conserva y esta grabación queda sin audio.
+      if (target.obligatorio) { r.failed = true; r.warned = true; logDiag('Audio: el audio de la nota no se pudo ampliar; se conserva sin cambios.'); flash(AN_DAMAGED_MSG); return; }
+      logDiag('Audio: el audio pendiente no se pudo ampliar; se guarda uno nuevo.');
     }
     r.id = anNewId(); const k = await anNewCek(r.kAudio, r.hid, r.id); r.cek = k.cek;
     r.detail = {parts: [part]};
@@ -4032,7 +4163,9 @@ function anRecErr(r, e){
   r.failed = true;
   logDiag('Audio cifrado: error técnico de guardado (' + anErrName(e) + ')');
   if (r.warned) return; r.warned = true;
-  flash('No se pudo guardar el audio cifrado (' + anErrName(e) + '). La transcripción sigue igual; el audio queda con lo que se alcanzó a guardar.');
+  flash(r.saved > 0
+    ? 'El audio quedó incompleto (' + anErrName(e) + '): se guardó solo hasta ahí y queda marcado como incompleto. La transcripción sigue igual.'
+    : 'No se pudo guardar el audio cifrado (' + anErrName(e) + '): esta grabación queda sin audio. La transcripción sigue igual.');
 }
 /* Cada fragmento de 10 s se cifra apenas llega; ante un corte se pierden como mucho esos 10 s. */
 function anRecChunk(r, data){
@@ -4043,19 +4176,22 @@ function anRecChunk(r, data){
     await anPutChunkMeta(r.db, {...r.base, bytes: r.base.bytes + r.bytes + size}, r.part, n, blob);
     r.saved = n + 1; r.bytes += size;
     // Se anota en el borrador desde el primer fragmento: si se corta todo, al abrir sigue unido a su nota pendiente.
-    if (n === 0 && r.id !== convAudioId) anLinkPending(r.id, r.part === 0 ? null : convAudioMs);
+    if (n === 0 && r.id !== convAudioId) anLinkPending(r, r.id, null);
   }).catch(e => anRecErr(r, e));
 }
+/* Al detener. Si algún fragmento no se pudo guardar (falta de espacio u otro error), la parte queda marcada
+   «incompleta» y sin duración: nunca se presenta como si tuviera todo lo grabado. */
 function anRecFinish(r, ms, complete){
   r.q = r.q.then(async () => {
     if (!r.id || !r.saved) return;
     const parts = r.detail.parts.slice();
-    parts[r.part] = {...parts[r.part], chunks: r.saved, bytes: r.bytes, ms: Math.max(0, Math.round(ms || 0)), complete: true, ...(complete ? {} : {interrumpida: true})};
+    parts[r.part] = {...parts[r.part], chunks: r.saved, bytes: r.bytes, complete: true,
+      ...(r.failed ? {ms: null, incompleta: true} : {ms: Math.max(0, Math.round(ms || 0))}), ...(complete ? {} : {interrumpida: true})};
     const detail = {parts};
     const meta = {...anSetState(r.base, 'cerrado'), bytes: r.base.bytes + r.bytes, sealed: await anSealDetail(r.kAudio, r.hid, r.id, detail)};
     await anPutMeta(r.db, meta);
-    anLinkPending(r.id, anTotalMs(detail));
-    logDiag('Audio cifrado: cerrado · parte ' + (r.part + 1) + ' · ' + r.saved + ' fragmentos · ' + r.bytes + ' bytes');
+    anLinkPending(r, r.id, anTotalMs(detail));
+    logDiag('Audio cifrado: cerrado · parte ' + (r.part + 1) + ' · ' + r.saved + ' fragmentos · ' + r.bytes + ' bytes' + (r.failed ? ' · incompleta' : ''));
     if (!r.failed) flash(convEditingId ? 'Audio guardado cifrado. Queda unido a la nota al guardar los cambios.' : 'Audio guardado cifrado. Queda unido a la nota al tocar Guardar.');
   }).catch(e => anRecErr(r, e)).finally(() => { anBusyN = Math.max(0, anBusyN - 1); });
   return r.q;
@@ -4082,7 +4218,7 @@ function startAudioNota(recorder){
 async function anSaveFile(f, ms){
   if (!anUsable() || !$('saveAudio').checked) return null;
   anBusyN++;
-  const hid = vault.header.id, kAudio = vault.audioKey, target = anTargetNow();
+  const hid = vault.header.id, kAudio = vault.audioKey, target = anTargetNow(), job = {ctx: convCtx, baseParts: null};
   let db = null, id = null, part = 0, isNew = true;
   try {
     if (!(await anLockOk())) return null;
@@ -4098,13 +4234,13 @@ async function anSaveFile(f, ms){
       origin: 'cargado', name: String(f.name || '').slice(0, 255), complete: true};
     let cek, meta;
     if (target.mode === 'parte') {
-      const m = await anGetMeta(db, target.id);
-      if (m && anValidMeta(m) && m.state === 'cerrado' && m.key && m.sealed) {
-        const old = await anOpenDetail(kAudio, hid, m.id, m.sealed);
-        id = m.id; part = m.parts; isNew = false; cek = await anOpenCek(kAudio, hid, id, m.key);
+      const o = await anOpenForPart(db, kAudio, hid, target);
+      if (o) {
+        id = o.m.id; part = o.m.parts; isNew = false; cek = o.cek;
+        if (target.obligatorio) job.baseParts = o.m.parts;
         // La ficha sigue «cerrado» mientras se escriben los fragmentos: si se corta, la parte nueva no cuenta y se limpia al abrir.
-        meta = {...m, parts: m.parts + 1, bytes: m.bytes + f.size, sealed: await anSealDetail(kAudio, hid, id, {parts: old.parts.concat(p)})};
-      }
+        meta = {...o.m, parts: o.m.parts + 1, bytes: o.m.bytes + f.size, sealed: await anSealDetail(kAudio, hid, id, {parts: o.old.parts.concat(p)})};
+      } else if (target.obligatorio) { flash(AN_DAMAGED_MSG); return null; }
     }
     if (isNew) {
       id = anNewId(); const k = await anNewCek(kAudio, hid, id); cek = k.cek;
@@ -4115,8 +4251,7 @@ async function anSaveFile(f, ms){
     for (const c of plan) await anPutChunk(db, id, part, c.n, await anSealChunk(cek, hid, id, part, c.n, f.slice(c.start, c.end)));
     await anPutMeta(db, meta);
     const detail = await anOpenDetail(kAudio, hid, id, meta.sealed);
-    anLinkPending(id, anTotalMs(detail));
-    flash('El archivo quedó guardado cifrado. Queda unido a la nota al tocar Guardar.');
+    if (anLinkPending(job, id, anTotalMs(detail))) flash('El archivo quedó guardado cifrado. Queda unido a la nota al tocar Guardar.');
     return id;
   } catch (e) {
     logDiag('Audio cifrado: no se guardó el archivo (' + anErrName(e) + ')');
@@ -4127,12 +4262,52 @@ async function anSaveFile(f, ms){
 }
 /* Borrar el audio de una nota borrada o descartada. Si no se puede, queda «sin nota»: nunca se pierde nada más. */
 async function anDeleteAudio(id){
-  if (typeof id !== 'string' || !id) return;
-  try { if (!(await anLockOk())) return; await anDelete(await anDb(), id); }
-  catch (e) { logDiag('Audio cifrado: no se pudo borrar (' + anErrName(e) + ')'); }
+  if (typeof id !== 'string' || !id) return false;
+  try { if (!(await anLockOk())) return false; await anDelete(await anDb(), id); return true; }
+  catch (e) { logDiag('Audio cifrado: no se pudo borrar (' + anErrName(e) + ')'); return false; }
 }
+/* Cancelar una edición: el audio de la nota vuelve a tener solo las partes que tenía antes de editar. */
+async function anTruncateAudio(id, keep){
+  if (typeof id !== 'string' || !id || !anIsInt(keep) || keep < 1) return false;
+  try {
+    if (!anUsable() || !(await anLockOk())) return false;
+    const db = await anDb(), m = await anGetMeta(db, id);
+    if (!m || !anValidMeta(m) || m.state !== 'cerrado' || !m.sealed) return false;
+    if (m.parts === keep) return true;
+    if (m.parts < keep) return false;
+    const hid = vault.header.id, kAudio = vault.audioKey;
+    const fixed = anTruncateDetail(await anOpenDetail(kAudio, hid, id, m.sealed), keep);
+    await anTruncate(db, {...m, parts: keep, bytes: fixed.parts.reduce((t, p) => t + p.bytes, 0), sealed: await anSealDetail(kAudio, hid, id, fixed)}, keep);
+    return true;
+  } catch (e) { logDiag('Audio cifrado: no se pudo quitar la parte agregada (' + anErrName(e) + ')'); return false; }
+}
+/* ¿Cuántos audios hay en la base de audios por nota? Sin crearla si no existe. null: no se pudo saber. */
+function anStoredCount(){
+  if (!globalThis.indexedDB) return Promise.resolve(0);
+  return new Promise(res => {
+    let creating = false;
+    const r = indexedDB.open(AN_DB);
+    r.onupgradeneeded = () => { creating = true; try { r.transaction.abort(); } catch (e) {} };
+    r.onsuccess = () => {
+      const db = r.result;
+      if (!db.objectStoreNames.contains('meta')) { db.close(); return res(0); }
+      anTx(db, ['meta'], 'readonly', t => t.objectStore('meta').count()).then(n => { db.close(); res(n); }, () => { db.close(); res(null); });
+    };
+    r.onerror = () => res(creating ? 0 : null);
+  });
+}
+/* Quitar la protección haría ilegibles los audios cifrados (su clave sale de la protección). Hasta AO, se impide. */
+vault.disableGuard = async () => {
+  const n = await anStoredCount();
+  if (n === null) return 'No se pudo comprobar si hay audios guardados cifrados. Por seguridad, la protección sigue activa.';
+  if (n === 0) return '';
+  return 'La protección no se puede quitar todavía: hay ' + (n === 1 ? 'un audio guardado' : n + ' audios guardados') + ' con tus notas, y solo se pueden abrir con ella. ' +
+    'Si la quitaras ahora, esos audios no se podrían volver a escuchar nunca. Más adelante, la app va a ofrecer una copia y borrar esos audios antes de quitarla. Por ahora sigue activa.';
+};
 /* Revisión al desbloquear (tabla 2.5). Solo cierra grabaciones cortadas y descarta archivos a medio guardar.
-   No crea la base si no existe y no borra nada más (D8). */
+   No crea la base si no existe y no borra nada más (D8). Un audio dañado (no se abre su clave o su detalle, o le
+   faltan fragmentos) se cuenta y se conserva tal cual: no se cierra, no se limpia, no se sobrescribe. */
+const anDamaged = new Set();
 async function anReviewOnOpen(){
   if (!anUsable()) return;
   try {
@@ -4145,10 +4320,13 @@ async function anReviewOnOpen(){
     const byId = new Map(metas.filter(m => m && typeof m.id === 'string').map(m => [m.id, m]));
     const hid = vault.header.id, kAudio = vault.audioKey; let closed = 0;
     for (const a of r.audios) {
-      const m = byId.get(a.id); if (!m) continue;
-      if (a.action === 'descartar') await anDelete(db, m.id);
-      else if (a.action === 'cerrar-interrumpida') {
-        let detail; try { detail = await anOpenDetail(kAudio, hid, m.id, m.sealed); } catch (e) { continue; }
+      const m = byId.get(a.id);
+      if (a.action === 'danado' || !m) { if (a.id) anDamaged.add(a.id); continue; }
+      if (a.action === 'descartar') { await anDelete(db, m.id); continue; }
+      let detail;
+      try { detail = await anOpenDetail(kAudio, hid, m.id, m.sealed); await anOpenCek(kAudio, hid, m.id, m.key); }
+      catch (e) { anDamaged.add(m.id); continue; }
+      if (a.action === 'cerrar-interrumpida') {
         const last = m.parts - 1, blobs = await anPartChunks(db, m.id, last);
         const lastBytes = blobs.reduce((t, b) => t + Math.max(0, b.size - AN_IV - AN_TAG), 0);
         const fixed = anCloseDetail(detail, m.parts, blobs.length, lastBytes);
@@ -4157,9 +4335,19 @@ async function anReviewOnOpen(){
         await anPutMeta(db, {...anSetState(m, 'cerrado'), parts: fixed.parts.length, bytes: fixed.parts.reduce((t, p) => t + p.bytes, 0),
           sealed: await anSealDetail(kAudio, hid, m.id, fixed)});
         closed++;
-      } else if (m.state === 'cerrado') await anDeletePartsFrom(db, m.id, m.parts);
+      } else if (m.state === 'cerrado') {
+        if (detail.parts.length !== m.parts) { anDamaged.add(m.id); continue; }
+        let missing = false;
+        for (let i = 0; i < detail.parts.length && !missing; i++) if (await anCountPartChunks(db, m.id, i) < detail.parts[i].chunks) missing = true;
+        if (missing) { anDamaged.add(m.id); continue; }
+        await anDeletePartsFrom(db, m.id, m.parts);   // restos de una parte cargada que nunca se confirmó
+      }
     }
     if (closed) flash(closed === 1 ? 'Se recuperó una grabación interrumpida: quedó guardada con lo que alcanzó a grabarse.' : 'Se recuperaron ' + closed + ' grabaciones interrumpidas.');
+    if (anDamaged.size) {
+      logDiag('Audio cifrado: ' + anDamaged.size + ' audio(s) dañado(s), conservados sin cambios.');
+      flash((anDamaged.size === 1 ? 'Hay un audio dañado' : 'Hay ' + anDamaged.size + ' audios dañados') + ': se conserva' + (anDamaged.size === 1 ? '' : 'n') + ' tal cual, sin borrarlo' + (anDamaged.size === 1 ? '' : 's') + ' ni sobrescribirlo' + (anDamaged.size === 1 ? '' : 's') + '.');
+    }
   } catch (e) { logDiag('Audio cifrado: revisión al abrir no terminó (' + anErrName(e) + ')'); }
 }
 
@@ -4536,6 +4724,7 @@ $('rec').onclick = async () => {
   if (!recording) {
     if (!window.isSecureContext || !navigator.mediaDevices) { setStatus('El navegador no deja usar el micrófono con la página abierta de esta forma (' + location.protocol + '). Abrila desde una dirección que empiece con https.'); return; }
     if (feeding || busy || outstanding > 0) { setStatus('Todavía se está transcribiendo: esperá a que termine para grabar de nuevo.'); return; }
+    if (convSaving) { setStatus('Esperá a que termine de guardarse la nota.'); return; }
     recEng = eng(); $('rec').disabled = true; audioOk = false;
     if (recEng === 'whisper' && $('saveAudio').checked && anUsable()) audioOk = true;   // E2: el audio va cifrado a su nota; el aviso del audio viejo no aplica
     else if (recEng === 'whisper' && $('saveAudio').checked) {
@@ -4652,7 +4841,7 @@ document.querySelectorAll('input[name=eng]').forEach(r => r.addEventListener('ch
 let lastDraft = '';
 const snap = () => JSON.stringify({title: $('title').value, text: $('text').value, tags, cur, baseline,
   conv: {open: convOpenId, target: convTargetId, targetSet: convTargetSet, editing: convEditingId, fromAudio: convFromAudio, recordedAt: convRecordedAt,
-    audioId: convAudioId, audioMs: convAudioMs}});
+    audioId: convAudioId, audioMs: convAudioMs, audioBase: convAudioBase}});
 function saveDraft(){ const x = snap(); if (x === lastDraft) return; lastDraft = x; try { vaultStore.setItem(DRAFT, x); } catch (e) {} }
 function restoreDraft(){
   try {
@@ -4668,6 +4857,7 @@ function restoreDraft(){
       convFromAudio = !!c.fromAudio; convRecordedAt = Number.isFinite(c.recordedAt) ? c.recordedAt : null;
       convAudioId = typeof c.audioId === 'string' && c.audioId && c.audioId.length <= 64 ? c.audioId : null;
       convAudioMs = Number.isInteger(c.audioMs) && c.audioMs >= 0 ? c.audioMs : null;
+      convAudioBase = convEditingId && convAudioId && Number.isInteger(c.audioBase) && c.audioBase >= 1 ? c.audioBase : null;
       renderConv();
       if ((d.text || '').trim()) flash(convEditingId ? 'Se recuperó una edición sin guardar. Tocá Guardar o Cancelar edición.' : 'Se recuperó un mensaje sin guardar. Tocá Guardar o Descartar.');
     }
@@ -4717,7 +4907,7 @@ initErgonomics(); loadCfg(); $('recordSaveAudio').checked = $('saveAudio').check
 // Protección cifrada: no bloquear mientras se graba o transcribe; guardar el borrador antes de bloquear.
 vaultSetHooks(() => recording || busy || outstanding > 0 || feeding || anBusyN > 0, saveDraft);   // cifrar un archivo también cuenta como uso
 vaultWhenReady(() => { loadNotes(); loadDict(); loadPeople(); loadGenerator(); updateGeneratorUI(); renderList(); convInit(); restoreDraft(); updWC(); });
-vaultWhenReady(() => { if (anUsable()) { anLock(); anReviewOnOpen(); } });   // E2: después de cargar notas y borrador
+vaultWhenReady(() => { if (anUsable()) anReviewOnOpen(); });   // E2: después de cargar notas y borrador (el candado ya se tomó al desbloquear)
 refreshAudioBox();
 </script>
 <script>

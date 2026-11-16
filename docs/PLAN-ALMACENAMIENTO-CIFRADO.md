@@ -2,7 +2,7 @@
 
 > **Este archivo no cambia de nombre.** Los pedidos que Ignacio copia y pega apuntan acá. Es el tablero: dice qué paso toca, qué hay que hacer en cada uno y en qué estado está.
 > **El diseño completo** (el porqué de cada cosa) está en [DISENO-ALMACENAMIENTO-CIFRADO-2026-11-16.md](DISENO-ALMACENAMIENTO-CIFRADO-2026-11-16.md). Si este tablero y el diseño no coinciden, vale el diseño; si el diseño y el código no coinciden, vale el código, y avisale a Ignacio.
-> Última actualización: 16/11/2026 (Claude Opus 5.5). **E1 unido a `main` (PR #45, `aab2b90`), con permiso de Ignacio. E2 programado, en PR abierto, sin unir.** Próximo paso, una vez unido E2: **K1**. La Etapa N ya está en `main`.
+> Última actualización: 16/11/2026 (Claude Opus 5.5). **E1 unido a `main` (PR #45, `aab2b90`), con permiso de Ignacio. E2 programado y corregido tras la revisión de ChatGPT, en PR abierto, sin unir.** Próximo paso, una vez unido E2: **K1**. La Etapa N ya está en `main`.
 
 ## Si sos la IA a la que le pidieron un paso, empezá acá
 
@@ -48,7 +48,7 @@ Orden decidido por Ignacio: **E1 → E2 → K1 → E3 → K2 → T → AO**.
 | Paso | Qué es | Depende de | Claude | ChatGPT (Codex) | Estado |
 |---|---|---|---|---|---|
 | **E1** | Base nueva de audios por nota, sin activar | — | Sonnet 5.5 | Modelo estándar, razonamiento medio | Unido a `main` (`aab2b90`, PR #45) |
-| **E2** | Cifrado de audios y guardado por nota | E1 | Opus 5.5 | El más capaz de tu plan, razonamiento alto | PR abierto (#47) |
+| **E2** | Cifrado de audios y guardado por nota | E1 | Opus 5.5 | El más capaz de tu plan, razonamiento alto | PR abierto (#47), corregido tras la revisión de ChatGPT; espera nueva revisión |
 | **K1** | Copia cifrada: exportar y verificar | E2 | Opus 5.5 | El más capaz de tu plan, razonamiento alto | Pendiente |
 | **E3** | Reproductor en la burbuja, espacio en Ajustes | E2, K1 y Etapa B3 | Sonnet 5.5 | Modelo estándar, razonamiento medio | Pendiente |
 | **K2** | Restaurar una copia cifrada | K1 | Opus 5.5 | El más capaz de tu plan, razonamiento alto | Pendiente |
@@ -183,3 +183,4 @@ Tomadas el 16/11/2026. Detalle y opciones descartadas, en el diseño completo.
 - 16/11/2026, 18:40 · Claude (Fable 5.2): con permiso de Ignacio se unieron a `main` los PR #42, #43 (Etapa N) y #44. Próximo paso: **E1**.
 - 16/11/2026 · Claude (Sonnet 5.5): E1 programado con permiso de Ignacio (bloque apagado, sin cifrado, candado sin conectar). PR #45 unido a `main` (`aab2b90`) con permiso de Ignacio, merge normal. Motorola: sin probar.
 - 16/11/2026, 18:40 · Claude (Opus 5.5): E2 programado con permiso de Ignacio, PR #47 abierto; sin unir. Decisiones del plan: **1a** (con la protección abierta, el audio se guarda solo cifrado; hasta E3 no se escucha desde la app) y **2a** (candado de una pestaña conectado para los audios). PR #46 cerrado a pedido de Ignacio (su cambio va acá). Detalle, casos aceptados y lo que no incluye: `CAMBIOS.md`. Motorola: sin probar. Conviene revisión cruzada de ChatGPT antes de unir.
+- 16/11/2026, 19:20 · Claude (Opus 5.5): correcciones de E2 por la revisión de ChatGPT sobre `2c88ce1`, con permiso de Ignacio, en el mismo PR #47: no se puede quitar la protección con audios guardados (hasta AO); el audio no se cruza entre notas A y B ni se borra si lo usa otra; Guardar espera la confirmación del disco; una sola pestaña escribe todo lo protegido; audio incompleto marcado sin duración; cancelar quita lo agregado; audio dañado conservado. Prueba nueva `tests/e2-correcciones-browser.mjs` (dos pestañas reales, sin espacio, cortes). Detalle y límites: `CAMBIOS.md`. Motorola: sin probar. Pide una nueva revisión independiente antes de unir.
