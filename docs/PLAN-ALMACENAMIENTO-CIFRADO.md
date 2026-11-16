@@ -2,7 +2,7 @@
 
 > **Este archivo no cambia de nombre.** Los pedidos que Ignacio copia y pega apuntan acá. Es el tablero: dice qué paso toca, qué hay que hacer en cada uno y en qué estado está.
 > **El diseño completo** (el porqué de cada cosa) está en [DISENO-ALMACENAMIENTO-CIFRADO-2026-11-16.md](DISENO-ALMACENAMIENTO-CIFRADO-2026-11-16.md). Si este tablero y el diseño no coinciden, vale el diseño; si el diseño y el código no coinciden, vale el código, y avisale a Ignacio.
-> Última actualización: 16/11/2026, 18:10 (Claude Fable 5.2). `main` = `3383584`.
+> Última actualización: 16/11/2026, 18:40 (Claude Fable 5.2). **Próximo paso: E1.** La Etapa N ya está en `main`.
 
 ## Si sos la IA a la que le pidieron un paso, empezá acá
 
@@ -26,16 +26,20 @@
 
 El orden general del proyecto es **Etapa N → B → E → C → D**. Estos pasos son la Etapa E y lo que cuelga de ella.
 
-| Etapa previa | Estado al 16/11/2026, 18:00 |
+| Etapa previa | Estado al 16/11/2026, 18:40 |
 |---|---|
-| **N** (pestañas «Dictar» y «Cuadernos») | **Programada por ChatGPT (Codex), PR #43 abierto.** Dos commits de las 17:01–17:02, pruebas del CI en verde, sin conflictos. **No hay trabajo en curso:** espera que Ignacio vea las capturas y autorice unir |
-| Documentación de continuidad | PR #42 de ChatGPT, abierto, en verde. Espera permiso |
+| **N** (pestañas «Dictar» y «Cuadernos») | **Unida a `main`** (PR #43 de ChatGPT, commit de merge `4d3cd01`), con permiso de Ignacio. Publicada. **Sin probar en el Motorola** |
+| Documentación de continuidad | **Unida a `main`** (PR #42 de ChatGPT, `8a7ecb8`) |
+| Este diseño y este tablero | **Unidos a `main`** (PR #44 de Claude), con permiso de Ignacio |
 | **B** (jerarquía y densidad: B1, B2, B3) | Sin empezar |
-| Este diseño | PR #44 de Claude, abierto. Espera permiso |
 
-- Los PR #42, #43 y #44 tocan `CAMBIOS.md`; el #42 y el #43, además, `CONTINUAR-AQUI.md` y `AGENTS.md`. Conviene unirlos en ese orden (#42, #43, #44); el que se une después puede necesitar resolver un cruce a mano en esos archivos.
-- La propuesta estética pide que la Etapa E vaya **después de B3** (el reproductor vive en la burbuja ya limpia). E1, E2, K1 y K2 no tocan la burbuja: si Ignacio quiere adelantarlos, puede; E3 sí espera a B3.
-- `main` sigue **sin protección** en GitHub (verificado el 16/11, 18:00). Lo activa Ignacio.
+- **Ignacio indicó (16/11/2026, 18:06) que la próxima IA retome desde E1.** E1, E2, K1 y K2 no tocan la burbuja y pueden ir antes de la Etapa B. **E3 espera a B3** (el reproductor vive en la burbuja ya limpia).
+- Eso no reemplaza la regla de cada paso: plan corto y permiso explícito de Ignacio antes de programar.
+- **Vocabulario:** desde la Etapa N, en la interfaz «hoja» se llama **«cuaderno»** y las pestañas son Dictar / Cuadernos / Anonimizar / Ajustes. Los ids internos, las claves y los nombres de funciones (`conv…`) no cambiaron. El diseño se escribió antes de esa unión y dice «hoja»: es lo mismo.
+- El diseño cita líneas de `index.html` de `3383584`. La Etapa N cambió textos en el lugar (59 líneas), así que las referencias siguen sirviendo de guía; confirmá siempre en el código actual.
+- Para resolver un cruce en `CAMBIOS.md` y `CONTINUAR-AQUI.md`, Claude unió `main` dentro de la rama del PR #43 (solo esos dos archivos, conservando ambos textos) antes de unirlo. `index.html` y las pruebas de ChatGPT no se tocaron; el CI volvió a pasar.
+- `main` sigue **sin protección** en GitHub (verificado el 16/11). Lo activa Ignacio.
+- Otros PR abiertos, ajenos a este plan: #37 (decisiones del mediodía, documentación), #22 y #1 (viejos).
 
 ## Tablero de pasos
 
@@ -176,3 +180,4 @@ Tomadas el 16/11/2026. Detalle y opciones descartadas, en el diseño completo.
 ## Historial de este tablero
 
 - 16/11/2026, 18:10 · Claude (Fable 5.2): creado junto con el diseño. Ningún paso empezado. Nada probado en el Motorola.
+- 16/11/2026, 18:40 · Claude (Fable 5.2): con permiso de Ignacio se unieron a `main` los PR #42, #43 (Etapa N) y #44. Próximo paso: **E1**.

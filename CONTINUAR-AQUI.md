@@ -1,30 +1,35 @@
-# CONTINUAR AQUÍ — Próxima IA de DictaNota
+# CONTINUAR AQUÍ — DictaNota
 
-> **ÚLTIMO CAMBIO (Claude, 16/11/2026): Etapa A estética en el PR #41** (rama `estetica-a-ajustes-2026-11-16`, base `e89d0a1`, **sin unir a `main`**, sin probar en el Motorola). Antes de nada leé el **[traspaso a ChatGPT](docs/TRASPASO-A-CHATGPT-2026-11-16.md)**: qué se hizo, qué falta y en qué orden (siguiente: Etapa N, con plan y permiso). Para el usuario: [pendientes y prueba en el Motorola](docs/PRUEBA-MOTOROLA-Y-PENDIENTES-USUARIO-2026-11-16.md).
+> **▶ ESTADO AL 16/11/2026, 18:40 (Claude Fable 5.2).** En `main` ya están: la **Etapa N** (pestañas Dictar / Cuadernos; PR #43 de ChatGPT), la continuidad (PR #42) y el **diseño del almacenamiento cifrado** (PR #44). Los tres se unieron con permiso del usuario, con merge normal.
+> **PRÓXIMO PASO: E1**, por indicación del usuario. Todo lo necesario está en el tablero de nombre fijo **[docs/PLAN-ALMACENAMIENTO-CIFRADO.md](docs/PLAN-ALMACENAMIENTO-CIFRADO.md)**: qué incluye cada paso (E1 → E2 → K1 → E3 → K2 → T → AO), de qué depende, su estado y las trece decisiones del usuario. Un paso por vez; **plan corto y permiso explícito antes de programar**. La Etapa B sigue pendiente y E3 la espera.
+> Nada de lo unido hoy está probado en el Motorola. Los bloques de abajo son anteriores a estas uniones.
 
-> **Propuesta estética pendiente (Claude, 16/11/2026, solo documentación):** tras revisar la app, Claude dejó [docs/PROPUESTA-ESTETICA-2026-11-16.md](docs/PROPUESTA-ESTETICA-2026-11-16.md) con mejoras en cuatro etapas (A–D) y, tras decisiones del usuario del 16/11 (13:22 y 13:31), dos más: **N** (pestañas «Dictar» y «Cuadernos», decididas; en la interfaz «hoja» pasa a «cuaderno») y **E** (reproductor de audio dentro de cada burbuja, para volver a escuchar y corregir, con audios grabados y cargados desde archivo guardados unidos a su nota solo si «Conservar audio» está activado; toca almacenamiento: plan y permiso explícito antes de programar; reemplaza la frase de AGENTS.md «Audio solo a pedido, fuera de las burbujas»). B2 quedó confirmado. **ChatGPT las retoma después de terminar y unir lo de `rediseno-04-clinica-chat-chatgpt`**, sin tocar esa rama mientras tanto. Texto listo para pegar: [docs/PROMPT-CHATGPT-ESTETICA-2026-11-16.txt](docs/PROMPT-CHATGPT-ESTETICA-2026-11-16.txt). Cada etapa en su rama, con capturas al usuario y su permiso para unir a `main`.
+> **Etapa N — ChatGPT (Codex), 16/11/2026:** rama `etapa-n-dictar-cuadernos`, base `3383584`. Textos visibles: Dictar / Cuadernos / Anonimizar / Ajustes; hoja pasa a cuaderno. No cambian ids, claves, datos guardados ni motores. PR #36 y #41 ya integrados; PR #42 documental separado. Validación automática en el PR; Motorola pendiente. Merge normal, sin squash, solo con permiso para publicar.
 
-> **Trabajo posterior en revisión:** ChatGPT implementó estética clara y chat en `rediseno-04-clinica-chat-chatgpt`, desde `089ebbec`. Consultar esa rama/PR antes de repetir el trabajo. Aún no equivale a publicación en main; ver CAMBIOS.md y resultado de CI. El informe de las 10:15 describe la base anterior.
-> Vocabulario vigente: nota = texto escrito o transcripto; hoja = contenedor de notas. Inicio listo para grabar y acceso a hojas. Anonimización de nota/hoja con original recuperable: próxima etapa, no implementada en este cambio.
+> **Estado verificado por ChatGPT (Codex), 16/11/2026:** main = `3383584`. Los PR #36 (tema claro y chat) y #41 (Etapa A de Claude) ya están unidos. La rama `rediseno-04-clinica-chat-chatgpt` en `95bb587` no tiene trabajo pendiente de integrar. No repetir esas implementaciones.
+> Esta actualización es documental, en rama nueva `continuidad-chatgpt-post-41`. No cambia la aplicación.
 
-> **Actualizado: 16/11/2026, 10:15.** `main` = `bb89314`, publicado.
-> **Primer documento para leer: [docs/INFORME-CONTINUIDAD-2026-11-16.md](docs/INFORME-CONTINUIDAD-2026-11-16.md)**: qué está hecho, qué falta, en qué orden y por qué el usuario «no ve cambios».
+## Lecturas vigentes
 
-## En una frase
+1. [Decisiones del usuario](https://github.com/ignabidon/notas-voz/blob/0961e509505191c93b5afc3dedf21b1ae88660b8/docs/DECISIONES-USUARIO-2026-11-16.md): leídas en el commit de Claude; todavía no están en main. Su PR #37 se mantiene separado.
+2. [Propuesta estética](docs/PROPUESTA-ESTETICA-2026-11-16.md), especialmente decisiones posteriores de la sección 6: los nombres **Dictar y Cuadernos** ya están elegidos y reemplazan la decisión parcial anterior.
+3. [Traspaso de Claude](docs/TRASPASO-A-CHATGPT-2026-11-16.md): detalle de A y pendientes. Sus frases «#41 sin unir» quedaron superadas por el merge verificado.
+4. AGENTS.md, SEGURIDAD.md, DISENO-CIFRADO.md, README.md y CAMBIOS.md antes de editar.
 
-El rediseño conversacional tiene hechos los datos, el guardado protegido y una **pestaña Notas** funcional (hojas, burbujas con fecha y hora de guardado, Guardar/Descartar, mover y copiar). **Falta la estética clara «Clínica contemporánea» (nunca se implementó: la app sigue oscura)**, el aspecto de chat de Notas, la navegación final y la prueba en el Motorola.
+## Estado y próximos cambios
 
-## Lectura en orden
+- Implementado en main: tema claro, notas en burbujas, inicio listo para grabar, acceso a hojas, ajustes visuales de la Etapa A. Actualmente las pestañas siguen siendo Audio / Notas / Anonimizar / Ajustes.
+- Siguiente etapa N: cambiar textos visibles a **Dictar / Cuadernos / Anonimizar / Ajustes** y «hoja» a «cuaderno», sin renombrar ids internos ni claves. Plan: index.html, pruebas de rótulos y documentación; verificar las suites existentes y capturas a 360/412 px.
+- Luego B1/B2/B3: compositor compacto, grabación inferior según visibilidad y menú de burbujas. Un PR por ítem.
+- Anonimización: original persistente junto a versión anonimizada, primero por nota y después por cuaderno; elegir versión en cada exportación. El Deshacer actual no satisface persistencia al cerrar/reabrir.
+- Audio en burbujas: incluye archivos importados solo con «Conservar audio» activo; cifrado y plan de almacenamiento antes de implementarlo. Sin resaltado de palabra durante reproducción.
+- Pendientes también: motor y lamejs alojados en el repositorio, autoría humana en Acerca de, modo oscuro opcional y Android. No confundir decisiones con funcionalidades ya implementadas.
+- No modificar PRs de Claude ni activar auto-merge. Nuevas ramas desde main actualizado y **merge normal, sin squash**; la apertura de un PR no autoriza su unión.
 
-1. **[Informe de continuidad](docs/INFORME-CONTINUIDAD-2026-11-16.md)**: estado, pendientes priorizados y decisiones vigentes.
-2. **[Especificación](docs/REDISENO-CONVERSACIONAL-2026-11-16.md)**: secciones **2.5 y 2.6** (decisiones del usuario del 16/11; reemplazan a lo anterior donde choquen).
-3. **[AGENTS.md](AGENTS.md)**: reglas compartidas. **[SEGURIDAD.md](SEGURIDAD.md)** y **[DISENO-CIFRADO.md](DISENO-CIFRADO.md)**: restricciones obligatorias.
-4. **[CAMBIOS.md](CAMBIOS.md)**: detalle de las fases 1, 2 y 3. **[README.md](README.md)**: guía de uso y prueba en el celular.
+## Validación
 
-## Próximo paso sugerido
+Código: #36 y #41 integrados, confirmado por historial Git. Esta entrega solo corrige continuidad.
+Pruebas técnicas de funcionalidad: consultar CI de cada entrega; esta actualización no modifica código ni agrega resultados de navegador.
+Motorola: los cambios nuevos siguen sin validación física confirmada. El usuario hará la prueba conjunta al finalizar los pendientes de la etapa.
 
-1. Implementar la **estética Clínica contemporánea**: está aprobada; los colores están en el informe, sección 3.1. Mostrar capturas al usuario antes de publicar.
-2. Dar a Notas **aspecto de chat**: barra de escritura abajo y botón global «Nueva nota».
-3. Después: navegación Notas / Biblioteca / Ajustes, Anonimizar desde la hoja, vista Documento.
-
-Cada paso va en su rama, con pruebas, CI y **permiso del usuario para unir a `main`**. Sin datos reales de pacientes.
+Los informes anteriores conservan valor histórico; sus afirmaciones de que falta el tema claro o el chat ya no describen main.

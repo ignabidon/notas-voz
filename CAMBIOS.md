@@ -7,7 +7,21 @@
 - **Tablero para las próximas IA (nombre fijo):** [docs/PLAN-ALMACENAMIENTO-CIFRADO.md](docs/PLAN-ALMACENAMIENTO-CIFRADO.md): pasos E1 → E2 → K1 → E3 → K2 → T → AO con su estado, de qué depende cada uno, qué modelo conviene (Claude y equivalente en ChatGPT) y el pedido listo para copiar. Quien haga un paso actualiza ahí la columna «Estado». Enlazado desde AGENTS.md («Protección cifrada»).
 - **Verificado el 16/11, 18:00:** la Etapa N no está «en curso»: ChatGPT (Codex) la terminó en el PR #43 (CI en verde, sin conflictos) y espera el permiso del usuario; lo mismo el PR #42 (documentación). `main` sigue sin protección.
 - **Sigue valiendo:** decidir no es autorizar a programar. **No se programa nada sin permiso explícito**, y recién cuando le toque a la Etapa E (orden: N → B → E → C → D).
-- **Estado:** documento guardado en la rama y PR abierto · pruebas técnicas: no corresponde (no hay código) · **Motorola: nada probado**. No unir a `main` sin permiso del usuario (merge normal, sin squash). Se cruza en este archivo con los PR #42 y #43 (ChatGPT): unir en orden #42, #43 y este.
+- **Uniones a `main` (16/11/2026, 18:15–18:40), con permiso explícito del usuario y merge normal, sin squash:** PR #42 (`8a7ecb8`), PR #43 Etapa N (`4d3cd01`) y este PR #44. Para poder unir el #43, Claude unió `main` dentro de su rama y resolvió el cruce en CAMBIOS.md y CONTINUAR-AQUI.md conservando ambos textos; no tocó `index.html` ni las pruebas de ChatGPT, y el CI volvió a pasar. De paso se ordenó el comienzo de este archivo (la entrada del PR #42 había quedado dentro de la de la Etapa A). **Próximo paso: E1**, por indicación del usuario; CONTINUAR-AQUI.md y CLAUDE.md apuntan al tablero.
+- **Estado:** documento guardado en la rama y PR abierto · pruebas técnicas: no corresponde (no hay código) · **Motorola: nada probado**. No unir a `main` sin permiso del usuario (merge normal, sin squash).
+
+## 16/11/2026 · Etapa N: pestañas Dictar y Cuadernos (PR #43)
+
+> **Etapa N — ChatGPT (Codex), 16/11/2026:** rama `etapa-n-dictar-cuadernos`, base `3383584`. Textos visibles: Dictar / Cuadernos / Anonimizar / Ajustes; hoja pasa a cuaderno. No cambian ids, claves, datos guardados ni motores. PR #36 y #41 ya integrados; PR #42 documental separado. Validación automática en el PR; Motorola pendiente. Merge normal, sin squash, solo con permiso para publicar.
+
+## 16/11/2026 — Continuidad tras PR #36 y #41
+
+- Responsable: ChatGPT (Codex). Rama: `continuidad-chatgpt-post-41`; base: `3383584`.
+- Leído `docs/DECISIONES-USUARIO-2026-11-16.md` en el commit `0961e50` de Claude (PR #37, aún separado de main).
+- Corregidos CONTINUAR-AQUI.md, CLAUDE.md y encabezado de AGENTS.md: el tema claro, chat y Etapa A ya están integrados.
+- Registrado el orden vigente y las decisiones posteriores de Dictar/Cuadernos, sin reabrirlas. Se preservan autorías y ramas anteriores.
+- Verificación: historial Git y revisión del diff; cambio exclusivamente documental. No se repiten suites de navegador ni se afirma validación en Motorola.
+- PR nuevo; sin squash ni autorización implícita para fusionar.
 
 ## 16/11/2026 · Etapa A estética: ajustes menores de presentación (PR #41)
 
