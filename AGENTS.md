@@ -40,6 +40,7 @@
 - No bloquear mientras se graba o transcribe: lo controla `vaultSetHooks`. Si se agrega otro trabajo largo, sumarlo ahí.
 - No cambiar el formato (`notasvoz.boveda.v1`, AAD y parámetros) sin versión nueva y migración. Una futura app de Android depende de él.
 - Audios todavía sin cifrar: no decir lo contrario en la interfaz.
+- **Audios por nota, copia cifrada, mudanza del texto y original recuperable (plan del 16/11/2026, sin programar):** el tablero con los pasos, su estado y los pedidos para cada IA es [docs/PLAN-ALMACENAMIENTO-CIFRADO.md](docs/PLAN-ALMACENAMIENTO-CIFRADO.md) (nombre fijo); el diseño, [docs/DISENO-ALMACENAMIENTO-CIFRADO-2026-11-16.md](docs/DISENO-ALMACENAMIENTO-CIFRADO-2026-11-16.md). Un paso por vez, con plan y permiso explícito del usuario.
 
 ## Almacenamiento: preservarlo
 Las claves de localStorage e IndexedDB mantienen nombres históricos con «gamma». **No renombrarlas por estética ni borrarlas.** Ejemplos: `notasvoz.gamma.v1`, `notasvoz.gamma.dict.v1`, `notasvoz.gamma.cfg.v1`, `notasvoz.gamma.draft.v1`, `notasvoz.gamma.undo.v1`, IndexedDB `notasvoz-gamma-audio`.

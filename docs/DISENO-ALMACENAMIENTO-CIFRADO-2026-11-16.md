@@ -3,7 +3,8 @@
 > **Qué es esto:** un plan, solo en documento. **No se programó nada ni se tocó `index.html`.**
 > **Responsable:** Claude (Fable 5.2), 16/11/2026. Rama `docs-diseno-almacenamiento-cifrado-2026-11-16`, base `main` = `3383584`.
 > **Estado en tres niveles:** código guardado: **ninguno** (solo este documento) · pruebas técnicas: **ninguna** · probado en el Motorola: **nada**.
-> **Condición:** toca almacenamiento. No se programa nada de esto sin **permiso explícito de Ignacio**, y recién cuando le toque a la Etapa E (orden vigente: N → B → E → C → D). ChatGPT tiene en curso la Etapa N (PR #43, rama `etapa-n-dictar-cuadernos`): este documento no la toca.
+> **Condición:** toca almacenamiento. No se programa nada de esto sin **permiso explícito de Ignacio**, y recién cuando le toque a la Etapa E (orden vigente: N → B → E → C → D). La Etapa N ya está programada por ChatGPT (PR #43, rama `etapa-n-dictar-cuadernos`, en verde, a la espera del permiso de Ignacio): este documento no la toca.
+> **Para saber qué paso toca y cómo pedirlo: [PLAN-ALMACENAMIENTO-CIFRADO.md](PLAN-ALMACENAMIENTO-CIFRADO.md)** (tablero, nombre fijo).
 > **Decisiones de Ignacio (16/11/2026, 17:30–17:50): las trece están tomadas** (tabla de la Parte 1). Dos difieren de lo recomendado: el código de recuperación **no** cambia solo (D10) y la app **sí** se bloquea aunque esté sonando un audio (D11). Se sumó una decisión nueva: mudar el texto al depósito grande (D13).
 > Todo lo afirmado sobre el código se verificó leyendo `index.html` de `main` (`3383584`). Donde algo no se pudo comprobar, lo dice.
 
@@ -350,7 +351,8 @@ Cada una en su rama desde el `main` actualizado, con plan corto, permiso de Igna
 - **Orden decidido:** E1 → E2 → K1 → E3 → K2 → T → AO. **AO** va después de C1 (propuesta estética) y después de T (D13).
 - En E2 entra también el tope de carga de 30 MB (D4).
 - **No se deshace:** audios borrados al quitar la protección (D3), «reemplazar todo» al restaurar y cualquier «Borrar audio». Los tres llevan confirmación explícita y oferta de copia previa.
-- **Coordinación:** este PR y el #43 (Etapa N) agregan una entrada arriba de CAMBIOS.md; el segundo que se una puede tener que resolver ese cruce a mano.
+- **Coordinación:** este PR, el #42 y el #43 (ambos de ChatGPT, terminados y a la espera de permiso) agregan una entrada arriba de CAMBIOS.md. Conviene unir #42, #43 y después este; el que se une después puede tener que resolver ese cruce a mano.
+- **Estado y pedidos por paso:** se llevan en [PLAN-ALMACENAMIENTO-CIFRADO.md](PLAN-ALMACENAMIENTO-CIFRADO.md), no acá.
 
 ### 2.13 Mudanza del texto al depósito grande (D13)
 
