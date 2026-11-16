@@ -1,7 +1,7 @@
 # CONTINUAR AQUÍ — Próxima IA de DictaNota
 
 > **Punto de entrada obligatorio para continuar el rediseño conversacional (16/11/2026).**
-> **Estado (16/11/2026, 08:01):** propuesta, maquetas y **fase 1** hechas; la fase 1 (modelo de datos en funciones puras, bloque `CONV` de `index.html`, sin cambios visibles) está unida a `main` (PR #31). **Leer las secciones 2.5 y 2.6 de la especificación:** el usuario decidió un botón Guardar (lo no guardado se descarta) y que el sello sea la hora de guardado; el modelo de la fase 1 todavía debe ajustarse a eso. **Las fases siguientes necesitan autorización explícita.**
+> **Estado (16/11/2026, 09:14):** propuesta, maquetas, **fase 1** (modelo) y **fase 2** (guardado protegido, migración de notas viejas, sello = hora de guardado, mover/copiar hoja completa) hechas, sin cambios visibles: la app todavía no usa el bloque `CONV`. **Leer las secciones 2.5 y 2.6 de la especificación.** Próximo paso: **fase 3**, la pantalla Notas con burbujas y botón Guardar; necesita autorización explícita.
 
 ## Lectura en orden
 

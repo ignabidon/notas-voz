@@ -1,3 +1,14 @@
+## 16/11/2026 · Rediseño conversacional · fase 2: guardado protegido y migración (sin cambios visibles)
+
+Base: `main` en `7bd0240`; rama `rediseno-02-guardado-conversaciones-2026-11-16`. Autorizado por el usuario el 16/11/2026 (09:14).
+
+- **Ajuste del modelo a las decisiones de las 08:01:** el sello de cada burbuja es `savedAt`, el momento en que terminó de guardarse (botón Guardar). La hora de inicio de la grabación (`recordedAt`) queda como dato técnico opcional. El título de una hoja nueva usa la hora de guardado. Ninguna de las dos se puede cambiar después (`convCheckWrite`).
+- **Hoja completa:** `convMoveAll` pasa todos los mensajes de una hoja a otra (con «Deshacer»; la hoja de origen queda vacía y no se borra sola) y `convCopyText` arma el texto de toda la hoja para copiarlo (título y, por mensaje, su fecha en una línea aparte).
+- **Notas viejas:** `convFromLegacy` convierte cada nota en una hoja con **una burbuja**, con su fecha de último guardado. Repetirla no duplica y no modifica `notasvoz.gamma.v1`.
+- **Guardado:** `convMakeStore` carga y guarda la clave nueva `notasvoz.dictanota.v2`, verifica releyendo, rechaza cambios de sello, no lee ni escribe con la protección bloqueada y no sobrescribe datos dañados. La clave se sumó a `VAULT_KEYS` («conversaciones»): con la protección activada se guarda cifrada.
+- **La app todavía no carga, migra ni guarda conversaciones** (una prueba lo verifica). Nada cambia en el celular hasta la fase 3, que conecta la pantalla Notas y el botón Guardar. La recuperación automática del texto sin guardar se mantiene (decisión del usuario) y se usará para el mensaje pendiente.
+- Pruebas: **125/125** Node (15 del rediseño, datos ficticios; incluye cifrado real con la hoja protegida); `tests/browser.mjs` y `tests/cifrado-browser.mjs` aprobadas en Chrome local. Motorola: no aplica todavía.
+
 ## 16/11/2026 · Rediseño conversacional · fase 1: modelo de datos (sin cambios visibles)
 
 Base: `main` en `65ec519`; rama `rediseno-01-modelo-conversaciones-2026-11-16`. Autorizado por el usuario el 16/11/2026 (fase 1).

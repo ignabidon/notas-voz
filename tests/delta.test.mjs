@@ -1374,99 +1374,127 @@ test('cifrado: un código de recuperación nuevo reemplaza al anterior (pide la 
   assert.doesNotMatch(html, /\.vault-code\{[^}]*user-select:all/, 'el código tiene que poder seleccionarse en Android');
 });
 
-/* ---- Rediseño conversacional · fase 1: modelo de datos (16/11/2026). Datos ficticios. ---- */
+/* ---- Rediseño conversacional · modelo y guardado (fases 1 y 2, 16/11/2026). Datos ficticios. ---- */
 const convSrc = (html.match(/\/\*CONV-START\*\/([\s\S]*?)\/\*CONV-END\*\//) || [])[1];
-const conv = new Function(convSrc + ';return {convEmpty, convStamp, convValid, convEntriesOf, convAddEntry, convEditText, convRename, convMoveEntry, convUndoMove, convIsEmpty, convCheckWrite, convToLegacyNotes};')();
+const conv = new Function(convSrc + ';return {CONV_KEY, convEmpty, convStamp, convValid, convEntriesOf, convAddEntry, convEditText, convRename, convMoveEntry, convMoveEntries, convMoveAll, convUndoMove, convIsEmpty, convCopyText, convCheckWrite, convFromLegacy, convToLegacyNotes, convMakeStore};')();
 const BA = 180; // getTimezoneOffset() de Buenos Aires
 const T1042 = Date.UTC(2026, 10, 16, 13, 42); // 16/11/2026 10:42 en Argentina
 const seqIds = () => { let n = 0; return () => 'id' + (++n); };
+const guardar = (d, extra, ids) => conv.convAddEntry(d, {kind: 'audio', tzOffsetMin: BA, ...extra}, {newId: ids || seqIds()});
 
-test('conversaciones: el modelo está aislado y la app todavía no lo usa', () => {
+test('conversaciones: el bloque está aislado y la app todavía no carga, migra ni guarda', () => {
   assert.ok(convSrc, 'falta el bloque CONV');
   assert.doesNotMatch(convSrc, /localStorage|vaultStore|indexedDB|innerHTML|document\.|\beval\b|new Function|fetch\(/);
   const fuera = html.replace(convSrc, '');
-  for (const f of ['convAddEntry', 'convMoveEntry', 'convEditText', 'convToLegacyNotes', 'convValid']) assert.ok(!fuera.includes(f + '('), f + ' no debe usarse fuera del bloque en la fase 1');
-  assert.ok(!html.includes('notasvoz.dictanota'), 'la fase 1 no crea claves de almacenamiento');
+  for (const f of ['convAddEntry', 'convMoveEntries', 'convMoveAll', 'convFromLegacy', 'convMakeStore', 'convCopyText', 'convValid']) assert.ok(!fuera.includes(f + '('), f + ' no debe usarse fuera del bloque hasta la fase 3');
 });
 
-test('conversaciones: la nota nueva se titula con la fecha y hora de registro', () => {
+test('conversaciones: la clave nueva queda protegida por el cifrado', () => {
+  assert.equal(conv.CONV_KEY, 'notasvoz.dictanota.v2');
+  assert.match(html, /'notasvoz\.dictanota\.v2': 'conversaciones'/);
+  const vk = new Function((html.match(/const VAULT_KEYS = \{[\s\S]*?\};/) || [''])[0] + ';return VAULT_KEYS;')();
+  assert.equal(vk['notasvoz.dictanota.v2'], 'conversaciones');
+  for (const k of ['notasvoz.gamma.v1', 'notasvoz.gamma.draft.v1', 'notasvoz.gamma.undo.v1', 'notasvoz.gamma.people.v1', 'notasvoz.gamma.dict.v1']) assert.ok(vk[k], 'se conserva ' + k);
+});
+
+test('conversaciones: el sello es la hora de guardado y titula la hoja nueva', () => {
   assert.equal(conv.convStamp(T1042, BA), '16/11/2026 · 10:42');
   assert.equal(conv.convStamp(Date.UTC(2026, 0, 1, 2, 5), BA), '31/12/2025 · 23:05');
-  const r = conv.convAddEntry(conv.convEmpty(), {kind: 'audio', recordedAt: T1042, tzOffsetMin: BA, text: 'Comprar yerba.'}, {newId: seqIds(), now: T1042 + 60000});
+  const r = guardar(conv.convEmpty(), {savedAt: T1042, recordedAt: T1042 - 300000, text: 'Comprar yerba.'});
   assert.equal(r.created, true);
-  assert.equal(r.conversation.title, '16/11/2026 · 10:42');
-  assert.equal(r.conversation.createdAt, T1042);
+  assert.equal(r.conversation.title, '16/11/2026 · 10:42', 'título = hora de guardado, no de inicio de grabación');
+  assert.equal(r.entry.savedAt, T1042);
+  assert.equal(r.entry.recordedAt, T1042 - 300000);
+  assert.throws(() => guardar(conv.convEmpty(), {text: 'x'}), /guardado/);
 });
 
-test('conversaciones: sin texto ni audio no se crea ninguna nota', () => {
+test('conversaciones: sin texto ni audio no se crea ninguna hoja', () => {
   const d = conv.convEmpty();
   for (const text of ['', '   \n ']) {
-    const r = conv.convAddEntry(d, {kind: 'audio', recordedAt: T1042, tzOffsetMin: BA, text}, {newId: seqIds()});
-    assert.equal(r.entry, null); assert.equal(r.data, d); assert.equal(r.data.conversations.length, 0);
+    const r = guardar(d, {savedAt: T1042, text});
+    assert.equal(r.entry, null); assert.equal(r.data, d);
   }
-  const conAudio = conv.convAddEntry(d, {kind: 'audio', recordedAt: T1042, text: '', audioId: 'a1'}, {newId: seqIds()});
-  assert.equal(conAudio.created, true, 'un audio válido sin transcribir sí crea la nota');
-  assert.throws(() => conv.convAddEntry(d, {kind: 'audio', text: 'x'}), /fecha/);
-  assert.throws(() => conv.convAddEntry(d, {kind: 'heredado', recordedAt: T1042, text: 'x'}), /Tipo/);
+  assert.equal(guardar(d, {savedAt: T1042, text: '', audioId: 'a1'}).created, true, 'un audio guardado sin transcribir sí crea la hoja');
+  assert.throws(() => conv.convAddEntry(d, {kind: 'heredado', savedAt: T1042, text: 'x'}), /Tipo/);
 });
 
-test('conversaciones: dos capturas globales son dos notas; grabar dentro de una nota agrega ahí', () => {
+test('conversaciones: dos guardados globales son dos hojas; dentro de una hoja se agrega ahí', () => {
   const ids = seqIds();
-  let r = conv.convAddEntry(conv.convEmpty(), {kind: 'audio', recordedAt: T1042, tzOffsetMin: BA, text: 'Uno.'}, {newId: ids});
+  let r = guardar(conv.convEmpty(), {savedAt: T1042, text: 'Uno.'}, ids);
   const primera = r.conversation.id;
-  r = conv.convAddEntry(r.data, {kind: 'audio', recordedAt: T1042 + 120000, tzOffsetMin: BA, text: 'Dos.'}, {newId: ids});
+  r = guardar(r.data, {savedAt: T1042 + 120000, text: 'Dos.'}, ids);
   assert.notEqual(r.conversation.id, primera);
-  assert.equal(r.data.conversations.length, 2);
-  r = conv.convAddEntry(r.data, {conversationId: primera, kind: 'texto', recordedAt: T1042 + 300000, tzOffsetMin: BA, text: 'Tres.'}, {newId: ids});
+  r = conv.convAddEntry(r.data, {conversationId: primera, kind: 'texto', savedAt: T1042 + 7 * 864e5, tzOffsetMin: BA, text: 'Tres, otro lunes.'}, {newId: ids});
   assert.equal(r.created, false);
   assert.equal(r.data.conversations.length, 2);
-  assert.deepEqual(conv.convEntriesOf(r.data, primera).map(e => [e.text, e.recordedAt]), [['Uno.', T1042], ['Tres.', T1042 + 300000]]);
-  assert.throws(() => conv.convAddEntry(r.data, {conversationId: 'no-existe', kind: 'texto', recordedAt: T1042, text: 'x'}), /no existe/);
+  assert.deepEqual(conv.convEntriesOf(r.data, primera).map(e => conv.convStamp(e.savedAt, e.tzOffsetMin)), ['16/11/2026 · 10:42', '23/11/2026 · 10:42']);
+  assert.throws(() => conv.convAddEntry(r.data, {conversationId: 'no-existe', kind: 'texto', savedAt: T1042, text: 'x'}), /no existe/);
 });
 
-test('conversaciones: editar, renombrar y mover nunca cambian la fecha y hora de registro', () => {
+test('conversaciones: editar, renombrar y mover nunca cambian el sello', () => {
   const ids = seqIds();
-  let r = conv.convAddEntry(conv.convEmpty(), {kind: 'audio', recordedAt: T1042, tzOffsetMin: BA, text: 'Pasiente ficticio.', audioId: 'aud-1', durationMs: 48000}, {newId: ids});
+  let r = guardar(conv.convEmpty(), {savedAt: T1042, text: 'Pasiente ficticio.', audioId: 'aud-1', durationMs: 48000}, ids);
   const e = r.entry, origen = r.conversation.id;
-  r = conv.convAddEntry(r.data, {kind: 'texto', recordedAt: T1042 + 9e5, tzOffsetMin: BA, text: 'Lista ficticia.'}, {newId: ids});
-  const destino = r.conversation.id;
-  const antes = r.data;
+  r = conv.convAddEntry(r.data, {kind: 'texto', savedAt: T1042 + 9e5, tzOffsetMin: BA, text: 'Lista ficticia.'}, {newId: ids});
+  const destino = r.conversation.id, antes = r.data;
   let d = conv.convEditText(antes, e.id, 'Paciente ficticio.', T1042 + 1e6);
   d = conv.convRename(d, destino, 'Supermercado');
   const m = conv.convMoveEntry(d, e.id, destino, T1042 + 2e6);
   const movido = m.data.entries.find(x => x.id === e.id);
-  assert.equal(movido.recordedAt, T1042); assert.equal(movido.tzOffsetMin, BA);
-  assert.equal(movido.text, 'Paciente ficticio.'); assert.equal(movido.textEditedAt, T1042 + 1e6);
-  assert.equal(movido.audioId, 'aud-1'); assert.equal(movido.durationMs, 48000);
-  assert.equal(movido.conversationId, destino);
+  assert.deepEqual([movido.savedAt, movido.tzOffsetMin, movido.text, movido.textEditedAt, movido.audioId, movido.durationMs, movido.conversationId],
+    [T1042, BA, 'Paciente ficticio.', T1042 + 1e6, 'aud-1', 48000, destino]);
   assert.equal(m.data.entries.length, antes.entries.length, 'mover no duplica');
-  assert.ok(conv.convIsEmpty(m.data, origen), 'la nota de origen queda vacía pero no se borra sola');
-  assert.ok(m.data.conversations.some(c => c.id === origen));
+  assert.ok(conv.convIsEmpty(m.data, origen) && m.data.conversations.some(c => c.id === origen), 'la hoja de origen queda vacía pero no se borra sola');
   assert.equal(conv.convCheckWrite(antes, m.data), '');
-  const vuelta = conv.convUndoMove(m.data, m.undo);
-  assert.equal(vuelta.entries.find(x => x.id === e.id).conversationId, origen);
+  assert.equal(conv.convUndoMove(m.data, m.undo).entries.find(x => x.id === e.id).conversationId, origen);
   assert.throws(() => conv.convMoveEntry(d, e.id, 'no-existe'), /no existe/);
-  assert.equal(d.entries.find(x => x.id === e.id).conversationId, origen, 'un fallo no modifica el origen');
   assert.throws(() => conv.convRename(d, destino, '   '), /vacío/);
 });
 
-test('conversaciones: el control de escritura rechaza cambiar fechas o duplicar mensajes', () => {
-  const r = conv.convAddEntry(conv.convEmpty(), {kind: 'texto', recordedAt: T1042, tzOffsetMin: BA, text: 'Hola.'}, {newId: seqIds()});
-  const alterada = {...r.data, entries: r.data.entries.map(e => ({...e, recordedAt: e.recordedAt + 1}))};
-  assert.match(conv.convCheckWrite(r.data, alterada), /fecha y hora/);
-  const zona = {...r.data, entries: r.data.entries.map(e => ({...e, tzOffsetMin: 0}))};
-  assert.match(conv.convCheckWrite(r.data, zona), /zona/);
-  const dup = {...r.data, entries: r.data.entries.concat(r.data.entries)};
-  assert.match(conv.convCheckWrite(r.data, dup), /duplicado/);
+test('conversaciones: pasar toda una hoja a otra conserva sellos y se puede deshacer', () => {
+  const ids = seqIds();
+  let r = guardar(conv.convEmpty(), {savedAt: T1042, text: 'Sesión ficticia 1.'}, ids);
+  const hojaA = r.conversation.id;
+  r = conv.convAddEntry(r.data, {conversationId: hojaA, kind: 'audio', savedAt: T1042 + 7 * 864e5, tzOffsetMin: BA, text: 'Sesión ficticia 2.'}, {newId: ids});
+  r = guardar(r.data, {savedAt: T1042 + 1e5, text: 'Otra hoja.'}, ids);
+  const hojaB = r.conversation.id, antes = r.data;
+  const m = conv.convMoveAll(antes, hojaA, hojaB, T1042 + 9e8);
+  assert.equal(conv.convEntriesOf(m.data, hojaB).length, 3);
+  assert.ok(conv.convIsEmpty(m.data, hojaA));
+  assert.equal(conv.convCheckWrite(antes, m.data), '');
+  assert.deepEqual(conv.convEntriesOf(m.data, hojaB).map(e => e.text), ['Sesión ficticia 1.', 'Otra hoja.', 'Sesión ficticia 2.'], 'quedan ordenadas por hora de guardado');
+  const vuelta = conv.convUndoMove(m.data, m.undo);
+  assert.equal(conv.convEntriesOf(vuelta, hojaA).length, 2);
+  assert.equal(conv.convEntriesOf(vuelta, hojaB).length, 1);
+  assert.throws(() => conv.convMoveAll(antes, hojaA, hojaA), /otra hoja/);
+});
+
+test('conversaciones: copiar toda una hoja lleva título, fecha de cada mensaje y texto', () => {
+  const ids = seqIds();
+  let r = guardar(conv.convEmpty(), {savedAt: T1042, text: '  Primera sesión ficticia.  '}, ids);
+  const h = r.conversation.id;
+  r = conv.convAddEntry(r.data, {conversationId: h, kind: 'audio', savedAt: T1042 + 7 * 864e5, tzOffsetMin: BA, text: '', audioId: 'a2'}, {newId: ids});
+  r = conv.convAddEntry(r.data, {conversationId: h, kind: 'texto', savedAt: T1042 + 14 * 864e5, tzOffsetMin: BA, text: 'Tercera.'}, {newId: ids});
+  const d = conv.convRename(r.data, h, 'Paciente ficticio P-001');
+  assert.equal(conv.convCopyText(d, h), 'Paciente ficticio P-001\n\n16/11/2026 · 10:42\nPrimera sesión ficticia.\n\n30/11/2026 · 10:42\nTercera.');
+});
+
+test('conversaciones: el control de escritura rechaza cambiar sellos o duplicar mensajes', () => {
+  const r = guardar(conv.convEmpty(), {savedAt: T1042, recordedAt: T1042 - 1, text: 'Hola.'});
+  const cambiar = f => ({...r.data, entries: r.data.entries.map(e => ({...e, ...f(e)}))});
+  assert.match(conv.convCheckWrite(r.data, cambiar(e => ({savedAt: e.savedAt + 1}))), /fecha y hora/);
+  assert.match(conv.convCheckWrite(r.data, cambiar(e => ({recordedAt: null}))), /fecha y hora/);
+  assert.match(conv.convCheckWrite(r.data, cambiar(() => ({tzOffsetMin: 0}))), /zona/);
+  assert.match(conv.convCheckWrite(r.data, {...r.data, entries: r.data.entries.concat(r.data.entries)}), /duplicado/);
 });
 
 test('conversaciones: lectura defensiva descarta lo dañado sin ejecutar contenido', () => {
   const raw = {schema: 2, conversations: [{id: 'c1', title: '<img src=x onerror=alert(1)>', createdAt: T1042, tags: ['a', 3]}, {id: 'c1', title: 'repetida'}, {title: 'sin id'}],
-    entries: [{id: 'e1', conversationId: 'c1', kind: 'audio', recordedAt: T1042, text: 'ok'},
-      {id: 'e2', conversationId: 'c1', kind: 'audio', recordedAt: 'ayer', text: 'fecha mala'},
-      {id: 'e3', conversationId: 'cX', kind: 'texto', recordedAt: T1042, text: 'sin nota'},
-      {id: 'e4', conversationId: 'c1', kind: 'heredado', recordedAt: null, text: 'vieja', legacySavedAt: T1042},
-      {id: 'e5', conversationId: 'c1', kind: 'raro', recordedAt: T1042, text: 'x'}]};
+    entries: [{id: 'e1', conversationId: 'c1', kind: 'audio', savedAt: T1042, text: 'ok'},
+      {id: 'e2', conversationId: 'c1', kind: 'audio', savedAt: 'ayer', text: 'fecha mala'},
+      {id: 'e3', conversationId: 'cX', kind: 'texto', savedAt: T1042, text: 'sin hoja'},
+      {id: 'e4', conversationId: 'c1', kind: 'heredado', savedAt: null, text: 'vieja'},
+      {id: 'e5', conversationId: 'c1', kind: 'raro', savedAt: T1042, text: 'x'}]};
   const v = conv.convValid(raw);
   assert.equal(v.ok, false); assert.equal(v.dropped, 5);
   assert.deepEqual(v.data.entries.map(e => e.id), ['e1', 'e4']);
@@ -1476,14 +1504,80 @@ test('conversaciones: lectura defensiva descarta lo dañado sin ejecutar conteni
   assert.deepEqual(conv.convEntriesOf(v.data, 'c1').map(e => e.id), ['e4', 'e1'], 'lo heredado sin fecha va primero');
 });
 
+test('conversaciones: notas viejas → una burbuja por nota, con su fecha de guardado, sin duplicar', () => {
+  const viejas = [{id: 'n1', title: 'Paciente ficticio', text: 'Sesión del lunes.', ts: T1042, tags: ['clínica']},
+    {id: 'n2', title: '', text: 'Sin título.', ts: T1042 + 864e5, tags: []},
+    {id: 'n3', title: 'Vacía', text: '   ', ts: T1042, tags: []},
+    {id: 'n4', title: 'Sin fecha', text: 'Antigua.', ts: 0, tags: []}];
+  const copia = JSON.stringify(viejas);
+  const r = conv.convFromLegacy(conv.convEmpty(), viejas);
+  assert.equal(JSON.stringify(viejas), copia, 'no modifica las notas viejas');
+  assert.equal(r.added, 3);
+  assert.deepEqual(r.data.conversations.map(c => [c.id, c.title, c.tags]), [['legacy:n1', 'Paciente ficticio', ['clínica']], ['legacy:n2', conv.convStamp(T1042 + 864e5), []], ['legacy:n4', 'Sin fecha', []]]);
+  assert.deepEqual(r.data.entries.map(e => [e.conversationId, e.kind, e.savedAt, e.text]),
+    [['legacy:n1', 'heredado', T1042, 'Sesión del lunes.'], ['legacy:n2', 'heredado', T1042 + 864e5, 'Sin título.'], ['legacy:n4', 'heredado', null, 'Antigua.']]);
+  assert.equal(conv.convFromLegacy(r.data, viejas).added, 0, 'repetir la migración no duplica');
+  assert.ok(conv.convValid(JSON.parse(JSON.stringify(r.data))).ok, 'el resultado se puede releer');
+});
+
 test('conversaciones: volver al formato anterior produce notas planas válidas', () => {
   const ids = seqIds();
-  let r = conv.convAddEntry(conv.convEmpty(), {kind: 'audio', recordedAt: T1042, tzOffsetMin: BA, text: 'Uno.'}, {newId: ids, now: T1042});
+  let r = guardar(conv.convEmpty(), {savedAt: T1042, text: 'Uno.'}, ids);
   const c = r.conversation.id;
-  r = conv.convAddEntry(r.data, {conversationId: c, kind: 'texto', recordedAt: T1042 + 6e4, tzOffsetMin: BA, text: 'Dos.'}, {newId: ids, now: T1042 + 6e4});
-  r = conv.convAddEntry(r.data, {kind: 'audio', recordedAt: T1042 + 7e4, text: '', audioId: 'a9'}, {newId: ids, now: T1042 + 7e4});
+  r = conv.convAddEntry(r.data, {conversationId: c, kind: 'texto', savedAt: T1042 + 6e4, tzOffsetMin: BA, text: 'Dos.'}, {newId: ids});
+  r = guardar(r.data, {savedAt: T1042 + 7e4, text: '', audioId: 'a9'}, ids);
   const notas = conv.convToLegacyNotes(r.data);
-  assert.equal(notas.length, 1, 'una nota solo con audio sin transcribir no genera nota de texto vacía');
-  assert.deepEqual(notas[0], {id: c, title: '16/11/2026 · 10:42', text: 'Uno.\n\nDos.', ts: T1042 + 6e4, tags: []});
-  assert.ok(!notas[0].text.includes('16/11/2026'), 'las fechas no se meten en el texto');
+  assert.deepEqual(notas, [{id: c, title: '16/11/2026 · 10:42', text: 'Uno.\n\nDos.', ts: T1042 + 6e4, tags: []}]);
+});
+
+test('conversaciones: guardado verificado; bloqueada no lee ni escribe; dañado no se sobrescribe', () => {
+  const st = memStorage(); let abierta = true;
+  const s = conv.convMakeStore(st, () => abierta);
+  assert.equal(s.save(conv.convEmpty()).ok, false, 'sin cargar no guarda');
+  assert.equal(s.load().ok, true);
+  const r = guardar(s.data, {savedAt: T1042, text: 'Ficticio.'});
+  assert.equal(s.save(r.data).ok, true);
+  assert.equal(JSON.parse(st.getItem('notasvoz.dictanota.v2')).entries[0].text, 'Ficticio.');
+  const alterado = {...r.data, entries: r.data.entries.map(e => ({...e, savedAt: 1}))};
+  assert.match(s.save(alterado).error, /fecha y hora/);
+  assert.equal(JSON.parse(st.getItem('notasvoz.dictanota.v2')).entries[0].savedAt, T1042, 'un guardado rechazado no toca lo anterior');
+  abierta = false;
+  assert.equal(s.load().ok, false); assert.equal(s.data, null);
+  assert.equal(s.save(conv.convEmpty()).ok, false);
+  assert.equal(JSON.parse(st.getItem('notasvoz.dictanota.v2')).entries.length, 1, 'bloqueada no escribe');
+  abierta = true;
+  st.setItem('notasvoz.dictanota.v2', '{dañado');
+  assert.equal(s.load().ok, false); assert.equal(s.readWarning, true);
+  assert.equal(s.save(conv.convEmpty()).ok, false);
+  assert.equal(st.getItem('notasvoz.dictanota.v2'), '{dañado', 'lo dañado no se sobrescribe');
+  const lleno = conv.convMakeStore({getItem: () => null, setItem(){ throw new Error('QuotaExceededError'); }}, () => true);
+  lleno.load();
+  assert.match(lleno.save(guardar(conv.convEmpty(), {savedAt: T1042, text: 'x'}).data).error, /No se pudo guardar/);
+});
+
+test('conversaciones: migrar desde el almacén es repetible y deja intactas las notas viejas', () => {
+  const viejas = [{id: 'n1', title: 'Ficticia', text: 'Texto.', ts: T1042, tags: []}];
+  const st = memStorage({'notasvoz.gamma.v1': JSON.stringify(viejas)});
+  const s = conv.convMakeStore(st, () => true); s.load();
+  assert.deepEqual(s.migrate(JSON.parse(st.getItem('notasvoz.gamma.v1'))), {ok: true, added: 1, error: undefined});
+  assert.equal(s.migrate(viejas).added, 0);
+  assert.equal(st.getItem('notasvoz.gamma.v1'), JSON.stringify(viejas));
+  const s2 = conv.convMakeStore(st, () => true); s2.load();
+  assert.equal(s2.data.conversations[0].id, 'legacy:n1');
+});
+
+test('conversaciones: con la protección activada la hoja se guarda cifrada y bloqueada no se ve', async () => {
+  const st = memStorage(datosFicticios()), v = vaultCore.createVault(st);
+  await v.enable('frase de prueba larga');
+  const s = conv.convMakeStore(v.store, () => v.state === 'off' || v.state === 'open'); s.load();
+  assert.equal(s.save(guardar(s.data, {savedAt: T1042, text: 'Texto ficticio secreto.'}).data).ok, true);
+  await v.flush();
+  assert.equal(st.getItem('notasvoz.dictanota.v2'), null, 'no queda copia en claro');
+  const rec = st.getItem(vaultCore.VAULT_REC_PREFIX + 'conversaciones');
+  assert.ok(rec && !rec.includes('secreto'));
+  const v2 = vaultCore.createVault(st), s2 = conv.convMakeStore(v2.store, () => v2.state === 'off' || v2.state === 'open');
+  assert.equal(s2.load().ok, false, 'bloqueada no carga');
+  await v2.unlockPassword('frase de prueba larga');
+  assert.equal(s2.load().ok, true);
+  assert.equal(s2.data.entries[0].text, 'Texto ficticio secreto.');
 });
