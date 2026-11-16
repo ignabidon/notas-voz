@@ -2,35 +2,35 @@
 
 > Antes de editar: leer [SEGURIDAD.md](SEGURIDAD.md) y [AGENTS.md](AGENTS.md).
 
-## Rediseño claro en revisión (16/11/2026)
+## Rediseño claro y navegación (16/11/2026)
 
-Esta rama incorpora la estética Clínica contemporánea y disposición de chat. Inicio: grabar, «Ver hojas guardadas» o «Escribir una nota». Una nota es un texto escrito o transcripto; una hoja reúne notas y se puede renombrar. Dentro de una hoja, Grabar/Guardar agrega una nota allí. «Nueva nota» inicia una hoja independiente al guardar y protege cualquier borrador pendiente.
+Esta rama incorpora la estética Clínica contemporánea y disposición de chat. Inicio: grabar, «Ver cuadernos guardados» o «Escribir una nota». Una nota es un texto escrito o transcripto; un cuaderno reúne notas y se puede renombrar. Dentro de un cuaderno, Grabar/Guardar agrega una nota allí. «Nueva nota» inicia un cuaderno independiente al guardar y protege cualquier borrador pendiente.
 
-Las herramientas del editor están en «Herramientas de la nota»; las acciones de la hoja en «Opciones de esta hoja». Se conservan las cuatro pestañas en esta etapa. Navegación final, anonimización de toda la hoja y recuperación persistente de originales quedan pendientes. La publicación depende de revisión visual. Prueba física en Motorola pendiente.
+Las herramientas del editor están en «Herramientas de la nota»; las acciones del cuaderno en «Opciones de este cuaderno». Las cuatro pestañas son Dictar, Cuadernos, Anonimizar y Ajustes. La anonimización de todo el cuaderno y recuperación persistente de originales quedan pendientes. La publicación depende de revisión visual. Prueba física en Motorola pendiente.
 
-**Prueba breve:** nueva nota → escribir → Guardar → renombrar hoja → escribir otra → Guardar → Nueva nota → guardar aparte → Mover a la primera hoja → Deshacer. Repetir con grabación ficticia, letra Grande y teclado abierto. Verificar Pausar/Detener, corrección, protección y reabrir el borrador.
+**Prueba breve:** nueva nota → escribir → Guardar → renombrar cuaderno → escribir otra → Guardar → Nueva nota → guardar aparte → Mover a la primera cuaderno → Deshacer. Repetir con grabación ficticia, letra Grande y teclado abierto. Verificar Pausar/Detener, corrección, protección y reabrir el borrador.
 
-> **📌 CONTINUIDAD DEL PROYECTO PARA OTRAS IA:** comenzá por **[CONTINUAR-AQUI.md](CONTINUAR-AQUI.md)** y el **[informe de continuidad del 16/11/2026](docs/INFORME-CONTINUIDAD-2026-11-16.md)**. La pestaña Notas (hojas con mensajes) ya está publicada; la estética clara y el aspecto de chat **todavía no**. No modificar la aplicación sin autorización explícita.
+> **📌 CONTINUIDAD DEL PROYECTO PARA OTRAS IA:** comenzá por **[CONTINUAR-AQUI.md](CONTINUAR-AQUI.md)** y el **[informe de continuidad del 16/11/2026](docs/INFORME-CONTINUIDAD-2026-11-16.md)**. La pestaña Notas (cuadernos con mensajes) ya está publicada; la estética clara y el aspecto de chat ya están integrados. No modificar la aplicación sin autorización explícita.
 
 **Aplicación oficial:** https://ignabidon.github.io/notas-voz/
 
 > **⚠ Seguridad:** hay una revisión de seguridad («pen testing») en curso. Leé [SEGURIDAD.md](SEGURIDAD.md): qué está confirmado, qué no, riesgos abiertos y reglas para editar. Hasta ahora las notas **no están cifradas**: no uses datos reales.
 
-Esta es la **única versión web activa** del repositorio. La etapa vigente es **Delta 11**, con navegación Android de cuatro pantallas (Audio / Notas / Anonimizar / Ajustes; «Notas» reemplazó a «Texto» el 16/11/2026), estado global de transcripción y acciones accesibles de audio y texto.
+Esta es la **única versión web activa** del repositorio. La etapa vigente es **Delta 11**, con navegación Android de cuatro pantallas (Dictar / Cuadernos / Anonimizar / Ajustes; «Notas» reemplazó a «Texto» el 16/11/2026), estado global de transcripción y acciones accesibles de audio y texto.
 
 > **Prueba Delta 11 — experimental.** El usuario ya probó en Brave Android la grabación, Whisper, descarga TXT, recuperación del audio anterior y funcionamiento general de la interfaz. Las acciones nuevas de Delta 11 —Descargar audio visible, Compartir texto y accesos directos— **todavía necesitan prueba real en el Motorola**. Las 53 pruebas automáticas y la publicación GitHub Pages fueron satisfactorias. No usar datos reales de pacientes.
 
 
-## Notas en hojas (16/11/2026 · fase 3, sin probar en el Motorola)
+## Notas en cuadernos (16/11/2026 · fase 3, sin probar en el Motorola)
 
-La pestaña **Notas** reemplaza a Texto. Cada hoja es como un chat privado (no se envía nada): sus mensajes muestran la **fecha y hora en que se guardaron**.
+La pestaña **Notas** reemplaza a Texto. Cada cuaderno es como un chat privado (no se envía nada): sus mensajes muestran la **fecha y hora en que se guardaron**.
 
-- Grabá o escribí: el texto queda en el editor como **mensaje sin guardar**. Tocá **Guardar** para sumarlo a una hoja o **Descartar** para tirarlo (pide confirmación).
-- Grabar desde **Audio** crea siempre una hoja nueva. Con una hoja abierta en **Notas**, lo que grabes o escribas se agrega ahí.
-- En cada mensaje: Copiar, Editar, Mover, Borrar. En cada hoja: Renombrar, Copiar todo, Pasar todo a otra hoja, Descargar .txt.
-- Tus notas anteriores aparecen solas como hojas (una burbuja por nota); las originales se conservan aparte.
+- Grabá o escribí: el texto queda en el editor como **mensaje sin guardar**. Tocá **Guardar** para sumarlo a un cuaderno o **Descartar** para tirarlo (pide confirmación).
+- Grabar desde **Audio** crea siempre un cuaderno nuevo. Con un cuaderno abierto en **Notas**, lo que grabes o escribas se agrega ahí.
+- En cada mensaje: Copiar, Editar, Mover, Borrar. En cada cuaderno: Renombrar, Copiar todo, Pasar todo a otro cuaderno, Descargar .txt.
+- Tus notas anteriores aparecen solas como cuadernos (una burbuja por nota); las originales se conservan aparte.
 
-**Prueba en el Motorola (datos inventados):** abrir Notas y ver las notas anteriores → escribir algo y Guardar (hoja nueva con fecha y hora) → con esa hoja abierta, Grabar y Guardar (se agrega ahí) → ir a Audio, grabar, volver a Notas y Guardar (hoja nueva) → Editar un mensaje y ver que la fecha no cambia → Mover y Deshacer → Pasar todo a otra hoja → Copiar todo y pegar en otra app → escribir algo, cerrar Brave sin guardar y volver a abrir (debe ofrecer Guardar o Descartar) → probar con letra Grande.
+**Prueba en el Motorola (datos inventados):** abrir Notas y ver las notas anteriores → escribir algo y Guardar (cuaderno nuevo con fecha y hora) → con esa cuaderno abierto, Grabar y Guardar (se agrega ahí) → ir a Audio, grabar, volver a Notas y Guardar (cuaderno nuevo) → Editar un mensaje y ver que la fecha no cambia → Mover y Deshacer → Pasar todo a otro cuaderno → Copiar todo y pegar en otra app → escribir algo, cerrar Brave sin guardar y volver a abrir (debe ofrecer Guardar o Descartar) → probar con letra Grande.
 
 ## Protección con contraseña y huella (16/11/2026)
 

@@ -1,5 +1,7 @@
 ## 16/11/2026 · Etapa A estética: ajustes menores de presentación (PR #41)
 
+> **Etapa N — ChatGPT (Codex), 16/11/2026:** rama `etapa-n-dictar-cuadernos`, base `3383584`. Textos visibles: Dictar / Cuadernos / Anonimizar / Ajustes; hoja pasa a cuaderno. No cambian ids, claves, datos guardados ni motores. PR #36 y #41 ya integrados; PR #42 documental separado. Validación automática en el PR; Motorola pendiente. Merge normal, sin squash, solo con permiso para publicar.
+
 ## 16/11/2026 — Continuidad tras PR #36 y #41
 
 - Responsable: ChatGPT (Codex). Rama: `continuidad-chatgpt-post-41`; base: `3383584`.

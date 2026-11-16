@@ -1,5 +1,7 @@
 # CONTINUAR AQUÍ — DictaNota
 
+> **Etapa N — ChatGPT (Codex), 16/11/2026:** rama `etapa-n-dictar-cuadernos`, base `3383584`. Textos visibles: Dictar / Cuadernos / Anonimizar / Ajustes; hoja pasa a cuaderno. No cambian ids, claves, datos guardados ni motores. PR #36 y #41 ya integrados; PR #42 documental separado. Validación automática en el PR; Motorola pendiente. Merge normal, sin squash, solo con permiso para publicar.
+
 > **Estado verificado por ChatGPT (Codex), 16/11/2026:** main = `3383584`. Los PR #36 (tema claro y chat) y #41 (Etapa A de Claude) ya están unidos. La rama `rediseno-04-clinica-chat-chatgpt` en `95bb587` no tiene trabajo pendiente de integrar. No repetir esas implementaciones.
 > Esta actualización es documental, en rama nueva `continuidad-chatgpt-post-41`. No cambia la aplicación.
 
