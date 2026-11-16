@@ -1118,3 +1118,10 @@ test('Aprendizaje: el aviso usa textContent y la corrección del diálogo tambi�
   assert.match(body, /t\.textContent = 'Aprendí tu corrección/);
   assert.match(html, /else \{ flash\('Corrección aplicada\.'\); learnFromEdits\(\); \}/);
 });
+
+test('Audios: el aviso de audio guardado es llamativo y avisa cuando aparece uno nuevo', () => {
+  assert.match(html, /\.audio-shortcut\{[^}]*background:#a8ead8[^}]*font-weight:800/);
+  assert.match(html, /Tu audio quedó guardado \(/);
+  assert.match(html, /let audioSeenTs;/);
+  assert.match(html, /if \(audioSeenTs !== undefined && m && m\.ts !== audioSeenTs\) flash\(/);
+});

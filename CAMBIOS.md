@@ -1,5 +1,9 @@
 # Registro de cambios — Grabador de voz Delta
 
+## DictaNota · Aviso de audio guardado más visible — 16/11/2026
+
+Pedido tras la prueba del usuario en el celular: el aviso «Audio guardado» era demasiado sutil. Ahora es un botón verde de acento, más alto y en negrita, con el texto «Tu audio quedó guardado (01:05) · Tocá para descargarlo o recuperarlo», y al terminar de guardarse un audio nuevo aparece además un mensaje en la barra de abajo. Solo cambia la presentación; el audio y su almacenamiento no se tocan. Pruebas: 94/94 en local y revisión en navegador de laboratorio. Motorola: pendiente.
+
 ## DictaNota · Anonimizar como pantalla propia, audios a la vista y aprendizaje automático de correcciones — 16/11/2026
 
 Base: `main` en `7ba0289e827244f50cb35630ff9256506d6b5c89` (verificado antes de editar), rama `claude/notavoz-ux-improvements-o95axk`. Pedido del usuario: (1) el audio está muy escondido; (2) la barra fija debe incluir Anonimizar (Grabar · Texto · Anonimizar · Ajustes); (3) explicar con palabras simples qué hace Anonimizar; (4) las correcciones del usuario deben aprenderse solas, sin un botón extra, y Anonimizar debe permitir asociar nombre ↔ código.
