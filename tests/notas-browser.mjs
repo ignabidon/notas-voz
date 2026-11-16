@@ -39,7 +39,7 @@ try {
  assert.equal(await run('localStorage.getItem("notasvoz.gamma.v1")'),JSON.stringify(viejas));
  assert.equal(await run('window.__xss'),undefined);
  assert.equal(await run('document.querySelector("#convList").textContent.includes("<img src=x")'),true);
- assert.equal(await run('document.querySelector(\'[data-delta-view="transcripcion"] span\').textContent'),'Notas');
+ assert.equal(await run('document.querySelector(\'[data-delta-view="transcripcion"] span\').textContent'),'Cuadernos');
  // 1) Escribir sin cuaderno abierto → cuaderno nuevo titulada con la fecha y hora de guardado.
  const type=t=>run('(()=>{const x=document.getElementById("text");x.value='+JSON.stringify(t)+';x.dispatchEvent(new Event("input",{bubbles:true}));return document.getElementById("convTarget").textContent})()');
  assert.match(await type('Comprar yerba ficticia.'),/se crea un cuaderno nuevo/);
