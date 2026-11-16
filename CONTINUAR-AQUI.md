@@ -1,7 +1,7 @@
 # CONTINUAR AQUÍ — Próxima IA de DictaNota
 
 > **Punto de entrada obligatorio para continuar el rediseño conversacional (16/11/2026).**
-> **Estado (16/11/2026, 01:31):** propuesta, maquetas y **fase 1** hechas. La fase 1 (modelo de datos en funciones puras, bloque `CONV` de `index.html`, sin cambios visibles) está en la rama `rediseno-01-modelo-conversaciones-2026-11-16`. Decisiones nuevas del usuario en la sección 2.5 de la especificación. **Las fases siguientes necesitan autorización explícita**; la migración de notas viejas espera una decisión del usuario.
+> **Estado (16/11/2026, 08:01):** propuesta, maquetas y **fase 1** hechas; la fase 1 (modelo de datos en funciones puras, bloque `CONV` de `index.html`, sin cambios visibles) está unida a `main` (PR #31). **Leer las secciones 2.5 y 2.6 de la especificación:** el usuario decidió un botón Guardar (lo no guardado se descarta) y que el sello sea la hora de guardado; el modelo de la fase 1 todavía debe ajustarse a eso. **Las fases siguientes necesitan autorización explícita.**
 
 ## Lectura en orden
 

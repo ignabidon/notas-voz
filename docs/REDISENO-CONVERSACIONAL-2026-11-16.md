@@ -48,6 +48,8 @@ Objetivos principales:
 
 ### 2.3 Fecha y hora — decisión explícita final del usuario
 
+> **Actualizado el 16/11/2026 (08:01) por el usuario:** el sello de la burbuja es el **momento en que se terminó de guardar** el mensaje (botón Guardar), no el inicio de la grabación. Todo lo demás de esta sección sigue vigente: es metadato, no se edita desde la app y no cambia al corregir, anonimizar, mover o exportar. La hora de inicio de la grabación puede guardarse como dato técnico aparte, sin mostrarse como sello. Ver 2.5.
+
 **Regla obligatoria:** cada burbuja debe mostrar **fecha completa + hora originales** de registro, como el sello horario de un mensaje de chat, por ejemplo **`16/11/2026 · 10:42`**.
 
 - La fecha/hora son **metadatos de la entrada**, **NO parte del texto transcripto**.
@@ -77,8 +79,14 @@ Objetivos principales:
 - **Audios y datos guardados hasta hoy:** son material de prueba. No hace falta migrar los audios viejos a la biblioteca nueva; el usuario puede borrarlos con el botón «Borrar» actual.
 - **Notas viejas → formato nuevo (01:43):** **una burbuja por nota**. Cada nota guardada es un mensaje dentro de la conversación (por ejemplo, la de un paciente ficticio: una burbuja por cada sesión), con la fecha en que se guardó. Lo que no se guarda no aparece en ningún lado.
 - **Cada burbuja:** transcribir, copiar el texto y llevarlo fácilmente a otro lado.
-- **Pedido nuevo:** poder trasladar **todo el conjunto** de mensajes de una conversación, no solo uno. Falta precisar si es copiar/exportar todo junto, unir con otra conversación, o ambas.
-- **Duda abierta:** la regla 2.3 fija como sello la hora de inicio de la grabación; el usuario habló de «la fecha en que se guardó». Confirmar si hay un paso explícito de Guardar (y si sin él se descarta) y qué hora muestra el sello.
+- **Trasladar todo el conjunto:** además de un mensaje suelto, se tiene que poder llevar **todos los mensajes de una conversación** (por ejemplo, todas las notas de un paciente ficticio en su hoja). Interpretación a confirmar: copiar/exportar la conversación entera de una vez; falta saber si también se quiere unirla a otra conversación.
+
+### 2.6 Decisiones del usuario del 16/11/2026 (08:01) — reemplazan lo anterior donde choquen
+
+- **Botón Guardar:** al terminar de grabar y transcribir, el mensaje queda **sin guardar** hasta tocar **Guardar**. Si no se guarda, **se descarta** (con una confirmación antes de descartar, según lo dicho a la 01:31). Lo no guardado no aparece en Biblioteca ni en ninguna conversación. Esto reemplaza el paso 3 y el 6 del Flujo A («conservar una entrada nueva sin exigir…» / «queda en Biblioteca automáticamente»).
+- **Sello de la burbuja:** fecha y hora en que **se terminó de guardar** (`16/11/2026 · 10:42`). Inmutable desde la app. El título provisional de una nota nueva usa ese mismo momento.
+- **Notas viejas:** una burbuja por nota con su fecha de guardado (coincide con la regla nueva).
+- **Impacto técnico (sugerencia, no implementado):** el modelo de la fase 1 usa `recordedAt` como sello; hay que agregar `savedAt` como sello visible y dejar `recordedAt` como dato técnico opcional. Revisar qué pasa con el borrador automático actual (`notasvoz.gamma.draft.v1`): sirve para recuperar texto si el celular cierra la app, pero choca con «si no se guarda, se descarta». Decisión pendiente del usuario.
 - **Fase 1 (modelo de datos, sin cambios visibles):** autorizada e implementada en la rama `rediseno-01-modelo-conversaciones-2026-11-16`.
 
 ## 3. Nueva arquitectura de información propuesta
