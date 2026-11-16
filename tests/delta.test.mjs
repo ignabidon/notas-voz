@@ -956,3 +956,58 @@ test('ergonomía: guardar tamaño conserva configuración anterior y comunica fa
   assert.equal(make({setItem(){throw Error('storage blocked');}})(),false);
   assert.match(html,/El tamaño se aplicó, pero este navegador no permitió guardar el ajuste/);
 });
+
+/* ---- Seguridad (revisión de seguridad 15/11/2026; ver SEGURIDAD.md) ---- */
+const csp = (html.match(/<meta http-equiv="Content-Security-Policy" content="([^"]+)"/) || [])[1] || '';
+const cspDir = name => ((csp.split(';').map(s => s.trim()).find(s => s.startsWith(name + ' ')) || '').split(/\s+/).slice(1));
+const ORIGENES_PERMITIDOS = ['https://cdn.jsdelivr.net', 'https://huggingface.co', 'https://*.huggingface.co', 'https://*.hf.co'];
+
+test('seguridad: la política CSP existe, va antes de cualquier script y cierra lo innecesario', () => {
+  assert.ok(csp, 'falta la política Content-Security-Policy');
+  assert.ok(html.indexOf('Content-Security-Policy') < html.indexOf('<script'), 'la política debe ir antes de los scripts');
+  assert.deepEqual(cspDir('default-src'), ["'none'"]);
+  for (const d of ['object-src', 'base-uri', 'form-action', 'frame-src', 'manifest-src']) assert.deepEqual(cspDir(d), ["'none'"], d);
+});
+
+test('seguridad: la CSP no permite eval ni orígenes comodín ni http', () => {
+  assert.ok(!csp.includes("'unsafe-eval'"), 'no se debe permitir unsafe-eval (sí wasm-unsafe-eval para el motor)');
+  for (const d of ['script-src', 'connect-src', 'worker-src']) {
+    const v = cspDir(d);
+    assert.ok(v.length, 'falta ' + d);
+    assert.ok(!v.includes('*') && !v.includes('http:') && !v.includes('https:'), d + ' demasiado abierto');
+    v.filter(x => x.startsWith('http')).forEach(o => assert.ok(ORIGENES_PERMITIDOS.includes(o), 'origen no revisado en ' + d + ': ' + o));
+  }
+});
+
+test('seguridad: todas las direcciones externas del código están revisadas', () => {
+  const hosts = new Set([...html.replace(csp, '').matchAll(/https?:\/\/[^'"\s)<>]+/g)].map(m => new URL(m[0]).origin));
+  const ok = new Set(['https://cdn.jsdelivr.net', 'http://www.w3.org', 'https://www.w3.org']);   // w3.org solo en espacios de nombres XML de la exportación Word
+  for (const h of hosts) assert.ok(ok.has(h), 'dirección externa nueva sin revisar: ' + h + ' (documentar en SEGURIDAD.md y en la CSP)');
+});
+
+test('seguridad: el conversor MP3 se carga con huella SHA-384', () => {
+  assert.match(html, /s\.integrity = 'sha384-[A-Za-z0-9+\/]{64}'/);
+  assert.match(html, /s\.crossOrigin = 'anonymous'/);
+  assert.ok(html.indexOf("s.integrity") > html.indexOf("lamejs@1.2.1/lame.min.js") && html.indexOf("s.integrity") < html.indexOf('document.head.append(s)'));
+});
+
+test('seguridad: no hay ejecución dinámica de código ni escritura directa de HTML con datos', () => {
+  assert.ok(!/\beval\s*\(/.test(html), 'eval');
+  assert.ok(!/\bnew Function\b/.test(html), 'new Function');
+  assert.ok(!/document\.write\s*\(/.test(html), 'document.write');
+  assert.ok(!/\.(outerHTML|insertAdjacentHTML)\b/.test(html), 'outerHTML/insertAdjacentHTML');
+  // innerHTML solo con vacío o con textos fijos entre comillas simples; nunca con variables de notas o personas
+  for (const m of html.matchAll(/\.innerHTML\s*=\s*([^;\n]+)/g)) assert.match(m[1].trim(), /^(''|'<div class="warn">[^']*'|'<div class="warn">'.*'<\/div>')/, 'innerHTML con contenido no fijo: ' + m[0]);
+  assert.ok(!/\son(click|error|load)\s*=/.test(html.replace(/<script[\s\S]*?<\/script>/gi, '')), 'manejadores en línea dentro del HTML');
+});
+
+test('seguridad: no se envían datos a internet por código propio', () => {
+  for (const f of ['fetch(', 'sendBeacon', 'XMLHttpRequest', 'WebSocket', 'EventSource']) assert.ok(!html.includes(f), 'uso de ' + f + ' (documentar en SEGURIDAD.md)');
+});
+
+test('seguridad: SEGURIDAD.md existe y las IA lo ven primero', () => {
+  const rd = f => readFileSync(new URL('../' + f, import.meta.url), 'utf8');
+  const seg = rd('SEGURIDAD.md');
+  for (const s of ['Qué está confirmado', 'Qué NO está confirmado', 'Cómo volver atrás']) assert.ok(seg.includes(s), 'falta sección «' + s + '» en SEGURIDAD.md');
+  for (const f of ['AGENTS.md', 'CLAUDE.md', 'README.md']) assert.ok(rd(f).split('\n').slice(0, 12).join('\n').includes('SEGURIDAD.md'), f + ' debe mencionar SEGURIDAD.md en sus primeras líneas');
+});

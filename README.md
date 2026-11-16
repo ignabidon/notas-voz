@@ -2,6 +2,8 @@
 
 **Aplicación oficial:** https://ignabidon.github.io/notas-voz/
 
+> **⚠ Seguridad:** hay una revisión de seguridad («pen testing») en curso. Leé [SEGURIDAD.md](SEGURIDAD.md): qué está confirmado, qué no, riesgos abiertos y reglas para editar. Hasta ahora las notas **no están cifradas**: no uses datos reales.
+
 Esta es la **única versión web activa** del repositorio. La etapa vigente es **Delta 11**, con navegación Android de tres pantallas (Grabar / Texto / Ajustes), estado global de transcripción y acciones accesibles de audio y texto.
 
 > **Prueba Delta 11 — experimental.** El usuario ya probó en Brave Android la grabación, Whisper, descarga TXT, recuperación del audio anterior y funcionamiento general de la interfaz. Las acciones nuevas de Delta 11 —Guardar audio visible, Compartir texto y accesos directos— **todavía necesitan prueba real en el Motorola**. Las 53 pruebas automáticas y la publicación GitHub Pages fueron satisfactorias. No usar datos reales de pacientes.

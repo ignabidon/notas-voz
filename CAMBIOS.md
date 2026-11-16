@@ -1,5 +1,27 @@
 # Registro de cambios — Grabador de voz Delta
 
+## Seguridad 01 · revisión («pen testing») inicial, política CSP y huella de la librería MP3 — 15/11/2026
+
+**Leer también [SEGURIDAD.md](SEGURIDAD.md): es el registro vivo de la revisión (reglas, hallazgos, pendientes).** Base: `main` en `63bc33bd99d75e6b6bf681c6cc23cc6f4bf9e86f`, rama `seguridad-01-csp-huella-2026-11-15`.
+
+### Qué se hizo
+- **Revisión de seguridad de la aplicación del propio usuario** (código publicado, sitio, configuración del repositorio). Resultado resumido: sin inyección de código; sin envío propio de datos; riesgos abiertos: notas sin cifrar, librerías externas sin verificación completa, `main` sin protección. Detalle en SEGURIDAD.md.
+- **Política de seguridad (CSP) dentro de `index.html`** (`<meta http-equiv="Content-Security-Policy">`, antes de cualquier script): la página solo puede cargar código y conectarse a jsDelivr (librerías) y a Hugging Face (modelos), más recursos propios en memoria (`blob:`/`data:`). Sin `eval`, sin objetos, marcos, formularios ni `<base>`. Permite scripts en línea (`'unsafe-inline'`) porque la aplicación los usa; es una limitación documentada.
+- **Huella SHA-384 (`integrity`) y `crossOrigin` en la carga de la librería MP3** (`lamejs@1.2.1`): si el servicio externo entregara otro archivo, el navegador lo rechaza.
+- **Documentación visible desde el inicio:** nuevo `SEGURIDAD.md`; aviso en las primeras líneas de `AGENTS.md`, `CLAUDE.md` y `README.md`; nuevas reglas en «Forma de trabajo» de AGENTS.md.
+- **No se tocaron** el motor Whisper, la captura, la segmentación, el almacenamiento ni sus claves, ni el diseño.
+
+### Pruebas
+- **Automáticas (7 nuevas, «Seguridad»):** la CSP existe, va antes de los scripts y cierra lo innecesario; sin `unsafe-eval` ni comodines; toda dirección externa del código está revisada; la huella MP3 está presente; sin `eval`/`new Function`/`document.write`/`innerHTML` con datos; sin `fetch`/`WebSocket`/etc.; SEGURIDAD.md existe y se menciona en las primeras líneas de AGENTS/CLAUDE/README. Se comprobó, introduciendo fallas a propósito en una copia, que estas pruebas las detectan.
+- **Resultado local:** **86/86 aprobadas** (79 anteriores + 7 nuevas) con el mismo arnés de pruebas en el navegador integrado usado antes (esta computadora no tiene Node). **Falta el resultado de GitHub Actions** (`node --test` real).
+- **Navegador integrado (Chromium/Windows), servido desde `localhost`, con la política activa y sin bloqueos inesperados:** carga de la página; Whisper Tiny por procesador y Whisper Base por placa de video, ambos transcribiendo audio sintético de 3 s; librería MP3 cargada con huella; huella falsa rechazada; sitio no permitido y script ajeno bloqueados; captura (AudioWorklet), reproducción de audio, descarga TXT e IndexedDB funcionando.
+- **Prueba de inyección sobre el sitio publicado (versión anterior):** una nota ficticia con código de ataque falso en título, texto y etiqueta se mostró como texto sin ejecutarse.
+
+### Estado (tres niveles)
+- **Código guardado:** en la rama indicada; falta unir a `main`.
+- **Pruebas técnicas:** 86/86 locales; CI pendiente; sin probar en Firefox ni de punta a punta la conversión a MP3.
+- **Motorola/Brave:** **NO confirmado.** Hay que probar con datos ficticios: grabar, transcribir con Base y Small, convertir a MP3, descargar TXT, compartir y recuperar audio. Si algo no carga, ver «Cómo volver atrás» en SEGURIDAD.md.
+
 ## DictaNota · identidad visible — 15/11/2026
 
 - Nombre elegido por el usuario: **DictaNota**, en singular. Reemplaza «Grabador de voz Delta» en encabezado, título inicial y dinámico de la pestaña, presentación de Ajustes y nombre accesible de navegación.
