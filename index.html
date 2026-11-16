@@ -579,7 +579,7 @@ label,.hint,.warn,.sub,.section-hint,.selection-help,.mark-help,.record-caption-
 .transcription-dock-top strong,#transcriptionDockTime,#transcriptionDockMessage,.transcription-dock-bottom{color:var(--acc)}
 .transcription-dock-bar i,.transcription-dock.awaiting-audio .transcription-spinner{background:var(--acc)}
 .transcription-spinner{border-color:var(--line);border-top-color:var(--acc)}
-/* Lista de hojas y conversación son vistas distintas. El editor vive en la misma barra medida. */
+/* Lista de cuadernos y conversación son vistas distintas. El editor vive en la misma barra medida. */
 .c-edit{background:transparent;box-shadow:none;border:0;padding:12px 0!important;min-height:40vh}
 .text-screen-title p{max-width:42ch}
 .conv-panel{border:0;padding:0}
@@ -674,7 +674,7 @@ body.delta-recording #convComposer{display:none!important}
         <button id="mark" type="button" disabled title="Insertá una marca de tiempo en la transcripción (tecla M)" aria-label="Marcar momento en la transcripción">Marcar momento</button>
       </div>
     </div>
-    <div class="capture-shortcuts"><button type="button" id="openSheets" data-go-view="transcripcion">Ver hojas guardadas</button><button type="button" id="writeNewNote">Escribir una nota</button></div>
+    <div class="capture-shortcuts"><button type="button" id="openSheets" data-go-view="transcripcion">Ver cuadernos guardados</button><button type="button" id="writeNewNote">Escribir una nota</button></div>
     <p class="mark-help">«Marcar» señala un momento en la transcripción.</p>
     <div class="audio-tools">
       <button type="button" class="audio-shortcut" id="audioShortcut" data-go-view="grabacion" data-go-target="audioBox">Mis grabaciones</button>
@@ -860,22 +860,22 @@ body.delta-recording #convComposer{display:none!important}
 
   <!-- 2 · Texto -->
   <section class="card c-edit" id="transcripcion">
-    <div class="screen-title text-screen-title"><span class="screen-overline">NOTAS</span><h2>Tus hojas</h2><p>Cada hoja reúne tus notas de voz y de texto.</p></div>
+    <div class="screen-title text-screen-title"><span class="screen-overline">CUADERNOS</span><h2>Tus cuadernos</h2><p>Cada cuaderno reúne tus notas de voz y de texto.</p></div>
     <div id="convPanel" class="conv-panel">
       <p id="convMsg" class="warn conv-msg" role="alert"></p>
       <div id="convListView">
-        <div class="conv-heading"><h3 class="conv-h">Hojas guardadas</h3><button type="button" class="p" id="convNewNote">+ Nueva nota</button></div>
+        <div class="conv-heading"><h3 class="conv-h">Cuadernos guardados</h3><button type="button" class="p" id="convNewNote">+ Nueva nota</button></div>
         <div id="convList"></div>
       </div>
       <div id="convOpenView" hidden>
-        <div class="conv-heading"><button type="button" class="ghost conv-back" id="convBack">← Hojas</button><button type="button" id="convNewFromSheet">+ Nueva nota</button></div>
+        <div class="conv-heading"><button type="button" class="ghost conv-back" id="convBack">← Cuadernos</button><button type="button" id="convNewFromSheet">+ Nueva nota</button></div>
         <h3 class="conv-h" id="convTitle"></h3>
-        <details class="conv-sheet-tools"><summary>Opciones de esta hoja</summary><div class="conv-tools">
+        <details class="conv-sheet-tools"><summary>Opciones de este cuaderno</summary><div class="conv-tools">
           <button type="button" id="convRename">Renombrar</button>
           <button type="button" id="convCopyAll">Copiar todo</button>
-          <button type="button" id="convMoveAllBtn">Pasar todo a otra hoja</button>
+          <button type="button" id="convMoveAllBtn">Pasar todo a otro cuaderno</button>
           <button type="button" id="convTxt">Descargar .txt</button>
-          <button type="button" class="ghost danger" id="convDeleteEmpty" hidden>Borrar hoja vacía</button>
+          <button type="button" class="ghost danger" id="convDeleteEmpty" hidden>Borrar cuaderno vacío</button>
         </div>
         </details>
         <div id="convBubbles" class="conv-bubbles"></div>
@@ -900,11 +900,11 @@ body.delta-recording #convComposer{display:none!important}
     </div>
     <div id="busy" role="status"></div>
     <p class="hint selection-help" id="selectionHelp">Tocá una palabra o seleccioná una frase para corregirla.</p>
-    <p class="hint where-audio">¿Buscás el audio? Está en <b>Audio → Tus audios guardados</b>. <button type="button" class="ghost" data-go-view="grabacion" data-go-target="audioBox">Ver audios guardados</button></p>
+    <p class="hint where-audio">¿Buscás el audio? Está en <b>Dictar → Tus audios guardados</b>. <button type="button" class="ghost" data-go-view="grabacion" data-go-target="audioBox">Ver audios guardados</button></p>
 
     <div id="learn"></div>
 
-    <details class="studio-workflow"><summary>Exportar este mensaje</summary><div class="studio-workflow-body"><p class="hint">Exporta solo el texto en edición. Para toda una hoja, usá «Copiar todo» o «Descargar .txt» en la hoja.</p><div id="legacyNoteFields" hidden><div class="note-details">
+    <details class="studio-workflow"><summary>Exportar este mensaje</summary><div class="studio-workflow-body"><p class="hint">Exporta solo el texto en edición. Para todo un cuaderno, usá «Copiar todo» o «Descargar .txt» en el cuaderno.</p><div id="legacyNoteFields" hidden><div class="note-details">
       <label for="title">Título de la nota <span class="opt">(opcional)</span></label>
       <input type="text" id="title" placeholder="Ej.: Nota de sesión · 15/11">
     </div>
@@ -1042,7 +1042,7 @@ body.delta-recording #convComposer{display:none!important}
 <label for="text">Nota sin guardar</label>
     <p class="hint" id="transcriptionHelp" hidden></p>
     <div class="editor-area">
-      <textarea aria-describedby="transcriptionHelp convTarget" id="text" placeholder="Grabá o escribí acá. Con Whisper, el texto llega por fragmentos después de procesarlos. Tocá Guardar para sumarlo a una hoja."></textarea>
+      <textarea aria-describedby="transcriptionHelp convTarget" id="text" placeholder="Grabá o escribí acá. Con Whisper, el texto llega por fragmentos después de procesarlos. Tocá Guardar para sumarlo a un cuaderno."></textarea>
       <button type="button" id="quickCorrect" aria-haspopup="dialog" hidden>Corregir palabra</button>
     </div>
     <div id="nativeInterim" role="status" aria-live="polite" class="hint"></div>
@@ -1050,7 +1050,7 @@ body.delta-recording #convComposer{display:none!important}
 </div>
   <div class="dock-actions" id="studioDockNotes">
     <button type="button" id="studioDockStart" aria-label="Empezar a grabar"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4M8 22h8"/></svg><span>Grabar</span></button>
-    <button type="button" class="p" id="save" title="Guarda el mensaje en la hoja, con la fecha y hora de guardado. No descarga archivos."><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 3h12l4 4v14H3V3zM7 3v6h10V3M7 21v-8h10v8"/></svg><span>Guardar</span></button>
+    <button type="button" class="p" id="save" title="Guarda el mensaje en el cuaderno, con la fecha y hora de guardado. No descarga archivos."><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 3h12l4 4v14H3V3zM7 3v6h10V3M7 21v-8h10v8"/></svg><span>Guardar</span></button>
   </div>
   <div id="studioDockCapture" hidden aria-label="Controles fijos de grabación">
     <div class="dock-capture-status" role="status" aria-live="off">
@@ -1063,8 +1063,8 @@ body.delta-recording #convComposer{display:none!important}
     </div>
   </div>
 <nav class="studio-nav" aria-label="Pantallas de DictaNota">
-  <a href="#grabacion" data-delta-view="grabacion" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2.5" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3.5M8.5 21.5h7"/></svg><span>Audio</span></a>
-  <a href="#transcripcion" data-delta-view="transcripcion"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 2.5h8l4 4V21H7zM15 2.5v4h4M10 11h6M10 15h6M10 19h4"/></svg><span>Notas</span></a>
+  <a href="#grabacion" data-delta-view="grabacion" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2.5" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3.5M8.5 21.5h7"/></svg><span>Dictar</span></a>
+  <a href="#transcripcion" data-delta-view="transcripcion"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 2.5h8l4 4V21H7zM15 2.5v4h4M10 11h6M10 15h6M10 19h4"/></svg><span>Cuadernos</span></a>
   <a href="#anonimizar" id="studioAnonLink" data-delta-view="anonimizar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v6c0 4 8 9 8 9s8-5 8-9V6z"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg><span>Anonimizar</span></a>
   <a href="#ajustes" id="studioSettingsLink" data-delta-view="ajustes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h6M14 6h6M4 12h11M19 12h1M4 18h3M11 18h9"/><circle cx="12" cy="6" r="2"/><circle cx="17" cy="12" r="2"/><circle cx="9" cy="18" r="2"/></svg><span>Ajustes</span></a>
 </nav></aside>
@@ -1084,9 +1084,9 @@ body.delta-recording #convComposer{display:none!important}
 </dialog>
 <dialog id="convMoveDialog" aria-labelledby="convMoveTitle">
   <form id="convMoveForm">
-    <h2 id="convMoveTitle">Mover a otra hoja</h2>
+    <h2 id="convMoveTitle">Mover a otro cuaderno</h2>
     <p class="hint" id="convMoveHint"></p>
-    <label for="convMoveSelect">Hoja de destino</label>
+    <label for="convMoveSelect">Cuaderno de destino</label>
     <select id="convMoveSelect"></select>
     <div class="dialog-actions"><button id="convMoveCancel" type="button">Cancelar</button><button class="p" type="submit">Mover</button></div>
   </form>
@@ -1183,7 +1183,7 @@ const VAULT_KEYS = {
   'notasvoz.gamma.undo.v1': 'deshacer',
   'notasvoz.gamma.people.v1': 'personas',
   'notasvoz.gamma.dict.v1': 'diccionario',
-  'notasvoz.dictanota.v2': 'conversaciones' // rediseño conversacional: hojas y mensajes de la pantalla Notas
+  'notasvoz.dictanota.v2': 'conversaciones' // rediseño conversacional: cuadernos y mensajes de la pantalla Notas
 };
 const VAULT_B32 = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
 const vaultEnc = new TextEncoder(), vaultDec = new TextDecoder('utf-8', {fatal: true});
@@ -1946,13 +1946,13 @@ function sentenceStarters(text, S){
 /* ====================================================================
    Rediseño conversacional · modelo de datos (fases 1 a 3, 16/11/2026).
    Ver docs/REDISENO-CONVERSACIONAL-2026-11-16.md, secciones 2.5 y 2.6.
-   - Nota = conversación (hoja); mensaje = burbuja.
+   - Nota = conversación (cuaderno); mensaje = burbuja.
    - Un mensaje existe solo después de tocar Guardar. savedAt (ms UTC, momento
      en que terminó de guardarse) es el sello visible: se escribe una vez y
      nunca cambia. recordedAt (inicio de la captura) es un dato técnico opcional.
    - Una nota nueva se titula con la fecha y hora de guardado.
    - Funciones puras salvo convMakeStore, que recibe el almacén desde afuera.
-     Desde la fase 3 la pantalla Notas las usa (ver «Notas en hojas»).
+     Desde la fase 3 la pantalla Notas las usa (ver «Notas en cuadernos»).
    ==================================================================== */
 const CONV_SCHEMA = 2;
 const CONV_KEY = 'notasvoz.dictanota.v2';
@@ -2004,12 +2004,12 @@ function convValid(raw){
   }
   return {data: out, dropped, ok: dropped === 0};
 }
-/* Mensajes de una hoja en orden de guardado (los heredados sin fecha, primero). */
+/* Mensajes de un cuaderno en orden de guardado (los heredados sin fecha, primero). */
 function convEntriesOf(data, conversationId){
   return data.entries.map((e, i) => [e, i]).filter(([e]) => e.conversationId === conversationId)
     .sort((a, b) => ((a[0].savedAt ?? -Infinity) - (b[0].savedAt ?? -Infinity)) || a[1] - b[1]).map(([e]) => e);
 }
-/* Guarda un mensaje (se llama al tocar Guardar). Sin conversationId (captura global) crea SIEMPRE una hoja nueva
+/* Guarda un mensaje (se llama al tocar Guardar). Sin conversationId (captura global) crea SIEMPRE un cuaderno nuevo
    titulada con la fecha y hora de guardado. Sin texto ni audio no crea nada. No modifica los datos recibidos. */
 function convAddEntry(data, input, opts = {}){
   const newId = opts.newId || convNewId;
@@ -2024,7 +2024,7 @@ function convAddEntry(data, input, opts = {}){
     conversations = conversations.concat(conversation);
   } else {
     const c = conversations.find(x => x.id === input.conversationId);
-    if (!c) throw new Error('La hoja de destino no existe.');
+    if (!c) throw new Error('El cuaderno de destino no existe.');
     conversation = {...c, updatedAt: entry.savedAt};
     conversations = conversations.map(x => x.id === c.id ? conversation : x);
   }
@@ -2041,12 +2041,12 @@ function convEditText(data, entryId, text, now = Date.now()){
 function convRename(data, conversationId, title, now = Date.now()){
   const t = typeof title === 'string' ? title.trim() : '';
   if (!t) throw new Error('El título no puede quedar vacío.');
-  if (!data.conversations.some(c => c.id === conversationId)) throw new Error('La hoja no existe.');
+  if (!data.conversations.some(c => c.id === conversationId)) throw new Error('El cuaderno no existe.');
   return {...data, conversations: data.conversations.map(c => c.id === conversationId ? {...c, title: t, updatedAt: now} : c)};
 }
-/* Mover (no copiar) uno o varios mensajes a otra hoja. Solo cambia la hoja de destino. Devuelve lo necesario para «Deshacer». */
+/* Mover (no copiar) uno o varios mensajes a otro cuaderno. Solo cambial cuaderno de destino. Devuelve lo necesario para «Deshacer». */
 function convMoveEntries(data, entryIds, targetId, now = Date.now()){
-  if (!data.conversations.some(c => c.id === targetId)) throw new Error('La hoja de destino no existe.');
+  if (!data.conversations.some(c => c.id === targetId)) throw new Error('El cuaderno de destino no existe.');
   const ids = [...new Set(entryIds)], moves = [];
   for (const id of ids) {
     const e = data.entries.find(x => x.id === id); if (!e) throw new Error('El mensaje no existe.');
@@ -2060,17 +2060,17 @@ function convMoveEntries(data, entryIds, targetId, now = Date.now()){
     undo: {to: targetId, moves}};
 }
 const convMoveEntry = (data, entryId, targetId, now) => convMoveEntries(data, [entryId], targetId, now);
-/* Pasar TODOS los mensajes de una hoja a otra. La hoja de origen queda vacía y no se borra sola. */
+/* Pasar TODOS los mensajes de un cuaderno a otra. El cuaderno de origen queda vacía y no se borra solo. */
 function convMoveAll(data, fromId, targetId, now = Date.now()){
-  if (fromId === targetId) throw new Error('Elegí otra hoja de destino.');
-  if (!data.conversations.some(c => c.id === fromId)) throw new Error('La hoja no existe.');
+  if (fromId === targetId) throw new Error('Elegí otro cuaderno de destino.');
+  if (!data.conversations.some(c => c.id === fromId)) throw new Error('El cuaderno no existe.');
   return convMoveEntries(data, data.entries.filter(e => e.conversationId === fromId).map(e => e.id), targetId, now);
 }
 function convUndoMove(data, undo, now = Date.now()){
   if (!undo) return data;
   for (const m of undo.moves) {
     const e = data.entries.find(x => x.id === m.entryId);
-    if (!e || e.conversationId !== undo.to || !data.conversations.some(c => c.id === m.from)) throw new Error('No se puede deshacer: la hoja cambió.');
+    if (!e || e.conversationId !== undo.to || !data.conversations.some(c => c.id === m.from)) throw new Error('No se puede deshacer: el cuaderno cambió.');
   }
   const touched = new Set(undo.moves.map(m => m.from).concat(undo.to)), back = new Map(undo.moves.map(m => [m.entryId, m.from]));
   return {...data, conversations: data.conversations.map(c => touched.has(c.id) ? {...c, updatedAt: now} : c),
@@ -2081,13 +2081,13 @@ function convDeleteEntry(data, entryId){
   if (!data.entries.some(e => e.id === entryId)) throw new Error('El mensaje no existe.');
   return {...data, entries: data.entries.filter(e => e.id !== entryId)};
 }
-/* Solo se borra una hoja vacía: nunca se pierden mensajes al borrar una hoja. */
+/* Solo se borra un cuaderno vacío: nunca se pierden mensajes al borrar un cuaderno. */
 function convDeleteConversation(data, conversationId){
-  if (!data.conversations.some(c => c.id === conversationId)) throw new Error('La hoja no existe.');
-  if (!convIsEmpty(data, conversationId)) throw new Error('La hoja todavía tiene mensajes.');
+  if (!data.conversations.some(c => c.id === conversationId)) throw new Error('El cuaderno no existe.');
+  if (!convIsEmpty(data, conversationId)) throw new Error('El cuaderno todavía tiene mensajes.');
   return {...data, conversations: data.conversations.filter(c => c.id !== conversationId)};
 }
-/* Lista de hojas para mostrar: la de actividad más reciente primero. */
+/* Lista de cuadernos para mostrar: la de actividad más reciente primero. */
 function convSummaries(data){
   return data.conversations.map((c, i) => {
     const es = data.entries.filter(e => e.conversationId === c.id);
@@ -2095,9 +2095,9 @@ function convSummaries(data){
     return {id: c.id, title: c.title, count: es.length, lastSavedAt: last === -Infinity ? null : last, order: convIsMs(c.updatedAt) ? c.updatedAt : -Infinity, i};
   }).sort((a, b) => (b.order - a.order) || (a.i - b.i)).map(({order, i, ...x}) => x);
 }
-/* Texto de toda una hoja para copiar o llevar a otro lado: título y, por mensaje, su fecha en una línea aparte. */
+/* Texto de todo un cuaderno para copiar o llevar a otro lado: título y, por mensaje, su fecha en una línea aparte. */
 function convCopyText(data, conversationId){
-  const c = data.conversations.find(x => x.id === conversationId); if (!c) throw new Error('La hoja no existe.');
+  const c = data.conversations.find(x => x.id === conversationId); if (!c) throw new Error('El cuaderno no existe.');
   const parts = convEntriesOf(data, conversationId).filter(e => e.text.trim())
     .map(e => (e.savedAt === null ? 'Sin fecha' : convStamp(e.savedAt, e.tzOffsetMin)) + '\n' + e.text.trim());
   return [c.title].concat(parts).join('\n\n');
@@ -2114,7 +2114,7 @@ function convCheckWrite(before, after){
   }
   return '';
 }
-/* Notas viejas ({id, text, title, ts, tags}) → una hoja con UNA burbuja por nota (decisión del usuario, 16/11/2026).
+/* Notas viejas ({id, text, title, ts, tags}) → un cuaderno con UNA burbuja por nota (decisión del usuario, 16/11/2026).
    ts era la hora del último guardado: pasa a ser el sello. Repetirla no duplica (ids «legacy:…»). No toca las notas viejas. */
 function convFromLegacy(data, notes){
   if (!Array.isArray(notes)) return {data, added: 0};
@@ -2131,7 +2131,7 @@ function convFromLegacy(data, notes){
   if (!conversations.length) return {data, added: 0};
   return {data: {...data, conversations: data.conversations.concat(conversations), entries: data.entries.concat(entries)}, added: conversations.length};
 }
-/* Volver atrás: cada hoja → una nota plana del formato anterior. Las fechas no se meten en el texto. */
+/* Volver atrás: cada cuaderno → una nota plana del formato anterior. Las fechas no se meten en el texto. */
 function convToLegacyNotes(data){
   return data.conversations.map(c => {
     const es = convEntriesOf(data, c.id);
@@ -2231,10 +2231,10 @@ function renderList(){
     d.append(s, sm, o, x); l.append(d);
   });
 }
-/* ---------- Notas en hojas (rediseño conversacional, fase 3) ----------
-   El editor es el «mensaje sin guardar». Guardar lo agrega como burbuja a una hoja, con la fecha y hora de
-   guardado; sin Guardar no queda en ninguna hoja (la recuperación automática del borrador se mantiene).
-   Grabar desde Audio (captura global) siempre va a una hoja nueva; grabar o escribir con una hoja abierta en
+/* ---------- Notas en cuadernos (rediseño conversacional, fase 3) ----------
+   El editor es el «mensaje sin guardar». Guardar lo agrega como burbuja a un cuaderno, con la fecha y hora de
+   guardado; sin Guardar no queda en ningún cuaderno (la recuperación automática del borrador se mantiene).
+   Grabar desde Audio (captura global) siempre va a un cuaderno nuevo; grabar o escribir con un cuaderno abierto en
    Notas la agrega ahí. Todo se muestra con textContent. Las notas anteriores (notasvoz.gamma.v1) no se tocan. */
 const convStore = convMakeStore(vaultStore, () => vault.state === 'off' || vault.state === 'open');
 let convOpenId = null, convTargetId = null, convTargetSet = false, convEditingId = null, convFromAudio = false, convRecordedAt = null;
@@ -2262,11 +2262,11 @@ function refreshConvTarget(){
   const t = $('convTarget');
   $('convCancelEdit').hidden = !convEditingId;
   $('convDiscard').hidden = !!convEditingId;
-  if (!convStore.data) { t.textContent = 'Las hojas no están disponibles todavía. Lo que escribas queda como borrador.'; return; }
+  if (!convStore.data) { t.textContent = 'Los cuadernos no están disponibles todavía. Lo que escribas queda como borrador.'; return; }
   const e = convEditingId && convEntry(convEditingId);
   if (e) { t.textContent = 'Editando una nota de «' + convTitleOf(e.conversationId) + '». Guardar cambia el texto; la fecha y hora (' + (e.savedAt === null ? 'sin fecha' : convStamp(e.savedAt, e.tzOffsetMin)) + ') no cambian.'; return; }
   const d = convDest();
-  t.textContent = d ? 'Al guardar, esta nota se agrega a «' + convTitleOf(d) + '».' : 'Al guardar, se crea una hoja nueva con la fecha y hora.';
+  t.textContent = d ? 'Al guardar, esta nota se agrega a «' + convTitleOf(d) + '».' : 'Al guardar, se crea un cuaderno nuevo con la fecha y hora.';
 }
 function convShowMsg(t){ $('convMsg').textContent = t || ''; }
 function convButton(label, fn, cls){ const b = document.createElement('button'); b.type = 'button'; b.textContent = label; if (cls) b.className = cls; b.onclick = fn; return b; }
@@ -2280,7 +2280,7 @@ function renderConv(){
   const list = $('convList'); list.textContent = '';
   if (!convOpenId) {
     const sums = data ? convSummaries(data) : [];
-    if (!sums.length) { const p = document.createElement('p'); p.className = 'hint'; p.textContent = data ? 'Todavía no hay hojas. Grabá o escribí y tocá Guardar.' : 'Las hojas no están disponibles.'; list.append(p); }
+    if (!sums.length) { const p = document.createElement('p'); p.className = 'hint'; p.textContent = data ? 'Todavía no hay cuadernos. Grabá o escribí y tocá Guardar.' : 'Los cuadernos no están disponibles.'; list.append(p); }
     sums.forEach(x => {
       const b = convButton('', () => convOpen(x.id), 'conv-item');
       const t = document.createElement('span'); t.textContent = x.title || 'Sin título';
@@ -2293,7 +2293,7 @@ function renderConv(){
   $('convDeleteEmpty').hidden = !convIsEmpty(data, convOpenId);
   const box = $('convBubbles'); box.textContent = '';
   const es = convEntriesOf(data, convOpenId);
-  if (!es.length) { const p = document.createElement('p'); p.className = 'hint'; p.textContent = 'Esta hoja está vacía.'; box.append(p); }
+  if (!es.length) { const p = document.createElement('p'); p.className = 'hint'; p.textContent = 'Este cuaderno está vacío.'; box.append(p); }
   es.forEach(e => {
     const d = document.createElement('div'); d.className = 'conv-bubble' + (e.id === convEditingId ? ' editing' : '');
     const t = document.createElement('p'); t.className = 'conv-text'; t.textContent = e.text || '(sin texto)';
@@ -2326,7 +2326,7 @@ $('convUndo').onclick = () => {
   if (!convUndoData || !convStore.data) return;
   let next; try { next = convUndoMove(convStore.data, convUndoData); } catch (e) { return flash(e.message); }
   const back = convUndoData.moves[0].from;
-  if (convCommit(next, 'Listo: volvió a su hoja.')) { convUndoData = null; $('convUndoRow').hidden = true; convOpenId = back; renderConv(); }
+  if (convCommit(next, 'Listo: volvió a su cuaderno.')) { convUndoData = null; $('convUndoRow').hidden = true; convOpenId = back; renderConv(); }
 };
 async function convCopy(text){
   if (!text.trim()) return flash('No hay texto para copiar.');
@@ -2349,11 +2349,11 @@ function convAskMove(mode, entryId){
   if (!convStore.data || !convOpenId) return;
   const sel = $('convMoveSelect'); sel.textContent = '';
   convSummaries(convStore.data).filter(x => x.id !== convOpenId).forEach(x => { const o = document.createElement('option'); o.value = x.id; o.textContent = x.title || 'Sin título'; sel.append(o); });
-  if (!sel.options.length) return flash('No hay otra hoja. Guardá una nota nueva para crear otra.');
-  if (mode === 'all' && convIsEmpty(convStore.data, convOpenId)) return flash('Esta hoja no tiene notas.');
+  if (!sel.options.length) return flash('No hay otro cuaderno. Guardá una nota nueva para crear otro.');
+  if (mode === 'all' && convIsEmpty(convStore.data, convOpenId)) return flash('Este cuaderno no tiene notas.');
   convMoveMode = {mode, entryId, from: convOpenId};
-  $('convMoveTitle').textContent = mode === 'all' ? 'Pasar todo a otra hoja' : 'Mover a otra hoja';
-  $('convMoveHint').textContent = mode === 'all' ? 'Se mueven todos las notas de «' + convTitleOf(convOpenId) + '» con sus fechas. La hoja queda vacía (no se borra sola).' : 'Se mueve la nota (no se copia) y conserva su fecha y hora.';
+  $('convMoveTitle').textContent = mode === 'all' ? 'Pasar todo a otro cuaderno' : 'Mover a otro cuaderno';
+  $('convMoveHint').textContent = mode === 'all' ? 'Se mueven todas las notas de «' + convTitleOf(convOpenId) + '» con sus fechas. El cuaderno queda vacío (no se borra solo).' : 'Se mueve la nota (no se copia) y conserva su fecha y hora.';
   $('convMoveDialog').showModal();
 }
 $('convMoveCancel').onclick = () => $('convMoveDialog').close();
@@ -2372,7 +2372,7 @@ function convBeginNew(){
   if (recording || busy || outstanding > 0 || feeding) { flash('Terminá la grabación o transcripción antes de crear otra nota.'); return false; }
   if ($('text').value.trim() || convEditingId) {
     document.querySelector('[data-delta-view="transcripcion"]').click();
-    renderConv(); flash('Primero guardá o descartá la nota pendiente. Su hoja de destino no cambió.'); return false;
+    renderConv(); flash('Primero guardá o descartá la nota pendiente. Su cuaderno de destino no cambió.'); return false;
   }
   convResetPending(); convOpenId = null; convComposeNew = true;
   document.querySelector('[data-delta-view="transcripcion"]').click(); renderConv();
@@ -2388,21 +2388,21 @@ $('convToolsToggle').onclick = () => {
 $('openSheets').addEventListener('click', () => { convComposeNew = false; convOpenId = null; renderConv(); });
 $('convRename').onclick = () => {
   if (!convStore.data || !convOpenId) return;
-  const t = prompt('Nuevo nombre de la hoja', convTitleOf(convOpenId)); if (t === null) return;
+  const t = prompt('Nuevo nombre del cuaderno', convTitleOf(convOpenId)); if (t === null) return;
   let next; try { next = convRename(convStore.data, convOpenId, t); } catch (e) { return flash(e.message); }
-  convCommit(next, 'Hoja renombrada.');
+  convCommit(next, 'Cuaderno renombrado.');
 };
 $('convCopyAll').onclick = () => { if (convStore.data && convOpenId) convCopy(convCopyText(convStore.data, convOpenId)); };
 $('convTxt').onclick = () => {
   if (!convStore.data || !convOpenId) return;
-  const name = (convTitleOf(convOpenId).replace(/[^\w\- áéíóúñÁÉÍÓÚÑ]/g, '').trim().replace(/\s+/g, '_') || 'hoja') + '.txt';
+  const name = (convTitleOf(convOpenId).replace(/[^\w\- áéíóúñÁÉÍÓÚÑ]/g, '').trim().replace(/\s+/g, '_') || 'cuaderno') + '.txt';
   try { download(new File([convCopyText(convStore.data, convOpenId)], name, {type: 'text/plain;charset=utf-8'})); flash('Descarga solicitada. El archivo sale sin cifrar.'); }
   catch (e) { flash('No se pudo iniciar la descarga.'); }
 };
 $('convDeleteEmpty').onclick = () => {
   if (!convStore.data || !convOpenId) return;
   let next; try { next = convDeleteConversation(convStore.data, convOpenId); } catch (e) { return flash(e.message); }
-  convOpenId = null; convCommit(next, 'Hoja vacía borrada.');
+  convOpenId = null; convCommit(next, 'Cuaderno vacío borrado.');
 };
 /* Limpia el editor después de guardar: no deja copia para deshacer (ya está guardado) ni borra los avisos de lo aprendido. */
 function convClearComposer(){
@@ -2424,7 +2424,7 @@ $('text').addEventListener('input', () => {
 $('save').onclick = () => {
   const text = $('text').value; if (!text.trim()) return flash('No hay texto para guardar.');
   if (!pendingOk()) return;
-  if (!convStore.data) return flash('No se guardó: las hojas no están disponibles. ' + ($('convMsg').textContent || 'Desbloqueá la app y volvé a intentar.'));
+  if (!convStore.data) return flash('No se guardó: los cuadernos no están disponibles. ' + ($('convMsg').textContent || 'Desbloqueá la app y volvé a intentar.'));
   const now = Date.now(), editing = convEditingId && convEntry(convEditingId);
   let next, dest, savedAt;
   try {
@@ -2441,15 +2441,15 @@ $('save').onclick = () => {
   else { showSuggestions(suggest(baseline, text, D.rules.map(r => r.a.toLowerCase()))); baseline = text; }
   convComposeNew = false; convOpenId = dest; convClearComposer();
   const when = convStamp(savedAt), where = convTitleOf(dest);
-  flash(editing ? 'Cambios guardados. La fecha no cambió.' : (where === when ? 'Guardado como hoja nueva · ' + when : 'Guardado en «' + where + '» · ' + when));
+  flash(editing ? 'Cambios guardados. La fecha no cambió.' : (where === when ? 'Guardado como cuaderno nuevo · ' + when : 'Guardado en «' + where + '» · ' + when));
 };
 function convInit(){
   const r = convStore.load();
   if (!r.ok) convShowMsg(r.error);
   else {
     const m = convStore.migrate(notes);
-    if (!m.ok) convShowMsg('No se pudieron pasar las notas anteriores a hojas: ' + m.error);
-    else if (m.added) flash(m.added + (m.added === 1 ? ' nota anterior pasó' : ' notas anteriores pasaron') + ' a Notas. Las originales siguen guardadas aparte.');
+    if (!m.ok) convShowMsg('No se pudieron pasar las notas anteriores a cuadernos: ' + m.error);
+    else if (m.added) flash(m.added + (m.added === 1 ? ' nota anterior pasó' : ' notas anteriores pasaron') + ' a Cuadernos. Las originales siguen guardadas aparte.');
   }
   renderConv();
 }
