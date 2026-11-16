@@ -3704,6 +3704,133 @@ document.addEventListener('keydown', e => {
 });
 window.addEventListener('beforeunload', e => { if (recording || busy || outstanding > 0 || feeding) { e.preventDefault(); e.returnValue = ''; } });
 
+/* ====================================================================
+   Audio por nota — Etapa E1 (16/11/2026; ver docs/DISENO-ALMACENAMIENTO-CIFRADO-2026-11-16.md, 2.3 y 2.5)
+   APAGADO: nada de la app llama a este bloque todavía. La base nueva no se crea en el
+   celular hasta que un paso posterior (E2) la use. No toca la base histórica de audio.
+   Sin cifrado todavía: por eso ningún dato real puede entrar acá hasta E2.
+   ==================================================================== */
+/*AUDIONOTA-START*/
+const AN_DB = 'notasvoz-dictanota-audio';
+const AN_DB_VERSION = 1;
+const AN_LOCK_NAME = 'dictanota-una-pestana';
+const AN_STATES = ['grabando', 'escribiendo', 'cerrado', 'importando'];
+const AN_FILE_CHUNK = 1024 * 1024;
+const AN_NEXT = {grabando: ['cerrado'], escribiendo: ['cerrado'], importando: ['cerrado'], cerrado: []};
+const anIsInt = n => Number.isInteger(n) && n >= 0;
+function anNewId(c){
+  c = c || globalThis.crypto;
+  if (c && typeof c.randomUUID === 'function') return c.randomUUID();
+  const b = c.getRandomValues(new Uint8Array(16)), h = [...b].map(x => x.toString(16).padStart(2, '0')).join('');
+  return h.slice(0, 8) + '-' + h.slice(8, 12) + '-' + h.slice(12, 16) + '-' + h.slice(16, 20) + '-' + h.slice(20);
+}
+function anNewMeta(id, now, state){
+  const m = {id: String(id), state: state || 'grabando', createdAt: now, bytes: 0, parts: 0, key: null, sealed: null};
+  if (!anValidMeta(m)) throw new Error('ficha de audio inválida');
+  return m;
+}
+function anValidMeta(m){
+  return !!m && typeof m === 'object' && typeof m.id === 'string' && m.id.length > 0 && m.id.length <= 64 &&
+    AN_STATES.includes(m.state) && Number.isFinite(m.createdAt) && anIsInt(m.bytes) && anIsInt(m.parts) &&
+    (m.key == null || typeof m.key === 'object') && (m.sealed == null || typeof m.sealed === 'object');
+}
+function anCanMove(from, to){ return !!AN_NEXT[from] && AN_NEXT[from].includes(to); }
+function anSetState(m, to){
+  if (!anValidMeta(m)) throw new Error('ficha de audio inválida');
+  if (!AN_STATES.includes(to) || !anCanMove(m.state, to)) throw new Error('cambio de estado no permitido: ' + m.state + ' → ' + to);
+  return {...m, state: to};
+}
+function anChunkKey(id, part, n){
+  if (typeof id !== 'string' || !id || !anIsInt(part) || !anIsInt(n)) throw new Error('clave de fragmento inválida');
+  return [id, part, n];
+}
+function anChunkBounds(id){
+  if (typeof id !== 'string' || !id) throw new Error('clave de fragmento inválida');
+  return {lower: [id, 0, 0], upper: [id, Infinity, Infinity]};
+}
+function anFilePlan(size, chunk){
+  if (chunk === undefined) chunk = AN_FILE_CHUNK;
+  if (!anIsInt(size) || !anIsInt(chunk) || chunk < 1) throw new Error('tamaño inválido');
+  const out = [];
+  for (let start = 0, n = 0; start < size; start += chunk, n++) out.push({n, start, end: Math.min(start + chunk, size)});
+  return out;
+}
+/* Revisión al abrir: solo MIRA y dice qué hacer. Nunca borra nada por su cuenta (D8).
+   metas: fichas guardadas · chunkCounts: {id: cantidad de fragmentos} · noteAudioIds: audioId que usan las notas · draftAudioIds: el del borrador */
+function anReview(metas, chunkCounts, noteAudioIds, draftAudioIds){
+  chunkCounts = chunkCounts || {};
+  const used = new Set([...(noteAudioIds || []), ...(draftAudioIds || [])].filter(Boolean));
+  const audios = [], seen = new Set();
+  for (const m of metas || []) {
+    if (!anValidMeta(m)) { audios.push({id: m && typeof m.id === 'string' ? m.id : null, action: 'danado'}); continue; }
+    seen.add(m.id);
+    const chunks = chunkCounts[m.id] || 0;
+    let action;
+    if (m.state === 'grabando') action = chunks > 0 ? 'cerrar-interrumpida' : 'descartar';
+    else if (m.state === 'escribiendo') action = 'descartar';
+    else if (m.state === 'importando') action = 'limpiar-lote';
+    else if (chunks === 0 && m.parts > 0) action = 'danado';
+    else action = used.has(m.id) ? 'ok' : 'sin-nota';
+    audios.push({id: m.id, action});
+  }
+  const notasSinAudio = [...used].filter(id => !seen.has(id));
+  return {audios, notasSinAudio};
+}
+/* Candado de una sola pestaña (2.5). Sin conectar a la app en E1. */
+function anTakeLock(nav){
+  nav = nav || globalThis.navigator;
+  if (!nav || !nav.locks || typeof nav.locks.request !== 'function') return Promise.resolve({ok: true, soportado: false, release(){}});
+  return new Promise((resolve, reject) => {
+    nav.locks.request(AN_LOCK_NAME, {ifAvailable: true}, lock => {
+      if (!lock) { resolve({ok: false, soportado: true, release(){}}); return; }
+      return new Promise(freed => resolve({ok: true, soportado: true, release: freed}));
+    }).catch(reject);
+  });
+}
+/* Base de datos: se abre solo cuando alguien lo pide (nadie, por ahora). */
+function anOpen(idb){
+  idb = idb || globalThis.indexedDB;
+  return new Promise((res, rej) => {
+    if (!idb) return rej(new Error('este navegador no puede guardar audio'));
+    const r = idb.open(AN_DB, AN_DB_VERSION);
+    r.onupgradeneeded = () => { const d = r.result; d.createObjectStore('meta', {keyPath: 'id'}); d.createObjectStore('chunks'); };
+    r.onsuccess = () => res(r.result);
+    r.onerror = () => rej(r.error || new Error('no se pudo abrir el almacenamiento'));
+  });
+}
+function anTx(db, stores, mode, fn){
+  return new Promise((res, rej) => {
+    const t = db.transaction(stores, mode);
+    let r;
+    t.oncomplete = () => res(r && 'result' in r ? r.result : undefined);
+    t.onerror = t.onabort = () => rej(t.error || new Error('operación cancelada'));
+    try { r = fn(t); } catch (e) { try { t.abort(); } catch (_) {} rej(e); }
+  });
+}
+/* La ficha y el primer fragmento se guardan juntos, o ninguno. */
+function anStart(db, meta, firstChunk){
+  if (!anValidMeta(meta)) return Promise.reject(new Error('ficha de audio inválida'));
+  return anTx(db, ['meta', 'chunks'], 'readwrite', t => { t.objectStore('meta').put(meta); t.objectStore('chunks').put(firstChunk, anChunkKey(meta.id, 0, 0)); });
+}
+function anPutMeta(db, meta){
+  if (!anValidMeta(meta)) return Promise.reject(new Error('ficha de audio inválida'));
+  return anTx(db, ['meta'], 'readwrite', t => t.objectStore('meta').put(meta));
+}
+const anGetMeta = (db, id) => anTx(db, ['meta'], 'readonly', t => t.objectStore('meta').get(id));
+const anListMeta = db => anTx(db, ['meta'], 'readonly', t => t.objectStore('meta').getAll());
+const anPutChunk = (db, id, part, n, blob) => anTx(db, ['chunks'], 'readwrite', t => t.objectStore('chunks').put(blob, anChunkKey(id, part, n)));
+const anGetChunk = (db, id, part, n) => anTx(db, ['chunks'], 'readonly', t => t.objectStore('chunks').get(anChunkKey(id, part, n)));
+function anCountChunks(db, id){
+  const b = anChunkBounds(id);
+  return anTx(db, ['chunks'], 'readonly', t => t.objectStore('chunks').count(IDBKeyRange.bound(b.lower, b.upper)));
+}
+/* Borrar un audio: la ficha y todos sus fragmentos, en una sola operación. */
+function anDelete(db, id){
+  const b = anChunkBounds(id);
+  return anTx(db, ['meta', 'chunks'], 'readwrite', t => { t.objectStore('meta').delete(id); t.objectStore('chunks').delete(IDBKeyRange.bound(b.lower, b.upper)); });
+}
+/*AUDIONOTA-END*/
+
 /* ---------- Audio guardado (solo en este dispositivo) ---------- */
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 let dbP = null;

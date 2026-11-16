@@ -1,3 +1,13 @@
+## 16/11/2026 · Paso E1: base nueva de audios por nota, SIN ACTIVAR
+
+- **Responsable:** Claude (Sonnet 5.5), con permiso explícito del usuario (plan mostrado y aprobado). Rama: `e1-base-audios-por-nota`. Base: `fc86681` (`main`). Alcance: solo el paso E1 del tablero [docs/PLAN-ALMACENAMIENTO-CIFRADO.md](docs/PLAN-ALMACENAMIENTO-CIFRADO.md).
+- **Qué agrega (nada visible):** en `index.html`, un bloque `AUDIONOTA` (funciones `an…`) con: base IndexedDB `notasvoz-dictanota-audio` v1 (almacenes `meta` y `chunks`, clave de fragmento `[id, parte, n]`); estados de un audio (`grabando`, `escribiendo`, `cerrado`, `importando`) y cambios permitidos; plan de partes de un archivo (1 MB); **revisión al abrir** que solo mira y propone qué hacer (tabla 2.5 del diseño), sin borrar nada; guardar ficha + primer fragmento en una sola transacción, y borrar un audio completo en otra; **candado de una sola pestaña** (`navigator.locks`).
+- **Apagado:** nada de la app llama al bloque. La base nueva **no se crea** al cargar la app. El candado queda escrito y probado pero **sin conectar** (decisión del usuario; se conecta en E2). No se toca `notasvoz-gamma-audio`, ni claves, ni CSP, ni dependencias, ni textos de la interfaz.
+- **Sin cifrado todavía:** por eso ningún dato real puede entrar a esta base hasta E2. Una prueba estática exige que nadie fuera del bloque lo use y que no escriba en otro lado que `meta` y `chunks`.
+- **Fallo encontrado y corregido durante las pruebas:** una transacción que fallaba a mitad (por ejemplo, un fragmento no guardable) dejaba la ficha escrita sin su fragmento. Ahora se cancela entera.
+- **Pruebas técnicas:** `node --test tests/delta.test.mjs` 139/139 (5 nuevas); nueva `tests/audio-nota-browser.mjs` en Chrome real (datos de Delta 11 sembrados quedan idénticos, la base nueva no existe al cargar, ficha + fragmento atómicos, borrado, candado entre tomas); `browser`, `cifrado-browser` y `notas-browser` siguen pasando. Todo con datos inventados. Se suma al CI.
+- **Estado:** código guardado en la rama · pruebas técnicas aprobadas en local (CI en el PR) · **Motorola: sin probar** (no hay nada visible que probar). Vuelta atrás: total. No unir a `main` sin permiso del usuario (merge normal, sin squash).
+
 ## 16/11/2026 · Diseño del almacenamiento cifrado: Etapa E + original recuperable (SOLO documentación)
 
 - **Responsable:** Claude (Fable 5.2). Rama: `docs-diseno-almacenamiento-cifrado-2026-11-16`. Base: `3383584` (`main`). **No toca `index.html` ni las pruebas.** Sin datos persistidos nuevos, claves, orígenes ni dependencias.

@@ -27,6 +27,9 @@ jobs:
       - name: Verificar protección cifrada en Chrome (huella simulada)
         run: node tests/cifrado-browser.mjs
         timeout-minutes: 4
+      - name: Verificar audio por nota E1 en Chrome (apagado, datos ficticios)
+        run: node tests/audio-nota-browser.mjs
+        timeout-minutes: 3
       - name: Verificar pantalla Notas en Chrome (hojas y mensajes, datos ficticios)
         run: node tests/notas-browser.mjs
         timeout-minutes: 4
