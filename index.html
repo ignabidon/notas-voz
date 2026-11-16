@@ -520,7 +520,7 @@ textarea#text{scroll-margin-bottom:var(--dock-space)}
       <button type="button" class="audio-shortcut" id="audioShortcut" data-go-view="grabacion" data-go-target="audioBox">Mis grabaciones</button>
       <button type="button" id="loadAudioBtn">Cargar un audio para transcribir</button>
       <input type="file" id="loadAudioFile" accept="audio/*,.m4a,.mp3,.wav,.ogg,.opus,.aac,.amr,.webm" hidden>
-      <p class="hint" id="loadAudioHint">El archivo <b>no se guarda</b>: solo se transcribe en este celular. Máximo 32 MB y 10 minutos por archivo. Los audios largos tardan más que su duración.</p>
+      <p class="hint" id="loadAudioHint">El archivo <b>no se guarda</b>: solo se transcribe en este celular. Máximo 200 MB y 15 minutos por archivo. Los audios largos tardan más que su duración.</p>
     </div>
     <div class="record-save-audio">
       <label class="chk" for="recordSaveAudio"><input type="checkbox" id="recordSaveAudio"><span><b>Conservar también el audio</b><small>Activalo antes de grabar. Tu voz queda guardada en Brave hasta que la descargues o borres.</small></span></label>
@@ -2779,11 +2779,11 @@ $('retryTranscription').onclick = () => {
 $('aTx').onclick = () => transcribeSaved();
 /* Preflight de archivos importados: no decodificar a PCM antes de conocer duración.
    La lectura de metadatos depende del navegador; no es un sandbox del códec. */
-const IMPORT_MAX_BYTES = 32 * 1024 * 1024, IMPORT_MAX_SEC = 10 * 60;
+const IMPORT_MAX_BYTES = 200 * 1024 * 1024, IMPORT_MAX_SEC = 15 * 60;
 function validateImport(size, duration){
-  if (size > IMPORT_MAX_BYTES) throw new Error('El archivo supera 32 MB. Cortalo en partes.');
+  if (size > IMPORT_MAX_BYTES) throw new Error('El archivo supera 200 MB. Cortalo en partes.');
   if (!Number.isFinite(duration) || duration <= 0) throw new Error('No se pudo verificar la duración. Convertí el archivo a WAV o MP3.');
-  if (duration > IMPORT_MAX_SEC) throw new Error('El archivo supera 10 minutos. Cortalo en partes.');
+  if (duration > IMPORT_MAX_SEC) throw new Error('El archivo supera 15 minutos. Cortalo en partes.');
 }
 function inspectImport(blob){
   validateImport(blob.size, 1);
@@ -2883,7 +2883,7 @@ $('loadAudioFile').addEventListener('change', () => {
   $('loadAudioFile').value = '';
   if (!f) return;
   if (audioBusy()) return flash('Esperá a que termine lo que se está haciendo.');
-  if (f.size > IMPORT_MAX_BYTES) return flash('Ese archivo supera 32 MB. Cortalo en partes.');
+  if (f.size > IMPORT_MAX_BYTES) return flash('Ese archivo supera 200 MB. Cortalo en partes.');
   if (f.size > LOAD_MAX_BYTES) return flash('Ese archivo es demasiado grande (más de 200 MB). Probá con uno más corto.');
   if (f.type && !/^(audio|video)\//.test(f.type)) return flash('Ese archivo no parece un audio. Elegí un archivo de sonido (MP3, M4A, WAV, OGG…).');
   if (!confirm('¿Transcribir «' + f.name + '» (' + mb(f.size) + ')? El archivo no se guarda en DictaNota. Guardá antes las correcciones del editor: el texto actual se reemplaza si «Empezar de cero al grabar» está activado.')) return;
