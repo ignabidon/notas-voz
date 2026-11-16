@@ -137,7 +137,7 @@ Cada ítem indica: qué se ve hoy → cambio → dónde → criterio de aceptaci
 
 *Decisión del usuario:*
 - **Pestaña 1 = «Dictar»** (reemplaza a «Audio»). Reúne **todo lo que tiene que ver con grabar o cargar audios para transcribir**: el círculo `#rec`, pausa, marcas y cronómetro, la carga de un archivo de audio, el estado de la transcripción, «Conservar audio» y «Mis grabaciones» (`#audioBox`).
-- **Pestaña 2 = el lugar de las hojas**: conjuntos de notas relacionadas (p. ej. «Luciano», con varias notas tomadas en distintos días) y, al abrir una, sus notas en burbujas. **Nombre pendiente.** «Bitácora» queda descartado por demasiado formal; «Hojas» es exacto, pero al usuario le preocupa que no se entienda en el uso diario.
+- **Pestaña 2 = el lugar de las hojas**: conjuntos de notas relacionadas (p. ej. todas las notas sobre una misma persona o tema, tomadas en distintos días) y, al abrir una, sus notas en burbujas. **Nombre pendiente.** «Bitácora» queda descartado por demasiado formal; «Hojas» es exacto, pero al usuario le preocupa que no se entienda en el uso diario.
 - **Pestañas 3 y 4:** Anonimizar y Ajustes, sin cambios.
 
 *Alternativas para la pestaña 2 (propuestas por Claude, a elección del usuario):* **Cuadernos** (recomendada: cada cuaderno reúne las notas de una persona o tema, se lee natural en «Mis cuadernos» y no repite «Notas»), Carpetas, Hilos, Temas y, como último recurso, Hojas. Si se elige otro nombre, cambia también la palabra «hoja» en toda la interfaz.
