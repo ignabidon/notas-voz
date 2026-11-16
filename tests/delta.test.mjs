@@ -25,7 +25,7 @@ test('IDs únicos y referencias existentes', () => {
 });
 
 test('controles de voz visibles y sincronizados', () => {
-  for (const id of ['rec','pause','save','studioDockNotes','studioDockCapture','studioDockPause','studioDockStop','studioAnonAction']) assert.ok(ids.includes(id), 'falta #'+id);
+  for (const id of ['rec','pause','save','studioDockNotes','studioDockCapture','studioDockPause','studioDockStop','anon','undo']) assert.ok(ids.includes(id), 'falta #'+id);
   assert.match(html, /id="studioSettingsLink" data-delta-view="ajustes"/);
   assert.match(html, /if \(view==='ajustes'\) document\.getElementById\('ajustes'\)\.open=true;/);
   assert.ok(html.includes("$('studioDockStop').addEventListener('click',()=>$('rec').click())"));
@@ -363,20 +363,21 @@ test('Delta 06a: jamás se borra automáticamente al iniciar o guardar notas', (
 test('Delta 08: navegación inferior de tres pantallas reales', () => {
   const nav=html.match(/<nav class="studio-nav"[\s\S]*?<\/nav>/);
   assert.ok(nav);
-  assert.equal((nav[0].match(/data-delta-view="/g)||[]).length,3);
-  for(const tab of ['grabacion','transcripcion','ajustes']) assert.match(nav[0],new RegExp('data-delta-view="'+tab+'"'));
+  assert.equal((nav[0].match(/data-delta-view="/g)||[]).length,4);
+  for(const tab of ['grabacion','transcripcion','anonimizar','ajustes']) assert.match(nav[0],new RegExp('data-delta-view="'+tab+'"'));
   assert.doesNotMatch(nav[0],/studioPrivacyLink/);
   assert.match(html, /<body data-view="grabacion">/);
   assert.match(html, /body\[data-view="grabacion"\] \.c-edit/);
   assert.match(html, /body\[data-view="transcripcion"\] \.c-rec/);
   assert.match(html, /body\[data-view="ajustes"\] \.c-rec/);
+  assert.match(html, /body\[data-view="anonimizar"\] \.c-rec/);
 });
 
 test('Delta 08: cambiar pantallas conserva un único DOM y actualiza el tab activo', () => {
   const match=html.match(/function chooseDeltaView\(view, scrollToTop=true\) \{[\s\S]*?\n  \}/);
   assert.ok(match,'falta selector de pantallas');
   const settings={open:false};
-  const tabs=['grabacion','transcripcion','ajustes'].map(deltaView=>({
+  const tabs=['grabacion','transcripcion','anonimizar','ajustes'].map(deltaView=>({
     dataset:{deltaView},attrs:{},
     setAttribute(k,v){this.attrs[k]=v;},
     removeAttribute(k){delete this.attrs[k];}
@@ -392,7 +393,7 @@ test('Delta 08: cambiar pantallas conserva un único DOM y actualiza el tab acti
   };
   const win={scrollTo:()=>scrolled++};
   const choose=new Function('validDeltaViews','document','window',
-    match[0]+'; return chooseDeltaView;')(['grabacion','transcripcion','ajustes'],doc,win);
+    match[0]+'; return chooseDeltaView;')(['grabacion','transcripcion','anonimizar','ajustes'],doc,win);
   assert.equal(choose('transcripcion'), 'transcripcion');
   assert.equal(doc.body.dataset.view,'transcripcion');
   assert.equal(tabs[1].attrs['aria-current'],'page');
@@ -413,7 +414,7 @@ test('Delta 08: Grabar Texto Ajustes comparten acciones sin duplicar ni borrar e
   assert.match(html,/#studioDockNotes\{display:none\}/);
   assert.match(html,/id="studioDockStop"/);
   assert.match(html,/id="studioDockPause"/);
-  assert.match(html,/id="studioAnonAction"/);
+  assert.doesNotMatch(html,/id="studioAnonAction"/,'Anonimizar ya está en la navegación fija, no se repite');
   assert.match(html,/id="save"/);
   assert.match(html,/function updateDockRecording\(\)/);
   assert.match(html,/studioDockStop'\)\.addEventListener\('click',\(\)=>\$\('rec'\)\.click\(\)/);
@@ -448,7 +449,7 @@ test('Delta 08: nuevo sistema visual y diseño móvil adaptable', () => {
   assert.match(html,/--bg:#090f18/);
   assert.match(html,/#rec\{width:154px;height:154px/);
   assert.match(html,/#clock\{font-size:64px/);
-  assert.match(html,/\.studio-dock \.studio-nav\{display:grid;grid-template-columns:repeat\(3,1fr\)/);
+  assert.match(html,/\.studio-dock \.studio-nav\{display:grid;grid-template-columns:repeat\(4,1fr\)/);
   assert.match(html,/\.studio-dock \.studio-nav a\[aria-current="page"\]/);
   assert.match(html,/@media\(max-width:760px\)/);
   assert.match(html,/env\(safe-area-inset-bottom\)/);
@@ -521,7 +522,7 @@ test('Delta 09: todos los íconos del menú tienen el mismo grosor y Ajustes usa
   const nav=html.match(/<nav class="studio-nav"[\s\S]*?<\/nav>/);
   assert.ok(nav);
   const icons=[...nav[0].matchAll(/<svg\b[^>]*>[\s\S]*?<\/svg>/g)].map(x=>x[0]);
-  assert.equal(icons.length,3);
+  assert.equal(icons.length,4);
   for(const icon of icons) {
     assert.match(icon,/viewBox="0 0 24 24"/);
     assert.match(icon,/stroke-width="1.9"/);
@@ -531,6 +532,7 @@ test('Delta 09: todos los íconos del menú tienen el mismo grosor y Ajustes usa
   assert.match(nav[0],/id="studioSettingsLink"[\s\S]*?<circle cx="12" cy="6" r="2"\/><circle cx="17" cy="12" r="2"\/><circle cx="9" cy="18" r="2"\/>/);
   assert.match(nav[0],/data-delta-view="grabacion"/);
   assert.match(nav[0],/data-delta-view="transcripcion"/);
+  assert.match(nav[0],/data-delta-view="anonimizar"/);
   assert.match(nav[0],/data-delta-view="ajustes"/);
 });
 
@@ -1010,4 +1012,109 @@ test('seguridad: SEGURIDAD.md existe y las IA lo ven primero', () => {
   const seg = rd('SEGURIDAD.md');
   for (const s of ['Qué está confirmado', 'Qué NO está confirmado', 'Cómo volver atrás']) assert.ok(seg.includes(s), 'falta sección «' + s + '» en SEGURIDAD.md');
   for (const f of ['AGENTS.md', 'CLAUDE.md', 'README.md']) assert.ok(rd(f).split('\n').slice(0, 12).join('\n').includes('SEGURIDAD.md'), f + ' debe mencionar SEGURIDAD.md en sus primeras líneas');
+});
+
+
+/* ---- DictaNota: cuarta pantalla Anonimizar, audios a la vista y aprendizaje automático ---- */
+const learnPure = (() => {
+  const m = html.match(/\/\*PURE-START\*\/([\s\S]*?)\/\*PURE-END\*\//);
+  return new Function(m[1] + ';return {autoLearn, learnable, changedWindow, parseDict, applyDict};')();
+})();
+
+test('Anonimizar: pantalla propia en la barra fija, con explicación sencilla y ejemplo', () => {
+  const section = html.match(/<section class="card c-anon" id="anonimizar">[\s\S]*?<\/section>\n\n<\/div>\n\n<\/main>/);
+  assert.ok(section, 'falta la sección Anonimizar');
+  for (const id of ['anon','undo','anonRes','susBox','hideX','keepX','peopleBox','pName','pRel','pCode','pAdd','pApply','pList','pFormPreview','anonPreview','privacidad'])
+    assert.match(section[0], new RegExp('id="' + id + '"'), 'falta #' + id + ' dentro de Anonimizar');
+  assert.match(section[0], /¿Para qué sirve\?/);
+  assert.match(section[0], /nombres de personas, teléfonos, correos o fechas/);
+  assert.match(section[0], /\[Persona 1\]/);
+  assert.match(section[0], /\[madre de P-001\]/);
+  assert.match(section[0], /<details id="peopleBox" class="studio-patients" open>/);
+  assert.match(section[0], /Si dejás el código vacío/);
+  assert.match(html, /<a href="#anonimizar" id="studioAnonLink" data-delta-view="anonimizar"/);
+  assert.match(html, /body:not\(\[data-view="anonimizar"\]\) \.c-anon\{display:none!important\}/);
+  assert.match(html, /body\[data-view="anonimizar"\] #studioDockNotes\{display:none\}/);
+  assert.doesNotMatch(html.match(/<section class="card c-edit" id="transcripcion">[\s\S]*?<\/section>/)[0], /id="anon"/, 'el botón ya no está duplicado en Texto');
+});
+
+test('Anonimizar: la vista previa y la lista de personas muestran cómo se escribe cada nombre', () => {
+  assert.match(html, /function refreshAnonPreview\(\)\{ \$\('anonPreview'\)\.textContent = \$\('text'\)\.value; \}/);
+  assert.match(html, /attributeFilter: \['data-view'\]/);
+  assert.match(html, /function updatePersonPreview\(\)/);
+  assert.match(html, /se va a escribir así: /);
+  assert.match(html, /'Se escribe: ' \+ \(p\.code/);
+});
+
+test('Audios: siempre a la vista, con acceso directo desde Grabar, Texto y Ajustes', () => {
+  assert.doesNotMatch(html, /<div class="abox" id="audioBox" style="display:none">/);
+  assert.doesNotMatch(html, /\$\('audioBox'\)\.style\.display/);
+  assert.match(html, /<div class="abox" id="audioBox">/);
+  assert.match(html, /Tus audios guardados/);
+  assert.match(html, /id="audioEmpty"/);
+  assert.match(html, /id="audioShortcut"/);
+  // el cuadro de audio está antes del estado de transcripción y de los detalles técnicos
+  assert.ok(html.indexOf('id="audioBox"') < html.indexOf('id="keepOn"'));
+  assert.equal((html.match(/data-go-target="audioBox"/g) || []).length, 3, 'accesos desde Grabar, Texto y Ajustes');
+  assert.match(html, /link\.dataset\.goTarget/);
+  for (const id of ['aDown','aMp3','aTx','aDel','aUndoAudio','audioUndoRow']) assert.ok(ids.includes(id), 'falta #' + id);
+  assert.match(html, /\$\('audioReady'\)\.hidden = !m; \$\('audioEmpty'\)\.hidden = !!m;/);
+});
+
+test('Aprendizaje: aprende errores de transcripción parecidos y nada más', () => {
+  const {autoLearn} = learnPure;
+  // una frase partida que se une en una palabra: regla sin contexto
+  assert.deepEqual(autoLearn('Hablamos de la contra transferencia hoy.', 'Hablamos de la contratransferencia hoy.', []),
+    [{a: 'contra transferencia', b: 'contratransferencia'}]);
+  // error de ortografía: regla con la palabra anterior como contexto (no cambia el resto del texto)
+  assert.deepEqual(autoLearn('Sentía tenes ganas.', 'Sentía tenés ganas.', []), [{a: 'sentía tenes', b: 'sentía tenés'}]);
+  // no aprende: cambio de contenido, palabras cortas, nombres con mayúscula, cifras, agregados y borrados
+  assert.deepEqual(autoLearn('Dijo que estaba cansado.', 'Mencionó que estaba cansado.', []), []);
+  assert.deepEqual(autoLearn('Llegó con el niño.', 'Llegó con la niña.', []), []);
+  assert.deepEqual(autoLearn('Vino Jose con su madre.', 'Vino José con su madre.', []), []);
+  assert.deepEqual(autoLearn('Tiene 12 años.', 'Tiene 13 años.', []), []);
+  assert.deepEqual(autoLearn('Una frase.', 'Una frase. Y otra agregada.', []), []);
+  assert.deepEqual(autoLearn('Una frase larga.', 'Una larga.', []), []);
+  assert.deepEqual(autoLearn('igual', 'igual', []), []);
+});
+
+test('Aprendizaje: no repite reglas conocidas y funciona en notas largas', () => {
+  const {autoLearn, parseDict, applyDict} = learnPure;
+  assert.deepEqual(autoLearn('Habló de la contra transferencia.', 'Habló de la contratransferencia.', ['contra transferencia']), []);
+  const base = Array.from({length: 9000}, (_, i) => ['la', 'sesión', 'fue', 'tranquila', 'hoy', 'con', 'calma'][i % 7]).join(' ');
+  const edited = base.replace('sesión', 'sesion');
+  const t0 = Date.now();
+  const found = autoLearn(base, edited, []);
+  assert.ok(Date.now() - t0 < 1500, 'demasiado lento para una nota larga');
+  assert.equal(found.length, 1);
+  assert.match(found[0].b, /sesion$/);
+  // lo aprendido se aplica a la próxima transcripción
+  const rules = parseDict(autoLearn('Hablamos de la contra transferencia hoy.', 'Hablamos de la contratransferencia hoy.', []).map(r => r.a + ' => ' + r.b).join('\n'));
+  assert.equal(applyDict('Hoy surgió la contra transferencia en la sesión.', rules), 'Hoy surgió la contratransferencia en la sesión.');
+  assert.equal(applyDict('Una transferencia distinta.', rules), 'Una transferencia distinta.');
+});
+
+test('Aprendizaje: se activa solo al editar, se puede apagar y se puede deshacer', () => {
+  assert.match(html, /id="learnAuto" checked/);
+  assert.match(html, /\$\('text'\)\.addEventListener\('change', learnFromEdits\)/);
+  assert.match(html, /\$\('text'\)\.addEventListener\('blur', learnFromEdits\)/);
+  assert.match(html, /document\.addEventListener\('visibilitychange', \(\) => \{ if \(document\.hidden\) learnFromEdits\(\); \}\)/);
+  assert.match(html, /function learnFromEdits\(\)\{\s+if \(!\$\('learnAuto'\)\.checked\) return;/);
+  assert.match(html, /learnFromEdits\(\); \/\/ lo que corregiste antes se aprende ANTES de ocultar nombres/);
+  assert.match(html, /function doClear\(auto\)\{[\s\S]*?learnFromEdits\(\);\s+stash\(\);/);
+  assert.match(html, /if \(\$\('learnAuto'\)\.checked\) learnFromEdits\(\);\s+else \{ showSuggestions\(/);
+  assert.match(html, /learnAuto:\$\('learnAuto'\)\.checked/);
+  assert.match(html, /typeof c\.learnAuto === 'boolean'/);
+  assert.match(html, /function forgetRule\(a, b\)/);
+  assert.match(html, /u\.textContent = 'Deshacer'/);
+  assert.match(html, /'# Aprendido de tus correcciones'/);
+  // se reutiliza la clave de diccionario existente: no hay datos nuevos en el navegador
+  assert.equal((html.match(/notasvoz\.gamma\.dict\.v1/g) || []).length, 1);
+});
+
+test('Aprendizaje: el aviso usa textContent y la corrección del diálogo también aprende', () => {
+  const body = html.match(/function showLearned\([\s\S]*?\n\}/)[0];
+  assert.doesNotMatch(body, /innerHTML/);
+  assert.match(body, /t\.textContent = 'Aprendí tu corrección/);
+  assert.match(html, /else \{ flash\('Corrección aplicada\.'\); learnFromEdits\(\); \}/);
 });

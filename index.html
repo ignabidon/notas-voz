@@ -252,7 +252,7 @@ body[data-view="grabacion"] #studioAnonAction,body[data-view="grabacion"] #save{
 body[data-view="transcripcion"] #studioDockNotes{grid-template-columns:1fr 1.15fr}
 body[data-view="transcripcion"] #studioDockStart{display:none}
 body[data-view="ajustes"] #studioDockNotes{display:none}
-.studio-dock .studio-nav{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;border-color:#28424b}
+.studio-dock .studio-nav{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;border-color:#28424b}
 .studio-dock .studio-nav a{display:flex;flex-direction:column;gap:3px;min-height:56px;font-size:12px;color:#bdd1d2;border-radius:12px;padding:8px 4px}
 .studio-dock .studio-nav a[aria-current="page"]{background:#224745;color:#d8fff1}
 .studio-dock .studio-nav svg{width:22px;height:22px}
@@ -411,6 +411,40 @@ body[data-view="transcripcion"] #studioDockNotes button{flex-direction:column;ga
  #studioDockCapture .dock-actions button{min-height:48px}
  .editor-quick-actions{position:static}
 }
+
+/* Cuarta pantalla (Anonimizar), audios a la vista y aprendizaje automático */
+body[data-view="anonimizar"] .c-rec,body[data-view="anonimizar"] .c-edit,body[data-view="anonimizar"] .c-set{display:none!important}
+body:not([data-view="anonimizar"]) .c-anon{display:none!important}
+body[data-view="anonimizar"] #studioDockNotes{display:none}
+body[data-view="transcripcion"] #studioDockNotes{grid-template-columns:minmax(0,1fr) minmax(0,1.4fr)}
+.anon-example-box{margin-top:10px}
+.c-anon{padding:26px}
+.studio-dock .studio-nav{grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
+.studio-dock .studio-nav a{padding:8px 2px;font-size:clamp(12px,calc(13px * var(--text-scale)),14px);overflow-wrap:normal;word-break:normal;letter-spacing:-.1px;text-align:center}
+.anon-explain{background:#10262c;border:1px solid #2f5a58;border-radius:16px;padding:16px;margin:0 0 16px}
+.anon-explain h3{font-size:calc(16px * var(--text-scale));margin:0 0 6px;color:#d4f7ec}
+.anon-explain h3:not(:first-child){margin-top:16px}
+.anon-explain p{margin:0 0 8px;line-height:1.55}
+.anon-example{display:grid;gap:8px;margin:12px 0 6px}
+.anon-example>div{background:#0c1a22;border:1px solid #2c4a52;border-radius:12px;padding:10px 12px;line-height:1.5}
+.anon-example q{quotes:"«" "»";display:block;margin-top:4px;color:#f2fffb;overflow-wrap:anywhere}
+.anon-tag{display:inline-block;font-size:12px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#8fe1c9}
+.anon-steps{margin:6px 0 0;padding-left:22px;display:grid;gap:7px;line-height:1.55}
+.anon-preview-label{margin:16px 0 6px;font-weight:700;color:#cfe6e6}
+.anon-preview{white-space:pre-wrap;overflow-wrap:anywhere;background:#0e1a24;color:#fff;border:1px solid #395560;border-radius:14px;padding:14px;max-height:34vh;overflow:auto;font-size:max(15px,calc(16px * var(--text-scale)));line-height:1.6;margin:0 0 12px}
+.anon-preview:empty::before{content:"Todavía no hay texto. Grabá o escribí algo en «Texto».";color:#9fb5bb}
+.anon-formpreview{margin:0 0 12px;padding:10px 12px;border-radius:12px;background:#0c1a22;border:1px dashed #4b7b78;color:#e4fff7;overflow-wrap:anywhere}
+.anon-formpreview:empty{display:none}
+.anon-list-title{font-size:calc(15px * var(--text-scale));margin:18px 0 4px;color:#d4f7ec}
+.audio-shortcut{width:100%;margin-top:12px;min-height:48px;text-align:left;border-color:#4c8e86;color:#d9fff4;background:#173c3a}
+.where-audio{margin:10px 0 0}
+.where-audio button{min-height:48px;margin-top:6px}
+#audioBox{scroll-margin-top:14px;margin-top:20px}
+#audioEmpty{margin:4px 0 0}
+#learn .learned{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:#132f2d;border:1px solid #3d7a6f;border-radius:12px;padding:10px 12px;margin:8px 0}
+#learn .learned span{flex:1 1 220px;overflow-wrap:anywhere}
+@media(max-width:760px){.c-anon{padding:22px 16px}}
+@media(max-width:380px){.studio-dock .studio-nav a{font-size:12px;letter-spacing:-.2px}}
 </style>
 </head>
 <body data-view="grabacion">
@@ -433,7 +467,9 @@ body[data-view="transcripcion"] #studioDockNotes button{flex-direction:column;ga
 
   <!-- 1 · Grabar -->
   <section class="card c-rec" id="grabacion">
-    <div class="record-head"><span class="record-overline">ESTUDIO DE VOZ</span><h2>Grabación</h2><p class="rec-caption">Listo para transcribir en tu dispositivo.</p></div>
+    <div class="record-head"><span class="record-overline">ESTUDIO DE VOZ</span><h2>Grabación</h2><p class="rec-caption">Listo para transcribir en tu dispositivo.</p>
+      <button type="button" class="ghost audio-shortcut" id="audioShortcut" data-go-view="grabacion" data-go-target="audioBox" hidden></button>
+    </div>
     <div class="recrow">
       <div class="record-clock"><div id="clock" aria-label="Tiempo de grabación">00:00</div><span class="record-caption-label" id="recordLabel">Tocá el micrófono para empezar</span></div>
       <button id="rec" type="button">Grabar</button>
@@ -447,6 +483,26 @@ body[data-view="transcripcion"] #studioDockNotes button{flex-direction:column;ga
       <label class="chk" for="recordSaveAudio"><input type="checkbox" id="recordSaveAudio"><span><b>Conservar también el audio</b><small>Activalo antes de grabar. Tu voz queda guardada en Brave hasta que la descargues o borres.</small></span></label>
       <button type="button" id="recordDownloadAudio" disabled>Guardar audio</button>
       <p class="hint" id="recordAudioHint" role="status">Activá «Conservar también el audio» antes de grabar.</p>
+    </div>
+    <div class="abox" id="audioBox">
+      <div class="gl">Tus audios guardados</div>
+      <p class="hint" id="audioHelp">Acá se descarga o se recupera la voz que grabaste. Quedan dentro de este navegador hasta que los borres.</p>
+      <p class="hint" id="audioEmpty" role="status">Todavía no hay audio guardado. Activá «Conservar también el audio» antes de grabar.</p>
+      <div id="audioReady" hidden>
+        <div class="warn" id="audioInfo"></div>
+        <div class="row arow">
+          <button class="p two" id="aDown" type="button"><span>Descargar audio</span><small id="aDownSub">recomendado</small></button>
+          <button class="two" id="aMp3" type="button"><span>Convertir a MP3</span><small>alternativa · más compatible</small></button>
+        </div>
+        <div class="row">
+          <button id="aTx" type="button">Transcribir este audio</button>
+          <button class="ghost danger" id="aDel" type="button">Borrar audio</button>
+        </div>
+        <div class="row" id="audioUndoRow" hidden>
+          <button id="aUndoAudio" type="button">Recuperar audio anterior</button>
+        </div>
+      </div>
+      <div class="warn" id="audioMsg" role="status" style="margin-top:8px"></div>
     </div>
     <div class="warn" id="keepOn" style="display:none;text-align:center;margin-top:12px">Mantené la pantalla encendida y no cambies de app: si no, la grabación puede cortarse.</div>
     <div class="bar" id="bar"><i id="barI"></i></div>
@@ -462,22 +518,6 @@ body[data-view="transcripcion"] #studioDockNotes button{flex-direction:column;ga
     <div class="warn" id="lvTxt"></div>
     <input type="checkbox" id="liveAnon" hidden>
 
-    <div class="abox" id="audioBox" style="display:none">
-      <div class="gl">Audio guardado</div>
-      <div class="warn" id="audioInfo"></div>
-      <div class="row arow">
-        <button class="p two" id="aDown" type="button"><span>Descargar audio</span><small id="aDownSub">recomendado</small></button>
-        <button class="two" id="aMp3" type="button"><span>Convertir a MP3</span><small>alternativa · más compatible</small></button>
-      </div>
-      <div class="row">
-        <button id="aTx" type="button">Transcribir este audio</button>
-        <button class="ghost danger" id="aDel" type="button">Borrar audio</button>
-      </div>
-      <div class="row" id="audioUndoRow" hidden>
-        <button id="aUndoAudio" type="button">Recuperar audio anterior</button>
-      </div>
-      <div class="warn" id="audioMsg" style="margin-top:8px"></div>
-    </div>
     <details>
       <summary>Detalles técnicos de la última grabación</summary>
       <pre id="diag" class="warn" style="white-space:pre-wrap;margin:8px 0"></pre>
@@ -510,6 +550,7 @@ body[data-view="transcripcion"] #studioDockNotes button{flex-direction:column;ga
       <section class="settings-module" id="settingsAudio"><div class="settings-module-top"><span class="module-icon">◉</span><h3>Audio</h3></div>
         <label class="chk" style="margin-top:18px"><input type="checkbox" id="saveAudio">
         <span><b>Guardar el audio de la grabación</b><small>Permite recuperar o descargar la voz original. No está anonimizada ni cifrada.</small></span></label>
+        <button type="button" class="ghost" data-go-view="grabacion" data-go-target="audioBox">Ver, descargar o recuperar audios guardados</button>
         <details class="settings-inner"><summary>Micrófono y rendimiento</summary><div class="settings-inner-content"><label for="accel" style="margin-top:14px">Velocidad de cálculo</label>
       <select id="accel">
         <option value="auto" selected>Automática (usa la placa de video si puede)</option>
@@ -535,11 +576,12 @@ body[data-view="transcripcion"] #studioDockNotes button{flex-direction:column;ga
       </details>
       </section>
       <section class="settings-module" id="settingsDictionary"><div class="settings-module-top"><span class="module-icon">Aa</span><h3>Diccionario</h3></div>
+        <label class="chk"><input type="checkbox" id="learnAuto" checked><span><b>Aprender de mis correcciones</b><small>Si corregís una palabra en «Texto», DictaNota la recuerda y la escribe bien la próxima vez, sin que toques ningún botón. Aprende solo palabras en minúscula que se parecen a lo que escribió Whisper; nunca nombres con mayúscula ni números. Aparece un aviso con «Deshacer» por si fue un error.</small></span></label>
         <details class="studio-dictionary">
       <summary>Corregir palabras frecuentes <small>Opcional · para errores que se repiten</small></summary>
       <p class="hint" id="dictHelp">Escribí qué palabra sale mal y por cuál reemplazarla, una corrección por línea. No hace falta explicar el motivo.</p>
       <p class="hint">Ejemplo: <code>contra transferencia =&gt; contratransferencia</code></p>
-      <p class="hint">Se guarda automáticamente en este navegador y se aplica a las próximas transcripciones. Para corregir el texto que ya tenés, tocá «Aplicar al texto actual».</p>
+      <p class="hint">Lo que DictaNota aprende de tus correcciones se agrega abajo, en «Aprendido de tus correcciones». Podés editar o borrar esas líneas. Se guarda automáticamente en este navegador y se aplica a las próximas transcripciones. Para corregir el texto que ya tenés, tocá «Aplicar al texto actual».</p>
       <p class="hint">También podés escribir un término técnico solo, como <code>Winnicott</code>: la app intentará corregir variantes parecidas. Revisá el resultado. Para nombres de pacientes, usá Personas y códigos.</p>
       <label for="dict" style="margin-top:12px">Tus palabras y correcciones</label>
       <textarea id="dict" aria-describedby="dictHelp" class="mono" spellcheck="false" autocapitalize="off"></textarea>
@@ -605,56 +647,9 @@ body[data-view="transcripcion"] #studioDockNotes button{flex-direction:column;ga
     </div>
     <div id="nativeInterim" role="status" aria-live="polite" class="hint"></div>
     <div class="meta"><span id="wc">0 palabras</span><span id="cc"></span></div>
+    <p class="hint where-audio">¿Buscás el audio? Está en <b>Grabar → Tus audios guardados</b>. <button type="button" class="ghost" data-go-view="grabacion" data-go-target="audioBox">Ver audios guardados</button></p>
 
     <div id="learn"></div>
-
-    <div class="group privacy-group" id="privacidad">
-      <div class="gl">Anonimización</div>
-      <div class="studio-anon-actions"><button class="p" id="anon" title="Aplicar una sola vez; se puede deshacer">Anonimizar transcripción</button><div class="studio-anon-secondary"><button id="undo" disabled>↶ Deshacer anonimizado</button><button type="button" id="studioAnonSettings" aria-expanded="false" aria-controls="studioAnonConfig">⚙ Ajustes</button></div></div>
-      <div class="warn" id="anonRes" style="margin-top:8px"></div>
-      <div id="susBox"></div>
-      <div class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 2.5 20h19L12 3z"/><path d="M12 10v4M12 17.5v.01"/></svg><span>La anonimización es automática y puede fallar: revisá siempre el texto antes de guardarlo o exportarlo.</span></div>
-      <details id="studioAnonConfig">
-        <summary>Ajustes de anonimización</summary>
-        <label style="margin-top:10px">Ocultar también estas palabras (separadas por coma)</label>
-        <input type="text" id="hideX" placeholder="Ej.: nombre de una escuela, apodo">
-        <label style="margin-top:12px">No ocultar nunca estas palabras</label>
-        <input type="text" id="keepX" placeholder="Ej.: Freud, Winnicott">
-      </details>
-      <details id="peopleBox" class="studio-patients">
-        <summary>Personas y códigos <small>· cómo se reemplaza cada nombre</small></summary>
-        <div class="warn" style="margin:10px 0 8px">Opcional: asociá nombres y apodos con un código que elegís o generás. La asociación se usa solo cuando tocás «Anonimizar». Si no configurás nada, los nombres se ocultan como [Persona 1], [Persona 2], etc. La tabla se guarda en este navegador y contiene nombres reales.</div>
-        <label for="pName">Nombre (y apodos, separados por coma)</label>
-        <input type="text" id="pName" placeholder="Ej.: José, Pepe" autocomplete="off">
-        <label for="pRel" style="margin-top:10px">Relación <span class="opt">(vacía = es el paciente)</span></label>
-        <input type="text" id="pRel" placeholder="Ej.: madre, hermano, docente" autocomplete="off">
-        <label for="pCode" style="margin-top:10px">Código <span class="opt">(escribilo libremente o generá uno)</span></label>
-        <input type="text" id="pCode" placeholder="Ej.: P-024" autocomplete="off" spellcheck="false">
-        <details class="code-settings">
-          <summary>Generar un código <small>· opcional, a tu elección</small></summary>
-          <div class="code-options">
-            <label for="pMode">Método</label>
-            <select id="pMode">
-              <option value="sequential">Correlativo (P-001, P-002…)</option>
-              <option value="random">Aleatorio (P-A3F82C…)</option>
-            </select>
-            <div class="code-config">
-              <div><label for="pPrefix">Prefijo</label><input type="text" id="pPrefix" value="P-" maxlength="12" autocomplete="off" spellcheck="false"></div>
-              <div><label for="pNext">Próximo número</label><input type="number" id="pNext" min="1" max="999999999" value="1" inputmode="numeric"></div>
-              <div><label for="pDigits">Dígitos</label><select id="pDigits"><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></select></div>
-            </div>
-            <div class="hint" id="pGenHint">El generador propone un código, pero no lo registra hasta que toques «Agregar asociación».</div>
-            <button id="pGenerate" type="button">Generar código</button>
-          </div>
-        </details>
-        <div class="row"><button class="p" id="pAdd" type="button">Agregar asociación</button><button id="pApply" type="button">Aplicar asociaciones al texto</button></div>
-        <div class="warn" id="pMsg" style="margin-top:8px"></div>
-        <div id="pList" style="margin-top:8px"></div>
-        <label class="chk"><input type="checkbox" id="pVolatile"><span><b>No guardar las asociaciones</b><small>Opcional: si lo activás, las asociaciones actuales se pierden al cerrar la página. Por defecto se guardan localmente.</small></span></label>
-        <div class="row"><button class="ghost danger" id="pClear" type="button">Borrar toda la tabla</button></div>
-      </details>
-    </div>
-
 
     <details class="studio-workflow"><summary>Guardar, organizar y exportar la nota</summary><div class="studio-workflow-body"><div class="note-details">
       <label for="title">Título de la nota <span class="opt">(opcional)</span></label>
@@ -687,6 +682,85 @@ body[data-view="transcripcion"] #studioDockNotes button{flex-direction:column;ga
 
   </section>
 
+  <!-- 3 · Anonimizar -->
+  <section class="card c-anon" id="anonimizar">
+    <div class="screen-title"><span class="screen-overline">PRIVACIDAD</span><h2>Anonimizar</h2><p>Ocultá nombres y datos personales antes de guardar o compartir.</p></div>
+
+    <div class="anon-explain" id="anonExplain">
+      <h3>¿Para qué sirve?</h3>
+      <p>Al dictar, la nota puede incluir <b>nombres de personas, teléfonos, correos o fechas</b>. Anonimizar los <b>reemplaza por etiquetas o códigos</b>, para que el texto se pueda guardar o compartir sin mostrar quién es cada persona.</p>
+      <details class="anon-example-box">
+        <summary>Ver un ejemplo con datos inventados</summary>
+        <div class="anon-example">
+          <div><span class="anon-tag">Texto original</span><q>Hoy hablé con Ana y con Pedro. Ana me dio su teléfono: 11 5555 1234.</q></div>
+          <div><span class="anon-tag">Sin cargar a nadie</span><q>Hoy hablé con [Persona 1] y con [Persona 2]. [Persona 1] me dio su teléfono: [número].</q></div>
+          <div><span class="anon-tag">Si cargás «Ana = madre, código P-001»</span><q>Hoy hablé con [madre de P-001] y con [Persona 1]. [madre de P-001] me dio su teléfono: [número].</q></div>
+        </div>
+        <p class="hint">Con un código, la misma persona se escribe siempre igual en todas tus notas.</p>
+      </details>
+    </div>
+
+    <div class="group privacy-group" id="privacidad">
+      <div class="gl">Anonimizar el texto de tu nota</div>
+      <p class="hint">Tocá el botón: se reemplaza todo el texto de una sola vez. <b>Revisá el resultado</b> (puede fallar) y, si algo salió mal, usá «Deshacer anonimizado». Para elegir qué código lleva cada persona, cargala más abajo en «Personas y códigos».</p>
+      <div class="studio-anon-actions"><button class="p" id="anon" title="Reemplaza nombres y datos por etiquetas. Se puede deshacer.">Anonimizar transcripción</button><div class="studio-anon-secondary"><button id="undo" disabled>↶ Deshacer anonimizado</button><button type="button" id="studioAnonSettings" aria-expanded="false" aria-controls="studioAnonConfig">⚙ Más opciones</button></div></div>
+      <div class="warn" id="anonRes" role="status" style="margin-top:8px"></div>
+      <div id="susBox"></div>
+      <div class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 2.5 20h19L12 3z"/><path d="M12 10v4M12 17.5v.01"/></svg><span>La anonimización es automática y puede fallar: revisá siempre el texto antes de guardarlo o exportarlo.</span></div>
+      <p class="anon-preview-label" id="anonPreviewLabel">Así queda tu texto ahora <span class="opt">(solo lectura; se edita en «Texto»)</span></p>
+      <div id="anonPreview" class="anon-preview" tabindex="0" role="region" aria-labelledby="anonPreviewLabel"></div>
+      <button type="button" class="ghost" data-go-view="transcripcion">Ir a Texto para editarlo</button>
+      <details id="studioAnonConfig">
+        <summary>Más opciones de anonimización</summary>
+        <label for="hideX" style="margin-top:10px">Ocultar también estas palabras <span class="opt">(separadas por coma)</span></label>
+        <input type="text" id="hideX" placeholder="Ej.: nombre de una escuela, apodo">
+        <p class="hint">Sirve para lugares, instituciones o apodos que el programa no reconoce solo.</p>
+        <label for="keepX" style="margin-top:12px">No ocultar nunca estas palabras</label>
+        <input type="text" id="keepX" placeholder="Ej.: Freud, Winnicott">
+        <p class="hint">Sirve para autores o términos con mayúscula que no son personas a proteger.</p>
+      </details>
+    </div>
+
+    <details id="peopleBox" class="studio-patients" open>
+      <summary>Personas y códigos <small>· opcional: qué código lleva cada nombre</small></summary>
+      <div class="anon-explain people-explain">
+        <p><b>¿Qué es esto?</b> Una lista que le dice a DictaNota: «cuando aparezca <b>este nombre</b>, escribí <b>este código</b>». Así, en todas tus notas la misma persona tiene siempre el mismo código y vos sabés quién es.</p>
+        <p class="hint">Es opcional. Si no cargás a nadie, los nombres se ocultan como [Persona 1], [Persona 2]… La lista se guarda <b>solo en este navegador</b> y contiene nombres reales (no está cifrada).</p>
+      </div>
+      <div id="pFormPreview" class="anon-formpreview" role="status" aria-live="polite"></div>
+      <label for="pName">1. Nombre de la persona <span class="opt">(y apodos, separados por coma)</span></label>
+      <input type="text" id="pName" placeholder="Ej.: José, Pepe" autocomplete="off">
+      <label for="pRel" style="margin-top:10px">2. ¿Quién es? <span class="opt">(dejalo vacío si es el paciente)</span></label>
+      <input type="text" id="pRel" placeholder="Ej.: madre, hermano, docente" autocomplete="off">
+      <label for="pCode" style="margin-top:10px">3. Código <span class="opt">(escribilo vos o generá uno)</span></label>
+      <input type="text" id="pCode" placeholder="Ej.: P-024" autocomplete="off" spellcheck="false">
+      <p class="hint">Si dejás el código vacío, esa persona se oculta como [Persona 1], [Persona 2]… sin código fijo.</p>
+      <details class="code-settings">
+        <summary>Generar un código <small>· opcional, a tu elección</small></summary>
+        <div class="code-options">
+          <label for="pMode">Método</label>
+          <select id="pMode">
+            <option value="sequential">Correlativo (P-001, P-002…)</option>
+            <option value="random">Aleatorio (P-A3F82C…)</option>
+          </select>
+          <div class="code-config">
+            <div><label for="pPrefix">Prefijo</label><input type="text" id="pPrefix" value="P-" maxlength="12" autocomplete="off" spellcheck="false"></div>
+            <div><label for="pNext">Próximo número</label><input type="number" id="pNext" min="1" max="999999999" value="1" inputmode="numeric"></div>
+            <div><label for="pDigits">Dígitos</label><select id="pDigits"><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></select></div>
+          </div>
+          <div class="hint" id="pGenHint">El generador propone un código, pero no lo registra hasta que toques «Agregar asociación».</div>
+          <button id="pGenerate" type="button">Generar código</button>
+        </div>
+      </details>
+      <div class="row"><button class="p" id="pAdd" type="button">Agregar asociación</button><button id="pApply" type="button">Aplicar asociaciones al texto</button></div>
+      <div class="warn" id="pMsg" role="status" style="margin-top:8px"></div>
+      <h3 class="anon-list-title">Personas cargadas</h3>
+      <div id="pList"></div>
+      <label class="chk"><input type="checkbox" id="pVolatile"><span><b>No guardar las asociaciones</b><small>Opcional: si lo activás, las asociaciones actuales se pierden al cerrar la página. Por defecto se guardan localmente.</small></span></label>
+      <div class="row"><button class="ghost danger" id="pClear" type="button">Borrar toda la tabla</button></div>
+    </details>
+  </section>
+
 </div>
 
 </main>
@@ -712,7 +786,6 @@ body[data-view="transcripcion"] #studioDockNotes button{flex-direction:column;ga
   <div id="flash" role="status" aria-live="polite"></div>
   <div class="dock-actions" id="studioDockNotes">
     <button type="button" id="studioDockStart" aria-label="Empezar a grabar"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4M8 22h8"/></svg><span>Grabar</span></button>
-    <button type="button" id="studioAnonAction" aria-label="Anonimizar transcripción"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3 4 6v6c0 4 8 9 8 9s8-5 8-9V6z"/><path d="m8 12 3 3 5-6"/></svg><span>Anonimizar</span></button>
     <button type="button" class="p" id="save" title="Descarga la nota como archivo .txt en este dispositivo"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 3h12l4 4v14H3V3zM7 3v6h10V3M7 21v-8h10v8"/></svg><span>Guardar .txt</span></button>
   </div>
   <div id="studioDockCapture" hidden aria-label="Controles fijos de grabación">
@@ -728,17 +801,18 @@ body[data-view="transcripcion"] #studioDockNotes button{flex-direction:column;ga
 <nav class="studio-nav" aria-label="Pantallas de DictaNota">
   <a href="#grabacion" data-delta-view="grabacion" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2.5" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3.5M8.5 21.5h7"/></svg><span>Grabar</span></a>
   <a href="#transcripcion" data-delta-view="transcripcion"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 2.5h8l4 4V21H7zM15 2.5v4h4M10 11h6M10 15h6M10 19h4"/></svg><span>Texto</span></a>
+  <a href="#anonimizar" id="studioAnonLink" data-delta-view="anonimizar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v6c0 4 8 9 8 9s8-5 8-9V6z"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg><span>Anonimizar</span></a>
   <a href="#ajustes" id="studioSettingsLink" data-delta-view="ajustes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h6M14 6h6M4 12h11M19 12h1M4 18h3M11 18h9"/><circle cx="12" cy="6" r="2"/><circle cx="17" cy="12" r="2"/><circle cx="9" cy="18" r="2"/></svg><span>Ajustes</span></a>
 </nav></aside>
 <dialog id="correctionDialog" aria-labelledby="correctionTitle" aria-describedby="correctionDescription">
   <form id="correctionForm">
     <h2 id="correctionTitle">Corregir selección</h2>
-    <p class="hint" id="correctionDescription">Cambiá solo esta aparición. Recordarla para próximas transcripciones es opcional.</p>
+    <p class="hint" id="correctionDescription">Cambiá esta aparición. Si la corrección es de una palabra mal transcripta, DictaNota la aprende sola para la próxima vez (se puede apagar en Ajustes → Diccionario).</p>
     <label for="correctionOriginal">Texto seleccionado</label>
     <input id="correctionOriginal" type="text" readonly>
     <label for="correctionReplacement">Reemplazar por…</label>
     <input id="correctionReplacement" type="text" autocomplete="off" spellcheck="true" required>
-    <label class="chk"><input id="correctionRemember" type="checkbox"><span>Recordar para próximas transcripciones<small>Se guarda en este navegador. Evitá guardar nombres de pacientes.</small></span></label>
+    <label class="chk"><input id="correctionRemember" type="checkbox"><span>Reemplazar siempre, en cualquier contexto<small>Opcional y más fuerte que lo automático: cambia toda aparición de este texto. Se guarda en este navegador. Evitá guardar nombres de pacientes.</small></span></label>
     <p id="correctionRuleNotice" hidden></p>
     <p id="correctionError" role="alert"></p>
     <div class="dialog-actions"><button id="correctionCancel" type="button">Cancelar</button><button class="p" type="submit">Aplicar</button></div>
@@ -748,7 +822,7 @@ body[data-view="transcripcion"] #studioDockNotes button{flex-direction:column;ga
 <script>
 document.addEventListener('DOMContentLoaded',function(){
   /* Las tres pantallas comparten un solo DOM para mantener la grabación activa al cambiar de vista. */
-  const validDeltaViews = ['grabacion','transcripcion','ajustes'];
+  const validDeltaViews = ['grabacion','transcripcion','anonimizar','ajustes'];
   function chooseDeltaView(view, scrollToTop=true) {
     if (!validDeltaViews.includes(view)) view='grabacion';
     document.body.dataset.view=view;
@@ -783,13 +857,14 @@ document.addEventListener('DOMContentLoaded',function(){
   new MutationObserver(syncStart).observe(startButton,{attributes:true,attributeFilter:['disabled']});
   syncStart();
   startAction.addEventListener('click',()=>startButton.click());
-  const anonAction=document.getElementById('studioAnonAction'),anonButton=document.getElementById('anon');
-  const syncAnon=()=>{anonAction.disabled=anonButton.disabled;};
-  new MutationObserver(syncAnon).observe(anonButton,{attributes:true,attributeFilter:['disabled']});
-  syncAnon();
-  anonAction.addEventListener('click',()=>{
-    anonButton.click();
-    if(anonButton.disabled) document.getElementById('privacidad').scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
+  /* Atajos entre pantallas (por ejemplo, «Ver audios guardados»): cambian de pantalla y, si corresponde, bajan hasta ese bloque. */
+  document.querySelectorAll('[data-go-view]').forEach(link=>{
+    link.addEventListener('click',()=>{
+      const target=link.dataset.goTarget?document.getElementById(link.dataset.goTarget):null;
+      const view=chooseDeltaView(link.dataset.goView,!target);
+      if (window.location.hash!=='#'+view) history.replaceState(null,'','#'+view);
+      if (target) requestAnimationFrame(()=>target.scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'}));
+    });
   });
   const btn=document.getElementById('studioAnonSettings'),panel=document.getElementById('studioAnonConfig');
   if(btn&&panel){btn.addEventListener('click',function(){panel.open=!panel.open;btn.setAttribute('aria-expanded',String(panel.open));});}
@@ -922,8 +997,44 @@ function suggest(base, edited, known) {
     const a = ctxP.concat(h.rem.map(t => t.toLowerCase()), ctxN).join(' ');
     const b = ctxP.concat(h.add.map(t => t.toLowerCase()), ctxN).join(' ');
     if (a === b || seen.has(a)) continue;
-    seen.add(a); out.push({a, b});
+    seen.add(a); out.push({a, b, rem: h.rem.map(t => t.toLowerCase()), add: h.add.map(t => t.toLowerCase()), prev: h.prev});
     if (out.length >= 8) break;
+  }
+  return out;
+}
+
+/* Aprendizaje automático de correcciones.
+   Solo se aprende lo que parece un error de transcripción: palabras que suenan parecido o se escriben parecido
+   (contra transferencia → contratransferencia, tenes → tenés). Las reescrituras de contenido, las palabras
+   cortas que cambian de sentido (el → la) y todo lo que tenga mayúsculas o cifras no se aprenden solos
+   (así no se guardan nombres de personas). Devuelve [{a, b}] listos para el diccionario. */
+function learnable(rem, add) {
+  const x = phon(rem.join('')), y = phon(add.join(''));
+  if (!x || !y) return false;
+  if (x === y) return true;
+  const long = Math.max(x.length, y.length);
+  if (long < 5) return false;
+  return lev(x, y) <= Math.max(1, Math.floor(long * 0.34));
+}
+/* Recorta dos textos a la zona que cambió (más unas palabras de contexto), para poder comparar notas largas. */
+function changedWindow(a, b, pad) {
+  pad = pad || 80;
+  const m = Math.min(a.length, b.length);
+  let p = 0; while (p < m && a[p] === b[p]) p++;
+  let q = 0; while (q < m - p && a[a.length - 1 - q] === b[b.length - 1 - q]) q++;
+  let s = Math.max(0, p - pad); while (s > 0 && !/\s/.test(a[s - 1])) s--;
+  let e = a.length - q + Math.min(q, pad); while (e < a.length && !/\s/.test(a[e])) e++;
+  return {a: a.slice(s, e), b: b.slice(s, b.length - (a.length - e))};
+}
+function autoLearn(base, edited, known) {
+  const have = new Set(known || []), out = [], w = changedWindow(base, edited);
+  for (const s of suggest(w.a, w.b, known)) {
+    if (!learnable(s.rem, s.add)) continue;
+    // Una frase partida que se une en una palabra es un error típico de Whisper: la regla no necesita contexto.
+    const joined = s.rem.length > 1 && phon(s.rem.join('')) === phon(s.add.join(''));
+    const a = joined ? s.rem.join(' ') : s.a, b = joined ? s.add.join(' ') : s.b;
+    if (have.has(a) || have.has(s.rem.join(' '))) continue;
+    have.add(a); out.push({a, b});
   }
   return out;
 }
@@ -1096,6 +1207,8 @@ const nWords = s => (s.match(WORDS) || []).length;
 
 /* ---------- Notas ---------- */
 function fmt(ts){ return new Date(ts).toLocaleString('es-AR', {dateStyle:'short', timeStyle:'short'}); }
+function refreshAnonPreview(){ $('anonPreview').textContent = $('text').value; }
+new MutationObserver(() => { if (document.body.dataset.view === 'anonimizar') refreshAnonPreview(); }).observe(document.body, {attributes: true, attributeFilter: ['data-view']});
 function resetEdit(){ anonBackup = null; $('undo').disabled = true; $('anon').disabled = false; $('anonRes').textContent = ''; $('learn').innerHTML = ''; $('susBox').innerHTML = ''; }
 function renderList(){
   const l = $('list'); l.innerHTML = '';
@@ -1128,8 +1241,8 @@ $('save').onclick = () => {
   flash(requestedDownload
     ? 'Descarga .txt solicitada. Buscá la nota en Descargas de Brave.' + (savedLocally ? '' : ' No se pudo guardar copia en el navegador.')
     : 'No se pudo iniciar la descarga .txt.' + (savedLocally ? ' Quedó una copia en Brave.' : ' Copiá el texto antes de salir.'));
-  showSuggestions(suggest(baseline, $('text').value, D.rules.map(r => r.a.toLowerCase())));
-  baseline = $('text').value;
+  if ($('learnAuto').checked) learnFromEdits();
+  else { showSuggestions(suggest(baseline, $('text').value, D.rules.map(r => r.a.toLowerCase()))); baseline = $('text').value; }
 };
 $('newn').onclick = () => {
   if ($('text').value || $('title').value || tags.length) { doClear(false); flash('Nota nueva. Lo anterior se recupera con «Deshacer borrado».'); }
@@ -1157,6 +1270,7 @@ function stash(){
 function isUnsaved(){ const t = $('text').value; if (!t.trim()) return false; const n = notes.find(m => m.id === cur); return !n || n.text !== t; }
 function doClear(auto){
   if (!$('text').value && !$('title').value && !tags.length) return;
+  learnFromEdits();
   stash();
   cur = null; $('title').value = ''; $('text').value = ''; baseline = ''; tags = []; renderChips(); resetEdit(); resetLive();
   $('undoClear').style.display = '';
@@ -1202,6 +1316,7 @@ function anonymize(){
     $('anonRes').textContent = 'Esta transcripción ya fue anonimizada. Para repetir el proceso, primero tocá «Deshacer anonimizado».';
     return;
   }
+  learnFromEdits(); // lo que corregiste antes se aprende ANTES de ocultar nombres
   const hide = $('hideX').value.split(',').map(s => s.trim()).filter(Boolean);
   const keep = new Set(KEEP.concat($('keepX').value.split(',')).map(s => norm(s.trim())).filter(Boolean));
   const np0 = maxPersona($('title').value + ' ' + $('text').value), S = buildAnon(new Map(), {n: np0});
@@ -1252,7 +1367,7 @@ function anonymize(){
   $('learn').innerHTML = '';
   $('undo').disabled = false;
   $('anon').disabled = true;
-  updWC(); saveDraft();
+  updWC(); saveDraft(); refreshAnonPreview();
   $('anonRes').textContent = 'Se ocultaron ' + (S.np.n - np0) + ' nombre(s)' + (S.stat.t ? ', ' + S.stat.t + ' reemplazo(s) por código' : '') + ' y ' + nOther + ' dato(s) (correo, teléfono, fecha). Revisá el texto: pueden quedar nombres sin detectar.';
   showSuspects(Array.from(S.sus).concat(sentenceStarters($('text').value, S)));
 }
@@ -1270,11 +1385,11 @@ function loadPeople(){
 }
 function renderPeople(){
   const l = $('pList'); l.innerHTML = '';
-  if (!people.length) { l.innerHTML = '<div class="warn">Todavía no cargaste a nadie.</div>'; return; }
+  if (!people.length) { l.innerHTML = '<div class="warn">Todavía no cargaste a nadie. Sin lista, los nombres se ocultan como [Persona 1], [Persona 2]…</div>'; return; }
   people.forEach((p, i) => {
     const d = document.createElement('div'); d.className = 'n';
     const s = document.createElement('span'); s.textContent = p.names.join(', ');
-    const sm = document.createElement('small'); sm.textContent = '→ ' + (p.code ? (p.rel ? '[' + p.rel + ' de ' + p.code + ']' : p.code + ' (el paciente)') : '[Persona] (solo ocultar)');
+    const sm = document.createElement('small'); sm.textContent = 'Se escribe: ' + (p.code ? (p.rel ? '[' + p.rel + ' de ' + p.code + ']' : '[' + p.code + '] (el paciente)') : '[Persona 1], [Persona 2]… (solo ocultar)');
     const x = document.createElement('button'); x.textContent = 'Quitar'; x.className = 'ghost danger';
     x.onclick = () => { people.splice(i, 1); savePeople(); renderPeople(); };
     d.append(s, sm, x); l.append(d);
@@ -1366,11 +1481,18 @@ $('pGenerate').onclick = () => {
       }
       if (!code) throw new Error('No quedan códigos correlativos disponibles.');
     }
-    $('pCode').value = code;
+    $('pCode').value = code; updatePersonPreview();
     proposedCode = {code, mode:c.mode, prefix:c.prefix, next:c.next, digits:c.digits};
     $('pMsg').textContent = 'Código propuesto: ' + code + '. Cargá el nombre y tocá «Agregar asociación» para confirmarlo.';
   } catch (e) { $('pMsg').textContent = e.message || String(e); }
 };
+function updatePersonPreview(){
+  const box = $('pFormPreview'), name = $('pName').value.split(',')[0].trim(), rel = $('pRel').value.trim(), code = $('pCode').value.trim();
+  if (!name && !code && !rel) { box.textContent = ''; return; }
+  const shown = code ? (rel ? '[' + rel + ' de ' + code + ']' : '[' + code + ']') : '[Persona 1]';
+  box.textContent = (name ? '«' + name + '»' : 'Esta persona') + ' se va a escribir así: ' + shown + (!code && rel ? ' · Falta el código para usar la relación.' : '');
+}
+['pName', 'pRel', 'pCode'].forEach(id => $(id).addEventListener('input', updatePersonPreview));
 $('pCode').addEventListener('input', () => { proposedCode = null; });
 $('pAdd').onclick = () => {
   const msg = t => $('pMsg').textContent = t;
@@ -1393,10 +1515,10 @@ $('pAdd').onclick = () => {
     saveGenerator();
   }
   proposedCode = null;
-  $('pName').value = ''; $('pRel').value = ''; $('pCode').value = '';
+  $('pName').value = ''; $('pRel').value = ''; $('pCode').value = ''; updatePersonPreview();
   msg('Asociación guardada. Se aplicará cuando toques «Anonimizar transcripción».');
 };
-$('pApply').onclick = () => $('pMsg').textContent = applyPeopleToText() ? 'Tabla aplicada al texto.' : 'No había nada para cambiar en el texto.';
+$('pApply').onclick = () => { $('pMsg').textContent = applyPeopleToText() ? 'Listo: se reemplazaron en el texto los nombres de la lista.' : 'No había nada para cambiar en el texto.'; refreshAnonPreview(); };
 $('pClear').onclick = () => { if (!people.length || !confirm('¿Borrar toda la tabla de personas?')) return; people = []; savePeople(); renderPeople(); $('pMsg').textContent = 'Tabla borrada.'; };
 $('pVolatile').addEventListener('change', () => {
   if ($('pVolatile').checked) { try { localStorage.removeItem(PKEY); } catch (e) {} $('pMsg').textContent = 'La tabla ya no se guarda: se pierde al cerrar la página.'; }
@@ -1446,7 +1568,7 @@ $('undo').onclick = () => {
   $('anon').disabled = false;
   $('susBox').innerHTML = '';
   $('anonRes').textContent = 'Se recuperó la versión original. Podés volver a anonimizarla si querés.';
-  updWC(); saveDraft();
+  updWC(); saveDraft(); refreshAnonPreview();
 };
 
 /* ---------- Exportar ---------- */
@@ -1519,9 +1641,44 @@ function updDict(save){
   if (save) { try { localStorage.setItem(DKEY, $('dict').value); } catch (e) {} }
 }
 $('dict').addEventListener('input', () => updDict(true));
+const LEARN_HEADER = '# Aprendido de tus correcciones';
 function addRule(a, b){
-  const d = $('dict'); d.value = d.value.replace(/\s*$/, '') + '\n' + a + ' => ' + b + '\n'; updDict(true);
+  const d = $('dict'); let v = d.value.replace(/\s*$/, '');
+  if (!v.includes(LEARN_HEADER)) v += '\n\n' + LEARN_HEADER;
+  d.value = v + '\n' + a + ' => ' + b + '\n'; updDict(true);
 }
+function forgetRule(a, b){
+  const line = a + ' => ' + b, d = $('dict');
+  d.value = d.value.split('\n').filter(l => l.trim() !== line).join('\n'); updDict(true);
+}
+/* Aprende sola de lo que el usuario corrige en el texto (ver autoLearn). Se puede apagar en Ajustes. */
+function learnFromEdits(){
+  if (!$('learnAuto').checked) return;
+  const t = $('text').value;
+  if (t === baseline) return;
+  let found = [];
+  try { found = autoLearn(baseline, t, D.rules.map(r => r.a.toLowerCase())); } catch (e) {}
+  baseline = t; // lo ya evaluado no se vuelve a analizar
+  if (!found.length) return;
+  found.forEach(f => addRule(f.a, f.b));
+  let saved = false; try { saved = localStorage.getItem(DKEY) === $('dict').value; } catch (e) {}
+  showLearned(found, saved);
+}
+function showLearned(list, saved){
+  const box = $('learn');
+  list.forEach(f => {
+    const d = document.createElement('div'); d.className = 'learned';
+    const t = document.createElement('span'); t.textContent = 'Aprendí tu corrección: «' + f.a + '» → «' + f.b + '». La próxima vez lo escribo así.' + (saved ? '' : ' (No se pudo guardar en este navegador: vale solo hasta cerrar la página.)');
+    const u = document.createElement('button'); u.type = 'button'; u.textContent = 'Deshacer';
+    u.onclick = () => { forgetRule(f.a, f.b); d.remove(); flash('Listo: ya no recuerdo esa corrección.'); };
+    d.append(t, u); box.append(d);
+  });
+  while (box.querySelectorAll('.learned').length > 4) box.querySelector('.learned').remove();
+  flash(list.length === 1 ? 'Aprendí tu corrección: «' + list[0].a + '» → «' + list[0].b + '». Podés deshacerla debajo del texto.' : 'Aprendí ' + list.length + ' correcciones de lo que editaste. Podés deshacerlas debajo del texto.');
+}
+$('text').addEventListener('change', learnFromEdits);
+$('text').addEventListener('blur', learnFromEdits);
+document.addEventListener('visibilitychange', () => { if (document.hidden) learnFromEdits(); });
 $('applyDict').onclick = () => {
   const t = $('text').value, n = applyDict(t, D);
   if (n === t) return flash('El diccionario no encontró nada para cambiar.');
@@ -2458,7 +2615,7 @@ function startAudioSave(stream){
       await audioPutMeta(meta);
     }).then(refreshAudioBox).catch(audioErr);
   };
-  try { mr.start(10000); $('audioBox').style.display = 'none'; logDiag('Audio: se guarda en este dispositivo (' + audioMime + ')'); }
+  try { mr.start(10000); $('audioReady').hidden = true; $('audioShortcut').hidden = true; $('audioEmpty').hidden = false; $('audioEmpty').textContent = 'Grabando… el audio nuevo aparecerá acá cuando termines.'; logDiag('Audio: se guarda en este dispositivo (' + audioMime + ')'); }
   catch (e) { mr = null; flash('Este navegador no puede guardar el audio.'); logDiag('Audio: ' + (e.message || e)); }
 }
 async function refreshAudioBox(){
@@ -2468,11 +2625,18 @@ async function refreshAudioBox(){
   $('recordAudioHint').textContent = m
     ? 'Audio guardado en Brave (' + fmtClock(m.ms) + '). Tocá «Guardar audio» para descargarlo.'
     : ($('saveAudio').checked ? 'Se conservará el audio de la próxima grabación.' : 'Activá «Conservar también el audio» antes de grabar.');
-  if (!m) { box.style.display = 'none'; return; }
+  $('audioReady').hidden = !m; $('audioEmpty').hidden = !!m;
+  $('audioShortcut').hidden = !m;
+  if (m) $('audioShortcut').textContent = 'Audio guardado · ' + fmtClock(m.ms) + ' · Ver, descargar o recuperar';
+  if (!m) {
+    $('audioEmpty').textContent = $('saveAudio').checked
+      ? 'Todavía no hay audio guardado. El audio de la próxima grabación quedará acá.'
+      : 'Todavía no hay audio guardado. Activá «Conservar también el audio» antes de grabar y quedará acá para descargarlo o recuperarlo.';
+    return;
+  }
   $('audioInfo').textContent = (m.complete ? '' : 'Quedó una grabación que no llegó a cerrarse (se cortó); se guardó lo grabado hasta ahí. ') + fmtClock(m.ms) + ' · ' + mb(m.bytes) + ' · ' + fmt(m.ts) + (m.downloaded ? ' · descarga solicitada' : '') + (previous ? ' · Podés recuperar el audio anterior.' : '');
   $('aDownSub').textContent = 'recomendado · .' + audioExt(m.mime);
   $('audioUndoRow').hidden = !previous;
-  box.style.display = '';
 }
 const audioBtns = on => ['aDown', 'aMp3', 'aTx', 'aDel', 'aUndoAudio'].forEach(id => $(id).disabled = on);
 const audioBusy = () => recording || busy || outstanding > 0 || feeding;
@@ -2710,6 +2874,7 @@ function loadCfg(){
     $('liveAnon').checked = false; // Solo anonimización posterior
     applyTextSize(c.textSize);
     if (typeof c.pVolatile === 'boolean') $('pVolatile').checked = c.pVolatile;
+    if (typeof c.learnAuto === 'boolean') $('learnAuto').checked = c.learnAuto;
     if (c.model && hasOpt($('model'), c.model)) $('model').value = c.model;
     else if (!c.model && matchMedia('(pointer:coarse)').matches) $('model').value = 'Xenova/whisper-base'; // en celulares, la opción rápida por defecto
     if (c.accel && hasOpt($('accel'), c.accel)) $('accel').value = c.accel;
@@ -2719,9 +2884,9 @@ function loadCfg(){
     if (typeof c.saveAudio === 'boolean') $('saveAudio').checked = c.saveAudio;
   } catch (e) {}
 }
-const saveCfg = () => { try { localStorage.setItem(CKEY, JSON.stringify({textSize:$('textSize').value, model:$('model').value, accel:$('accel').value, mic:$('mic').value, eng:eng(), replace:$('replace').checked, saveAudio:$('saveAudio').checked, pVolatile:$('pVolatile').checked})); return true; } catch (e) { return false; } };
+const saveCfg = () => { try { localStorage.setItem(CKEY, JSON.stringify({textSize:$('textSize').value, model:$('model').value, accel:$('accel').value, mic:$('mic').value, eng:eng(), replace:$('replace').checked, saveAudio:$('saveAudio').checked, pVolatile:$('pVolatile').checked, learnAuto:$('learnAuto').checked})); return true; } catch (e) { return false; } };
 $('textSize').addEventListener('change', () => { applyTextSize($('textSize').value); if (!saveCfg()) flash('El tamaño se aplicó, pero este navegador no permitió guardar el ajuste.'); });
-['model', 'accel', 'mic', 'replace', 'saveAudio', 'pVolatile'].forEach(id => $(id).addEventListener('change', saveCfg));
+['model', 'accel', 'mic', 'replace', 'saveAudio', 'pVolatile', 'learnAuto'].forEach(id => $(id).addEventListener('change', saveCfg));
 document.querySelectorAll('input[name=eng]').forEach(r => r.addEventListener('change', () => { setStatus(''); saveCfg(); }));
 
 /* ---------- Borrador autoguardado: sobrevive a recargas y cierres ---------- */
@@ -2886,7 +3051,8 @@ function correctionCanRemember(text,start,end){
     saveDraft();
     const saved=remember.checked;
     dialog.close();
-    flash(saved?'Palabra corregida. Reemplazo guardado en Ajustes → Corregir palabras frecuentes.':'Corrección aplicada solo a esta aparición.');
+    if(saved) flash('Palabra corregida. Reemplazo guardado en Ajustes → Corregir palabras frecuentes.');
+    else { flash('Corrección aplicada.'); learnFromEdits(); }
   });
 })();
 

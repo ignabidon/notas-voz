@@ -18,11 +18,11 @@
 
 ## Funcionalidades que deben preservarse
 1. Inicio, pausa, reanudación y detención de voz; marcas y cronómetro.
-2. Tres pantallas visibles de a una: **Grabar / Texto / Ajustes**. Cambiar de pantalla no debe detener la captura. Barra fija de **Detener** y **Pausar/Reanudar** mientras se graba; al terminar, Grabar en la pantalla Grabar y Anonimizar/Guardar en Texto.
+2. Cuatro pantallas visibles de a una: **Grabar / Texto / Anonimizar / Ajustes** (desde 16/11/2026; Anonimizar es pantalla propia y su botón ya no se repite en la barra de acciones). Cambiar de pantalla no debe detener la captura. Barra fija de **Detener** y **Pausar/Reanudar** mientras se graba; al terminar, Grabar en las pantallas Grabar y Texto y Guardar en Texto.
 3. Whisper local, progreso, estado y diagnósticos de errores. Primera carga de modelos puede requerir internet.
-4. Corrección contextual sobre selección en Android, con opción de guardar regla en diccionario (nunca automáticamente sin consentimiento).
+4. Corrección contextual sobre selección en Android. **Aprendizaje automático de correcciones (pedido del usuario, 16/11/2026):** al editar el texto se guardan solas en el diccionario las correcciones que parecen errores de transcripción (`autoLearn`), con aviso y «Deshacer»; el consentimiento es el ajuste «Aprender de mis correcciones» (activado por defecto, `learnAuto` en CKEY). Nunca aprender nombres con mayúscula, cifras ni cambios provocados por la anonimización; no ampliar los filtros sin pedido del usuario. La regla de «Reemplazar siempre» del diálogo sigue siendo opcional.
 5. Edición, borrador, notas, audio local, guardar, copiar y exportar.
-6. Anonimización posterior, revisar antes de compartir, deshacer, códigos/alias de personas.
+6. Anonimización posterior (pantalla Anonimizar con explicación visible), revisar antes de compartir, deshacer, códigos/alias de personas. El audio guardado debe seguir siempre visible en Grabar (`#audioBox`) con accesos desde Texto y Ajustes.
 7. Advertencias al guardar mientras se graba o transcribe.
 
 ## Almacenamiento: preservarlo
