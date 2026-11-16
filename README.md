@@ -1,5 +1,7 @@
 # DictaNota — Prueba Delta
 
+> Antes de editar: leer [SEGURIDAD.md](SEGURIDAD.md) y [AGENTS.md](AGENTS.md).
+
 ## Rediseño claro en revisión (16/11/2026)
 
 Esta rama incorpora la estética Clínica contemporánea y disposición de chat. Inicio: grabar, «Ver hojas guardadas» o «Escribir una nota». Una nota es un texto escrito o transcripto; una hoja reúne notas y se puede renombrar. Dentro de una hoja, Grabar/Guardar agrega una nota allí. «Nueva nota» inicia una hoja independiente al guardar y protege cualquier borrador pendiente.
