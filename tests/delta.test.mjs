@@ -1359,3 +1359,17 @@ test('cifrado: la app lee y escribe lo protegido solo a través del almacén cif
   assert.ok(html.indexOf('const vault = createVault(localStorage)') < html.indexOf('function loadNotes()'), 'el almacén cifrado se crea antes que la app');
   for (const id of ['vaultLock', 'vaultLockForm', 'vaultBioUnlock', 'vaultRecoverForm', 'vaultEnable', 'vaultSetup', 'vaultRecoveryBox', 'vaultOn', 'topLock']) assert.ok(ids.includes(id), 'falta #' + id);
 });
+
+test('cifrado: un código de recuperación nuevo reemplaza al anterior (pide la contraseña)', async () => {
+  const st = memStorage(datosFicticios()), v1 = vaultCore.createVault(st);
+  const {recovery: viejo} = await v1.enable('frase de prueba larga');
+  await assert.rejects(v1.newRecovery('mal'));
+  const nuevo = await v1.newRecovery('frase de prueba larga');
+  assert.notEqual(nuevo, viejo);
+  await assert.rejects(vaultCore.createVault(st).unlockRecovery(viejo, 'otra frase segura'));
+  const v = vaultCore.createVault(st);
+  await v.unlockRecovery(nuevo, 'otra frase segura');
+  assert.match(v.store.getItem('notasvoz.gamma.v1'), new RegExp(MARCA));
+  assert.ok(html.includes('id="vaultRecoveryCopy"') && html.includes('id="vaultNewCode"'));
+  assert.doesNotMatch(html, /\.vault-code\{[^}]*user-select:all/, 'el código tiene que poder seleccionarse en Android');
+});

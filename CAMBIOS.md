@@ -1,3 +1,10 @@
+## 16/11/2026 · Código de recuperación: copiar y generar uno nuevo
+
+Lo informó el usuario después de activar la protección en el Motorola: no podía copiar el código de recuperación. La huella sí le funcionó (primera validación real: activar, salir, volver a entrar y desbloquear con la huella en Brave/Android).
+- Botón «Copiar código». Si el portapapeles falla, deja el código seleccionado. El estilo `user-select:all`, que complicaba la selección en Android, pasa a `user-select:text`.
+- Nuevo «Nuevo código de recuperación» en Ajustes (pide la contraseña). Reemplaza el código anterior, que deja de servir. Se verifica antes de guardar.
+- Pruebas: 110/110 Node (una nueva) y `tests/cifrado-browser.mjs` amplía el recorrido con el código nuevo y el botón Copiar. Motorola: falta probar Copiar y el código nuevo.
+
 ## 16/11/2026 · Protección cifrada con contraseña y huella
 
 Base: main `702cedd`; rama `seguridad-02-cifrado-2026-11-16`. Pedido del usuario: cifrar toda la app, desbloquear con huella y contraseña, autobloqueo a los 15 minutos y audios en una segunda etapa. Pensado para que sirva también a una futura app de Android.
