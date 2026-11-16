@@ -343,7 +343,7 @@ test('Delta 06a: la eliminación requiere confirmación y deja fuera el audio', 
   assert.ok(m, 'falta control para borrar textos');
   assert.match(m[1], /if \(!confirm\(/);
   assert.match(m[1], /if \(recording \|\| busy \|\| outstanding > 0 \|\| feeding\)/);
-  assert.match(m[1], /removeLocalTextKeys\(localStorage, TEXT_STORAGE_KEYS\)/);
+  assert.match(m[1], /removeLocalTextKeys\(vaultStore, TEXT_STORAGE_KEYS\)/);
   assert.match(m[1], /lastDraft = snap\(\)/);
   assert.doesNotMatch(m[1], /audioClear\(|indexedDB|localStorage\.clear\(/);
   assert.match(html, /id="localPrivacy"/);
@@ -440,7 +440,7 @@ test('Delta 08: ajustes agrupados y privacidad, audio y diccionario intactos', (
   assert.match(html, /Micrófono y rendimiento/);
   assert.match(html, /Otras opciones/);
   assert.match(html, /No elimina los archivos de Descargas/);
-  assert.match(html, /removeLocalTextKeys\(localStorage, TEXT_STORAGE_KEYS\)/);
+  assert.match(html, /removeLocalTextKeys\(vaultStore, TEXT_STORAGE_KEYS\)/);
   assert.match(html, /'localPrivacy'\)\.open=true/);
 });
 
@@ -1109,7 +1109,9 @@ test('Aprendizaje: se activa solo al editar, se puede apagar y se puede deshacer
   assert.match(html, /u\.textContent = 'Deshacer'/);
   assert.match(html, /'# Aprendido de tus correcciones'/);
   // se reutiliza la clave de diccionario existente: no hay datos nuevos en el navegador
-  assert.equal((html.match(/notasvoz\.gamma\.dict\.v1/g) || []).length, 1);
+  // (la lista de claves protegidas de la protección cifrada la nombra a propósito y se excluye)
+  const sinBoveda = html.replace(/\/\*VAULT-CORE-START\*\/[\s\S]*?\/\*VAULT-CORE-END\*\//, '');
+  assert.equal((sinBoveda.match(/notasvoz\.gamma\.dict\.v1/g) || []).length, 1);
 });
 
 test('Aprendizaje: el aviso usa textContent y la corrección del diálogo también aprende', () => {
@@ -1202,4 +1204,158 @@ test('ayudas accesibles: controles únicos, destino debajo y advertencias fuera'
   assert.match(html, /prefers-reduced-motion:reduce\)\{#studioDockCapture .capture-dot\{animation:none!important/);
   assert.match(html, /id="loadAudioHint">[\s\S]*?200 MB y 15 minutos/);
   assert.match(html,/La anonimización es automática y puede fallar: revisá siempre/);
+});
+
+/* ---- Protección cifrada (seguridad-02, 16/11/2026). Datos ficticios. ---- */
+const vaultCore = (() => {
+  const m = html.match(/\/\*VAULT-CORE-START\*\/([\s\S]*?)\/\*VAULT-CORE-END\*\//);
+  return new Function(m[1] + ';return {createVault, vaultParseHeader, vaultNewRecoveryCode, vaultNormalizeRecovery, VAULT_HEADER, VAULT_REC_PREFIX, VAULT_KEYS};')();
+})();
+const MARCA = 'PACIENTE-FICTICIO-7Q';
+const memStorage = (init = {}) => {
+  const m = new Map(Object.entries(init));
+  return {getItem: k => m.has(k) ? m.get(k) : null, setItem: (k, v) => { m.set(k, String(v)); }, removeItem: k => { m.delete(k); }, map: m};
+};
+const datosFicticios = () => ({
+  'notasvoz.gamma.v1': JSON.stringify([{id: 'a1', title: 'Sesión ' + MARCA, text: 'Texto de ' + MARCA, ts: 1, tags: ['prueba']}]),
+  'notasvoz.gamma.draft.v1': JSON.stringify({title: '', text: 'Borrador ' + MARCA, tags: [], cur: null, baseline: ''}),
+  'notasvoz.gamma.people.v1': JSON.stringify([{names: [MARCA], code: 'P-001', rel: ''}]),
+  'notasvoz.gamma.dict.v1': 'pasiente => paciente\n' + MARCA.toLowerCase() + ' => x',
+  'notasvoz.gamma.cfg.v1': '{"textSize":"normal"}'
+});
+const sinMarca = st => [...st.map.values()].every(v => !v.includes(MARCA) && !v.includes(MARCA.toLowerCase()));
+const tick = () => new Promise(r => setTimeout(r, 5));
+
+test('cifrado: sin protección el almacén pasa directo a localStorage', () => {
+  const st = memStorage(datosFicticios()), v = vaultCore.createVault(st);
+  assert.equal(v.state, 'off');
+  assert.equal(v.store.getItem('notasvoz.gamma.v1'), st.getItem('notasvoz.gamma.v1'));
+  v.store.setItem('notasvoz.gamma.draft.v1', 'x'); assert.equal(st.getItem('notasvoz.gamma.draft.v1'), 'x');
+});
+
+test('cifrado: activar cifra todo lo protegido, borra las copias en claro y deja la configuración', async () => {
+  const st = memStorage(datosFicticios()), v = vaultCore.createVault(st);
+  const {recovery, dek} = await v.enable('frase de prueba larga');
+  assert.match(recovery, /^[0-9A-HJKMNP-TV-Z]{4}(-[0-9A-HJKMNP-TV-Z]{4}){5}$/);
+  assert.equal(dek.length, 32);
+  assert.equal(v.state, 'open');
+  assert.ok(sinMarca(st), 'quedó texto ficticio sin cifrar en el almacenamiento');
+  for (const k of ['notasvoz.gamma.v1', 'notasvoz.gamma.draft.v1', 'notasvoz.gamma.people.v1', 'notasvoz.gamma.dict.v1']) {
+    assert.equal(st.getItem(k), null, 'quedó en claro: ' + k);
+    assert.ok(v.store.getItem(k).length > 0);
+  }
+  assert.equal(st.getItem('notasvoz.gamma.cfg.v1'), '{"textSize":"normal"}', 'la configuración no es sensible y no se toca');
+  assert.ok(st.getItem(vaultCore.VAULT_HEADER));
+  // Escrituras nuevas: se guardan cifradas, nunca en claro.
+  v.store.setItem('notasvoz.gamma.undo.v1', JSON.stringify({text: 'Deshacer ' + MARCA}));
+  await tick(); await v.flush();
+  assert.ok(sinMarca(st));
+  assert.ok(st.getItem(vaultCore.VAULT_REC_PREFIX + 'deshacer'));
+});
+
+test('cifrado: bloqueada no lee ni escribe; contraseña incorrecta rechazada; la correcta abre', async () => {
+  const st = memStorage(datosFicticios()), v1 = vaultCore.createVault(st);
+  await v1.enable('frase de prueba larga');
+  const antes = new Map(st.map);
+  const v = vaultCore.createVault(st);   // como al recargar la página
+  assert.equal(v.state, 'locked');
+  assert.equal(v.store.getItem('notasvoz.gamma.v1'), null);
+  v.store.setItem('notasvoz.gamma.v1', '[]'); v.store.removeItem('notasvoz.gamma.dict.v1'); await tick();
+  assert.deepEqual(st.map, antes, 'bloqueada no debe modificar nada');
+  await assert.rejects(v.unlockPassword('otra contraseña'), e => e.name === 'OperationError');
+  assert.equal(v.state, 'locked');
+  await v.unlockPassword('frase de prueba larga');
+  assert.equal(v.state, 'open');
+  assert.match(v.store.getItem('notasvoz.gamma.v1'), new RegExp(MARCA));
+  assert.deepEqual(v.damaged, []); assert.deepEqual(v.leftovers, []);
+});
+
+test('cifrado: el código de recuperación abre y reemplaza la contraseña', async () => {
+  const st = memStorage(datosFicticios()), v1 = vaultCore.createVault(st);
+  const {recovery} = await v1.enable('frase de prueba larga');
+  const v = vaultCore.createVault(st);
+  await assert.rejects(v.unlockRecovery('0000-0000-0000-0000-0000-0000', 'nueva frase segura'));
+  await v.unlockRecovery(recovery.toLowerCase().replace(/-/g, ' '), 'nueva frase segura');
+  assert.equal(v.state, 'open');
+  const v2 = vaultCore.createVault(st);
+  await assert.rejects(v2.unlockPassword('frase de prueba larga'));
+  await v2.unlockPassword('nueva frase segura');
+  assert.match(v2.store.getItem('notasvoz.gamma.draft.v1'), new RegExp(MARCA));
+  assert.equal(vaultCore.vaultNormalizeRecovery('abio-l0o1'), 'AB10100' + '1');
+});
+
+test('cifrado: huella (salida PRF simulada) envuelve la misma clave; otra salida no abre', async () => {
+  const st = memStorage(datosFicticios()), v1 = vaultCore.createVault(st);
+  const {dek} = await v1.enable('frase de prueba larga');
+  const prf = crypto.getRandomValues(new Uint8Array(32));
+  await v1.addBio(dek, new Uint8Array([1, 2, 3]), new Uint8Array(32), prf);
+  assert.ok(v1.header.bio);
+  const v = vaultCore.createVault(st);
+  await assert.rejects(v.unlockBio(crypto.getRandomValues(new Uint8Array(32))));
+  await v.unlockBio(prf);
+  assert.match(v.store.getItem('notasvoz.gamma.people.v1'), new RegExp(MARCA));
+  v.removeBio(); assert.equal(vaultCore.createVault(st).header.bio, null);
+});
+
+test('cifrado: un registro alterado o intercambiado no se usa ni se borra', async () => {
+  const st = memStorage(datosFicticios()), v1 = vaultCore.createVault(st);
+  await v1.enable('frase de prueba larga');
+  const P = vaultCore.VAULT_REC_PREFIX;
+  const notas = JSON.parse(st.getItem(P + 'notas'));
+  notas.box.ct = notas.box.ct.slice(0, -4) + (notas.box.ct.endsWith('AAA=') ? 'BBB=' : 'AAA=');
+  st.setItem(P + 'notas', JSON.stringify(notas));
+  // intercambio: el registro de personas puesto en lugar del diccionario (con su nombre cambiado)
+  const pers = JSON.parse(st.getItem(P + 'personas')); pers.n = 'diccionario'; st.setItem(P + 'diccionario', JSON.stringify(pers));
+  const v = vaultCore.createVault(st);
+  await v.unlockPassword('frase de prueba larga');
+  assert.deepEqual(v.damaged.sort(), ['diccionario', 'notas']);
+  assert.equal(v.store.getItem('notasvoz.gamma.v1'), null);
+  assert.equal([...st.map.keys()].filter(k => k.includes('.danado.')).length, 2, 'los registros dañados se apartan intactos');
+  assert.match(v.store.getItem('notasvoz.gamma.people.v1'), new RegExp(MARCA));
+});
+
+test('cifrado: copias en claro que quedaron se cifran si faltan y se conservan si son distintas', async () => {
+  const st = memStorage(datosFicticios()), v1 = vaultCore.createVault(st);
+  await v1.enable('frase de prueba larga');
+  st.setItem('notasvoz.gamma.undo.v1', '{"text":"' + MARCA + '"}');       // faltaba cifrada
+  st.setItem('notasvoz.gamma.draft.v1', '{"text":"otra versión"}');        // distinta de la cifrada
+  const v = vaultCore.createVault(st);
+  await v.unlockPassword('frase de prueba larga');
+  assert.equal(st.getItem('notasvoz.gamma.undo.v1'), null);
+  assert.match(v.store.getItem('notasvoz.gamma.undo.v1'), new RegExp(MARCA));
+  assert.deepEqual(v.leftovers, ['borrador']);
+  assert.equal(st.getItem('notasvoz.gamma.draft.v1'), '{"text":"otra versión"}', 'no se borra lo que no coincide');
+});
+
+test('cifrado: quitar la protección exige la contraseña y deja los datos como antes', async () => {
+  const datos = datosFicticios(), st = memStorage(datos), v = vaultCore.createVault(st);
+  await v.enable('frase de prueba larga');
+  await assert.rejects(v.disable('mal'));
+  assert.equal(v.state, 'open');
+  await v.disable('frase de prueba larga');
+  assert.equal(v.state, 'off');
+  for (const [k, val] of Object.entries(datos)) assert.equal(st.getItem(k), val);
+  assert.ok([...st.map.keys()].every(k => !k.startsWith(vaultCore.VAULT_HEADER)));
+});
+
+test('cifrado: cabecera dañada o con parámetros abusivos deja todo bloqueado, sin caer a texto en claro', () => {
+  const st = memStorage({...datosFicticios()});
+  st.setItem(vaultCore.VAULT_HEADER, JSON.stringify({v: 1, id: 'AAAAAAAAAAAAAAAAAAAAAA==', pw: {kdf: 'PBKDF2-SHA256', it: 999999999, salt: 'AA==', box: {iv: 'AA==', ct: 'AA=='}}, rec: {kdf: 'HKDF-SHA256', salt: 'AA==', box: {iv: 'AA==', ct: 'AA=='}}, bio: null}));
+  const v = vaultCore.createVault(st);
+  assert.equal(v.state, 'broken');
+  assert.equal(v.store.getItem('notasvoz.gamma.v1'), null);
+  v.store.setItem('notasvoz.gamma.v1', '[]');
+  assert.notEqual(st.getItem('notasvoz.gamma.v1'), '[]');
+  assert.throws(() => vaultCore.vaultParseHeader('{"v":2}'));
+});
+
+test('cifrado: la app lee y escribe lo protegido solo a través del almacén cifrado', () => {
+  const main = html.replace(/\/\*VAULT-CORE-START\*\/[\s\S]*?\/\*VAULT-CORE-END\*\//, '');
+  assert.doesNotMatch(main, /localStorage\.(getItem|setItem|removeItem)\(\s*(KEY|DRAFT|UNDO|PKEY|DKEY)\b/);
+  assert.match(html, /vaultWhenReady\(\(\) => \{ loadNotes\(\); loadDict\(\); loadPeople\(\);[^\n]*restoreDraft\(\);/);
+  assert.match(html, /vaultSetHooks\(\(\) => recording \|\| busy \|\| outstanding > 0 \|\| feeding, saveDraft\);/);
+  assert.match(html, /const VAULT_IDLE_MS = 15 \* 60 \* 1000;/);
+  assert.match(html, /const VAULT_PBKDF2_IT = 600000;/);
+  assert.ok(html.indexOf('const vault = createVault(localStorage)') < html.indexOf('function loadNotes()'), 'el almacén cifrado se crea antes que la app');
+  for (const id of ['vaultLock', 'vaultLockForm', 'vaultBioUnlock', 'vaultRecoverForm', 'vaultEnable', 'vaultSetup', 'vaultRecoveryBox', 'vaultOn', 'topLock']) assert.ok(ids.includes(id), 'falta #' + id);
 });

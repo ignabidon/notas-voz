@@ -24,3 +24,6 @@ jobs:
       - name: Verificar interfaz en Chrome (estados simulados)
         run: node tests/browser.mjs
         timeout-minutes: 3
+      - name: Verificar protección cifrada en Chrome (huella simulada)
+        run: node tests/cifrado-browser.mjs
+        timeout-minutes: 4

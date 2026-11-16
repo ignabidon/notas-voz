@@ -504,6 +504,27 @@ textarea#text{padding-bottom:28px}
 body.keyboard-open textarea#text{min-height:120px;height:max(120px,calc(var(--visual-height) - var(--dock-height,180px) - 70px))}
 .title-with-help{display:flex;align-items:center;gap:12px}.anon-explain:has(>#anonHelp[hidden]){display:none}.info-toggle svg{display:block;margin:auto}
 @media(max-width:380px){.audio-retention{gap:0 4px}.record-head{gap:4px}}
+
+/* Protección cifrada (seguridad-02) */
+input[type=password]{width:100%;min-width:0;background:#0b1426;color:var(--ink);border:1px solid #30415f;border-radius:12px;padding:12px;font-size:16px}
+.top-lock{display:flex;align-items:center;gap:6px;font-size:12px;min-height:40px;padding:8px 12px}
+.top-lock svg{width:16px;height:16px}
+.vault-lock{position:fixed;inset:0;z-index:50;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px max(16px,env(safe-area-inset-right)) 24px max(16px,env(safe-area-inset-left));overflow:auto}
+.vault-lock-card{width:min(420px,100%);background:var(--card);border:1px solid var(--line);border-radius:24px;padding:24px;text-align:center}
+.vault-lock-card h2{font-size:22px;margin:12px 0 6px}
+.vault-lock-card .logo{margin:0 auto}
+.vault-lock-card form{text-align:left;margin-top:16px}
+.vault-lock-card button{width:100%;margin-top:12px;min-height:48px}
+.vault-lock-card input{margin-top:4px}
+#vaultLockMsg{min-height:1.5em;margin-top:12px;color:#ffc9a8;font-size:13px}
+.vault-panel{border-top:1px solid #2c4853;padding:6px 0 14px;margin-bottom:6px}
+.vault-panel h4{font-size:15px;margin:6px 0 4px}
+.vault-panel form,.vault-panel .vault-box{margin-top:12px}
+.vault-panel .row button{min-height:48px}
+.vault-code{font:600 20px/1.5 ui-monospace,monospace;letter-spacing:1px;background:#0b1426;border:1px dashed #6386b5;border-radius:12px;padding:12px;text-align:center;overflow-wrap:anywhere;user-select:all}
+#vaultMsg:empty,#vaultWarn:empty,#vaultSaveError:empty{display:none}
+#vaultMsg{color:var(--acc);font-size:13px}
+#vaultWarn,#vaultSaveError{color:#ffc9a8;font-size:13px}
 </style>
 </head>
 <body data-view="grabacion">
@@ -518,6 +539,7 @@ body.keyboard-open textarea#text{min-height:120px;height:max(120px,calc(var(--vi
     </div>
   </div>
   <span class="pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Procesamiento local</span>
+  <button type="button" id="topLock" class="ghost top-lock" hidden aria-label="Bloquear DictaNota"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Bloquear</button>
 </header>
 
 <main class="layout">
@@ -636,9 +658,42 @@ body.keyboard-open textarea#text{min-height:120px;height:max(120px,calc(var(--vi
       <div class="hint">Para comparar, grabá el mismo párrafo con cada opción.</div></div></details>
       </section>
       <section class="settings-module" id="settingsPrivacy"><div class="settings-module-top"><span class="module-icon">◇</span><h3>Privacidad y almacenamiento</h3></div>
+        <section class="vault-panel" id="vaultPanel" aria-labelledby="vaultTitle">
+          <h4 id="vaultTitle">Protección con contraseña y huella</h4>
+          <p class="hint" id="vaultStatus" role="status"></p>
+          <div id="vaultOff" hidden>
+            <p class="hint">Cifra en este celular las notas, el borrador, la copia para deshacer, la tabla de personas y el diccionario. Para abrir DictaNota vas a usar tu huella o una contraseña. Si olvidás la contraseña y perdés el código de recuperación, <b>nadie puede recuperar las notas</b>.</p>
+            <button type="button" id="vaultEnable" class="p">Activar protección</button>
+            <form id="vaultSetup" hidden>
+              <label for="vaultNew">Contraseña nueva (al menos 8 caracteres; mejor una frase)</label>
+              <input type="password" id="vaultNew" autocomplete="new-password" required>
+              <label for="vaultNew2">Repetila</label>
+              <input type="password" id="vaultNew2" autocomplete="new-password" required>
+              <div class="row"><button type="submit" id="vaultSetupGo" class="p">Cifrar mis datos</button><button type="button" id="vaultSetupCancel">Cancelar</button></div>
+            </form>
+          </div>
+          <div id="vaultRecoveryBox" class="vault-box" hidden>
+            <p class="hint"><b>Código de recuperación.</b> Anotalo en papel y guardalo fuera del celular. Sirve para entrar si olvidás la contraseña. No se vuelve a mostrar.</p>
+            <p class="vault-code" id="vaultRecoveryCode"></p>
+            <label class="chk"><input type="checkbox" id="vaultRecoverySaved"><span>Ya lo anoté en un lugar seguro</span></label>
+            <div class="row"><button type="button" id="vaultRecoveryBio" class="p">Activar huella</button><button type="button" id="vaultRecoveryDone">Ahora no</button></div>
+          </div>
+          <div id="vaultOn" hidden>
+            <div class="row"><button type="button" id="vaultLockBtn">Bloquear ahora</button><button type="button" id="vaultBioAdd">Activar huella</button><button type="button" id="vaultBioRemove" hidden>Dejar de usar la huella</button></div>
+            <div class="row"><button type="button" id="vaultChangePw" class="ghost">Cambiar contraseña</button><button type="button" id="vaultDisable" class="ghost danger">Quitar la protección</button></div>
+          </div>
+          <form id="vaultAuth" class="vault-box" hidden>
+            <label for="vaultAuthPass" id="vaultAuthTitle">Contraseña</label>
+            <input type="password" id="vaultAuthPass" autocomplete="current-password">
+            <div class="row"><button type="submit" class="p">Continuar</button><button type="button" id="vaultAuthCancel">Cancelar</button></div>
+          </form>
+          <p id="vaultMsg" role="status"></p>
+          <p id="vaultWarn" role="alert"></p>
+          <p id="vaultSaveError" role="alert"></p>
+        </section>
         <details id="localPrivacy" class="privacy-panel">
         <summary>Privacidad y datos guardados <small>Notas y borradores en Brave</small></summary>
-        <p class="hint">Guardar .txt descarga un archivo, pero también deja una copia del texto en Brave. Además, el borrador se guarda automáticamente. Estas copias no están cifradas.</p>
+        <p class="hint" id="localPrivacyNote">Guardar .txt descarga un archivo, pero también deja una copia del texto en Brave. Además, el borrador se guarda automáticamente. Estas copias no están cifradas.</p>
         <p class="hint" id="localTextInfo" role="status"></p>
         <button type="button" id="clearLocalTexts" class="ghost danger">Borrar notas y borradores de Brave</button>
         <p class="hint">Esta acción irreversible vacía el texto visible y la opción Deshacer. No elimina los archivos de Descargas, audios, asociaciones, diccionario, modelos ni ajustes.</p>
@@ -888,6 +943,30 @@ body.keyboard-open textarea#text{min-height:120px;height:max(120px,calc(var(--vi
     <div class="dialog-actions"><button id="correctionCancel" type="button">Cancelar</button><button class="p" type="submit">Aplicar</button></div>
   </form>
 </dialog>
+<div id="vaultLock" class="vault-lock" role="dialog" aria-modal="true" aria-labelledby="vaultLockTitle" hidden>
+  <div class="vault-lock-card">
+    <span class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>
+    <h2 id="vaultLockTitle">DictaNota está bloqueada</h2>
+    <p class="hint">Tus notas están cifradas en este celular.</p>
+    <button type="button" id="vaultBioUnlock" class="p" hidden>Desbloquear con huella</button>
+    <form id="vaultLockForm">
+      <label for="vaultLockPass">Contraseña</label>
+      <input type="password" id="vaultLockPass" autocomplete="current-password">
+      <button type="submit" id="vaultLockGo">Desbloquear con contraseña</button>
+    </form>
+    <p id="vaultLockMsg" role="alert"></p>
+    <button type="button" id="vaultRecoverOpen" class="ghost">Olvidé la contraseña</button>
+    <form id="vaultRecoverForm" hidden>
+      <label for="vaultRecCode">Código de recuperación</label>
+      <input type="text" id="vaultRecCode" autocomplete="off" autocapitalize="characters" spellcheck="false">
+      <label for="vaultRecNew">Contraseña nueva</label>
+      <input type="password" id="vaultRecNew" autocomplete="new-password">
+      <label for="vaultRecNew2">Repetila</label>
+      <input type="password" id="vaultRecNew2" autocomplete="new-password">
+      <button type="submit" class="p">Entrar y cambiar la contraseña</button>
+    </form>
+  </div>
+</div>
 
 <script>
 document.addEventListener('DOMContentLoaded',function(){
@@ -939,6 +1018,421 @@ document.addEventListener('DOMContentLoaded',function(){
   const btn=document.getElementById('studioAnonSettings'),panel=document.getElementById('studioAnonConfig');
   if(btn&&panel){btn.addEventListener('click',function(){panel.open=!panel.open;btn.setAttribute('aria-expanded',String(panel.open));});}
 });
+</script>
+<script>
+/* ====================================================================
+   Protección cifrada (seguridad-02, 16/11/2026; ver SEGURIDAD.md y DISENO-CIFRADO.md)
+   Cifra en este navegador las notas, el borrador, la copia para deshacer,
+   la tabla de personas y el diccionario. Los audios todavía no.
+   ==================================================================== */
+/*VAULT-CORE-START*/
+const VAULT_HEADER = 'notasvoz.boveda.v1';
+const VAULT_REC_PREFIX = 'notasvoz.boveda.v1.r.';
+const VAULT_PBKDF2_IT = 600000;
+const VAULT_KEYS = {
+  'notasvoz.gamma.v1': 'notas',
+  'notasvoz.gamma.draft.v1': 'borrador',
+  'notasvoz.gamma.undo.v1': 'deshacer',
+  'notasvoz.gamma.people.v1': 'personas',
+  'notasvoz.gamma.dict.v1': 'diccionario'
+};
+const VAULT_B32 = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+const vaultEnc = new TextEncoder(), vaultDec = new TextDecoder('utf-8', {fatal: true});
+function vb64(bytes){
+  const b = new Uint8Array(bytes); let s = '';
+  for (let i = 0; i < b.length; i += 0x8000) s += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000));
+  return btoa(s);
+}
+function vunb64(str, max){
+  if (typeof str !== 'string' || str.length > (max || 30000000) || !/^[A-Za-z0-9+/]*={0,2}$/.test(str)) throw new Error('formato inválido');
+  const s = atob(str), b = new Uint8Array(s.length);
+  for (let i = 0; i < s.length; i++) b[i] = s.charCodeAt(i);
+  return b;
+}
+const vaultRandom = n => crypto.getRandomValues(new Uint8Array(n));
+const vaultAad = (id, kind) => vaultEnc.encode('dictanota|v1|' + id + '|' + kind);
+function vaultImportDataKey(raw){ return crypto.subtle.importKey('raw', raw, {name: 'AES-GCM'}, false, ['encrypt', 'decrypt']); }
+async function vaultKekFromPassword(password, salt, iterations){
+  const base = await crypto.subtle.importKey('raw', vaultEnc.encode(String(password).normalize('NFC')), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey({name: 'PBKDF2', hash: 'SHA-256', salt, iterations}, base, {name: 'AES-GCM', length: 256}, false, ['encrypt', 'decrypt']);
+}
+async function vaultKekFromSecret(secret, salt, info){
+  const base = await crypto.subtle.importKey('raw', secret, 'HKDF', false, ['deriveKey']);
+  return crypto.subtle.deriveKey({name: 'HKDF', hash: 'SHA-256', salt, info: vaultEnc.encode(info)}, base, {name: 'AES-GCM', length: 256}, false, ['encrypt', 'decrypt']);
+}
+async function vaultSeal(key, plain, aad){
+  const iv = vaultRandom(12);
+  const ct = await crypto.subtle.encrypt({name: 'AES-GCM', iv, additionalData: aad, tagLength: 128}, key, plain);
+  return {iv: vb64(iv), ct: vb64(ct)};
+}
+async function vaultOpen(key, box, aad){
+  if (!box || typeof box !== 'object') throw new Error('formato inválido');
+  const iv = vunb64(box.iv, 32);
+  if (iv.length !== 12) throw new Error('formato inválido');
+  return new Uint8Array(await crypto.subtle.decrypt({name: 'AES-GCM', iv, additionalData: aad, tagLength: 128}, key, vunb64(box.ct)));
+}
+function vaultNewRecoveryCode(){
+  // 120 bits aleatorios en 24 caracteres sin letras confundibles (I, L, O, U).
+  const b = vaultRandom(15); let bits = 0, val = 0, out = '';
+  for (const x of b) { val = ((val & 0xff) << 8) | x; bits += 8; while (bits >= 5) { out += VAULT_B32[(val >>> (bits - 5)) & 31]; bits -= 5; } }
+  return out.match(/.{4}/g).join('-');
+}
+const vaultNormalizeRecovery = s => String(s || '').toUpperCase().replace(/[\s-]/g, '').replace(/O/g, '0').replace(/[IL]/g, '1');
+function vaultParseHeader(text){
+  const h = JSON.parse(text);
+  const okBox = b => b && typeof b.iv === 'string' && typeof b.ct === 'string' && b.ct.length < 200;
+  if (!h || h.v !== 1 || typeof h.id !== 'string' || !/^[A-Za-z0-9+/=]{16,64}$/.test(h.id)) throw new Error('cabecera inválida');
+  if (!h.pw || h.pw.kdf !== 'PBKDF2-SHA256' || !Number.isSafeInteger(h.pw.it) || h.pw.it < 100000 || h.pw.it > 5000000 || typeof h.pw.salt !== 'string' || !okBox(h.pw.box)) throw new Error('cabecera inválida');
+  if (!h.rec || h.rec.kdf !== 'HKDF-SHA256' || typeof h.rec.salt !== 'string' || !okBox(h.rec.box)) throw new Error('cabecera inválida');
+  if (h.bio !== null && (!h.bio || typeof h.bio.cred !== 'string' || h.bio.cred.length > 1400 || typeof h.bio.salt !== 'string' || typeof h.bio.hkdf !== 'string' || !okBox(h.bio.box))) throw new Error('cabecera inválida');
+  return h;
+}
+async function vaultCreate(password){
+  const dek = vaultRandom(32), id = vb64(vaultRandom(16)), pwSalt = vaultRandom(16), recSalt = vaultRandom(16), recovery = vaultNewRecoveryCode();
+  const pwKek = await vaultKekFromPassword(password, pwSalt, VAULT_PBKDF2_IT);
+  const recKek = await vaultKekFromSecret(vaultEnc.encode(vaultNormalizeRecovery(recovery)), recSalt, 'dictanota recuperacion v1');
+  const header = {v: 1, id, created: Date.now(),
+    pw: {kdf: 'PBKDF2-SHA256', it: VAULT_PBKDF2_IT, salt: vb64(pwSalt), box: await vaultSeal(pwKek, dek, vaultAad(id, 'clave-contrasena'))},
+    rec: {kdf: 'HKDF-SHA256', salt: vb64(recSalt), box: await vaultSeal(recKek, dek, vaultAad(id, 'clave-recuperacion'))},
+    bio: null};
+  return {header, dek, recovery};
+}
+async function vaultUnwrapPassword(h, password){
+  const kek = await vaultKekFromPassword(password, vunb64(h.pw.salt, 64), h.pw.it);
+  return vaultOpen(kek, h.pw.box, vaultAad(h.id, 'clave-contrasena'));
+}
+async function vaultUnwrapRecovery(h, code){
+  const kek = await vaultKekFromSecret(vaultEnc.encode(vaultNormalizeRecovery(code)), vunb64(h.rec.salt, 64), 'dictanota recuperacion v1');
+  return vaultOpen(kek, h.rec.box, vaultAad(h.id, 'clave-recuperacion'));
+}
+async function vaultBioKek(h, prfOutput){ return vaultKekFromSecret(new Uint8Array(prfOutput), vunb64(h.bio.hkdf, 64), 'dictanota huella v1'); }
+async function vaultUnwrapBio(h, prfOutput){ return vaultOpen(await vaultBioKek(h, prfOutput), h.bio.box, vaultAad(h.id, 'clave-huella')); }
+async function vaultWithPassword(h, dek, password){
+  const salt = vaultRandom(16), kek = await vaultKekFromPassword(password, salt, VAULT_PBKDF2_IT);
+  return {...h, pw: {kdf: 'PBKDF2-SHA256', it: VAULT_PBKDF2_IT, salt: vb64(salt), box: await vaultSeal(kek, dek, vaultAad(h.id, 'clave-contrasena'))}};
+}
+async function vaultWithBio(h, dek, credId, prfSalt, prfOutput){
+  const next = {...h, bio: {cred: vb64(credId), salt: vb64(prfSalt), hkdf: vb64(vaultRandom(16)), box: null}};
+  next.bio.box = await vaultSeal(await vaultBioKek(next, prfOutput), dek, vaultAad(h.id, 'clave-huella'));
+  return next;
+}
+async function vaultSealRecord(key, id, name, value){
+  return JSON.stringify({v: 1, n: name, box: await vaultSeal(key, vaultEnc.encode(value), vaultAad(id, 'registro|' + name))});
+}
+async function vaultOpenRecord(key, id, name, raw){
+  const r = JSON.parse(raw);
+  if (!r || r.v !== 1 || r.n !== name) throw new Error('registro inválido');
+  return vaultDec.decode(await vaultOpen(key, r.box, vaultAad(id, 'registro|' + name)));
+}
+/* Almacén con la misma forma que localStorage. Sin protección pasa directo a localStorage.
+   Con protección: lectura y escritura sincrónicas sobre una copia en memoria descifrada,
+   y escritura cifrada en segundo plano. Bloqueada, no lee ni escribe nada protegido. */
+function createVault(storage){
+  const v = {state: 'off', header: null, key: null, cache: new Map(), pending: new Set(), queue: Promise.resolve(), scheduled: false,
+    error: '', leftovers: [], damaged: [], frozen: new Set(), onError: () => {}};
+  try {
+    const raw = storage.getItem(VAULT_HEADER);
+    if (raw !== null) { v.state = 'locked'; try { v.header = vaultParseHeader(raw); } catch (e) { v.state = 'broken'; } }
+  } catch (e) { v.state = 'broken'; }
+  const isProtected = k => Object.prototype.hasOwnProperty.call(VAULT_KEYS, k);
+  const recKey = k => VAULT_REC_PREFIX + VAULT_KEYS[k];
+  v.setError = msg => { v.error = msg; v.onError(msg); };
+  v.flush = () => {
+    v.queue = v.queue.then(async () => {
+      const keys = [...v.pending]; v.pending.clear();
+      for (const k of keys) {
+        if (v.frozen.has(k)) { v.setError('Hay datos cifrados dañados que no se pueden reemplazar sin espacio libre; los cambios de esa parte no se guardan.'); continue; }
+        try {
+          if (!v.cache.has(k)) storage.removeItem(recKey(k));
+          else { const value = v.cache.get(k); storage.setItem(recKey(k), await vaultSealRecord(v.key, v.header.id, VAULT_KEYS[k], value)); }
+          if (v.error) v.setError('');
+        } catch (e) { v.pending.add(k); v.setError('No se pudo guardar cifrado (' + (e && e.name || 'error') + '). Liberá espacio y volvé a intentar.'); }
+      }
+    });
+    return v.queue;
+  };
+  const schedule = k => { v.pending.add(k); if (!v.scheduled) { v.scheduled = true; setTimeout(() => { v.scheduled = false; v.flush(); }, 0); } };
+  v.store = {
+    getItem(k){ if (!isProtected(k) || v.state === 'off') return storage.getItem(k); if (v.state !== 'open') return null; return v.cache.has(k) ? v.cache.get(k) : null; },
+    setItem(k, value){ if (!isProtected(k) || v.state === 'off') return storage.setItem(k, value); if (v.state !== 'open') return; v.cache.set(k, String(value)); schedule(k); },
+    removeItem(k){ if (!isProtected(k) || v.state === 'off') return storage.removeItem(k); if (v.state !== 'open') return; v.cache.delete(k); schedule(k); }
+  };
+  async function openWith(dek){
+    const key = await vaultImportDataKey(dek);
+    const cache = new Map(); v.damaged = [];
+    for (const [k, name] of Object.entries(VAULT_KEYS)) {
+      const raw = storage.getItem(VAULT_REC_PREFIX + name);
+      if (raw === null) continue;
+      try { cache.set(k, await vaultOpenRecord(key, v.header.id, name, raw)); }
+      catch (e) {
+        // Nunca sobrescribir un registro que no se pudo leer: se aparta intacto y se avisa.
+        v.damaged.push(name);
+        try { storage.setItem(VAULT_REC_PREFIX + name + '.danado.' + Date.now(), raw); storage.removeItem(VAULT_REC_PREFIX + name); }
+        catch (e2) { v.frozen.add(k); }
+      }
+    }
+    v.key = key; v.cache = cache; v.state = 'open';
+    // Copias sin cifrar que quedaron (activación interrumpida o una pestaña vieja): se cifran o se señalan.
+    v.leftovers = [];
+    for (const k of Object.keys(VAULT_KEYS)) {
+      const plain = storage.getItem(k);
+      if (plain === null) continue;
+      if (!cache.has(k)) { cache.set(k, plain); v.pending.add(k); await v.flush(); if (!v.pending.has(k)) storage.removeItem(k); }
+      else if (cache.get(k) === plain) storage.removeItem(k);
+      else v.leftovers.push(VAULT_KEYS[k]);
+    }
+  }
+  v.unlockPassword = async password => { await openWith(await vaultUnwrapPassword(v.header, password)); };
+  v.unlockRecovery = async (code, newPassword) => {
+    const dek = await vaultUnwrapRecovery(v.header, code);
+    const header = await vaultWithPassword(v.header, dek, newPassword);
+    storage.setItem(VAULT_HEADER, JSON.stringify(header)); v.header = header;
+    await openWith(dek);
+  };
+  v.unlockBio = async prfOutput => { await openWith(await vaultUnwrapBio(v.header, prfOutput)); };
+  v.enable = async password => {
+    if (v.state !== 'off') throw new Error('La protección ya está activada.');
+    const {header, dek, recovery} = await vaultCreate(password);
+    const key = await vaultImportDataKey(dek);
+    const cache = new Map(), records = new Map();
+    for (const [k, name] of Object.entries(VAULT_KEYS)) {
+      const plain = storage.getItem(k);
+      if (plain === null) continue;
+      const rec = await vaultSealRecord(key, header.id, name, plain);
+      if (await vaultOpenRecord(key, header.id, name, rec) !== plain) throw new Error('La verificación del cifrado falló; no se cambió nada.');
+      cache.set(k, plain); records.set(name, rec);
+    }
+    try {
+      for (const [name, rec] of records) storage.setItem(VAULT_REC_PREFIX + name, rec);
+      storage.setItem(VAULT_HEADER, JSON.stringify(header));
+      for (const [name, rec] of records) if (storage.getItem(VAULT_REC_PREFIX + name) !== rec) throw new Error('relectura distinta');
+    } catch (e) {
+      for (const name of records.keys()) try { storage.removeItem(VAULT_REC_PREFIX + name); } catch (e2) {}
+      try { storage.removeItem(VAULT_HEADER); } catch (e2) {}
+      throw new Error('No hay espacio para guardar la copia cifrada; no se cambió nada.');
+    }
+    for (const k of cache.keys()) storage.removeItem(k);
+    v.header = header; v.key = key; v.cache = cache; v.state = 'open'; v.leftovers = []; v.damaged = [];
+    return {recovery, dek};
+  };
+  v.checkPassword = password => vaultUnwrapPassword(v.header, password);
+  v.changePassword = async (current, next) => {
+    const dek = await vaultUnwrapPassword(v.header, current);
+    const header = await vaultWithPassword(v.header, dek, next); dek.fill(0);
+    storage.setItem(VAULT_HEADER, JSON.stringify(header)); v.header = header;
+  };
+  v.addBio = async (dek, credId, prfSalt, prfOutput) => {
+    const header = await vaultWithBio(v.header, dek, credId, prfSalt, prfOutput);
+    if (!(await vaultUnwrapBio(header, prfOutput)).every((x, i) => x === dek[i])) throw new Error('La verificación de la huella falló.');
+    storage.setItem(VAULT_HEADER, JSON.stringify(header)); v.header = header;
+  };
+  v.removeBio = () => { const header = {...v.header, bio: null}; storage.setItem(VAULT_HEADER, JSON.stringify(header)); v.header = header; };
+  v.disable = async password => {
+    (await vaultUnwrapPassword(v.header, password)).fill(0);
+    await v.flush();
+    if (v.pending.size) throw new Error('Hay cambios sin guardar; no se quitó la protección.');
+    for (const [k, value] of v.cache) storage.setItem(k, value);
+    for (const [k, value] of v.cache) if (storage.getItem(k) !== value) throw new Error('No se pudo escribir la copia sin cifrar; la protección sigue activa.');
+    for (const name of Object.values(VAULT_KEYS)) storage.removeItem(VAULT_REC_PREFIX + name);
+    storage.removeItem(VAULT_HEADER);
+    v.state = 'off'; v.header = null; v.key = null; v.cache = new Map();
+  };
+  return v;
+}
+/*VAULT-CORE-END*/
+
+const vault = createVault(localStorage);
+const vaultStore = vault.store;
+const VAULT_IDLE_MS = 15 * 60 * 1000;
+let vaultReadyFns = [], vaultBusy = () => false, vaultBeforeLock = () => {}, vaultLastActivity = Date.now();
+function vaultWhenReady(fn){ if (vault.state === 'off' || vault.state === 'open') fn(); else vaultReadyFns.push(fn); }
+function vaultSetHooks(busy, beforeLock){ vaultBusy = busy; vaultBeforeLock = beforeLock; }
+const vaultEl = id => document.getElementById(id);
+function vaultFriendly(e){
+  const n = e && e.name;
+  if (n === 'OperationError') return 'La contraseña, el código o la huella no coinciden.';
+  if (n === 'NotAllowedError') return 'Se canceló o venció la verificación de la huella.';
+  if (n === 'SecurityError') return 'El navegador no permite la huella en esta dirección.';
+  return (e && e.message) || 'Error inesperado.';
+}
+function vaultSetInert(on){ document.querySelectorAll('body > *:not(#vaultLock):not(script)').forEach(el => { el.inert = on; }); }
+function vaultShowLock(){
+  const box = vaultEl('vaultLock'); box.hidden = false; vaultSetInert(true);
+  const broken = vault.state === 'broken';
+  vaultEl('vaultLockForm').hidden = broken; vaultEl('vaultRecoverOpen').hidden = broken;
+  vaultEl('vaultLockMsg').textContent = broken ? 'Los datos de la protección están dañados. No se modificó nada: no borres los datos del sitio y pedí ayuda revisando SEGURIDAD.md.' : '';
+  vaultEl('vaultBioUnlock').hidden = broken || !(vault.header && vault.header.bio);
+  if (!broken && !(vault.header && vault.header.bio)) setTimeout(() => vaultEl('vaultLockPass').focus(), 50);
+}
+async function vaultAfterUnlock(){
+  vaultEl('vaultLock').hidden = true; vaultSetInert(false);
+  vaultEl('vaultLockPass').value = ''; vaultEl('vaultRecCode').value = ''; vaultEl('vaultRecNew').value = ''; vaultEl('vaultRecNew2').value = '';
+  vaultLastActivity = Date.now();
+  const fns = vaultReadyFns; vaultReadyFns = [];
+  fns.forEach(fn => { try { fn(); } catch (e) { console.error(e); } });
+  vaultRefreshPanel();
+}
+async function vaultLockNow(){
+  if (vault.state !== 'open') return false;
+  if (vaultBusy()) { vaultPanelMsg('No se bloquea mientras grabás o transcribís.'); return false; }
+  try { vaultBeforeLock(); } catch (e) {}
+  await vault.flush();
+  if (vault.pending.size) { vaultPanelMsg('No se pudo guardar todo cifrado; no se bloqueó para no perder texto.'); return false; }
+  vault.state = 'locked'; vault.cache = new Map(); vault.key = null;
+  location.reload();   // descarta de la memoria y de la pantalla todo el texto descifrado
+  return true;
+}
+/* Huella: llave de acceso del dispositivo con la extensión PRF de WebAuthn (sin servidor). */
+async function vaultBioEvaluate(credId, prfSalt){
+  const a = await navigator.credentials.get({publicKey: {challenge: vaultRandom(32), allowCredentials: [{type: 'public-key', id: credId}], userVerification: 'required', timeout: 120000, extensions: {prf: {eval: {first: prfSalt}}}}});
+  const r = a.getClientExtensionResults ? a.getClientExtensionResults() : {};
+  const out = r.prf && r.prf.results && r.prf.results.first;
+  if (!out) throw new Error('El administrador de llaves de acceso no entregó la clave de la huella (falta soporte PRF).');
+  return new Uint8Array(out);
+}
+async function vaultBioRegister(dek){
+  if (!window.PublicKeyCredential || !navigator.credentials || !navigator.credentials.create) throw new Error('Este navegador no permite usar la huella para DictaNota.');
+  const prfSalt = vaultRandom(32);
+  const cred = await navigator.credentials.create({publicKey: {
+    rp: {name: 'DictaNota'}, user: {id: vaultRandom(16), name: 'DictaNota', displayName: 'DictaNota'}, challenge: vaultRandom(32),
+    pubKeyCredParams: [{type: 'public-key', alg: -7}, {type: 'public-key', alg: -257}],
+    authenticatorSelection: {authenticatorAttachment: 'platform', residentKey: 'preferred', userVerification: 'required'},
+    timeout: 120000, extensions: {prf: {eval: {first: prfSalt}}}}});
+  const ext = cred.getClientExtensionResults ? cred.getClientExtensionResults() : {};
+  if (!ext.prf || ext.prf.enabled === false) throw new Error('Tu navegador o tu administrador de llaves de acceso no admite la función que necesita DictaNota (PRF). Seguí usando la contraseña.');
+  const credId = new Uint8Array(cred.rawId);
+  const out = ext.prf.results && ext.prf.results.first ? new Uint8Array(ext.prf.results.first) : await vaultBioEvaluate(credId, prfSalt);
+  await vault.addBio(dek, credId, prfSalt, out);
+}
+function vaultPanelMsg(text){ const m = vaultEl('vaultMsg'); if (m) m.textContent = text; }
+function vaultRefreshPanel(){
+  const on = vault.state === 'open';
+  vaultEl('vaultOff').hidden = vault.state !== 'off';
+  vaultEl('vaultOn').hidden = !on;
+  vaultEl('topLock').hidden = !on;
+  vaultEl('vaultStatus').textContent = vault.state === 'off'
+    ? 'Desactivada: las notas, borradores, personas y diccionario se guardan sin cifrar en este navegador.'
+    : 'Activada: notas, borrador, deshacer, personas y diccionario se guardan cifrados (AES-256). Se bloquea tras 15 minutos sin uso. Los audios guardados todavía NO están cifrados.';
+  if (on) {
+    vaultEl('vaultBioAdd').hidden = !!vault.header.bio; vaultEl('vaultBioRemove').hidden = !vault.header.bio;
+    const extra = [];
+    if (vault.leftovers.length) extra.push('Quedó una copia sin cifrar distinta de: ' + vault.leftovers.join(', ') + ' (probablemente de una pestaña abierta antes de activar la protección). No se borró.');
+    if (vault.damaged.length) extra.push('No se pudo leer: ' + vault.damaged.join(', ') + '. Se apartó intacto sin borrarlo.');
+    vaultEl('vaultWarn').textContent = extra.join(' ');
+  }
+  const priv = vaultEl('localPrivacyNote');
+  if (priv) priv.textContent = vault.state === 'off'
+    ? 'Guardar .txt descarga un archivo, pero también deja una copia del texto en Brave. Además, el borrador se guarda automáticamente. Estas copias no están cifradas: activá la protección más arriba.'
+    : 'Las copias que quedan en Brave (notas y borrador) están cifradas. Los archivos .txt o Word que descargás y lo que copiás o compartís salen sin cifrar.';
+}
+/* Formulario de contraseña compartido para acciones sensibles. */
+function vaultAskPassword(title){
+  return new Promise(resolve => {
+    const f = vaultEl('vaultAuth'); f.hidden = false; vaultEl('vaultAuthTitle').textContent = title; vaultEl('vaultAuthPass').value = ''; vaultEl('vaultAuthPass').focus();
+    const done = value => { f.hidden = true; f.onsubmit = null; vaultEl('vaultAuthCancel').onclick = null; vaultEl('vaultAuthPass').value = ''; resolve(value); };
+    f.onsubmit = ev => { ev.preventDefault(); done(vaultEl('vaultAuthPass').value); };
+    vaultEl('vaultAuthCancel').onclick = () => done(null);
+  });
+}
+function vaultPasswordProblem(a, b){
+  if (a.length < 8) return 'Usá al menos 8 caracteres (mejor una frase de varias palabras).';
+  if (a !== b) return 'Las dos contraseñas no coinciden.';
+  return '';
+}
+async function vaultOfferBio(dek){
+  try { vaultPanelMsg('Seguí las indicaciones del celular para registrar la huella…'); await vaultBioRegister(dek); vaultPanelMsg('Listo: ya podés desbloquear con la huella. La contraseña sigue sirviendo.'); }
+  catch (e) { vaultPanelMsg('No se activó la huella: ' + vaultFriendly(e)); }
+  finally { dek.fill(0); vaultRefreshPanel(); }
+}
+function vaultInitUI(){
+  vault.onError = msg => { vaultEl('vaultSaveError').textContent = msg; if (msg && typeof flash === 'function') flash(msg); };
+  vaultEl('vaultLockForm').addEventListener('submit', async ev => {
+    ev.preventDefault();
+    const btn = vaultEl('vaultLockGo'); btn.disabled = true; vaultEl('vaultLockMsg').textContent = 'Comprobando…';
+    try { await vault.unlockPassword(vaultEl('vaultLockPass').value); await vaultAfterUnlock(); }
+    catch (e) { vaultEl('vaultLockMsg').textContent = vaultFriendly(e); vaultEl('vaultLockPass').select(); }
+    finally { btn.disabled = false; }
+  });
+  vaultEl('vaultBioUnlock').addEventListener('click', async () => {
+    vaultEl('vaultLockMsg').textContent = 'Esperando la huella…';
+    try { const h = vault.header; await vault.unlockBio(await vaultBioEvaluate(vunb64(h.bio.cred, 1400), vunb64(h.bio.salt, 64))); await vaultAfterUnlock(); }
+    catch (e) { vaultEl('vaultLockMsg').textContent = vaultFriendly(e) + ' Podés usar la contraseña.'; }
+  });
+  vaultEl('vaultRecoverOpen').addEventListener('click', () => { vaultEl('vaultRecoverForm').hidden = false; vaultEl('vaultRecCode').focus(); });
+  vaultEl('vaultRecoverForm').addEventListener('submit', async ev => {
+    ev.preventDefault();
+    const problem = vaultPasswordProblem(vaultEl('vaultRecNew').value, vaultEl('vaultRecNew2').value);
+    if (problem) { vaultEl('vaultLockMsg').textContent = problem; return; }
+    vaultEl('vaultLockMsg').textContent = 'Comprobando el código…';
+    try { await vault.unlockRecovery(vaultEl('vaultRecCode').value, vaultEl('vaultRecNew').value); vaultEl('vaultRecoverForm').hidden = true; await vaultAfterUnlock(); vaultPanelMsg('Entraste con el código de recuperación y quedó la contraseña nueva. El código sigue siendo el mismo: guardalo.'); }
+    catch (e) { vaultEl('vaultLockMsg').textContent = vaultFriendly(e); }
+  });
+  vaultEl('vaultEnable').addEventListener('click', () => { vaultEl('vaultSetup').hidden = false; vaultEl('vaultNew').focus(); });
+  vaultEl('vaultSetupCancel').addEventListener('click', () => { vaultEl('vaultSetup').hidden = true; vaultEl('vaultNew').value = ''; vaultEl('vaultNew2').value = ''; });
+  vaultEl('vaultSetup').addEventListener('submit', async ev => {
+    ev.preventDefault();
+    if (vaultBusy()) { vaultPanelMsg('Primero detené y terminá de transcribir.'); return; }
+    const problem = vaultPasswordProblem(vaultEl('vaultNew').value, vaultEl('vaultNew2').value);
+    if (problem) { vaultPanelMsg(problem); return; }
+    vaultEl('vaultSetupGo').disabled = true; vaultPanelMsg('Cifrando… puede tardar unos segundos.');
+    try {
+      try { vaultBeforeLock(); } catch (e) {}
+      const {recovery, dek} = await vault.enable(vaultEl('vaultNew').value);
+      vaultEl('vaultNew').value = ''; vaultEl('vaultNew2').value = ''; vaultEl('vaultSetup').hidden = true;
+      vaultEl('vaultRecoveryCode').textContent = recovery; vaultEl('vaultRecoveryBox').hidden = false; vaultEl('vaultRecoverySaved').checked = false;
+      vaultEl('vaultRecoveryDone').onclick = () => {
+        if (!vaultEl('vaultRecoverySaved').checked) { vaultPanelMsg('Marcá la casilla cuando hayas anotado el código.'); return; }
+        vaultEl('vaultRecoveryCode').textContent = ''; vaultEl('vaultRecoveryBox').hidden = true;
+        vaultEl('vaultRecoveryDone').onclick = null; vaultEl('vaultRecoveryBio').onclick = null;
+        dek.fill(0); vaultRefreshPanel(); vaultPanelMsg('Protección activada.');
+      };
+      vaultEl('vaultRecoveryBio').onclick = () => {
+        if (!vaultEl('vaultRecoverySaved').checked) { vaultPanelMsg('Primero anotá el código de recuperación y marcá la casilla.'); return; }
+        vaultEl('vaultRecoveryCode').textContent = ''; vaultEl('vaultRecoveryBox').hidden = true;
+        vaultEl('vaultRecoveryDone').onclick = null; vaultEl('vaultRecoveryBio').onclick = null;
+        vaultOfferBio(dek);
+      };
+      vaultRefreshPanel(); vaultPanelMsg('Tus datos ya están cifrados. Anotá el código de recuperación antes de seguir.');
+    } catch (e) { vaultPanelMsg(vaultFriendly(e)); }
+    finally { vaultEl('vaultSetupGo').disabled = false; }
+  });
+  vaultEl('vaultLockBtn').addEventListener('click', vaultLockNow);
+  vaultEl('topLock').addEventListener('click', vaultLockNow);
+  vaultEl('vaultBioAdd').addEventListener('click', async () => {
+    const pw = await vaultAskPassword('Confirmá tu contraseña para activar la huella'); if (pw === null) return;
+    try { const dek = await vault.checkPassword(pw); await vaultOfferBio(dek); } catch (e) { vaultPanelMsg(vaultFriendly(e)); }
+  });
+  vaultEl('vaultBioRemove').addEventListener('click', () => {
+    if (!confirm('¿Dejar de usar la huella? Vas a desbloquear solo con la contraseña. La llave de acceso «DictaNota» se puede borrar después desde el Administrador de contraseñas de Google.')) return;
+    vault.removeBio(); vaultRefreshPanel(); vaultPanelMsg('Ya no se usa la huella.');
+  });
+  vaultEl('vaultChangePw').addEventListener('click', async () => {
+    const cur = await vaultAskPassword('Contraseña actual'); if (cur === null) return;
+    const a = await vaultAskPassword('Contraseña nueva (al menos 8 caracteres)'); if (a === null) return;
+    const b = await vaultAskPassword('Repetí la contraseña nueva'); if (b === null) return;
+    const problem = vaultPasswordProblem(a, b); if (problem) { vaultPanelMsg(problem); return; }
+    try { await vault.changePassword(cur, a); vaultPanelMsg('Contraseña cambiada. La huella y el código de recuperación siguen funcionando.'); } catch (e) { vaultPanelMsg(vaultFriendly(e)); }
+  });
+  vaultEl('vaultDisable').addEventListener('click', async () => {
+    if (vaultBusy()) { vaultPanelMsg('Primero detené y terminá de transcribir.'); return; }
+    if (!confirm('¿Quitar la protección? Las notas, el borrador, las personas y el diccionario vuelven a guardarse SIN cifrar en este navegador.')) return;
+    const pw = await vaultAskPassword('Confirmá tu contraseña para quitar la protección'); if (pw === null) return;
+    try { await vault.disable(pw); vaultRefreshPanel(); vaultPanelMsg('Protección quitada. Los datos quedaron sin cifrar en este navegador.'); } catch (e) { vaultPanelMsg(vaultFriendly(e)); }
+  });
+  // Bloqueo automático tras 15 minutos sin uso. Grabar o transcribir cuenta como uso.
+  const touch = () => { vaultLastActivity = Date.now(); };
+  ['pointerdown', 'keydown', 'input', 'wheel', 'touchstart'].forEach(t => document.addEventListener(t, touch, {capture: true, passive: true}));
+  const check = () => {
+    if (vault.state !== 'open') return;
+    if (vaultBusy()) { touch(); return; }
+    if (Date.now() - vaultLastActivity >= VAULT_IDLE_MS) vaultLockNow();
+  };
+  setInterval(check, 30000);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') check(); });
+  if (vault.state === 'locked' || vault.state === 'broken') vaultShowLock();
+  vaultRefreshPanel();
+}
+vaultInitUI();   // el marcado ya existe: este script va al final del documento
 </script>
 <script>
 /* ====================================================================
@@ -1276,13 +1770,16 @@ function validNotes(value){
       tags:Array.isArray(n.tags) ? n.tags.filter(t => typeof t === 'string') : []}));
 }
 let notesReadWarning = false;
-try { const raw = JSON.parse(localStorage.getItem(KEY) || '[]'); notes = validNotes(raw); notesReadWarning = !Array.isArray(raw) || raw.length !== notes.length || raw.some(n => typeof n.title !== 'string' || !Number.isFinite(n.ts) || !Array.isArray(n.tags) || n.tags.some(t => typeof t !== 'string'));  }
-catch (e) { notes = []; notesReadWarning = true; }
+// Con la protección activada, las notas se leen recién al desbloquear (vaultWhenReady, al final).
+function loadNotes(){
+  try { const raw = JSON.parse(vaultStore.getItem(KEY) || '[]'); notes = validNotes(raw); notesReadWarning = !Array.isArray(raw) || raw.length !== notes.length || raw.some(n => typeof n.title !== 'string' || !Number.isFinite(n.ts) || !Array.isArray(n.tags) || n.tags.some(t => typeof t !== 'string'));  }
+  catch (e) { notes = []; notesReadWarning = true; }
+}
 // No sobrescribir un almacenamiento inválido silenciosamente al guardar una nota.
 
 const setStatus = s => $('status').textContent = s;
 let ft; const flash = s => { $('flash').textContent = s; clearTimeout(ft); ft = setTimeout(() => $('flash').textContent = '', 6000); };
-const persist = () => { if (notesReadWarning && !confirm('Hay datos locales con formato inválido. Guardar reemplaza esa lista por las notas recuperables. ¿Continuar?')) return false; try { localStorage.setItem(KEY, JSON.stringify(notes)); notesReadWarning = false; return true; } catch (e) { flash('No se pudo guardar en este navegador.'); return false; } };
+const persist = () => { if (notesReadWarning && !confirm('Hay datos locales con formato inválido. Guardar reemplaza esa lista por las notas recuperables. ¿Continuar?')) return false; try { vaultStore.setItem(KEY, JSON.stringify(notes)); notesReadWarning = false; return true; } catch (e) { flash('No se pudo guardar en este navegador.'); return false; } };
 const eng = () => document.querySelector('input[name=eng]:checked').value;
 const nWords = s => (s.match(WORDS) || []).length;
 
@@ -1343,7 +1840,7 @@ $('copyAll').onclick = async () => {
   catch (e) { t.focus(); t.select(); try { document.execCommand('copy'); } catch (e2) { return flash('No se pudo copiar. Usá Seleccionar todo y copiá a mano.'); } }
   flash('Copiado (' + nWords(t.value) + ' palabras).');
 };
-function persistUndo(){ try { if (clearBackup) localStorage.setItem(UNDO, JSON.stringify(clearBackup)); else localStorage.removeItem(UNDO); } catch (e) {} }
+function persistUndo(){ try { if (clearBackup) vaultStore.setItem(UNDO, JSON.stringify(clearBackup)); else vaultStore.removeItem(UNDO); } catch (e) {} }
 function stash(){
   clearBackup = {title: $('title').value, text: $('text').value, tags: tags.slice(), cur, baseline};
   persistUndo(); $('undoClear').style.display = '';
@@ -1458,10 +1955,10 @@ $('anon').onclick = () => { if (!$('text').value.trim()) return flash('No hay te
 const PKEY = 'notasvoz.gamma.people.v1';
 let people = [], liveIds = new Map(), liveNp = {n: 0}, ackTxt = null;
 const resetLive = () => { liveIds = new Map(); liveNp = {n: 0}; };
-function savePeople(){ if ($('pVolatile').checked) return; try { localStorage.setItem(PKEY, JSON.stringify(people)); } catch (e) {} }
+function savePeople(){ if ($('pVolatile').checked) return; try { vaultStore.setItem(PKEY, JSON.stringify(people)); } catch (e) {} }
 function loadPeople(){
   people = [];
-  if (!$('pVolatile').checked) { try { const p = JSON.parse(localStorage.getItem(PKEY) || '[]'); if (Array.isArray(p)) people = p.filter(x => x && Array.isArray(x.names)); } catch (e) {} }
+  if (!$('pVolatile').checked) { try { const p = JSON.parse(vaultStore.getItem(PKEY) || '[]'); if (Array.isArray(p)) people = p.filter(x => x && Array.isArray(x.names)); } catch (e) {} }
   renderPeople();
 }
 function renderPeople(){
@@ -1602,7 +2099,7 @@ $('pAdd').onclick = () => {
 $('pApply').onclick = () => { $('pMsg').textContent = applyPeopleToText() ? 'Listo: se reemplazaron en el texto los nombres de la lista.' : 'No había nada para cambiar en el texto.'; refreshAnonPreview(); };
 $('pClear').onclick = () => { if (!people.length || !confirm('¿Borrar toda la tabla de personas?')) return; people = []; savePeople(); renderPeople(); $('pMsg').textContent = 'Tabla borrada.'; };
 $('pVolatile').addEventListener('change', () => {
-  if ($('pVolatile').checked) { try { localStorage.removeItem(PKEY); } catch (e) {} $('pMsg').textContent = 'La tabla ya no se guarda: se pierde al cerrar la página.'; }
+  if ($('pVolatile').checked) { try { vaultStore.removeItem(PKEY); } catch (e) {} $('pMsg').textContent = 'La tabla ya no se guarda: se pierde al cerrar la página.'; }
   else { savePeople(); $('pMsg').textContent = 'La tabla se guarda en este dispositivo.'; }
 });
 function showSuspects(list){
@@ -1712,14 +2209,14 @@ const DEFAULT_DICT = [
 const VOSEO = ['# Voseo rioplatense', 'tú => vos', 'tienes => tenés', 'quieres => querés', 'puedes => podés', 'sabes => sabés', 'eres => sos', 'vienes => venís', 'haces => hacés', 'dices => decís', 'piensas => pensás', 'sientes => sentís'];
 let D = {rules: [], V: []};
 function loadDict(){
-  let s = null; try { s = localStorage.getItem(DKEY); } catch (e) {}
+  let s = null; try { s = vaultStore.getItem(DKEY); } catch (e) {}
   $('dict').value = s === null ? DEFAULT_DICT : s;
   updDict(false);
 }
 function updDict(save){
   D = parseDict($('dict').value);
   $('dictInfo').textContent = D.rules.length + ' regla(s) y ' + D.V.length + ' palabra(s) propia(s).';
-  if (save) { try { localStorage.setItem(DKEY, $('dict').value); } catch (e) {} }
+  if (save) { try { vaultStore.setItem(DKEY, $('dict').value); } catch (e) {} }
 }
 $('dict').addEventListener('input', () => updDict(true));
 const LEARN_HEADER = '# Aprendido de tus correcciones';
@@ -1742,7 +2239,7 @@ function learnFromEdits(){
   baseline = t; // lo ya evaluado no se vuelve a analizar
   if (!found.length) return;
   found.forEach(f => addRule(f.a, f.b));
-  let saved = false; try { saved = localStorage.getItem(DKEY) === $('dict').value; } catch (e) {}
+  let saved = false; try { saved = vaultStore.getItem(DKEY) === $('dict').value; } catch (e) {}
   showLearned(found, saved);
 }
 function showLearned(list, saved){
@@ -2193,7 +2690,7 @@ async function toMono16k(blocks, rate){
   return new Float32Array((await withDeadline(off.startRendering(), 15000, 'preparación del audio')).getChannelData(0));
 }
 
-const BUILD = 'Delta 11 · corrección Firefox · vigilancia de grabaciones largas';
+const BUILD = 'Delta 11 · corrección Firefox · vigilancia de grabaciones largas · protección cifrada';
 let retryAudio = [], retryBytes = 0, retryUnavailable = false;
 function clearRetryAudio(){ retryAudio = []; retryBytes = 0; retryUnavailable = false; }
 function retainRetryAudio(blocks, rate, info){
@@ -3058,15 +3555,15 @@ document.querySelectorAll('input[name=eng]').forEach(r => r.addEventListener('ch
 /* ---------- Borrador autoguardado: sobrevive a recargas y cierres ---------- */
 let lastDraft = '';
 const snap = () => JSON.stringify({title: $('title').value, text: $('text').value, tags, cur, baseline});
-function saveDraft(){ const x = snap(); if (x === lastDraft) return; lastDraft = x; try { localStorage.setItem(DRAFT, x); } catch (e) {} }
+function saveDraft(){ const x = snap(); if (x === lastDraft) return; lastDraft = x; try { vaultStore.setItem(DRAFT, x); } catch (e) {} }
 function restoreDraft(){
   try {
-    const d = JSON.parse(localStorage.getItem(DRAFT) || 'null');
+    const d = JSON.parse(vaultStore.getItem(DRAFT) || 'null');
     if (d && ((d.text || '').trim() || (d.title || '').trim())) {
       cur = d.cur || null; $('title').value = d.title || ''; $('text').value = d.text || ''; baseline = d.baseline || ''; tags = d.tags || [];
       renderChips(); if ((d.text || '').trim()) flash('Se recuperó el texto de la última vez.');
     }
-    const u = JSON.parse(localStorage.getItem(UNDO) || 'null');
+    const u = JSON.parse(vaultStore.getItem(UNDO) || 'null');
     if (u) { clearBackup = u; $('undoClear').style.display = ''; }
   } catch (e) {}
   lastDraft = snap();
@@ -3083,14 +3580,14 @@ function removeLocalTextKeys(store, keys) {
 }
 function refreshLocalTextInfo() {
   let draft = false, undo = false;
-  try { draft = localStorage.getItem(DRAFT) !== null; undo = localStorage.getItem(UNDO) !== null; } catch (e) {}
+  try { draft = vaultStore.getItem(DRAFT) !== null; undo = vaultStore.getItem(UNDO) !== null; } catch (e) {}
   $('localTextInfo').textContent = notes.length + ' nota(s) guardada(s) · ' + (draft ? 'borrador almacenado' : 'sin borrador almacenado') + ' · ' + (undo ? 'copia para deshacer almacenada' : 'sin copia para deshacer');
 }
 $('localPrivacy').addEventListener('toggle', () => { if ($('localPrivacy').open) refreshLocalTextInfo(); });
 $('clearLocalTexts').onclick = () => {
   if (recording || busy || outstanding > 0 || feeding) { flash('Primero detené y terminá de transcribir antes de borrar los textos locales.'); return; }
   if (!confirm('¿Eliminar las notas y borradores de Brave, incluido el texto visible y la opción de deshacer? No se puede revertir. Las descargas y los audios no se borrarán.')) return;
-  if (!removeLocalTextKeys(localStorage, TEXT_STORAGE_KEYS)) { flash('No se pudieron eliminar todos los textos locales. Revisá la configuración de Brave.'); return; }
+  if (!removeLocalTextKeys(vaultStore, TEXT_STORAGE_KEYS)) { flash('No se pudieron eliminar todos los textos locales. Revisá la configuración de Brave.'); return; }
   notes = []; cur = null; tags = []; baseline = ''; clearBackup = null;
   $('title').value = ''; $('text').value = ''; $('undoClear').style.display = 'none';
   renderChips(); renderList(); resetEdit(); resetLive();
@@ -3108,7 +3605,11 @@ function updWC(){
 }
 $('text').addEventListener('input', updWC);
 setInterval(updWC, 300);
-initErgonomics(); loadCfg(); $('recordSaveAudio').checked = $('saveAudio').checked; updateModelHint(); loadDict(); loadPeople(); loadGenerator(); updateGeneratorUI(); renderList(); restoreDraft(); updWC(); refreshAudioBox();
+initErgonomics(); loadCfg(); $('recordSaveAudio').checked = $('saveAudio').checked; updateModelHint();
+// Protección cifrada: no bloquear mientras se graba o transcribe; guardar el borrador antes de bloquear.
+vaultSetHooks(() => recording || busy || outstanding > 0 || feeding, saveDraft);
+vaultWhenReady(() => { loadNotes(); loadDict(); loadPeople(); loadGenerator(); updateGeneratorUI(); renderList(); restoreDraft(); updWC(); });
+refreshAudioBox();
 </script>
 <script>
 /* Corrección explícita: una aparición, reglas futuras solo con consentimiento. */
@@ -3208,7 +3709,7 @@ function correctionCanRemember(text,start,end){
     const updated=selection.text.slice(0,selection.start)+value+selection.text.slice(selection.end);
     if(remember.checked){
       const next=correctionDictionary($('dict').value,selection.original,value);
-      try{localStorage.setItem(DKEY,next);}catch(e){error.textContent='No se pudo guardar la regla. Desmarcá «Recordar» para corregir solo este texto.';return;}
+      try{vaultStore.setItem(DKEY,next);}catch(e){error.textContent='No se pudo guardar la regla. Desmarcá «Recordar» para corregir solo este texto.';return;}
       $('dict').value=next;updDict(false);
     }
     editor.value=updated;

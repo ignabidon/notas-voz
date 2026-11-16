@@ -18,6 +18,14 @@ Cambio de presentación y ayudas; sin datos persistentes nuevos, claves nuevas, 
 - **Alcance:** solo la propia aplicación del usuario (`index.html` en `main`, su sitio de GitHub Pages y la configuración del repositorio). No se probó ningún sitio ajeno.
 - **Regla de datos:** todas las pruebas usan información ficticia. Nunca datos reales de pacientes, ni en pruebas, ni en capturas, ni en diagnósticos.
 
+## 16/11/2026 · Protección cifrada (hallazgo 1)
+
+**[código + prueba técnica]** Rama `seguridad-02-cifrado-2026-11-16`. El detalle está en `DISENO-CIFRADO.md`.
+- Opcional, desde Ajustes → Privacidad. Cifra notas, borrador, deshacer, personas y diccionario con AES-GCM de 256 bits. Se desbloquea con contraseña (PBKDF2-SHA256, 600.000 iteraciones), con un código de recuperación o con la huella (passkey con WebAuthn PRF). Se autobloquea a los 15 minutos sin uso, pero nunca mientras se graba o transcribe.
+- **Los audios todavía no se cifran.** Los TXT, Word, lo copiado y lo compartido salen sin cifrar.
+- Sin orígenes nuevos ni cambios en la CSP: WebAuthn no usa red.
+- **No probado en el Motorola:** huella en Brave, tiempo de desbloqueo y autobloqueo con la pantalla apagada.
+
 ## Reglas obligatorias para cualquier IA que edite el código
 
 1. **Orígenes externos.** La página solo puede hablar con los servidores de la tabla «Orígenes permitidos». Agregar uno nuevo exige: permiso del usuario, actualizar la política CSP de `index.html`, actualizar esa tabla y las pruebas (`tests/delta.test.mjs`, sección «Seguridad»). Las pruebas fallan si aparece una dirección externa sin revisar.
@@ -27,6 +35,7 @@ Cambio de presentación y ayudas; sin datos persistentes nuevos, claves nuevas, 
 5. **Motor Whisper (`@huggingface/transformers@3.8.1`):** se carga con `import()` dinámico desde jsDelivr; el navegador no permite huella en ese tipo de carga. Mantener la versión fija. Cambiarla requiere probar CPU y placa de video.
 6. **No ampliar la CSP por comodidad** (`unsafe-eval`, comodines `*`, `https:` genérico). Si una función deja de andar, mirar la consola del navegador: los bloqueos aparecen como «Content Security Policy» y dicen qué dirección o directiva falló.
 7. **No guardar datos nuevos** (ni en `localStorage`, ni en IndexedDB) sin documentar aquí qué datos son y si quedan sin cifrar.
+   - *16/11/2026, protección cifrada:* toda lectura o escritura de notas (`KEY`), borrador (`DRAFT`), deshacer (`UNDO`), personas (`PKEY`) y diccionario (`DKEY`) pasa por **`vaultStore`**, nunca por `localStorage` directo (hay una prueba que lo exige). Datos nuevos de pacientes van a una clave nueva agregada a `VAULT_KEYS`. Claves nuevas: `notasvoz.boveda.v1` (cabecera: parámetros y clave de datos envuelta, nunca en claro) y `notasvoz.boveda.v1.r.*` (registros cifrados). No bajar las iteraciones de PBKDF2 por velocidad, no guardar la contraseña ni la clave en ningún almacenamiento y no mostrar texto en claro si la cabecera está dañada.
    - *16/11/2026:* el aprendizaje automático de correcciones agrega líneas `a => b` al diccionario existente (`notasvoz.gamma.dict.v1`, **sin cifrar**) y el campo booleano `learnAuto` a la configuración existente (`notasvoz.gamma.cfg.v1`). No hay claves nuevas. Solo se aprenden palabras en minúscula y sin cifras (no nombres propios), pero provienen de lo dictado: no usar datos reales. El aviso de lo aprendido usa `textContent`.
 
 ## Qué está confirmado
@@ -53,7 +62,7 @@ Marcar siempre el nivel: **[código]** guardado en GitHub · **[prueba técnica]
 
 | # | Riesgo | Gravedad | Estado |
 |---|--------|----------|--------|
-| 1 | Notas, tabla de personas, borrador, deshacer y audio se guardan **sin cifrar** en el navegador; los TXT descargados tampoco están protegidos. Quien use el celular desbloqueado puede leerlos. | Alta si se usan datos reales | **ABIERTO.** Mitigación actual: no usar datos reales; opción «tabla de personas solo en memoria». Diseño propuesto, sin implementar: PR «bóveda opcional» (borrador). |
+| 1 | Notas, tabla de personas, borrador, deshacer y audio se guardan **sin cifrar** en el navegador; los TXT descargados tampoco están protegidos. Quien use el celular desbloqueado puede leerlos. | Alta si se usan datos reales | **MITIGADO EN PARTE (16/11/2026, sin validar en el Motorola).** Protección cifrada opcional para todo el texto (ver `DISENO-CIFRADO.md`). Siguen abiertos: **audios sin cifrar**, archivos descargados, y la prueba física de la huella. Hasta validarla en el teléfono: no usar datos reales. |
 | 2 | Librerías de internet sin verificación: motor Whisper (jsDelivr) y librería MP3. Si jsDelivr fuera vulnerado, ese código podría leer las notas. | Media | **MITIGADO EN PARTE.** MP3 con huella. Whisper: versión fija y la CSP limita orígenes, pero no hay huella posible con `import()`. Riesgo residual: aceptado hasta decidir si se aloja una copia propia (más pesada y con mantenimiento). |
 | 3 | Sin política de seguridad del navegador. | Media | **HECHO** (CSP en `<meta>`), pendiente de prueba en el Motorola. Limitación: permite scripts en línea (`'unsafe-inline'`) porque la aplicación tiene tres scripts embebidos; mejora futura: huellas o nonce. Un `<meta>` no puede impedir que otro sitio incruste la página (`frame-ancestors`); GitHub Pages no permite cabeceras propias. |
 | 4 | La rama `main` no está protegida: se puede publicar aunque las pruebas fallen. | Baja/Media | **ABIERTO. Decisión del usuario** (configuración de GitHub: exigir que pasen las pruebas antes de unir). Ninguna IA debe cambiarla sin pedido. |
@@ -95,7 +104,10 @@ Todo lo demás está en `default-src 'none'` (sin objetos, sin marcos, sin formu
 - [ ] Revisar permisos del micrófono y audios dañados o muy grandes (comportamiento ante errores).
 - [ ] Revisar las otras ramas y el historial por datos sensibles o claves.
 - [ ] Decisión del usuario sobre proteger `main` (punto 4) y sobre alojar copia propia del motor (punto 2).
-- [ ] Decisión del usuario sobre la «bóveda» cifrada opcional (punto 1; PR de diseño abierto).
+- [x] Decisión del usuario sobre el cifrado (punto 1): **toda la app**, huella + contraseña + código de recuperación, autobloqueo de 15 minutos y audios en una segunda etapa (16/11/2026). Implementado en `seguridad-02-cifrado-2026-11-16`.
+- [ ] Probar la protección cifrada en Brave del Motorola con datos ficticios: activar, anotar el código, registrar la huella, recargar, desbloquear con huella y con contraseña, autobloqueo con la pantalla apagada y tiempo de desbloqueo. **Confirmación del usuario necesaria.**
+- [ ] Cifrar los audios guardados (segunda etapa).
+- [ ] Copia cifrada exportable (respaldo y paso a una futura app de Android; ver `DISENO-CIFRADO.md`).
 - [ ] Evaluar CSP más estricta (huellas/nonce en lugar de `'unsafe-inline'`) cuando el código se estabilice.
 - [ ] Agregar fecha y resultado a este archivo cuando se complete cada punto.
 
