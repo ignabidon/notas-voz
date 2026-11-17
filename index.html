@@ -5815,10 +5815,13 @@ function saveDraft(){
     if (vault.readOnly || vault.state !== 'open') return false;
     try {
       if (value === lastDraft && vault.saved(DRAFT) && vaultStore.getItem(DRAFT) === value) return true;
-      if (!await draftWriteConfirmed(value, vaultStore, vault)) throw new Error('escritura no confirmada');
+      const confirmed = await draftWriteConfirmed(value, vaultStore, vault);
+      // Una escritura en curso puede haber sido superada por otra más reciente.
+      if (version !== draftWriteVersion) return false;
+      if (!confirmed) throw new Error('escritura no confirmada');
       lastDraft = value; draftErrorShown = false;
       return true;
-    } catch (e) { return draftWriteFailed(); }
+    } catch (e) { return version === draftWriteVersion ? draftWriteFailed() : false; }
   });
   draftWriteQueue = write.then(() => {}, () => {});
   return write;
