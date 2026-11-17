@@ -55,3 +55,6 @@ jobs:
       - name: Verificar reproductor E3 y almacenamiento
         run: node tests/e3-browser.mjs
         timeout-minutes: 4
+      - name: Ensayar biblioteca unificada y respaldo formato 2 (no activados)
+        run: node tests/p2-biblioteca-browser.mjs
+        timeout-minutes: 5
