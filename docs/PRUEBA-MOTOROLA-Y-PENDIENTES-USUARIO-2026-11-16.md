@@ -1,5 +1,18 @@
 # DictaNota · Tus pendientes y la prueba en el Motorola (16/11/2026)
 
+> ## ▶ Actualización del 17/11/2026, 9:19 (Claude)
+> **Lo que ya está hecho** (unido a `main`, sin que tengas que hacer nada más): el PR #41 (Etapa A), la Etapa N (Dictar / Cuadernos), E1, E2 (audios cifrados), K1 (copia cifrada: crear y verificar), B3 (menú ⋯ de las notas) y **E3 (reproductor y panel de espacio)**. Lo de «Todavía no se pueden escuchar los audios desde la app» más abajo **ya no vale**: se escuchan desde la nota.
+> **Lo que probaste hoy en el Motorola** está en [PRUEBA-CORTA-MOTOROLA.md](PRUEBA-CORTA-MOTOROLA.md), con el estado de cada paso. Esa es ahora la lista vigente de lo que falta; **esta prueba larga queda para otro día** (Whisper Small, MP3, huella, grabaciones largas).
+> **Tus pendientes hoy:**
+> 1. **Cerrar el PR #54** (lo reemplazó el #55, ya unido) y decidir qué hacer con los viejos: #49 (guía del propietario y feedback del Motorola), #37 (decisiones del motor), #52 (visión DictaVoz) y los borradores #22 y #1. Ninguna IA los cierra sin que lo pidas.
+> 2. **Proteger `main`** (sección 2): al 16/11 seguía sin protección; hoy no lo verifiqué.
+> 3. **Decidir el nombre.** Si ya existe otra app «Dictanota», hay que elegir otro (candidato: DictaVoz). Detalle y riesgos en la prueba corta, sección «Nombre de la aplicación». En `main` no hay todavía ningún documento que lo decida.
+> 4. **Ajustes**: tiene demasiado texto y opciones y no se entiende dónde está cada cosa. Anotado como pendiente de rediseño; antes de programar se te muestra una maqueta.
+> 5. **Dos pedidos tuyos sin resolver** del uso en el Motorola: elegir cuaderno y nombre desde Dictar, y que «querés» no salga como «queréis». Y uno nuevo: **deshacer una edición ya guardada** (hoy no existe).
+> 6. **Próximo paso técnico: K2** (restaurar una copia cifrada). Es el que puede borrar datos: la IA te consulta antes de empezar.
+>
+> *Las secciones 1 a 5 de abajo son de la versión del 16/11 y se conservan como referencia.*
+
 > **Para:** Ignacio. **Responsable de este documento:** Claude. Solo documentación.
 > **Ninguna IA puede hacer estos pasos por vos**: son del celular y de tu cuenta de GitHub.
 > **Regla de oro:** usá **solo datos inventados**. El repositorio es público y nada de lo que pruebes debe ser de un paciente real.
@@ -13,7 +26,7 @@
 
 ---
 
-## 1. Revisar y decidir el PR #41 (Etapa A)
+## 1. Revisar y decidir el PR #41 (Etapa A) — *hecho: ya está unido*
 
 - Mirá las capturas «antes y después» (360 y 412 px) que te mandé en el chat.
 - Qué cambió, en lenguaje simple: se quitó la palabra vieja «Texto» de algunos mensajes; los dos botones de Audio se ven iguales; Ajustes está más ordenado (íconos propios, botón (i) junto al título, el selector de modelo no corta el texto); el punto de grabación es rojo al grabar y ámbar al pausar; «Procesamiento local» se ve también en el celular; Audio no repite frases ni muestra un botón «Descargar audio» de más.
@@ -91,7 +104,7 @@ Con la protección activada y «Conservar audio» encendido; leé en voz alta un
 26. ☐ Editá la nota A, grabale algo, tocá **Cancelar edición**: el aviso dice que se quitó el audio agregado. Intentá editar otra nota B con la edición de A abierta y algo grabado: tiene que pedirte que guardes o canceles.
 27. ☐ Abrí DictaNota en **dos pestañas** de Brave y desbloqueá las dos: la segunda muestra arriba «abierta en otra pestaña» y, si tocás Guardar ahí, dice que no se guardó.
 28. ☐ Ajustes → **Quitar la protección** con audios guardados: te explica que no se puede todavía y la protección sigue.
-(Todavía no se pueden escuchar los audios desde la app: llega con E3.)
+(Con E3 los audios ya se escuchan desde la nota: ver la prueba corta, pasos 10 a 14.)
 
 ## 4. Cómo contarme el resultado
 
