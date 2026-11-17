@@ -1,8 +1,8 @@
 ## 17/11/2026 · Biblioteca P2 y respaldo formato 2 en laboratorio (ChatGPT, rama dependiente del PR #59)
 
-- Por aprobación del propietario, se prepara la modalidad de audio sin bóveda en la misma IndexedDB, distinguida explícitamente por \`mode: claro\`, con hash SHA-256 y verificación de fragmentos; **todavía sin conectarla a la grabación de uso real**.
-- Se incorpora un escritor y lector de **ensayo** de copias \`.dictanota\` formato 2, con el audio inicialmente en claro cifrado durante la exportación; el formato 1 y su lector se mantienen intactos. No hay restauración todavía ni copia completa prometida en la interfaz.
-- Se agrega prueba de Chrome y CI para el escenario con audio sintético e integridad/tamper. Decisiones, pendientes y límites en \`docs/ENTREGA2-P2-RESPALDO-V2-PREPARACION.md\`.
+- Por aprobación del propietario, se prepara la modalidad de audio sin bóveda en la misma IndexedDB, distinguida explícitamente por `mode: claro`, con hash SHA-256 y verificación de fragmentos; **todavía sin conectarla a la grabación de uso real**.
+- Se incorpora un escritor y lector de **ensayo** de copias `.dictanota` formato 2, con el audio inicialmente en claro cifrado durante la exportación; el formato 1 y su lector se mantienen intactos. No hay restauración todavía ni copia completa prometida en la interfaz.
+- Se agrega prueba de Chrome y CI para el escenario con audio sintético e integridad/tamper. Decisiones, pendientes y límites en `docs/ENTREGA2-P2-RESPALDO-V2-PREPARACION.md`.
 - **Motorola: no se probará a pedido del propietario**; los resultados de laboratorio no se atribuirán al teléfono. Sin K2/T/AO, cambios a bases históricas, migraciones, borrados ni fusión automática.
 
 ## 17/11/2026 · Entrega 2, revisión independiente y correcciones de P1/P4 (ChatGPT, PR #59 sin fusionar)
