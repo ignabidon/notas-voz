@@ -6,6 +6,8 @@
 
 **Leer también README.md y CAMBIOS.md antes de editar.**
 
+**Pedidos a Ignacio (17/11/2026): [PEDIDOS-A-IGNACIO.md](PEDIDOS-A-IGNACIO.md).** Todo lo que una IA le pida a Ignacio (probar en el celular, decidir, configurar GitHub) se anota ahí, con pasos en lenguaje simple, en el mismo cambio en que se pide. Al empezar una sesión, leelo y recordale los pedidos pendientes; solo Ignacio confirma una prueba física. Revisión vigente del PR #47 (E2): [docs/REVISION-PR47-E2-2026-11-17.md](docs/REVISION-PR47-E2-2026-11-17.md).
+
 ## Coordinación y autoría (acordado con el usuario, 16/11/2026)
 
 - Registrar **solo en documentación** quién implementó cada entrega: ChatGPT, Claude u otro responsable confirmado, rama/PR, SHA base, alcance, pruebas y pendientes. Usar CAMBIOS.md y el informe de continuidad. No poner nombres de IA, créditos ni identificación del agente en la interfaz.

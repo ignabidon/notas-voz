@@ -1,3 +1,10 @@
+## 17/11/2026 · Revisión del PR #47 y archivo de pedidos a Ignacio (SOLO documentación)
+
+- **Responsable:** Claude (Sonnet 5.5), a pedido de Ignacio. Rama: `claude/wonderful-cerf-uc3a47`. Base: `aab2b90` (`main`). **No toca `index.html`, pruebas, claves, CSP ni dependencias. No modifica el PR #47.**
+- **Agrega:** [docs/REVISION-PR47-E2-2026-11-17.md](docs/REVISION-PR47-E2-2026-11-17.md) (resultado de la revisión de `71bb17f`, por lectura de código) y [PEDIDOS-A-IGNACIO.md](PEDIDOS-A-IGNACIO.md) (nombre fijo: registro de lo que las IA le piden a Ignacio, con pasos simples, reglas para la IA que controla el cumplimiento y pedidos P-01 a P-06). Punteros en CONTINUAR-AQUI, AGENTS, CLAUDE, SEGURIDAD y el tablero.
+- **Ojo al unir:** el PR #47 también edita `AGENTS.md`, `CAMBIOS.md`, `CLAUDE.md`, `CONTINUAR-AQUI.md`, `SEGURIDAD.md` y el tablero; es probable un cruce de texto en las primeras líneas. Conservar ambos textos.
+- **Estado:** documentación guardada · sin pruebas técnicas nuevas · **Motorola: sin probar**.
+
 ## 16/11/2026 · Paso E1: base nueva de audios por nota, SIN ACTIVAR
 
 - **Responsable:** Claude (Sonnet 5.5), con permiso explícito del usuario (plan mostrado y aprobado). Rama: `e1-base-audios-por-nota`. Base: `fc86681` (`main`). Alcance: solo el paso E1 del tablero [docs/PLAN-ALMACENAMIENTO-CIFRADO.md](docs/PLAN-ALMACENAMIENTO-CIFRADO.md).

@@ -4,6 +4,8 @@
 
 **⚠ SEGURIDAD — leé primero SEGURIDAD.md** (revisión de seguridad en curso desde el 15/11/2026: reglas obligatorias, CSP, hallazgos abiertos y pendientes; la CSP y la huella MP3 aún no están confirmadas en el Motorola).
 
+**Pedidos pendientes a Ignacio: [PEDIDOS-A-IGNACIO.md](PEDIDOS-A-IGNACIO.md) (leerlo al empezar y anotar ahí todo pedido nuevo).**
+
 **Antes de programar, leé AGENTS.md, README.md y CAMBIOS.md. AGENTS.md es la fuente única de reglas compartidas para Claude, ChatGPT y otros agentes.**
 
 - Rama principal: `main`; aplicación web oficial: `/index.html`.

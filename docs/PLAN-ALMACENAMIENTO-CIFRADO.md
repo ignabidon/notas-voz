@@ -48,7 +48,7 @@ Orden decidido por Ignacio: **E1 → E2 → K1 → E3 → K2 → T → AO**.
 | Paso | Qué es | Depende de | Claude | ChatGPT (Codex) | Estado |
 |---|---|---|---|---|---|
 | **E1** | Base nueva de audios por nota, sin activar | — | Sonnet 5.5 | Modelo estándar, razonamiento medio | PR abierto (#45) |
-| **E2** | Cifrado de audios y guardado por nota | E1 | Opus 5.5 | El más capaz de tu plan, razonamiento alto | Pendiente |
+| **E2** | Cifrado de audios y guardado por nota | E1 | Opus 5.5 | El más capaz de tu plan, razonamiento alto | PR abierto (#47), con hallazgos de revisión por corregir: [docs/REVISION-PR47-E2-2026-11-17.md](REVISION-PR47-E2-2026-11-17.md). Decisión de Ignacio: P-01 |
 | **K1** | Copia cifrada: exportar y verificar | E2 | Opus 5.5 | El más capaz de tu plan, razonamiento alto | Pendiente |
 | **E3** | Reproductor en la burbuja, espacio en Ajustes | E2, K1 y Etapa B3 | Sonnet 5.5 | Modelo estándar, razonamiento medio | Pendiente |
 | **K2** | Restaurar una copia cifrada | K1 | Opus 5.5 | El más capaz de tu plan, razonamiento alto | Pendiente |

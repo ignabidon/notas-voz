@@ -1,3 +1,5 @@
+> **▶ ACTUALIZACIÓN 17/11/2026 (Claude Sonnet 5.5, solo documentación).** **E2 está en el PR #47 (sin unir).** Una revisión independiente de `71bb17f` lo dio por bueno en lo principal pero con hallazgos por corregir antes de unir (los más importantes: **H-1, A-1, A-3**); está en [docs/REVISION-PR47-E2-2026-11-17.md](docs/REVISION-PR47-E2-2026-11-17.md). **Lo que Ignacio debe hacer (pruebas en Brave, decisiones, configuración de GitHub) está en [PEDIDOS-A-IGNACIO.md](PEDIDOS-A-IGNACIO.md): leelo al empezar, anotá ahí todo pedido nuevo y recordale los pendientes.** Próximo paso: P-01 (Ignacio decide si se corrige o se une #47); K1 recién después de unir E2.
+
 # CONTINUAR AQUÍ — DictaNota
 
 > **▶ ESTADO AL 16/11/2026, 18:40 (Claude Fable 5.2).** En `main` ya están: la **Etapa N** (pestañas Dictar / Cuadernos; PR #43 de ChatGPT), la continuidad (PR #42) y el **diseño del almacenamiento cifrado** (PR #44). Los tres se unieron con permiso del usuario, con merge normal.

@@ -1,3 +1,7 @@
+## 17/11/2026 · Revisión independiente del PR #47 (E2, audios cifrados)
+
+**[código, lectura sin ejecutar]** Candado entre pestañas, audio dañado y borrador viejo revisados en `71bb17f`: resueltos en lo principal, sin hallazgos graves. Abiertos, entre otros: **H-1** (modo solo lectura también con la protección apagada, bloquea Guardar), **H-2** (`audioParts` puede pisarse con vacío), **H-4** (la revisión al abrir no se espera y puede borrar una parte recién grabada) y avisos que pueden afirmar algo que no pasó (**A-1, A-3**). Detalle, líneas y orden de corrección: [docs/REVISION-PR47-E2-2026-11-17.md](docs/REVISION-PR47-E2-2026-11-17.md). **No probado en el Motorola.** Las pruebas físicas pedidas a Ignacio: [PEDIDOS-A-IGNACIO.md](PEDIDOS-A-IGNACIO.md), P-02.
+
 ## 16/11/2026 · Etapa A estética (Claude, PR #41)
 
 Solo presentación en Audio, Anonimizar, Ajustes y encabezado: sin nuevos datos persistidos, claves, dependencias, orígenes ni cambios de CSP, cifrado, parámetros de Whisper o almacenamiento de audio. Sin `innerHTML` con datos del usuario; íconos SVG en línea. «Procesamiento local» pasa a verse también en el celular (el texto no cambia; nunca «sin nube»). `#audioBox` y las acciones de audio siguen siempre disponibles; la tarjeta repetida «Descargar audio» solo se muestra si hay un audio. Prueba técnica local; **sin prueba en el Motorola**. Sigue abierto el hallazgo 4 (proteger `main`): los pasos para el usuario están en [docs/PRUEBA-MOTOROLA-Y-PENDIENTES-USUARIO-2026-11-16.md](docs/PRUEBA-MOTOROLA-Y-PENDIENTES-USUARIO-2026-11-16.md).
