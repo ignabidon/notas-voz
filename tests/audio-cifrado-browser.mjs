@@ -106,7 +106,9 @@ try {
   assert.equal(g2.id, g1.id, 'mismo audio');
   const l2 = JSON.parse(await leerAudio(g1.id));
   assert.equal(l2.length, 2); assert.deepEqual(l2[0].sha, g1.sha, 'la primera parte no cambió'); assert.deepEqual(l2[1].sha, g2.sha);
-  await run(`document.getElementById('save').click(); vault.flush().then(() => true)`);
+  await run(`document.getElementById('save').click(); true`);
+  await waitFor('!convSaving && convAudioId === null', 'edición confirmada tras la comprobación del audio');
+  await run('vault.flush().then(() => true)');
   assert.equal(await run(`convStore.data.entries.find(e => e.id === ${JSON.stringify(nota.id)}).audioId`), g1.id);
 
   // 7) Archivo cargado (bytes inventados, nombre inventado): se guarda cifrado en partes de 1 MB y cuenta como «ocupado».
