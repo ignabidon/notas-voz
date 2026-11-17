@@ -3,7 +3,7 @@
 > **Para:** Ignacio. Este archivo no cambia de nombre. Lo mantiene la IA que haga cada paso.
 > **No es obligatoria para seguir avanzando.** Las IA prueban todo lo posible en laboratorio; esto es solo lo que **únicamente se ve en tu teléfono**. Hacé lo que puedas, cuando puedas.
 > **Usá solo datos inventados.** Nada de pacientes reales.
-> Última actualización: 17/11/2026 (después de E2 y K1).
+> Última actualización: 17/11/2026 (después de E2, K1 y B3).
 
 ## Antes de empezar
 
@@ -19,8 +19,8 @@ Anotá cada uno como **bien** o **falló**. Si falló, sacá una captura de pant
 |---|---|---|
 | 1 | En **Dictar**, tocá el micrófono, leé el texto y tocá **Detener**. | Aparece el texto escrito. La primera vez tarda más. |
 | 2 | Tocá **Guardar**. | La nota aparece como un globo dentro de un cuaderno. |
-| 3 | Cerrá la pestaña de Brave y volvé a abrir la dirección. Entrá a **Cuadernos**. | La nota sigue ahí. |
-| 4 | Tocá **Editar** en esa nota. | El cuadro para escribir se ve grande y cómodo. Tocá **Cancelar edición**. |
+| 3 | Cerrá la pestaña de Brave y volvé a abrir la dirección. Entrá a **Cuadernos**. | La nota sigue ahí. En la lista se ve el comienzo del texto y «Hoy» con la hora. |
+| 4 | Tocá **Editar** en esa nota. | El cuadro para escribir se ve grande y cómodo. Tocá **Cancelar edición**. Después tocá el botón **⋯** de la nota: aparecen «Mover a otro cuaderno» y «Borrar esta nota». |
 | 5 | Andá a **Ajustes**, bajá hasta **Copia cifrada** y tocá **Crear copia cifrada**. Elegí una contraseña de prueba, por ejemplo `prueba inventada 123`. (Si ya activaste la protección, en vez de eso te pide tu contraseña.) | Dice «Copia creada y comprobada» y Brave descarga un archivo que empieza con `DictaNota-copia-`. |
 | 6 | Tocá **Verificar una copia**, elegí ese archivo y escribí la misma contraseña. | Dice «Copia correcta». |
 

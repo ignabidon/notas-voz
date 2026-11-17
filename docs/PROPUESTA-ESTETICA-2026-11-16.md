@@ -100,6 +100,7 @@ Cada ítem indica: qué se ve hoy → cambio → dónde → criterio de aceptaci
 *Pruebas a actualizar:* las que fijan `#studioDockStart{display:none/flex}` por vista (`tests/delta.test.mjs`).
 
 **B3. Burbujas y lista de hojas.**
+> **Estado (17/11/2026): implementado.** Diferencia con lo propuesto: además de «Copiar», quedó a la vista **«Editar»**, porque corregir la transcripción es lo que el usuario más hace (devolución del Motorola del 16/11); «Mover» y «Borrar» van en el menú «⋯». La pulsación larga sigue reservada para «ver original» (AO).
 *Hoy:* cada burbuja lleva **cuatro botones con borde** (Copiar, Editar, Mover, Borrar: `.conv-actions`). La lista (`.conv-item`) nombra cada hoja por fecha y repite la misma fecha en la segunda línea («1 nota · último 16/11/2026 · 12:44»); dos hojas del mismo día se ven casi iguales.
 *Cambio:*
 - Burbuja limpia: texto + sello de hora + **menú ⋯** (≥48 px, `aria-haspopup`). «Copiar» puede quedar visible. Reservar la **pulsación larga** para «ver original» cuando exista la anonimización con original recuperable (idea del usuario).
