@@ -11,7 +11,7 @@ function borrador(storage, vault, snapshot, warnings){
   assert.ok(start > 0 && end > start, 'falta la rutina de confirmación del borrador');
   const code = html.slice(start, end);
   return new Function('vaultStore', 'vault', 'snap', 'flash', 'DRAFT',
-    "let lastDraft = '', draftWriteQueue = Promise.resolve(), draftErrorShown = false;\n" + code +
+    "let lastDraft = '', draftWriteQueue = Promise.resolve(), draftErrorShown = false, draftWriteVersion = 0;\n" + code +
     '\nreturn {saveDraft, last: () => lastDraft};'
   )(storage, vault, () => snapshot.value, s => warnings.push(s), 'notasvoz.gamma.draft.v1');
 }
@@ -106,4 +106,61 @@ test('P1/P4: el formato de copia y los identificadores criptográficos no cambia
   assert.match(html,/const AN_DB = 'notasvoz-dictanota-audio'/);
   assert.match(html,/const AN_DB_VERSION = 1/);
   assert.match(html,/const COPIA_FORMATO = 1|\bv: 1\b/);
+});
+
+test('P1: sin bóveda, escribir en pagehide no espera microtareas ni cola', async () => {
+  const data = new Map(), snapshot = {value: 'primera versión'}, warnings = [];
+  const storage = {setItem(k,v){data.set(k,v)}, getItem(k){return data.get(k) ?? null}};
+  let release;
+  const vault = {state:'open', readOnly:false, flush:() => new Promise(r=>{release=r}), saved:()=>true};
+  const b = borrador(storage, vault, snapshot, warnings);
+  const old=b.saveDraft();
+  for (let i=0; i<6 && !release; i++) await Promise.resolve();
+  assert.equal(typeof release,'function');
+  vault.state='off';
+  snapshot.value='última edición antes de cerrar';
+  const closing=b.saveDraft(); // el manejador de pagehide no espera una promesa
+  assert.equal(data.get('notasvoz.gamma.draft.v1'),snapshot.value,'la escritura ocurre dentro del mismo evento');
+  assert.equal(await closing,true);
+  release(); await old;
+  assert.equal(data.get('notasvoz.gamma.draft.v1'),snapshot.value,'un borrador viejo no pisa la última edición');
+  assert.equal(warnings.length,0);
+});
+
+test('P1: con bóveda, un bloqueo no puede ignorar un borrador sin confirmar', async () => {
+  const code = html.match(/async function vaultLockNow\(\)\{[\s\S]*?\n\}/)?.[0];
+  assert.ok(code,'existe la función de bloqueo');
+  let reloaded=0, flushes=0, msg='';
+  const vault={state:'open',pending:new Set(),cache:new Map(),key:{},audioKey:{},
+    flush:async()=>{flushes++}};
+  const lock=new Function('vault','vaultBusy','vaultBeforeLock','e3Stop','vaultPanelMsg','location',
+    code+'\nreturn vaultLockNow;')(vault,()=>false,async()=>false,()=>{},s=>{msg=s},{reload(){reloaded++}});
+  assert.equal(await lock(),false);
+  assert.equal(vault.state,'open','si falla el borrador, no recargar ni descartar el editor');
+  assert.equal(reloaded,0);
+  assert.equal(flushes,0);
+  assert.match(msg,/borrador no pudo guardarse/);
+  assert.match(html,/if \(!\(await vaultBeforeLock\(\)\)\) throw new Error\('No se activó la protección/);
+});
+
+test('P1: borrador viejo ya guardado no duplica nota; distinto destino o contenido se recupera', () => {
+  const start=html.indexOf('function draftAlreadyConfirmed(');
+  const end=html.indexOf('\nfunction restoreDraft(){',start);
+  assert.ok(start>=0 && end>start,'existe conciliación al restaurar');
+  const store={data:{entries:[
+    {id:'nota-1',text:'Texto confirmado',audioId:'audio-A',recordedAt:101},
+    {id:'nota-2',text:'Edición confirmada',audioId:null,recordedAt:77}
+  ]}};
+  const fn=new Function('convStore',html.slice(start,end)+'\nreturn draftAlreadyConfirmed;')(store);
+  const draft=(recordedAt,text='Texto confirmado',audioId='audio-A',editing=null)=>({
+    title:'',tags:[],text,conv:{recordedAt,audioId,editing}
+  });
+  assert.equal(fn(draft(101)),true,'no recuperar la nota ya guardada como un mensaje nuevo');
+  assert.equal(fn(draft(102)),false,'texto igual escrito después es un borrador diferente');
+  assert.equal(fn(draft(101,'Texto nuevo')),false,'una edición pendiente no se descarta');
+  assert.equal(fn(draft(101,'Texto confirmado','audio-B')),false,'audio diferente no es el mismo borrador');
+  assert.equal(fn(draft(null,'Edición confirmada',null,'nota-2')),true,'la edición ya confirmada se reconoce');
+  assert.equal(fn({...draft(101),tags:['pendiente']}),false,'conservar etiquetas que aún puedan ser un borrador');
+  assert.match(html,/lastDraft = staleConfirmed \? storedDraft : snap\(\)/,'el borrador viejo debe intentar limpiarse');
+  assert.match(html,/if \(staleConfirmed\) void saveDraft\(\)/,'reintenta la limpieza');
 });
