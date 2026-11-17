@@ -152,6 +152,8 @@ try {
   await run(`e3Recover(${JSON.stringify(orphan)})`);
   assert.equal(await run(`convStore.data.entries.filter(e=>e.audioId===${JSON.stringify(orphan)}).length`),1);
   const recovered=await run('convStore.data.entries.at(-1)');
+  assert.equal(recovered.text, '', 'recuperar un audio no debe añadir una transcripción ficticia');
+  assert.equal(recovered.transcriptionStatus, 'pendiente');
   assert.equal(await run('vault.saved(CONV_KEY)'),true);
   // Borrar solo audio conserva texto y sello. Un error de disco no debe borrar audio.
   await run(`window.__set=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){if(k==='notasvoz.boveda.v1.r.conversaciones')throw new DOMException('lleno','QuotaExceededError');return __set.call(this,k,v)};`);
