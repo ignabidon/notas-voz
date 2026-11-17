@@ -77,7 +77,27 @@ try{
   '})()'));
  assert.equal(fixed.bytes,1712);assert.equal(fixed.version,2);assert.equal(fixed.clear,1);
  assert.equal(fixed.encrypted,0);assert.equal(fixed.blocks,1);assert.equal(fixed.wrong,'Clave');
- console.log('BIBLIOTECA P2 + RESPALDO 2 OK:',r.chunks,'fragmentos; cifrado de copia autenticado; fixture fijo válido');
+ // Regresión: una ficha clara a medio escribir no se borra ni se diagnostica como cifrada
+ // si posteriormente se activa la bóveda. Solo E2 puede revisarse con clave E2.
+ const transition=JSON.parse(await run(`(async()=>{
+   const db=await anDb(), partialId=anNewId();
+   const part={mime:'audio/wav',origin:'cargado',name:'parcial-inventado.wav',
+     chunks:1,bytes:4,ms:100,complete:true,hashes:[]};
+   await anPutMeta(db,{...anNewMeta(partialId,Date.now(),'escribiendo'),
+     mode:AN_PLAIN_MODE,parts:1,bytes:4,plain:{parts:[part]}});
+   await anPutChunk(db,partialId,0,0,new Blob([new Uint8Array([1,2,3,4])]));
+   const {dek}=await vault.enable('clave inventada de cambio de modo 904'); dek.fill(0);
+   await vaultTakeTabLock();
+   await anReviewOnOpen();
+   const preserved=await anGetMeta(db,${JSON.stringify(r.id)});
+   return JSON.stringify({stillClear:!!preserved,clearMode:preserved?.mode,
+     partial:!!(await anGetMeta(db,partialId)),flagged:anDamaged.has(${JSON.stringify(r.id)})});
+ })()`));
+ assert.equal(transition.stillClear,true,'activar protección no borra audios en claro');
+ assert.equal(transition.clearMode,'claro','no se reinterpretan como cifrados');
+ assert.equal(transition.partial,true,'una escritura clara interrumpida permanece para diagnóstico');
+ assert.equal(transition.flagged,false,'una ficha clara íntegra no se informa como cifrado dañado');
+ console.log('BIBLIOTECA P2 + RESPALDO 2 OK:',r.chunks,'fragmentos; cifrado de copia autenticado; fixture fijo válido y transición preservada');
 }finally{
  try{ws?.close()}catch(e){}
  chrome.kill('SIGKILL');server.close();

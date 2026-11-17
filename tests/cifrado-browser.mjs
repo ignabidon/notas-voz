@@ -91,6 +91,25 @@ try {
   assert.equal(await run('document.querySelector(".wrap").inert'), false);
   assert.equal(await run('document.getElementById("topLock").hidden'), false);
 
+  // 4b) Si el borrador falla al autoguardarse, el temporizador cubre los datos, sin descartar el texto.
+  await run(`window.__beforeLockNormal = vaultBeforeLock; vaultBeforeLock = async () => false;
+    $('text').value = 'BORRADOR-CON-CUOTA-SIMULADA';
+    vaultLastActivity = Date.now() - 16 * 60 * 1000;
+    document.dispatchEvent(new Event('visibilitychange')); true`);
+  await waitFor('vaultPrivacyHold && !document.getElementById("vaultLock").hidden', 'escudo de privacidad');
+  assert.equal(await run('vault.state'), 'open', 'no se destruye el borrador sin guardar');
+  assert.equal(await run('document.querySelector(".wrap").inert'), true, 'texto no accesible desde la interfaz');
+  assert.equal(await run('document.getElementById("vaultLockTitle").textContent'), 'DictaVoz está oculta');
+  assert.equal(await run('document.getElementById("vaultBioUnlock").hidden'), true);
+  await run('document.getElementById("vaultLockPass").value = "incorrecta"; document.getElementById("vaultLockGo").click(); true');
+  await waitFor('/no coinciden/.test(document.getElementById("vaultLockMsg").textContent)', 'rechazo de contraseña del escudo');
+  assert.equal(await run('vaultPrivacyHold'), true);
+  await run(`document.getElementById("vaultLockPass").value = ${JSON.stringify(PASS)};
+    document.getElementById("vaultLockGo").click(); true`);
+  await waitFor('!vaultPrivacyHold && document.getElementById("vaultLock").hidden', 'retirar escudo con contraseña');
+  assert.equal(await run('document.getElementById("text").value'), 'BORRADOR-CON-CUOTA-SIMULADA', 'borrador visible recuperado');
+  await run('vaultBeforeLock = window.__beforeLockNormal; true');
+
   // 5) Bloquear desde el encabezado; contraseña incorrecta y luego correcta.
   await run('window.__viejo = true; document.getElementById("topLock").click(); true');
   await waitFor('!window.__viejo && ' + ready + ' && vault.state === "locked"', 'bloqueo manual');

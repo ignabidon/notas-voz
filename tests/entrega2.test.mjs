@@ -92,7 +92,7 @@ test('P4: una nota solo audio conserva estado, referencia y fecha sin texto fict
 
 test('P4: guardado sin texto requiere audio íntegro; recuperación no inventa transcripción', () => {
   assert.match(html,/if \(!text\.trim\(\) && !convAudioId\) return flash/);
-  assert.match(html,/if \(!text\.trim\(\) && convAudioId\) \{[\s\S]*?anAudioHealth\(/);
+  assert.match(html,/if \(convAudioId\) \{[\s\S]*?anAudioHealth\(/,'la integridad se revisa también si hay texto');
   assert.match(html,/if \(saveLabel\) saveLabel\.textContent = hasAudio && !hasText \? 'Guardar solo audio'/);
   const recover=html.match(/async function e3Recover\(id\)\{[\s\S]*?\n\}/)?.[0] || '';
   assert.match(recover,/convAudioId = id; convAudioMs = anTotalMs\(h.detail\)/);
@@ -128,7 +128,7 @@ test('P1: sin bóveda, escribir en pagehide no espera microtareas ni cola', asyn
 });
 
 test('P1: con bóveda, un bloqueo no puede ignorar un borrador sin confirmar', async () => {
-  const code = html.match(/async function vaultLockNow\(\)\{[\s\S]*?\n\}/)?.[0];
+  const code = html.match(/async function vaultLockNow\(auto = false\)\{[\s\S]*?\n\}/)?.[0];
   assert.ok(code,'existe la función de bloqueo');
   let reloaded=0, flushes=0, msg='';
   const vault={state:'open',pending:new Set(),cache:new Map(),key:{},audioKey:{},
@@ -141,6 +141,23 @@ test('P1: con bóveda, un bloqueo no puede ignorar un borrador sin confirmar', a
   assert.equal(flushes,0);
   assert.match(msg,/borrador no pudo guardarse/);
   assert.match(html,/if \(!\(await vaultBeforeLock\(\)\)\) throw new Error\('No se activó la protección/);
+});
+
+test('P1/seguridad: autobloqueo sin espacio oculta la pantalla y conserva la sesión recuperable', async () => {
+  const code = html.match(/async function vaultLockNow\(auto = false\)\{[\s\S]*?\n\}/)?.[0];
+  assert.ok(code);
+  let hidden = 0, reloaded = 0, flushed = 0;
+  const vault = {state:'open', pending:new Set(), flush:async()=>{flushed++}, cache:new Map(), key:{}, audioKey:{}};
+  const fn = new Function('vault','vaultBusy','vaultBeforeLock','e3Stop','vaultPanelMsg','location','vaultHoldPrivate',
+    code + '\nreturn vaultLockNow;')(
+      vault, () => false, async()=>false, ()=>{}, ()=>{}, {reload(){reloaded++}}, ()=>{hidden++});
+  assert.equal(await fn(true), false);
+  assert.equal(hidden, 1, 'el autobloqueo muestra un escudo de privacidad');
+  assert.equal(vault.state, 'open', 'la sesión queda en memoria para no perder el borrador no persistido');
+  assert.equal(reloaded, 0);
+  assert.equal(flushed, 0);
+  assert.match(html, /VAULT_IDLE_MS\) void vaultLockNow\(true\)/);
+  assert.match(html, /vault\.checkPassword\(vaultEl\('vaultLockPass'\)\.value\)/);
 });
 
 test('P1: borrador viejo ya guardado no duplica nota; distinto destino o contenido se recupera', () => {

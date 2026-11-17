@@ -7,12 +7,26 @@
 - **Pruebas:** CI añade `tests/k2-browser.mjs` para copia sintética, contraseña incorrecta, copia truncada, perfil ocupado, limpieza de lote y recarga. **No marcar resultado verde hasta que GitHub Actions lo confirme**. Sin prueba física en Motorola.
 - **Pendiente:** revisión independiente, matriz de cuotas/cortes, compatibilidad formato 1, manejo de audios no incluidos y reemplazo seguro con doble confirmación y autorización aparte. Informe: `docs/K2-RESTAURACION-VACIA-2026-11-17.md`.
 
+## 17/11/2026 · Revisión cruzada del PR #60 — transición entre modalidades (ChatGPT)
+
+- Sincronizado el PR #60 con el #59 corregido mediante un **commit de fusión en la rama apilada**; sin squash, sin force-push y sin fusionar `main`.
+- La revisión E2 al abrir la bóveda excluye audios experimentales identificados como `mode: claro`: no los descarta ni los etiqueta falsamente como cifrado dañado. Prueba de Chrome con ficha completa e interrumpida tras activar la protección.
+- Continúan bloqueadas la activación de P2 para usuarios, la copia integral restaurable, la exclusión entre pestañas sin bóveda y toda migración o eliminación de datos.
+
 ## 17/11/2026 · Biblioteca P2 y respaldo formato 2 en laboratorio (ChatGPT, rama dependiente del PR #59)
 
 - Por aprobación del propietario, se prepara la modalidad de audio sin bóveda en la misma IndexedDB, distinguida explícitamente por `mode: claro`, con hash SHA-256 y verificación de fragmentos; **todavía sin conectarla a la grabación de uso real**.
 - Se incorpora un escritor y lector de **ensayo** de copias `.dictanota` formato 2, con el audio inicialmente en claro cifrado durante la exportación; el formato 1 y su lector se mantienen intactos. No hay restauración todavía ni copia completa prometida en la interfaz.
 - Se agrega prueba de Chrome y CI para el escenario con audio sintético e integridad/tamper. Decisiones, pendientes y límites en `docs/ENTREGA2-P2-RESPALDO-V2-PREPARACION.md`.
 - **Motorola: no se probará a pedido del propietario**; los resultados de laboratorio no se atribuirán al teléfono. Sin K2/T/AO, cambios a bases históricas, migraciones, borrados ni fusión automática.
+
+## 17/11/2026 · Segunda revisión del PR #59 (ChatGPT; sin merge)
+
+- Ante falta de espacio, el autobloqueo ahora **oculta la interfaz y exige contraseña**, sin recargar ni perder el borrador. La bóveda permanece abierta **en RAM**: es un escudo de privacidad, no bloqueo criptográfico; queda registrado ese límite.
+- Guardar nota con **texto más audio** también verifica íntegramente los fragmentos. Si están dañados no confirma el vínculo ni pierde el texto.
+- Se aclara cuándo se puede reproducir un audio huérfano recuperado.
+- Nuevas pruebas Node/Chrome de escudo, contraseña correcta/errónea, conservación del editor y audio dañado con transcripción. CI y auditoría posterior deben comprobarse en el SHA final; Motorola pendiente.
+- Ninguna fusión, migración, K2, T, AO ni cambio de formato; los PR #60 y #61 siguen separados.
 
 ## 17/11/2026 · Entrega 2, revisión independiente y correcciones de P1/P4 (ChatGPT, PR #59 sin fusionar)
 

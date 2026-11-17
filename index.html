@@ -1657,6 +1657,7 @@ vault.takeLock = () => vaultTakeTabLock();   // el candado real (Web Locks); la 
 const vaultStore = vault.store;
 const VAULT_IDLE_MS = 15 * 60 * 1000;
 let vaultReadyFns = [], vaultBusy = () => false, vaultBeforeLock = () => {}, vaultLastActivity = Date.now();
+let vaultPrivacyHold = false; // Cobertura visual ante falla del borrador en el autobloqueo: NO equivale a cerrar la bóveda.
 function vaultWhenReady(fn){ if (vault.state === 'off' || vault.state === 'open') fn(); else vaultReadyFns.push(fn); }
 function vaultSetHooks(busy, beforeLock){ vaultBusy = busy; vaultBeforeLock = beforeLock; }
 const vaultEl = id => document.getElementById(id);
@@ -1670,11 +1671,12 @@ function vaultFriendly(e){
 function vaultSetInert(on){ document.querySelectorAll('body > *:not(#vaultLock):not(script)').forEach(el => { el.inert = on; }); }
 function vaultShowLock(){
   const box = vaultEl('vaultLock'); box.hidden = false; vaultSetInert(true);
+  vaultEl('vaultLockTitle').textContent = vaultPrivacyHold ? 'DictaVoz está oculta' : 'DictaVoz está bloqueada';
   const broken = vault.state === 'broken';
-  vaultEl('vaultLockForm').hidden = broken; vaultEl('vaultRecoverOpen').hidden = broken;
+  vaultEl('vaultLockForm').hidden = broken; vaultEl('vaultRecoverOpen').hidden = broken || vaultPrivacyHold;
   vaultEl('vaultLockMsg').textContent = broken ? 'Los datos de la protección están dañados. No se modificó nada: no borres los datos del sitio y pedí ayuda revisando SEGURIDAD.md.' : '';
-  vaultEl('vaultBioUnlock').hidden = broken || !(vault.header && vault.header.bio);
-  if (!broken && !(vault.header && vault.header.bio)) setTimeout(() => vaultEl('vaultLockPass').focus(), 50);
+  vaultEl('vaultBioUnlock').hidden = broken || vaultPrivacyHold || !(vault.header && vault.header.bio);
+  if (!broken && (vaultPrivacyHold || !(vault.header && vault.header.bio))) setTimeout(() => vaultEl('vaultLockPass').focus(), 50);
 }
 /* Candado de una sola pestaña (diseño 2.5): la primera pestaña que abre la protección es la única que escribe.
    Se toma ANTES de cargar notas y borrador; si otra pestaña lo tiene, esta queda en solo lectura (vault.readOnly). */
@@ -1703,7 +1705,16 @@ async function vaultAfterUnlock(){
   fns.forEach(fn => { try { fn(); } catch (e) { console.error(e); } });
   vaultRefreshPanel();
 }
-async function vaultLockNow(){
+/* Si falla el guardado automático, ocultar de inmediato el contenido y exigir autenticación.
+   La clave y el texto continúan en memoria para evitar perder el borrador; NO es un bloqueo criptográfico.
+   Sin cuota libre el usuario debe recuperar espacio y confirmar el borrador antes de salir. */
+function vaultHoldPrivate(){
+  if (vaultPrivacyHold) return;
+  vaultPrivacyHold = true;
+  vaultShowLock();
+  vaultEl('vaultLockMsg').textContent = 'No se pudo guardar el borrador. Se ocultó la pantalla por privacidad, pero la bóveda sigue abierta en memoria para no perderlo. Ingresá la contraseña para recuperarlo, liberá espacio y guardá antes de cerrar.';
+}
+async function vaultLockNow(auto = false){
   if (vault.state !== 'open') return false;
   if (vaultBusy()) { vaultPanelMsg('No se bloquea mientras grabás o transcribís.'); return false; }
   e3Stop();
@@ -1711,11 +1722,21 @@ async function vaultLockNow(){
   let draftReady = false;
   try { draftReady = await vaultBeforeLock(); } catch (e) {}
   if (!draftReady) {
-    vaultPanelMsg('No se bloqueó: el borrador no pudo guardarse. Liberá espacio o cerrá la otra pestaña y volvé a intentar.');
+    if (auto) vaultHoldPrivate();
+    else vaultPanelMsg('No se bloqueó: el borrador no pudo guardarse. Liberá espacio o cerrá la otra pestaña y volvé a intentar.');
     return false;
   }
-  await vault.flush();
-  if (vault.pending.size) { vaultPanelMsg('No se pudo guardar todo cifrado; no se bloqueó para no perder texto.'); return false; }
+  try { await vault.flush(); }
+  catch (e) {
+    if (auto) vaultHoldPrivate();
+    else vaultPanelMsg('No se pudo completar el guardado cifrado. No se bloqueó para no perder el borrador.');
+    return false;
+  }
+  if (vault.pending.size) {
+    if (auto) vaultHoldPrivate();
+    else vaultPanelMsg('No se pudo guardar todo cifrado; no se bloqueó para no perder texto.');
+    return false;
+  }
   vault.state = 'locked'; vault.cache = new Map(); vault.key = null; vault.audioKey = null;
   location.reload();   // descarta de la memoria y de la pantalla todo el texto descifrado
   return true;
@@ -1817,7 +1838,15 @@ function vaultInitUI(){
   vaultEl('vaultLockForm').addEventListener('submit', async ev => {
     ev.preventDefault();
     const btn = vaultEl('vaultLockGo'); btn.disabled = true; vaultEl('vaultLockMsg').textContent = 'Comprobando…';
-    try { await vault.unlockPassword(vaultEl('vaultLockPass').value); await vaultAfterUnlock(); }
+    try {
+      if (vaultPrivacyHold) {
+        // No recargar ni abrir de nuevo la bóveda: su caché contiene el borrador aún no confirmado.
+        const dek = await vault.checkPassword(vaultEl('vaultLockPass').value); dek.fill(0);
+        vaultPrivacyHold = false; vaultEl('vaultLock').hidden = true; vaultSetInert(false);
+        vaultEl('vaultLockPass').value = ''; vaultLastActivity = Date.now();
+        vaultPanelMsg('La pantalla estaba oculta porque el borrador no pudo guardarse. Liberá espacio y volvé a intentar antes de salir.');
+      } else { await vault.unlockPassword(vaultEl('vaultLockPass').value); await vaultAfterUnlock(); }
+    }
     catch (e) { vaultEl('vaultLockMsg').textContent = vaultFriendly(e); vaultEl('vaultLockPass').select(); }
     finally { btn.disabled = false; }
   });
@@ -1866,8 +1895,8 @@ function vaultInitUI(){
     } catch (e) { vaultPanelMsg(vaultFriendly(e)); }
     finally { vaultEl('vaultSetupGo').disabled = false; }
   });
-  vaultEl('vaultLockBtn').addEventListener('click', vaultLockNow);
-  vaultEl('topLock').addEventListener('click', vaultLockNow);
+  vaultEl('vaultLockBtn').addEventListener('click', () => void vaultLockNow(false));
+  vaultEl('topLock').addEventListener('click', () => void vaultLockNow(false));
   vaultEl('vaultBioAdd').addEventListener('click', async () => {
     const pw = await vaultAskPassword('Confirmá tu contraseña para activar la huella'); if (pw === null) return;
     try { const dek = await vault.checkPassword(pw); await vaultOfferBio(dek); } catch (e) { vaultPanelMsg(vaultFriendly(e)); }
@@ -1896,9 +1925,9 @@ function vaultInitUI(){
   const touch = () => { vaultLastActivity = Date.now(); };
   ['pointerdown', 'keydown', 'input', 'wheel', 'touchstart'].forEach(t => document.addEventListener(t, touch, {capture: true, passive: true}));
   const check = () => {
-    if (vault.state !== 'open') return;
+    if (vault.state !== 'open' || vaultPrivacyHold) return;
     if (vaultBusy()) { touch(); return; }
-    if (Date.now() - vaultLastActivity >= VAULT_IDLE_MS) vaultLockNow();
+    if (Date.now() - vaultLastActivity >= VAULT_IDLE_MS) void vaultLockNow(true);
   };
   setInterval(check, 30000);
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') check(); });
@@ -2869,9 +2898,9 @@ async function convSave(){
     try { const m = await anGetMeta(await anDb(), convAudioId); audioParts = m && anValidMeta(m) && m.state === 'cerrado' && m.parts >= 1 ? m.parts : null; }
     catch (e) { return flash('No se guardó: no se pudo comprobar el audio guardado (' + anErrName(e) + '). El texto y su audio siguen en el editor.'); }
   }
-  // Una nota sin texto requiere audio cifrado, cerrado y verificado completo; no basta con una referencia pendiente.
-  if (!text.trim() && convAudioId) {
-    if (!anUsable() || !audioParts) return flash('No se guardó: todavía no hay un audio por nota confirmado. El borrador sigue disponible.');
+  // Toda nota con audio (con texto o sin texto) exige integridad completa antes de confirmar el vínculo.
+  if (convAudioId) {
+    if (!anUsable() || !audioParts) return flash('No se guardó: todavía no hay un audio por nota confirmado. El texto y el borrador siguen disponibles.');
     try {
       const health = await anAudioHealth(await anDb(), vault.audioKey, vault.header.id, convAudioId);
       if (!health.ok) return flash('No se guardó: el audio está incompleto o dañado (' + health.why + '). Se conserva sin modificar para recuperarlo.');
@@ -4444,7 +4473,6 @@ async function anReadAudio(db, kAudio, hid, id){
   return out;
 }
 /*AUDIONOTA-END*/
-
 /* ---------- P2 · Biblioteca unificada: modalidad SIN bóveda (ensayo, NO conectada a la captura) ----------
    Misma base AN_DB/meta/chunks e IDs que E2; los fragmentos NO se cifran.
    Una ficha «claro» se distingue de una ficha AES-GCM; nunca inferir la modalidad por falta de key.
@@ -4684,7 +4712,7 @@ async function e3Recover(id){
     const saved = await saveDraft();
     document.querySelector('[data-delta-view="transcripcion"]').click(); renderConv();
     flash(saved
-      ? 'Audio recuperado como borrador. Escuchalo, agregá texto si querés y tocá Guardar solo audio para confirmar.'
+      ? 'Audio recuperado como borrador. Agregá texto si querés y tocá Guardar solo audio para confirmar. Podrás reproducirlo desde la nota guardada.'
       : 'El audio está disponible como borrador, pero no se pudo confirmar el guardado del borrador. No cierres la app sin resolverlo.');
   } catch (e) { flash(e.message); }
   finally { convSaving = false; void e3RefreshSpace(); }
@@ -5023,10 +5051,13 @@ async function anReviewOnOpen(){
     if (indexedDB.databases) { const list = await indexedDB.databases(); if (!list.some(d => d.name === AN_DB)) return; }
     if (!(await anLockOk())) return;
     const db = await anDb(), metas = await anListMeta(db), counts = {};
-    for (const m of metas) if (m && typeof m.id === 'string') counts[m.id] = await anCountChunks(db, m.id);
+    // El recorrido E2 solo sabe abrir audios cifrados. Nunca borrar ni declarar dañada
+    // una ficha P2 expresamente marcada como audio en claro al activar la bóveda.
+    const cifrados = metas.filter(m => !m || m.mode !== AN_PLAIN_MODE);
+    for (const m of cifrados) if (m && typeof m.id === 'string') counts[m.id] = await anCountChunks(db, m.id);
     const notes = convStore.data ? convStore.data.entries.map(e => e.audioId).filter(Boolean) : [];
-    const r = anReview(metas, counts, notes, [convAudioId]);
-    const byId = new Map(metas.filter(m => m && typeof m.id === 'string').map(m => [m.id, m]));
+    const r = anReview(cifrados, counts, notes, [convAudioId]);
+    const byId = new Map(cifrados.filter(m => m && typeof m.id === 'string').map(m => [m.id, m]));
     const hid = vault.header.id, kAudio = vault.audioKey; let closed = 0;
     for (const a of r.audios) {
       const m = byId.get(a.id);
@@ -5226,7 +5257,6 @@ async function copiaVerify(file, abrir, onProgress){
   return {formato, creado: h.creado, contenido: h.contenido, id: h.id, bytes: file.size, registros, audios, fragmentos, bytesAudio, cuadernos: stats.cuadernos, notas: stats.notas};
 }
 /*COPIA-END*/
-
 /* ---------- Respaldo formato 2: ensayo de compatibilidad, sin interfaz ni restauración ----------
    El formato 1 permanece intacto. La copia 2 cifra también fragmentos guardados en claro.
    AES-GCM de cada bloque y final + cadena SHA-256; autenticidad depende de la contraseña
