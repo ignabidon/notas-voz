@@ -51,7 +51,7 @@ Orden decidido por Ignacio: **E1 → E2 → K1 → E3 → K2 → T → AO**.
 | **E2** | Cifrado de audios y guardado por nota | E1 | Opus 5.5 | El más capaz de tu plan, razonamiento alto | Unido a `main` (PR #50, que integra el #47; 17/11/2026). Sin probar en el Motorola |
 | **K1** | Copia cifrada: exportar y verificar | E2 | Opus 5.5 | El más capaz de tu plan, razonamiento alto | Unido a `main` (17/11/2026). Sin probar en el Motorola |
 | **E3** | Reproductor en la burbuja, espacio en Ajustes | E2, K1 y Etapa B3 | Sonnet 5.5 | Modelo estándar, razonamiento medio | Unido a `main` (PR #55, que reemplaza al #54; 17/11/2026). Motorola: reproducir, quitar audio y panel de espacio probados por Ignacio; adelantar/pausar y «Ver nota» sin probar |
-| **K2** | Restaurar una copia cifrada | K1 | Opus 5.5 | El más capaz de tu plan, razonamiento alto | Pendiente |
+| **K2** | Restaurar una copia cifrada | K1 | Opus 5.5 | El más capaz de tu plan, razonamiento alto | **En ensayo, NO completo:** PR #61 sobre #60/#59, solo perfil vacío, pruebas y auditoría pendientes. Reemplazar datos existentes sin implementar. No fusionar |
 | **T** | Mudar el texto al depósito grande | K1 y K2 | Opus 5.5 | El más capaz de tu plan, razonamiento alto | Pendiente |
 | **AO** | Anonimización con original recuperable | T y Etapa C1 | Sonnet 5.5 u Opus 5.5 | Cualquiera de los dos niveles | Pendiente |
 
