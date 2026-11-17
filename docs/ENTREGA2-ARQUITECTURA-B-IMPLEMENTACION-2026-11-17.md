@@ -50,6 +50,18 @@ El propietario **aprobó la alternativa B**: biblioteca única de audio de cara 
 - Completar flujo ante Whisper fallido y recuperación de audio en el propio borrador (reproducir/reintentar/escribir), bloqueo de pestañas en ambos modos y control de preferencia por instalación, preservando la decisión manual de Guardar.
 - Validar matriz real de interrupciones, manipulación de fragmentos, borrador atrasado, varios cuadernos, quota, modo con/sin bóveda y copia incompleta. Diferenciar CI, Chrome y prueba física del Motorola.
 
+## Correcciones posteriores a la revisión independiente del PR #59 (17/11/2026)
+
+La revisión cruzada de ChatGPT identificó tres riesgos de borradores. Se corrigieron **en la misma rama y sin fusionar**:
+
+1. **Cierre de pestaña sin bóveda:** `saveDraft()` escribe y relee `localStorage` en el mismo evento, antes de devolver la promesa. Los cambios de texto/título también se guardan directamente al escribir, sin esperar 1,5 segundos. La cola asíncrona queda para cifrar con bóveda abierta; se evita que una versión en espera sobreescriba una posterior. **Límite:** un cierre forzado puede interrumpir un cifrado ya iniciado; ninguna promesa de JavaScript garantiza ejecutarse tras terminar el proceso del navegador.
+2. **Bloqueo y activación:** si no se puede confirmar el borrador, `vaultLockNow()` no recarga ni descarta el editor, y la activación de la bóveda tampoco sigue. Se informa el fallo; no se interpreta una promesa resuelta con `false` como éxito. Si el bloqueo automático falla por falta de espacio, se necesita que el usuario resuelva el problema; no puede afirmarse que la app quedó bloqueada.
+3. **Borrador ya confirmado:** `restoreDraft()` coteja el contenido y el audio, más el inicio de la grabación/composición (`recordedAt`) o el identificador de la nota editada, contra los mensajes ya guardados. Si el borrador corresponde exactamente a una nota confirmada, no crea un duplicado y reintenta limpiar ese borrador; si el contenido, el audio o el inicio difieren, no lo descarta. Conserva borradores con títulos o etiquetas pendientes.
+
+Pruebas nuevas en `tests/entrega2.test.mjs`: cierre sin bóveda sin esperar microtareas, no sobrescribir con una cola antigua, guardado fallido antes del bloqueo y conciliación de un borrador ya confirmado, incluyendo casos que **no** deben darse por guardados. Las pruebas de laboratorio y la validación real del Motorola se informan por separado.
+
+**Lo que no cambia:** no se incorporaron K2, T, AO, P2 ni formato nuevo de copia; no se migraron, borraron ni recifraron datos existentes; PR sin merge. La completa compatibilidad de copias sigue pendiente de decisión específica del propietario.
+
 ## Coordinación
 
 Se mantiene `main` intacto y el PR sin fusionar. No se editan ramas de otras IA ni los documentos abiertos de los PR #58/#52/#49/#37. La autoría se documenta solo aquí y en el PR, nunca en la interfaz. Todo ensayo usa notas inventadas y audio sintético; no hay datos reales de pacientes.
