@@ -84,7 +84,7 @@ En **Dictar → Mis grabaciones** están las opciones para los audios conservado
 - **Cargar un audio para transcribir** permite elegir un archivo del teléfono. En esta versión, **no lo incorpora automáticamente a las grabaciones guardadas**. La pantalla indica un límite de 200 MB y 15 minutos; una versión futura puede cambiar ese límite.
 - Si querés conservar una grabación importante, verificá que la opción estaba activada y descargá una copia; reproducí el archivo para comprobarlo.
 
-**Prueba real del 16/11:** el propietario confirmó que pudo descargar un archivo de audio de **168 KB**. Queda pendiente confirmar su reproducción y duración completas, además de retranscripción o conversión a MP3; la descarga por sí sola no acredita esas operaciones.
+**Prueba real del 16/11 (actualizada):** el propietario descargó un archivo de audio de **168 KB**, lo reprodujo y confirmó que **se escucha bien**. Esto valida la descarga y la reproducción del archivo de prueba; no equivale a probar la conversión a MP3, la retranscripción ni una comparación de duración inicio a fin.
 
 ## 8. Privacidad y protección
 
@@ -160,7 +160,7 @@ Probá con una frase ficticia, por ejemplo: «Hoy hablé con Ana Ejemplo sobre u
 - [ ] Puedo corregir una palabra, guardar la nota y volver a encontrarla en un cuaderno.
 - [ ] Puedo descargar un TXT y comprobar que se abre bien.
 - [x] Descargué un archivo de audio de **168 KB** (16/11).
-- [ ] Puedo reproducir el archivo y comprobar que contiene el audio completo.
+- [x] Reproduje el archivo descargado y confirmé que **se escucha bien** (16/11). No se informó una comparación detallada de su duración con la grabación original.
 - [ ] Puedo anonimizar una nota ficticia y revisar manualmente el resultado.
 - [ ] Si activé protección, puedo desbloquear con contraseña; huella solo si pasa la prueba real.
 - [ ] Distingo lo publicado de las novedades que todavía están en PR.
