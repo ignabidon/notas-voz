@@ -1,7 +1,7 @@
 ## 17/11/2026 · K2: ensayo de restauración solo en perfil vacío (ChatGPT, PR #61)
 
 - **Código en rama, no publicado:** PR #61 apilado sobre #60 → #59. Se agregó lector/restaurador de copias formato 1/2 con verificación íntegra previa, comprobación de instalación realmente vacía, exclusión de segunda pestaña, lote recuperable y cabecera de bóveda escrita al final. Interfaz rotulada «experimental». **No mezcla, reemplaza, migra ni borra datos existentes.**
-- **Seguridad:** la copia formato 2 aún no cubre audios heredados en `notasvoz-gamma-audio`; el formato 1 tampoco equivale a respaldo total en todos los modos. El nuevo lector no altera K1 ni formatos de copia. Los audios de prueba son ficticios.
+- **Seguridad:** se bloqueó específicamente restaurar copias formato 2 con audio originalmente en claro, para impedir que una bóveda aparentemente protegida conserve ese audio sin cifrar. La copia formato 2 aún no cubre audios heredados en `notasvoz-gamma-audio`; el formato 1 tampoco equivale a respaldo total en todos los modos. El nuevo lector no altera K1 ni formatos de copia. Los audios de prueba son ficticios.
 - **Pruebas:** CI añade `tests/k2-browser.mjs` para copia sintética, contraseña incorrecta, copia truncada, perfil ocupado, limpieza de lote y recarga. **No marcar resultado verde hasta que GitHub Actions lo confirme**. Sin prueba física en Motorola.
 - **Pendiente:** revisión independiente, matriz de cuotas/cortes, compatibilidad formato 1, manejo de audios no incluidos y reemplazo seguro con doble confirmación y autorización aparte. Informe: `docs/K2-RESTAURACION-VACIA-2026-11-17.md`.
 
