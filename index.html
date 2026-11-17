@@ -771,6 +771,13 @@ body.delta-recording #transcriptionDockBar{height:3px;margin-top:3px}
  body.conv-editor-expanded .conv-target{max-height:32px;font-size:12px}
  body.conv-editor-expanded .studio-dock{gap:4px}
 }
+/* E3: controles táctiles del audio sobre la transcripción. */
+.note-audio{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px 12px;align-items:center;padding:12px;margin-bottom:12px;border:1px solid var(--line-strong,var(--line));border-radius:16px;background:var(--surface-soft)}
+.note-audio button{min-height:48px;min-width:48px}
+.note-audio input[type=range]{width:100%;min-width:0;min-height:48px;padding:0;accent-color:var(--acc)}
+.note-audio-time,.note-audio-status{grid-column:1/-1;font-size:14px;overflow-wrap:anywhere}
+.e3-audio-row{border-top:1px solid var(--line);padding:12px 0;overflow-wrap:anywhere}
+#e3Space .row{flex-wrap:wrap}#e3Space button{min-height:48px;white-space:normal}
 </style>
 </head>
 <body data-view="grabacion">
@@ -967,6 +974,22 @@ body.delta-recording #transcriptionDockBar{height:3px;margin-top:3px}
             <div class="row"><button type="submit" class="p">Continuar</button><button type="button" id="copiaClaveCancel">Cancelar</button></div>
           </form>
           <p id="copiaMsg" role="status"></p>
+        </section>
+        <section class="vault-panel" id="e3Space" aria-labelledby="e3SpaceTitle">
+          <h4 id="e3SpaceTitle">Espacio y audios guardados</h4>
+          <p id="e3SpaceMsg" class="hint" role="status"></p>
+          <p id="e3TextSpace" class="hint"></p>
+          <p id="e3Persistence" class="hint" role="status"></p>
+          <p class="hint">La protección contra limpieza automática no reemplaza una copia. Borrar los datos del sitio elimina lo guardado.</p>
+          <div class="row"><button type="button" id="e3Refresh">Actualizar espacio</button><button type="button" id="e3Persist">Solicitar almacenamiento persistente</button></div>
+          <label for="e3Sort">Ordenar audios</label>
+          <select id="e3Sort"><option value="size">Mayor tamaño primero</option><option value="date">Más recientes primero</option></select>
+          <p class="hint">Los audios sin nota no se borran solos. Podés recuperarlos en un cuaderno nuevo o borrarlos. Para quitar el audio de una nota, abrila y usá su menú ⋯.</p>
+          <div id="e3AudioList"></div>
+          <div id="e3Legacy" hidden>
+            <p class="hint">Hay audio suelto anterior, sin cifrar y sin vínculo con tus notas. No se migra ni se incluye en la copia cifrada. Borrar elimina también su copia temporal anterior.</p>
+            <div class="row"><button type="button" id="e3LegacyDownload">Descargar audio anterior</button><button type="button" id="e3LegacyDelete" class="ghost danger">Borrar audio anterior</button></div>
+          </div>
         </section>
         <details id="localPrivacy" class="privacy-panel">
         <summary>Privacidad y datos guardados <small>Notas y borradores en Brave</small></summary>
@@ -1681,6 +1704,7 @@ async function vaultAfterUnlock(){
 async function vaultLockNow(){
   if (vault.state !== 'open') return false;
   if (vaultBusy()) { vaultPanelMsg('No se bloquea mientras grabás o transcribís.'); return false; }
+  e3Stop();
   try { vaultBeforeLock(); } catch (e) {}
   await vault.flush();
   if (vault.pending.size) { vaultPanelMsg('No se pudo guardar todo cifrado; no se bloqueó para no perder texto.'); return false; }
@@ -2595,6 +2619,7 @@ $('convMinimizeEditor').onclick = () => { convEditorCollapsed = true; $('text').
 $('text').addEventListener('focus', () => { convEditorCollapsed = false; convComposeNew = true; refreshConvEditor(); });
 $('text').addEventListener('input', refreshConvEditor);
 function renderConv(){
+  e3Stop();
   const data = convStore.data;
   if (convOpenId && !convHas(convOpenId)) convOpenId = null;
   const composing = !!(convOpenId || convComposeNew || $('text').value.trim() || convTargetSet || convEditingId);
@@ -2642,6 +2667,10 @@ function renderConv(){
     const item = (label, fn, cls) => { const b = convButton(label, () => { convCloseMenu(false); fn(); }, cls); b.setAttribute('role', 'menuitem'); return b; };
     menu.append(item('Mover a otro cuaderno', () => convAskMove('one', e.id)), item('Borrar esta nota', () => convDelete(e.id), 'ghost danger'));
     acts.append(convButton('Copiar', () => convCopy(e.text)), convButton('Editar', () => convEdit(e.id)), more);
+    if (e.audioId) {
+      d.append(e3Player(e));
+      menu.append(item('Quitar audio de esta nota', () => void e3Remove(e.id, e.audioId), 'ghost danger'));
+    }
     d.append(t, m, acts, menu); box.append(d);
   });
   refreshConvTarget();
@@ -4392,6 +4421,227 @@ async function anReadAudio(db, kAudio, hid, id){
 }
 /*AUDIONOTA-END*/
 
+/* ---------- E3: reproducción a pedido y espacio ---------- */
+let e3Current = null, e3Epoch = 0, e3PanelEpoch = 0, e3PersistAsked = false;
+const E3_PAUSE_MS = 60000;
+function e3Stop(){
+  e3Epoch++;
+  const s = e3Current; e3Current = null;
+  if (!s) return;
+  clearTimeout(s.timer);
+  s.audio.onended = s.audio.onerror = s.audio.ontimeupdate = null;
+  s.audio.pause(); s.audio.removeAttribute('src'); s.audio.load();
+  if (s.url) URL.revokeObjectURL(s.url);
+  s.url = null; s.cek = null; s.detail = null; s.button.disabled = false;
+  s.button.textContent = 'Reproducir'; s.button.setAttribute('aria-label', 'Reproducir audio de esta nota');
+}
+function e3Alive(s){ return e3Current === s && s.epoch === e3Epoch && anUsable() && s.root.isConnected; }
+function e3Time(ms){ return Number.isFinite(ms) ? fmtClock(Math.max(0, ms)) : 'Duración no disponible'; }
+function e3Failure(s, msg){
+  if (!e3Alive(s)) return;
+  e3Stop(); s.status.textContent = msg;
+}
+async function e3Part(s, part, seconds = 0){
+  if (!e3Alive(s)) return;
+  s.audio.pause(); s.audio.removeAttribute('src'); s.audio.load();
+  if (s.url) URL.revokeObjectURL(s.url); s.url = null;
+  s.part = part; s.loading = true; s.button.disabled = true;
+  const request = ++s.request, p = s.detail.parts[part], pieces = [];
+  let bytes = 0;
+  try {
+    for (let n = 0; n < p.chunks; n++) {
+      const chunk = await anGetChunk(s.db, s.id, part, n);
+      if (!e3Alive(s) || request !== s.request) return;
+      const plain = await anOpenChunk(s.cek, s.hid, s.id, part, n, chunk);
+      if (!e3Alive(s) || request !== s.request) { plain.fill(0); return; }
+      bytes += plain.length; pieces.push(new Blob([plain])); plain.fill(0);
+    }
+    if (bytes !== p.bytes) throw new Error('audio incompleto');
+    if (!e3Alive(s) || request !== s.request) return;
+    s.url = URL.createObjectURL(new Blob(pieces, {type: p.mime}));
+    s.audio.src = s.url;
+    if (seconds) s.audio.currentTime = seconds;
+    s.loading = false; s.button.disabled = false;
+    s.status.textContent = 'Parte ' + (part + 1) + ' de ' + s.detail.parts.length +
+      (anIsIncomplete(s.detail) ? ' · Grabación incompleta o interrumpida' : '');
+    await s.audio.play();
+    if (!e3Alive(s) || request !== s.request) return;
+    s.button.textContent = 'Pausar'; s.button.setAttribute('aria-label', 'Pausar audio de esta nota');
+  } catch (e) {
+    if (e3Alive(s) && request === s.request) e3Failure(s, 'No se pudo reproducir el audio. Puede estar dañado o tener un formato no compatible. Se conserva sin cambios.');
+  } finally { pieces.length = 0; }
+}
+async function e3Play(root, entry, button, range, status, clock){
+  if (e3Current && e3Current.root === root) {
+    const s = e3Current; if (s.loading) return;
+    clearTimeout(s.timer);
+    if (!s.audio.paused) {
+      s.audio.pause(); button.textContent = 'Reanudar'; button.setAttribute('aria-label', 'Reanudar audio de esta nota');
+      s.timer = setTimeout(() => { if (e3Alive(s)) { e3Stop(); status.textContent = 'Audio liberado tras la pausa. Tocá Reproducir para volver a escucharlo.'; } }, E3_PAUSE_MS);
+    } else {
+      try { await s.audio.play(); if (e3Alive(s)) { button.textContent = 'Pausar'; button.setAttribute('aria-label', 'Pausar audio de esta nota'); } }
+      catch (e) { e3Failure(s, 'No se pudo reanudar. Tocá Reproducir para intentar otra vez.'); }
+    }
+    return;
+  }
+  e3Stop();
+  if (!anUsable()) { status.textContent = 'Desbloqueá la protección para escuchar el audio.'; return; }
+  if (convAudioWork() || copiaBusyN) { status.textContent = 'Esperá a que termine la grabación, el guardado o la copia.'; return; }
+  const s = e3Current = {root, id: entry.audioId, button, range, status, clock, epoch: e3Epoch, audio: new Audio(), url: null,
+    hid: vault.header.id, part: 0, request: 0, loading: true, timer: null};
+  button.disabled = true; status.textContent = 'Preparando audio…';
+  try {
+    if (!(await anStoredCount())) throw new Error('no existe');
+    s.db = await anDb();
+    const meta = await anGetMeta(s.db, s.id);
+    if (!e3Alive(s)) return;
+    if (!meta) { e3Failure(s, 'Audio no disponible. El texto se conserva. Podés quitar la referencia desde ⋯.'); return; }
+    if (!anValidMeta(meta) || meta.state !== 'cerrado') throw new Error('ficha');
+    s.detail = await anOpenDetail(vault.audioKey, s.hid, s.id, meta.sealed);
+    if (!e3Alive(s)) return;
+    if (!s.detail.parts.length || s.detail.parts.length !== meta.parts) throw new Error('partes');
+    const cek = await anOpenCek(vault.audioKey, s.hid, s.id, meta.key);
+    if (!e3Alive(s)) return; s.cek = cek;
+    const total = anTotalMs(s.detail); s.total = total;
+    range.disabled = total === null || total <= 0; range.max = total === null ? 0 : total / 1000; range.value = 0;
+    clock.textContent = '0:00 / ' + e3Time(total);
+    s.audio.ontimeupdate = () => {
+      if (!e3Alive(s)) return;
+      const before = s.detail.parts.slice(0, s.part).reduce((t, p) => t + (p.ms || 0), 0);
+      const ms = before + s.audio.currentTime * 1000;
+      if (s.total !== null) range.value = ms / 1000;
+      clock.textContent = e3Time(ms) + ' / ' + e3Time(s.total);
+    };
+    s.audio.onerror = () => e3Failure(s, 'El navegador no pudo reproducir este formato. El audio se conserva sin cambios.');
+    s.audio.onended = () => {
+      if (!e3Alive(s)) return;
+      if (s.part + 1 < s.detail.parts.length) void e3Part(s, s.part + 1);
+      else { e3Stop(); status.textContent = 'Reproducción terminada.'; range.value = 0; }
+    };
+    range.onchange = () => {
+      if (!e3Alive(s) || s.total === null || s.loading) return;
+      clearTimeout(s.timer);
+      let ms = Math.min(Number(range.value) * 1000, Math.max(0, s.total - 1)), part = 0;
+      while (part < s.detail.parts.length - 1 && ms >= s.detail.parts[part].ms) ms -= s.detail.parts[part++].ms;
+      if (part !== s.part) void e3Part(s, part, ms / 1000);
+      else { s.audio.currentTime = ms / 1000; if (s.audio.paused) s.timer = setTimeout(() => { if (e3Alive(s)) e3Stop(); }, E3_PAUSE_MS); }
+    };
+    await e3Part(s, 0);
+  } catch (e) { e3Failure(s, 'Audio no disponible o dañado. Se conserva sin cambios; el texto sigue disponible.'); }
+}
+function e3Player(entry){
+  const root = document.createElement('div'); root.className = 'note-audio';
+  const button = convButton('Reproducir', () => void e3Play(root, entry, button, range, status, clock));
+  button.setAttribute('aria-label', 'Reproducir audio de esta nota');
+  const range = document.createElement('input'); range.type = 'range'; range.min = '0'; range.max = '0'; range.step = '0.1'; range.value = '0'; range.disabled = true;
+  range.setAttribute('aria-label', 'Posición del audio');
+  const clock = document.createElement('span'); clock.className = 'note-audio-time'; clock.textContent = e3Time(entry.durationMs);
+  const status = document.createElement('small'); status.className = 'note-audio-status'; status.setAttribute('role', 'status');
+  status.textContent = 'La voz original no está anonimizada.';
+  root.append(button, range, clock, status); return root;
+}
+function e3Used(id){ return convAudioId === id || !!(convStore.data && convAudioInUse(convStore.data, id)); }
+async function e3Write(next){
+  const before = convStore.data, raw = vaultStore.getItem(CONV_KEY), w = convStore.save(next);
+  if (!w.ok) throw new Error(w.error);
+  await vault.flush();
+  if (!vault.saved(CONV_KEY)) { convStore.revert(before, raw); throw new Error('No se pudo confirmar el guardado. No se borró ningún audio.'); }
+}
+async function e3Remove(entryId, audioId){
+  if (!anUsable() || convAudioWork() || copiaBusyN || !(await anLockOk())) return flash('No se puede cambiar el audio ahora. Terminá las tareas pendientes y usá la pestaña con permiso para guardar.');
+  if (convAudioWork() || copiaBusyN) return;
+  if (convAudioId === audioId || (entryId && convEditingId === entryId)) return flash('Primero guardá o cancelá la edición de esta nota.');
+  if (!entryId && e3Used(audioId)) return flash('El audio ya está unido a una nota o borrador; se conserva.');
+  if (entryId && (!convEntry(entryId) || convEntry(entryId).audioId !== audioId)) return;
+  if (!confirm(entryId ? '¿Quitar el audio de esta nota? El texto queda guardado. Si ninguna otra nota lo usa, el audio se borra. No se puede deshacer.' : '¿Borrar este audio sin nota? No se puede deshacer.')) return;
+  convSaving = true; e3Stop();
+  try {
+    if (entryId) await e3Write(convSetAudio(convStore.data, entryId, null, null, null));
+    if (!e3Used(audioId) && !(await anDeleteAudio(audioId))) throw new Error('El texto quedó guardado, pero no se pudo borrar el audio. Sigue disponible en Ajustes.');
+    flash(entryId ? 'Se quitó el audio de la nota. El texto no cambió.' : 'Audio borrado.');
+  } catch (e) { flash(e.message); }
+  finally { convSaving = false; renderConv(); void e3RefreshSpace(); }
+}
+async function e3Recover(id){
+  if (!anUsable() || convAudioWork() || copiaBusyN || !(await anLockOk())) return flash('No se puede crear la nota ahora. Terminá las tareas pendientes y usá la pestaña con permiso para guardar.');
+  if (convAudioWork() || copiaBusyN || e3Used(id)) return;
+  convSaving = true;
+  try {
+    const db = await anDb(), h = await anAudioHealth(db, vault.audioKey, vault.header.id, id);
+    if (!h.ok) throw new Error('El audio está dañado o todavía no terminó de guardarse. Se conserva sin cambios.');
+    if (e3Used(id)) return;
+    const r = convAddEntry(convStore.data, {conversationId: null, kind: 'audio', savedAt: Date.now(),
+      tzOffsetMin: new Date().getTimezoneOffset(), recordedAt: h.m.createdAt, text: 'Audio recuperado (sin transcripción).',
+      audioId: id, durationMs: anTotalMs(h.detail), audioParts: h.detail.parts.length});
+    await e3Write(r.data);
+    convOpenId = r.conversation.id;
+    document.querySelector('[data-delta-view="transcripcion"]').click(); renderConv(); flash('Audio recuperado en un cuaderno nuevo. Podés escucharlo y editar el texto.');
+  } catch (e) { flash(e.message); }
+  finally { convSaving = false; void e3RefreshSpace(); }
+}
+async function e3RequestPersist(){
+  if (!navigator.storage || !navigator.storage.persist) { $('e3Persistence').textContent = 'Este navegador no permite solicitar protección contra la limpieza automática.'; return; }
+  try { const yes = await navigator.storage.persist(); $('e3Persistence').textContent = 'Protegido contra la limpieza automática: ' + (yes ? 'Sí.' : 'No. Creá una copia cifrada como respaldo.'); }
+  catch (e) { $('e3Persistence').textContent = 'No se pudo solicitar la protección. Creá una copia cifrada como respaldo.'; }
+}
+function e3AfterAudioSaved(){
+  if (!e3PersistAsked) { e3PersistAsked = true; void e3RequestPersist(); }
+}
+async function e3RefreshSpace(){
+  const epoch = ++e3PanelEpoch, valid = () => epoch === e3PanelEpoch && (vault.state === 'open' || vault.state === 'off');
+  if (!valid()) return;
+  const list = $('e3AudioList'); list.textContent = ''; $('e3SpaceMsg').textContent = 'Consultando espacio…';
+  try {
+    const count = await anStoredCount();
+    const metas = count ? await anListMeta(await anDb()) : [];
+    const storage = navigator.storage;
+    let estimate = null, persisted = null;
+    try { estimate = storage && storage.estimate ? await storage.estimate() : null; } catch (e) {}
+    try { persisted = storage && storage.persisted ? await storage.persisted() : null; } catch (e) {}
+    if (!valid()) return;
+    const bytes = metas.reduce((t, m) => t + (Number.isFinite(m.bytes) ? m.bytes : 0), 0);
+    const free = estimate && Number.isFinite(estimate.quota) && Number.isFinite(estimate.usage) ? Math.max(0, estimate.quota - estimate.usage) : null;
+    $('e3SpaceMsg').textContent = (count === null ? 'No se pudieron consultar los audios.' : metas.length + ' audio(s) cifrado(s) · ' + mb(bytes)) +
+      (free === null ? ' · Espacio libre no disponible.' : ' · Espacio libre estimado del sitio: ' + mb(free) + (free < 50 * 1024 * 1024 ? ' · Queda poco espacio. Creá una copia y revisá tus audios.' : ''));
+    $('e3Persistence').textContent = 'Protegido contra la limpieza automática: ' + (persisted === null ? 'no disponible.' : persisted ? 'Sí.' : 'No. Creá una copia cifrada como respaldo.');
+    let textBytes = 0; for (let i = 0; i < localStorage.length; i++) { const key = localStorage.key(i); if (key && key.startsWith('notasvoz.')) textBytes += 2 * (key.length + (localStorage.getItem(key) || '').length); }
+    $('e3TextSpace').textContent = 'Texto, ajustes y registros: aproximadamente ' + mb(textBytes) + '. El cupo de texto depende del navegador; no se mide escribiendo datos de prueba.' +
+      (textBytes >= 4 * 1024 * 1024 ? ' Uso alto: se acerca a la referencia habitual de 5 MB. Creá una copia.' : textBytes >= 2.5 * 1024 * 1024 ? ' Supera la mitad de la referencia habitual de 5 MB.' : '');
+    if (anUsable()) {
+      const sorted = metas.slice().sort((a, b) => $('e3Sort').value === 'size' ? b.bytes - a.bytes : b.createdAt - a.createdAt);
+      for (const m of sorted) {
+        const row = document.createElement('div'); row.className = 'e3-audio-row';
+        const entries = convStore.data ? convStore.data.entries.filter(e => e.audioId === m.id) : [];
+        const pending = convAudioId === m.id, orphan = !entries.length && !pending;
+        const info = document.createElement('p'); info.textContent = (orphan ? 'Audio sin nota' : pending ? 'Audio en edición' : 'Audio de ' + entries.length + ' nota(s)') + ' · ' + fmt(m.createdAt) + ' · ' + mb(m.bytes) + (anDamaged.has(m.id) ? ' · Dañado: conservado sin cambios' : '');
+        row.append(info);
+        const actions = document.createElement('div'); actions.className = 'row';
+        if (orphan) actions.append(convButton('Crear nota', () => void e3Recover(m.id)), convButton('Borrar audio', () => void e3Remove(null, m.id), 'ghost danger'));
+        else if (entries.length) actions.append(convButton('Ver nota', () => { document.querySelector('[data-delta-view="transcripcion"]').click(); convOpen(entries[0].conversationId); }));
+        row.append(actions); list.append(row);
+      }
+      if (!sorted.length) list.textContent = 'Todavía no hay audios cifrados guardados.';
+    } else list.textContent = 'Los audios por nota se guardan con la protección activada.';
+    const old = await audioGetMeta(), previous = await audioGetPrevious();
+    if (!valid()) return;
+    $('e3Legacy').hidden = !old && !previous;
+    $('e3LegacyDownload').disabled = !old || audioBusy();
+    $('e3LegacyDelete').disabled = !old || audioBusy();
+  } catch (e) { if (valid()) $('e3SpaceMsg').textContent = 'No se pudo consultar el almacenamiento. No se cambió ningún dato.'; }
+}
+$('e3Refresh').onclick = () => void e3RefreshSpace();
+$('e3Sort').onchange = () => void e3RefreshSpace();
+$('e3Persist').onclick = () => void e3RequestPersist();
+$('e3LegacyDownload').onclick = () => $('aDown').click();
+$('e3LegacyDelete').onclick = async () => { await $('aDel').onclick(); void e3RefreshSpace(); };
+new MutationObserver(() => {
+  if (document.body.dataset.view !== 'transcripcion') e3Stop();
+  if (document.body.dataset.view === 'ajustes') void e3RefreshSpace();
+}).observe(document.body, {attributes: true, attributeFilter: ['data-view']});
+window.addEventListener('pagehide', e3Stop);
+/* ---------- Fin E3 ---------- */
+
+
 /* ---------- Audio por nota en uso (E2) ----------
    Solo con la protección abierta y «Conservar audio» encendido. Con la protección apagada,
    «Conservar audio» sigue usando la base histórica, como antes (D2). El reproductor llega en E3. */
@@ -4422,6 +4672,7 @@ function anLinkPending(job, id, ms){
     return false;
   }
   if (job.baseParts != null && convAudioBase === null && convEditingId) convAudioBase = job.baseParts;
+  e3AfterAudioSaved();
   convAudioId = id; convAudioMs = ms; saveDraft(); return true;
 }
 /* Revisión completa de un audio ANTES de ampliarlo o recortarlo (segunda revisión de E2):
@@ -5688,4 +5939,5 @@ function correctionCanRemember(text,start,end){
 </script>
 </body>
 </html>
+
 
