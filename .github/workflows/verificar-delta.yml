@@ -62,3 +62,6 @@ jobs:
       - name: K2 - restaurar copia sintética en instalación vacía de Chrome (sin reemplazos)
         run: node tests/k2-browser.mjs
         timeout-minutes: 6
+      - name: K2 · candado universal entre pestañas, lotes alterados, cuota por fase y cortes reales (datos ficticios)
+        run: node tests/k2-candado-browser.mjs
+        timeout-minutes: 6

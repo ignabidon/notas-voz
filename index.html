@@ -1487,6 +1487,8 @@ function createVault(storage, opts){
   const v = {state: 'off', header: null, key: null, audioKey: null, cache: new Map(), pending: new Set(), queue: Promise.resolve(), scheduled: false,
     error: '', leftovers: [], damaged: [], frozen: new Set(), onError: () => {},
     readOnly: false, disableGuard: null,
+    // Candado universal (K2, 17/11/2026): true mientras otra pestaña tenga el candado (o no se haya confirmado). Bloquea TODA escritura, con o sin bóveda.
+    otherTab: false,
     // Candado de una sola pestaña (segunda revisión de E2): se toma ANTES de cualquier escritura de datos protegidos o de la cabecera.
     // Devuelve true si esta pestaña es la única que escribe. La aplicación lo reemplaza por el candado real (vaultTakeTabLock).
     takeLock: (opts && opts.takeLock) || (async () => true)};
@@ -1529,8 +1531,8 @@ function createVault(storage, opts){
   const schedule = k => { v.pending.add(k); if (!v.scheduled) { v.scheduled = true; setTimeout(() => { v.scheduled = false; v.flush(); }, 0); } };
   v.store = {
     getItem(k){ if (!isProtected(k) || v.state === 'off') return storage.getItem(k); if (v.state !== 'open') return null; return v.cache.has(k) ? v.cache.get(k) : null; },
-    setItem(k, value){ if (!isProtected(k) || v.state === 'off') return storage.setItem(k, value); if (v.state !== 'open') return; assertWritable(); v.cache.set(k, String(value)); schedule(k); },
-    removeItem(k){ if (!isProtected(k) || v.state === 'off') return storage.removeItem(k); if (v.state !== 'open') return; assertWritable(); v.cache.delete(k); schedule(k); }
+    setItem(k, value){ if (v.otherTab) throw readOnlyError(); if (!isProtected(k) || v.state === 'off') return storage.setItem(k, value); if (v.state !== 'open') return; assertWritable(); v.cache.set(k, String(value)); schedule(k); },
+    removeItem(k){ if (v.otherTab) throw readOnlyError(); if (!isProtected(k) || v.state === 'off') return storage.removeItem(k); if (v.state !== 'open') return; assertWritable(); v.cache.delete(k); schedule(k); }
   };
   // Recibe la clave de datos en bruto y la pone en cero al terminar, salga bien o mal (diseño 2.4).
   async function openWith(dek){
@@ -1655,10 +1657,16 @@ function createVault(storage, opts){
 const vault = createVault(localStorage);
 vault.takeLock = () => vaultTakeTabLock();   // el candado real (Web Locks); la función se declara más abajo y se usa recién al desbloquear o activar
 const vaultStore = vault.store;
+// Candado universal: sin bóveda, nada se escribe hasta confirmar que esta es la única pestaña que escribe (se toma al arrancar).
+if (vault.state === 'off') vault.otherTab = true;
 const VAULT_IDLE_MS = 15 * 60 * 1000;
 let vaultReadyFns = [], vaultBusy = () => false, vaultBeforeLock = () => {}, vaultLastActivity = Date.now();
 let vaultPrivacyHold = false; // Cobertura visual ante falla del borrador en el autobloqueo: NO equivale a cerrar la bóveda.
-function vaultWhenReady(fn){ if (vault.state === 'off' || vault.state === 'open') fn(); else vaultReadyFns.push(fn); }
+function vaultWhenReady(fn){
+  if (vault.state === 'open') fn();
+  else if (vault.state === 'off') vaultTakeTabLock().then(() => fn());   // candado universal: también sin bóveda, antes de cargar y escribir
+  else vaultReadyFns.push(fn);
+}
 function vaultSetHooks(busy, beforeLock){ vaultBusy = busy; vaultBeforeLock = beforeLock; }
 const vaultEl = id => document.getElementById(id);
 function vaultFriendly(e){
@@ -1686,12 +1694,15 @@ function vaultTakeTabLock(){
      escribiendo, así que esta queda en solo lectura. Antes se asumía «sin problema». */
   if (!vaultTabLockP) vaultTabLockP = anTakeLock().catch(() => ({ok: false, soportado: true, fallo: true, release(){}})).then(l => {
     const ok = !!l.ok && l.soportado !== false;
-    vault.readOnly = !ok;
+    /* Sin bóveda, un navegador que no ofrece el candado sigue guardando como antes (no puede saber de otras pestañas);
+       ahí K2 se niega a restaurar. Si otra pestaña tiene el candado o hubo un error, esta no escribe nada. */
+    const blocked = !ok && (vault.state !== 'off' || l.soportado !== false);
+    vault.readOnly = blocked; vault.otherTab = blocked;
     const w = vaultEl('tabLockWarn');
-    const why = ok ? '' : l.fallo ? 'No se pudo comprobar si DictaVoz está abierta en otra pestaña (el navegador dio un error).'
+    const why = !blocked ? '' : l.fallo ? 'No se pudo comprobar si DictaVoz está abierta en otra pestaña (el navegador dio un error).'
       : l.soportado === false ? 'Este navegador no permite comprobar si DictaVoz está abierta en otra pestaña.'
       : 'DictaVoz está abierta en otra pestaña.';
-    if (w) { w.hidden = ok; w.textContent = ok ? '' : why + ' En esta podés leer, pero por seguridad no se guarda nada (ni notas, ni borrador, ni audios). Cerrá las demás pestañas y recargá esta.'; }
+    if (w) { w.hidden = !blocked; w.textContent = !blocked ? '' : why + ' En esta podés leer, pero por seguridad no se guarda nada (ni notas, ni borrador, ni ajustes, ni audios). Cerrá las demás pestañas y recargá esta.'; }
     return ok;
   });
   return vaultTabLockP;
@@ -3149,7 +3160,7 @@ function readGenerator(){
   return {prefix, next, digits, mode:$('pMode').value};
 }
 function saveGenerator(){
-  try { localStorage.setItem(GKEY, JSON.stringify(readGenerator())); } catch (e) {}
+  if (!vault.otherTab) try { localStorage.setItem(GKEY, JSON.stringify(readGenerator())); } catch (e) {}
 }
 function loadGenerator(){
   try {
@@ -5457,10 +5468,16 @@ async function copia2Verify(file,open,onProgress){
    El registro de recuperación contiene exclusivamente identificadores de datos NUEVOS. */
 /*K2-START*/
 const K2_JOURNAL = 'notasvoz.k2.restauracion.v1';
+/* El borrador vacío que la app guarda sola al abrirse (sin texto, título, etiquetas, nota ni audio) no cuenta como dato. */
+function k2DraftEmpty(raw){
+  try{const d=JSON.parse(raw);return !!d&&typeof d==='object'&&!String(d.text||'').trim()&&!String(d.title||'').trim()&&
+    !(Array.isArray(d.tags)&&d.tags.length)&&!d.cur&&!(d.conv&&d.conv.audioId)&&!(d.conv&&d.conv.editing);}catch(e){return false;}
+}
 function k2LocalEmpty(){
   if (vault.state !== 'off') return false;
   for (let i=0;i<localStorage.length;i++){
     const name=localStorage.key(i);
+    if (name===DRAFT && k2DraftEmpty(localStorage.getItem(name))) continue;
     if (name && name.startsWith('notasvoz.') && name !== K2_JOURNAL) return false;
   }
   return true;
@@ -5537,15 +5554,35 @@ async function k2ReadPlan(file,verified,key){
      plan.records.size!==verified.registros||plan.chunks.length!==verified.fragmentos)throw copiaError('Alterada');
   return plan;
 }
+/* Limpieza de un lote interrumpido. Solo se llama con el candado tomado (nadie más escribe) y sin cabecera.
+   Lote formato 2: cada audio lleva su «firma» (fecha de creación y tamaño de la ficha restaurada); si la ficha que hay no coincide,
+   no se borra NADA y se avisa. Los registros solo pueden ser nombres conocidos de la bóveda. Un lote desconocido o alterado no se toca. */
+function k2ParseJournal(raw){
+  const j=JSON.parse(raw);
+  const bad=()=>{throw new Error('Lote de restauración desconocido o alterado; no se tocó.');};
+  if(!j||j.version!==2||!Array.isArray(j.audios)||!Array.isArray(j.names)||j.audios.length>5000)bad();
+  const known=new Set(Object.values(VAULT_KEYS)),ids=new Set(),names=new Set();
+  for(const a of j.audios){
+    if(!a||typeof a.id!=='string'||!a.id||a.id.length>64||ids.has(a.id)||!Number.isFinite(a.createdAt)||!anIsInt(a.bytes))bad();
+    ids.add(a.id);
+  }
+  for(const n of j.names){ if(typeof n!=='string'||!known.has(n)||names.has(n))bad(); names.add(n); }
+  return j;
+}
 async function k2Rollback(){
   const raw=localStorage.getItem(K2_JOURNAL);
   if(!raw||localStorage.getItem(VAULT_HEADER))return false; // cabecera escrita = confirmación
-  const j=JSON.parse(raw);
-  if(!j||j.version!==1||!Array.isArray(j.ids)||!Array.isArray(j.names))throw new Error('Lote de restauración desconocido; no se tocó.');
+  if(!(await vaultTakeTabLock())||vault.readOnly)throw new Error('Sin el candado de pestaña no se limpia nada.');
+  const j=k2ParseJournal(raw);
   const db=await anDb();
-  for(const id of j.ids) { if(typeof id!=='string'||id.length>64)throw new Error('Identificador de lote inválido'); await anDelete(db,id); }
-  for(const name of j.names) { if(!/^[a-z0-9.-]{1,60}$/.test(name))throw new Error('Registro de lote inválido');localStorage.removeItem(VAULT_REC_PREFIX+name); }
-  localStorage.removeItem(CKEY);localStorage.removeItem(GKEY);
+  // Primero comprobar TODO; recién después borrar.
+  for(const a of j.audios){
+    const m=await anGetMeta(db,a.id);
+    if(m&&(m.createdAt!==a.createdAt||m.bytes!==a.bytes))throw new Error('Un audio del lote no coincide con lo restaurado; no se tocó nada.');
+  }
+  for(const a of j.audios) await anDelete(db,a.id);
+  for(const name of j.names) localStorage.removeItem(VAULT_REC_PREFIX+name);
+  localStorage.removeItem(CKEY);localStorage.removeItem(GKEY);   // la instalación estaba vacía antes de restaurar
   localStorage.removeItem(K2_JOURNAL);
   return true;
 }
@@ -5553,9 +5590,18 @@ async function k2RestoreEmpty(file,secret){
   if(!(file instanceof Blob)||!secret)throw new Error('Seleccioná una copia y escribí su contraseña o código.');
   if(vaultBusy()||convSaving||copiaBusyN)throw new Error('Primero terminá de grabar, transcribir o guardar.');
   if(!globalThis.navigator?.locks?.request)throw new Error('Este navegador no permite impedir escrituras de otra pestaña.');
+  // Candado ANTES de cualquier limpieza o escritura: desde acá ninguna otra pestaña puede escribir (candado universal).
+  if(!(await vaultTakeTabLock())||vault.readOnly||vault.otherTab)throw new Error('Cerrá las otras pestañas antes de restaurar.');
+  // El borrador vacío de arranque (sin bóveda, pasa directo) no debe quedar en claro junto a la bóveda restaurada.
+  try{const d=vaultStore.getItem(DRAFT);if(d!==null&&k2DraftEmpty(d))vaultStore.removeItem(DRAFT);}catch(e){}
+  // Mientras se restaura, esta misma pestaña tampoco escribe (borrador, ajustes): solo escribe el restaurador.
+  vault.otherTab=true;
+  try{return await k2RestoreLocked(file,secret);}
+  catch(e){vault.otherTab=false;throw e;}   // si terminó bien, la pantalla se recarga y el candado se vuelve a tomar
+}
+async function k2RestoreLocked(file,secret){
   if(localStorage.getItem(K2_JOURNAL))await k2Rollback();
   if(!(await k2StorageEmpty()))throw new Error('Esta instalación ya contiene datos o ajustes. No se mezcló ni reemplazó nada.');
-  if(!(await vaultTakeTabLock())||vault.readOnly)throw new Error('Cerrá las otras pestañas antes de restaurar.');
   const open=h=>copiaOpenWithSecret(h,secret);
   const verified=await copia2Verify(file,open);  // primera pasada: autenticar archivo COMPLETO
   if(verified.claro>0)throw new Error('Este respaldo contiene audios que estaban en claro. Todavía no se pueden restaurar con seguridad; no se escribió nada.');
@@ -5564,7 +5610,8 @@ async function k2RestoreEmpty(file,secret){
   const plan=await k2ReadPlan(file,verified,key);
   if(!(await k2StorageEmpty()))throw new Error('La instalación dejó de estar vacía. No se escribió nada.');
   const db=await anDb();
-  const journal={version:1,ids:plan.audios.map(m=>m.id),names:[...plan.records.keys()]};
+  const journal={version:2,audios:plan.audios.map(m=>({id:m.id,createdAt:m.createdAt,bytes:m.bytes})),names:[...plan.records.keys()]};
+  k2ParseJournal(JSON.stringify(journal));   // IDs repetidos o registros desconocidos: la copia está alterada, no se escribe nada
   localStorage.setItem(K2_JOURNAL,JSON.stringify(journal));
   if(localStorage.getItem(K2_JOURNAL)!==JSON.stringify(journal))throw new Error('No pudo confirmarse el lote de restauración.');
   let committed=false;
@@ -5596,6 +5643,10 @@ async function k2RestoreEmpty(file,secret){
     try{localStorage.removeItem(K2_JOURNAL)}catch(e){}
     return verified;
   }catch(e){
+    // Confirmación clara: si la cabecera quedó escrita completa, la restauración SÍ terminó (aunque fallara algo después).
+    let header=null;try{header=localStorage.getItem(VAULT_HEADER)}catch(e2){}
+    if(!committed&&header===JSON.stringify(plan.header)){try{localStorage.removeItem(K2_JOURNAL)}catch(e3){}return verified;}
+    if(!committed&&header!==null)throw new Error('Restauración en estado dudoso: no borres los datos del sitio y recargá DictaVoz. '+((e&&e.message)||''));
     if(!committed)try{await k2Rollback()}catch(cleanup){throw new Error('Restauración no confirmada; no borres los datos del sitio. Reintentá desde esta pestaña. '+cleanup.message);}
     throw e;
   }
@@ -5611,8 +5662,9 @@ async function k2Header(file){
 async function k2ResumeCleanup(){
   try{
     if(!localStorage.getItem(K2_JOURNAL))return;
+    if(!(await vaultTakeTabLock())||vault.otherTab)return;   // solo la pestaña con el candado limpia
     if(localStorage.getItem(VAULT_HEADER)){localStorage.removeItem(K2_JOURNAL);return;}
-    if(await vaultTakeTabLock())await k2Rollback();
+    await k2Rollback();
   }catch(e){console.warn('K2: el lote interrumpido se conserva para recuperación, sin publicar datos.',e&&e.name);}
 }
 void k2ResumeCleanup();
@@ -6276,7 +6328,7 @@ function loadCfg(){
     if (typeof c.saveAudio === 'boolean') $('saveAudio').checked = c.saveAudio;
   } catch (e) {}
 }
-const saveCfg = () => { try { localStorage.setItem(CKEY, JSON.stringify({textSize:$('textSize').value, model:$('model').value, accel:$('accel').value, mic:$('mic').value, eng:eng(), replace:$('replace').checked, saveAudio:$('saveAudio').checked, pVolatile:$('pVolatile').checked, learnAuto:$('learnAuto').checked, listPreview:$('listPreview').checked})); return true; } catch (e) { return false; } };
+const saveCfg = () => { if (typeof vault !== 'undefined' && vault.otherTab) return false; try { localStorage.setItem(CKEY, JSON.stringify({textSize:$('textSize').value, model:$('model').value, accel:$('accel').value, mic:$('mic').value, eng:eng(), replace:$('replace').checked, saveAudio:$('saveAudio').checked, pVolatile:$('pVolatile').checked, learnAuto:$('learnAuto').checked, listPreview:$('listPreview').checked})); return true; } catch (e) { return false; } };
 $('textSize').addEventListener('change', () => { applyTextSize($('textSize').value); if (!saveCfg()) flash('El tamaño se aplicó, pero este navegador no permitió guardar el ajuste.'); });
 ['model', 'accel', 'mic', 'replace', 'saveAudio', 'pVolatile', 'learnAuto'].forEach(id => $(id).addEventListener('change', saveCfg));
 $('listPreview').addEventListener('change', () => { saveCfg(); renderConv(); });   // B3: campo opcional de la configuración existente; solo cambia lo que se muestra
@@ -6307,6 +6359,7 @@ function draftWriteFailed(){
 function saveDraft(){
   const value = snap(), version = ++draftWriteVersion;
   if (vault.state === 'off') {
+    if (vault.otherTab) return Promise.resolve(false);   // otra pestaña escribe (el aviso ya está a la vista)
     // localStorage es sincrónico: no esperar a una microtarea para guardar la última edición.
     try {
       if (vaultStore.getItem(DRAFT) !== value) vaultStore.setItem(DRAFT, value);

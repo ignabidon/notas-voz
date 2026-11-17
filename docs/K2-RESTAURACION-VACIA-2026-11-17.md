@@ -10,7 +10,12 @@ Se incorpora una opción de **restauración en una instalación completamente va
 
 La copia versión 2 **no incluye todavía el audio heredado `notasvoz-gamma-audio`**. El botón de exportación vigente K1 produce formato 1, y con bóveda apagada solo exporta texto. Por eso ninguna de estas opciones puede anunciarse como «copia íntegra de todos los audios»; recuperar no vuelve a crear audios que nunca estuvieron en el archivo. El programa debe señalar esa limitación antes de publicar la función.
 
-**Bloqueo de integración (grave):** con la bóveda apagada, las otras pestañas todavía no toman siempre el candado de escritura; aunque K2 lo adquiera, no puede impedir por sí solo que una pestaña antigua escriba simultáneamente. La interfaz exige confirmar que se cerraron las demás pestañas, pero esa confirmación **no reemplaza** implementar y probar el bloqueo universal sin bóveda. **No publicar ni unir el PR #61 hasta resolverlo.**
+**Bloqueo de integración — corregido en rama (17/11/2026, Claude):** las cuatro observaciones de la revisión cruzada están resueltas y probadas en laboratorio:
+1. Candado universal: cada pestaña lo toma al arrancar, con o sin bóveda; sin él no se escribe nada (`vault.otherTab`).
+2. K2 toma el candado antes de cualquier limpieza o escritura; la limpieza se niega sin candado.
+3. Cabecera escrita completa = restauración hecha, aunque falle algo después; cabecera distinta = «estado dudoso», sin borrar.
+4. Lote formato 2 con firma por audio (`createdAt`, `bytes`) y nombres de registro conocidos; ante cualquier diferencia no se borra nada.
+Pruebas: `tests/k2-candado-browser.mjs`. Falta revisión cruzada de las correcciones, CI de GitHub y Motorola.
 
 ## Resguardos del ensayo
 

@@ -1,3 +1,4 @@
+> **▶ ACTUALIZACIÓN 17/11/2026, tarde (Claude):** PR #61 sincronizado con el #60 y con los **dos bloqueantes y dos riesgos de la revisión cruzada corregidos** (candado universal con o sin bóveda, limpieza solo tras el candado, confirmación clara, lote con firma). Prueba nueva `tests/k2-candado-browser.mjs`. Sigue en borrador: falta revisión cruzada de estas correcciones, CI de GitHub, revisión del #60 por otra IA y luego el **reemplazo** de K2.
 > **▶ ESTADO 17/11/2026 — K2 EN ENSAYO (ChatGPT):** PR #61 abierto en borrador sobre #60 → #59 (los tres sin fusionar). Implementada restauración experimental de copia formato 1/2 **solo en instalación vacía** y con verificación previa. **Reemplazar o mezclar datos actuales está bloqueado**, y no se ha realizado ninguna migración ni borrado. CI y revisión cruzada de seguridad pendientes; no declarar K2 completo ni restauración publicada. Leer `docs/K2-RESTAURACION-VACIA-2026-11-17.md`.
 
 # CONTINUAR AQUÍ — DictaNota

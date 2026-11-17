@@ -85,9 +85,10 @@ try {
   assert.deepEqual(await bases(), ['notasvoz-dictanota-audio', 'notasvoz-gamma-audio']);
   assert.equal(await fotoViejo(), antes, 'usar la base nueva cambió datos de Delta 11');
 
-  // 3) Candado: una segunda toma falla mientras la primera siga viva; al soltar, vuelve a andar.
-  const l = JSON.parse(await run(`(async () => { const a = await anTakeLock(), b = await anTakeLock(); a.release(); await new Promise(r => setTimeout(r, 50)); const c = await anTakeLock(); c.release(); return JSON.stringify([a.ok, b.ok, c.ok, a.soportado]); })()`));
-  assert.deepEqual(l, [true, false, true, true]);
+  // 3) Candado universal (K2, 17/11/2026): la app lo toma al arrancar, también sin bóveda; otra toma falla mientras siga viva.
+  const l = JSON.parse(await run(`(async () => { await vaultTabLockP; const q = await navigator.locks.query(); const held = q.held.filter(h => h.name === AN_LOCK_NAME).length;
+    const a = await anTakeLock(); a.release(); return JSON.stringify([held, a.ok, a.soportado, vault.otherTab]); })()`));
+  assert.deepEqual(l, [1, false, true, false], 'la app tiene el candado y escribe; una segunda toma no lo consigue');
   console.log('AUDIO POR NOTA E1 OK: apagado al cargar, datos de Delta 11 intactos, base nueva andando si se la llama, borrado y candado.');
 } finally {
   try { ws && ws.close(); } catch (e) {}

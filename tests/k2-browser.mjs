@@ -63,7 +63,7 @@ try{
   // Simular interrupción con lote identificado: solo se limpian sus propias piezas.
   const interrupted=JSON.parse(await run('(async()=>{' +
     "const db=await anDb(),id='audio-interrumpido-ficticio',m=anNewMeta(id,Date.now(),'importando');"+
-    "localStorage.setItem(K2_JOURNAL,JSON.stringify({version:1,ids:[id],names:['borrador']}));"+
+    "localStorage.setItem(K2_JOURNAL,JSON.stringify({version:2,audios:[{id,createdAt:m.createdAt,bytes:m.bytes}],names:['borrador']}));"+
     "await anPutMeta(db,m);await anPutChunk(db,id,0,0,new Blob(['audio inventado']));"+
     "localStorage.setItem(VAULT_REC_PREFIX+'borrador','registro de ensayo');"+
     'const cleaned=await k2Rollback();'+
@@ -76,6 +76,7 @@ try{
   const restored=JSON.parse(await run('(async()=>{' +
     'const f='+v1+';const r=await k2RestoreEmpty(f,"frase de prueba inventada 901");'+
     'const db=await anDb(),list=await anListMeta(db),m=list[0];'+
+    'vault.otherTab=false;'+  // la app recarga tras restaurar; acá se simula para volver a intentar
     'let repeat="";try{await k2RestoreEmpty(f,"frase de prueba inventada 901")}catch(e){repeat=e.message};'+
     'return JSON.stringify({format:r.formato,audios:r.audios,notas:r.notas,header:!!localStorage.getItem(VAULT_HEADER),'+
     'chunks:await anCountChunks(db,m.id),repeat,journal:localStorage.getItem(K2_JOURNAL)});'+

@@ -1,4 +1,13 @@
-**Precaución grave K2 (no fusionar):** el candado del restaurador todavía no excluye a las pestañas que escriben con bóveda apagada. Se añadió un aviso para cerrar otras pestañas, pero la integración requiere el bloqueo universal de escritura sin bóveda y ensayo de simultaneidad. El PR sigue en borrador.
+**K2 (PR #61, borrador):** el bloqueo universal sin bóveda ya está programado y probado en laboratorio (ver la entrada de correcciones). Falta revisión cruzada de esas correcciones y el CI de GitHub antes de unir.
+
+## 17/11/2026 · K2: correcciones de la revisión cruzada — candado universal (Claude, PR #61)
+
+- **Candado universal (bloqueante 1):** cada pestaña pide el candado al arrancar, **con o sin bóveda**, antes de cargar o escribir. La segunda pestaña queda en solo lectura: no guarda notas, borrador, ajustes, diccionario ni audios (el almacén lanza `OtraPestana`, `saveCfg`/`saveDraft` devuelven `false`) y muestra el aviso. Sin bóveda, un navegador **sin** Web Locks sigue guardando como antes (no puede saber de otras pestañas); ahí K2 ya se niega a restaurar.
+- **Limpieza tras el candado (bloqueante 2):** `k2RestoreEmpty` toma el candado **antes** de limpiar un lote viejo; `k2Rollback` y la limpieza de arranque se niegan a borrar sin candado. Durante la restauración, la propia pestaña tampoco escribe.
+- **Confirmación clara (riesgo 3):** si algo falla después de escribir la cabecera completa, la restauración se informa como hecha; una cabecera distinta se informa como «estado dudoso» sin borrar nada.
+- **Propiedad del lote (riesgo 4):** lote formato 2 con «firma» por audio (fecha de creación y tamaño); IDs repetidos, registros fuera de la lista conocida, versión vieja o firma distinta ⇒ **no se borra nada**.
+- **Arreglo adicional:** el borrador vacío que la app guarda sola al abrirse ya no hace que una instalación nueva cuente como «ocupada», y no queda en claro junto a la bóveda restaurada.
+- **Pruebas:** nueva `tests/k2-candado-browser.mjs` en el CI (dos pestañas reales escribiendo durante una restauración, limpieza solo con candado, cinco lotes alterados intactos, cuota simulada en 7 fases de IndexedDB/localStorage, relectura fallida de la cabecera y dos cortes reales por recarga). Actualizadas `k2-browser.mjs` (lote formato 2) y `audio-nota-browser.mjs` (la app ya tiene el candado al arrancar). Las 15 suites y los tests Node pasaron en laboratorio. **Motorola: sin probar.** Sigue en borrador, sin unir.
 
 ## 17/11/2026 · K2: ensayo de restauración solo en perfil vacío (ChatGPT, PR #61)
 
