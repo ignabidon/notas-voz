@@ -148,7 +148,7 @@ test('P1: borrador viejo ya guardado no duplica nota; distinto destino o conteni
   const end=html.indexOf('\nfunction restoreDraft(){',start);
   assert.ok(start>=0 && end>start,'existe conciliación al restaurar');
   const store={data:{entries:[
-    {id:'nota-1',text:'Texto confirmado',audioId:'audio-A',recordedAt:101},
+    {id:'nota-1',text:'Texto confirmado',audioId:'audio-A',audioParts:2,recordedAt:101},
     {id:'nota-2',text:'Edición confirmada',audioId:null,recordedAt:77}
   ]}};
   const fn=new Function('convStore',html.slice(start,end)+'\nreturn draftAlreadyConfirmed;')(store);
@@ -160,6 +160,9 @@ test('P1: borrador viejo ya guardado no duplica nota; distinto destino o conteni
   assert.equal(fn(draft(101,'Texto nuevo')),false,'una edición pendiente no se descarta');
   assert.equal(fn(draft(101,'Texto confirmado','audio-B')),false,'audio diferente no es el mismo borrador');
   assert.equal(fn(draft(null,'Edición confirmada',null,'nota-2')),true,'la edición ya confirmada se reconoce');
+  const editConAudio = {...draft(null,'Texto confirmado','audio-A','nota-1'),conv:{editing:'nota-1',audioId:'audio-A',audioBase:2}};
+  assert.equal(fn(editConAudio),false,'si se agregaron partes de audio pero la nota aún no las confirma, hay que recuperar la edición');
+  assert.equal(fn({...editConAudio,conv:{...editConAudio.conv,audioBase:1}}),true,'si la nota confirma más partes, es un borrador viejo');
   assert.equal(fn({...draft(101),tags:['pendiente']}),false,'conservar etiquetas que aún puedan ser un borrador');
   assert.match(html,/lastDraft = staleConfirmed \? storedDraft : snap\(\)/,'el borrador viejo debe intentar limpiarse');
   assert.match(html,/if \(staleConfirmed\) void saveDraft\(\)/,'reintenta la limpieza');
