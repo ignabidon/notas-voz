@@ -68,7 +68,7 @@ test('P1: la cola impide que un borrador viejo pise el nuevo', async () => {
   snapshot.value='nuevo después de Guardar';
   const newer=b.saveDraft();
   release();
-  assert.deepEqual(await Promise.all([old,newer]),[true,true]);
+  assert.deepEqual(await Promise.all([old,newer]),[false,true], 'la versión anterior fue superada; solo se confirma la nueva');
   assert.equal(b.last(),snapshot.value);
   assert.equal(data.get('notasvoz.gamma.draft.v1'),snapshot.value);
 });
