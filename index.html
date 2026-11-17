@@ -522,6 +522,8 @@ input[type=password]{width:100%;min-width:0;background:var(--surface-soft);color
 .vault-panel h4{font-size:15px;margin:6px 0 4px}
 .vault-panel form,.vault-panel .vault-box{margin-top:12px}
 .vault-panel .row button{min-height:48px}
+.copia-opciones{border:0;padding:0;margin:10px 0 0;min-width:0}.copia-opciones legend{font-size:14px;font-weight:600;padding:0;margin-bottom:2px}
+#copiaMsg{overflow-wrap:anywhere;white-space:pre-line}
 .vault-code{-webkit-user-select:text;font:600 20px/1.5 ui-monospace,monospace;letter-spacing:1px;background:var(--surface-soft);border:1px dashed var(--line);border-radius:12px;padding:12px;text-align:center;overflow-wrap:anywhere;user-select:text}
 #vaultMsg:empty,#vaultWarn:empty,#vaultSaveError:empty{display:none}
 #vaultMsg{color:var(--acc);font-size:13px}
@@ -930,6 +932,32 @@ body.delta-recording #transcriptionDockBar{height:3px;margin-top:3px}
           <p id="vaultMsg" role="status"></p>
           <p id="vaultWarn" role="alert"></p>
           <p id="vaultSaveError" role="alert"></p>
+        </section>
+        <section class="vault-panel" id="copiaPanel" aria-labelledby="copiaTitle">
+          <h4 id="copiaTitle">Copia cifrada</h4>
+          <p class="hint">Descarga un archivo con tus cuadernos, notas, personas, diccionario y ajustes, cifrado. Sirve de respaldo. Por ahora la copia se puede <b>crear y comprobar</b>; volver a cargarla en la app llega en una versión próxima. No cambia nada de lo que ya está guardado.</p>
+          <p class="hint" id="copiaOffHint">La protección está apagada: la copia igual sale cifrada, con una contraseña que elegís solo para ese archivo. Lleva el texto, no los audios de «Mis grabaciones».</p>
+          <fieldset id="copiaContenido" class="copia-opciones" hidden>
+            <legend>Qué lleva la copia</legend>
+            <label class="chk"><input type="radio" name="copiaTipo" id="copiaCompleta" value="completa" checked><span><b>Completa</b><small>Texto y audios cifrados guardados con tus notas.</small></span></label>
+            <label class="chk"><input type="radio" name="copiaTipo" id="copiaSoloTexto" value="solo-texto"><span><b>Solo texto</b><small>Más liviana: sin audios.</small></span></label>
+          </fieldset>
+          <div class="row"><button type="button" id="copiaCrear" class="p">Crear copia cifrada</button><button type="button" id="copiaVerificar">Verificar una copia</button></div>
+          <input type="file" id="copiaArchivo" hidden>
+          <form id="copiaPwForm" class="vault-box" hidden>
+            <p class="hint">Elegí una contraseña para este archivo. Si la olvidás, <b>la copia no se puede abrir</b>.</p>
+            <label for="copiaPw1">Contraseña de la copia (al menos 8 caracteres; mejor una frase)</label>
+            <input type="password" id="copiaPw1" autocomplete="new-password" required>
+            <label for="copiaPw2">Repetila</label>
+            <input type="password" id="copiaPw2" autocomplete="new-password" required>
+            <div class="row"><button type="submit" class="p">Crear la copia</button><button type="button" id="copiaPwCancel">Cancelar</button></div>
+          </form>
+          <form id="copiaClaveForm" class="vault-box" hidden>
+            <label for="copiaClave" id="copiaClaveTitle">Contraseña</label>
+            <input type="password" id="copiaClave" autocomplete="off">
+            <div class="row"><button type="submit" class="p">Continuar</button><button type="button" id="copiaClaveCancel">Cancelar</button></div>
+          </form>
+          <p id="copiaMsg" role="status"></p>
         </section>
         <details id="localPrivacy" class="privacy-panel">
         <summary>Privacidad y datos guardados <small>Notas y borradores en Brave</small></summary>
@@ -1546,6 +1574,8 @@ function createVault(storage, opts){
     return {recovery, dek};
   };
   v.checkPassword = password => vaultUnwrapPassword(v.header, password);
+  // Copia cifrada (K1): los registros cifrados tal como están guardados, sin descifrarlos ni tocarlos. Solo lectura.
+  v.rawRecords = () => Object.values(VAULT_KEYS).map(name => [name, storage.getItem(VAULT_REC_PREFIX + name)]).filter(x => x[1] !== null);
   v.changePassword = async (current, next) => {
     assertWritable();
     const dek = await vaultUnwrapPassword(v.header, current);
@@ -1677,6 +1707,7 @@ function vaultRefreshPanel(){
   vaultEl('vaultOff').hidden = vault.state !== 'off';
   vaultEl('vaultOn').hidden = !on;
   vaultEl('topLock').hidden = !on;
+  { const c = vaultEl('copiaContenido'), o = vaultEl('copiaOffHint'); if (c) c.hidden = !on; if (o) o.hidden = vault.state !== 'off'; }   // copia cifrada (K1)
   vaultEl('vaultStatus').textContent = vault.state === 'off'
     ? 'Desactivada: las notas, borradores, personas y diccionario se guardan sin cifrar en este navegador.'
     : 'Activada: notas, borrador, deshacer, personas y diccionario se guardan cifrados (AES-256). Se bloquea tras 15 minutos sin uso. Con «Conservar audio», los audios nuevos se guardan cifrados junto a su nota; los guardados antes en «Mis grabaciones» siguen sin cifrar.';
@@ -3659,7 +3690,7 @@ async function toMono16k(blocks, rate){
   return new Float32Array((await withDeadline(off.startRendering(), 15000, 'preparación del audio')).getChannelData(0));
 }
 
-const BUILD = 'Delta 11 · corrección Firefox · vigilancia de grabaciones largas · protección cifrada · audio cifrado por nota';
+const BUILD = 'Delta 11 · corrección Firefox · vigilancia de grabaciones largas · protección cifrada · audio cifrado por nota · copia cifrada';
 let retryAudio = [], retryBytes = 0, retryUnavailable = false;
 function clearRetryAudio(){ retryAudio = []; retryBytes = 0; retryUnavailable = false; }
 function retainRetryAudio(blocks, rate, info){
@@ -4613,6 +4644,316 @@ async function anReviewOnOpen(){
   } catch (e) { logDiag('Audio cifrado: revisión al abrir no terminó (' + anErrName(e) + ')'); }
 }
 
+/* ====================================================================
+   Copia cifrada — paso K1 (17/11/2026; ver docs/DISENO-ALMACENAMIENTO-CIFRADO-2026-11-16.md, 2.6)
+   Arma y comprueba un archivo .dictanota (formato 1). NO restaura (eso es K2) y no modifica nada
+   de lo guardado: los registros y los fragmentos de audio se copian tal como están, sin recifrar.
+   Archivo:  "DICTANOTA-COPIA\n" · formato (u32) · largo (u32) + cabecera JSON en claro · bloques.
+   Bloque:   tipo (1 byte: R, C, M, A o F) · largo del nombre (u32) · nombre · largo de datos (u64) · datos.
+   Los números van en orden de red (big-endian). Cada audio es un bloque M seguido de sus bloques A, en orden.
+   El bloque F (cifrado) cierra la copia: repite los totales y lleva «cadena», una huella encadenada de la
+   cabecera y de todos los bloques anteriores. Así también quedan autenticados los nombres, el orden y las fichas.
+   ==================================================================== */
+/*COPIA-START*/
+const COPIA_MAGIC = 'DICTANOTA-COPIA\n', COPIA_FORMATO = 1, COPIA_TIPOS = 'RCMAF';
+const COPIA_MAX_CABECERA = 65536, COPIA_MAX_NOMBRE = 200, COPIA_MAX_BLOQUE = 64 * 1024 * 1024, COPIA_MAX_BLOQUES = 5000000;
+const COPIA_MSG = {
+  NoEsCopia: 'Ese archivo no es una copia de DictaNota.',
+  FormatoNuevo: 'Esta copia es de una versión más nueva de DictaNota. Actualizá la app para abrirla.',
+  Clave: 'La contraseña o el código no abren esta copia.',
+  Cortada: 'La copia está incompleta: el archivo se cortó. Volvé a crearla o a descargarla.',
+  Alterada: 'La copia está dañada o fue modificada: no pasó la comprobación.',
+  Cancelada: 'Comprobación cancelada.'
+};
+function copiaError(code){ const e = new Error(COPIA_MSG[code]); e.name = 'Copia' + code; e.copia = code; return e; }
+const copiaU32 = n => { const b = new Uint8Array(4); new DataView(b.buffer).setUint32(0, n); return b; };
+const copiaU64 = n => { const b = new Uint8Array(8); new DataView(b.buffer).setBigUint64(0, BigInt(n)); return b; };
+function copiaJoin(list){ const out = new Uint8Array(list.reduce((t, x) => t + x.length, 0)); let o = 0; for (const x of list) { out.set(x, o); o += x.length; } return out; }
+const copiaSha = async bytes => new Uint8Array(await crypto.subtle.digest('SHA-256', bytes));
+const copiaAad = (id, kind) => vaultAad(id, 'copia|' + kind);
+function copiaHead(tipo, nombre, largo){
+  const n = vaultEnc.encode(nombre);
+  if (typeof tipo !== 'string' || tipo.length !== 1 || !COPIA_TIPOS.includes(tipo) || n.length < 1 || n.length > COPIA_MAX_NOMBRE || !Number.isSafeInteger(largo) || largo < 0 || largo > COPIA_MAX_BLOQUE) throw new Error('bloque de copia inválido');
+  return copiaJoin([new Uint8Array([tipo.charCodeAt(0)]), copiaU32(n.length), n, copiaU64(largo)]);
+}
+function copiaName(now){
+  const d = new Date(now), p = n => String(n).padStart(2, '0');
+  return 'DictaNota-copia-' + d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + '.dictanota';
+}
+function copiaCount(text){
+  try { const d = JSON.parse(text); return {cuadernos: Array.isArray(d.conversations) ? d.conversations.length : null, notas: Array.isArray(d.entries) ? d.entries.length : null}; }
+  catch (e) { return {cuadernos: null, notas: null}; }
+}
+/* Arma una copia. header: cabecera de la protección (viaja sin «bio»: la huella es de cada dispositivo).
+   key: clave de datos (AES-GCM). Los datos de cada bloque se leen una vez para su huella y no quedan en memoria. */
+function copiaWriter(header, key, contenido, creado){
+  if (contenido !== 'completa' && contenido !== 'solo-texto') throw new Error('contenido de copia inválido');
+  const bloques = []; let registros = 0, audios = 0, fragmentos = 0;
+  const add = async (tipo, nombre, datos) => {
+    const bytes = datos instanceof Uint8Array ? datos : new Uint8Array(await datos.arrayBuffer());
+    bloques.push({head: copiaHead(tipo, nombre, bytes.length), hash: await copiaSha(bytes), datos, size: bytes.length});
+  };
+  const sealed = async (obj, kind) => vaultEnc.encode(JSON.stringify(await vaultSeal(key, vaultEnc.encode(JSON.stringify(obj)), copiaAad(header.id, kind))));
+  return {
+    // raw: el registro cifrado, exactamente como está guardado.
+    async registro(nombre, raw){ await add('R', nombre, vaultEnc.encode(raw)); registros++; },
+    async config(obj){ await add('C', 'config', await sealed(obj, 'config')); },
+    // meta: la ficha tal como está; chunks: [{part, n, blob}] en orden, con los fragmentos cifrados tal como están.
+    async audio(meta, chunks){
+      if (contenido !== 'completa') throw new Error('una copia de solo texto no lleva audios');
+      await add('M', meta.id, vaultEnc.encode(JSON.stringify(meta))); audios++;
+      for (const c of chunks) { await add('A', meta.id + '|' + c.part + '|' + c.n, c.blob); fragmentos++; }
+    },
+    async finish(){
+      const total = bloques.length + 1;
+      const cab = vaultEnc.encode(JSON.stringify({formato: COPIA_FORMATO, creado, app: 'Delta 11', id: header.id, pw: header.pw, rec: header.rec, contenido, bloques: total}));
+      const prefijo = copiaJoin([vaultEnc.encode(COPIA_MAGIC), copiaU32(COPIA_FORMATO), copiaU32(cab.length), cab]);
+      let cadena = await copiaSha(prefijo), bytes = prefijo.length;
+      for (const b of bloques) { cadena = await copiaSha(copiaJoin([cadena, b.head, b.hash])); bytes += b.head.length + b.size; }
+      const fin = await sealed({bloques: total, bytes, registros, audios, fragmentos, cadena: vb64(cadena)}, 'fin');
+      const parts = [prefijo]; for (const b of bloques) parts.push(b.head, b.datos);
+      parts.push(copiaHead('F', 'fin', fin.length), fin);
+      return new Blob(parts, {type: 'application/octet-stream'});
+    }
+  };
+}
+/* Abre la cabecera de una copia con la contraseña o con el código de recuperación que valían al crearla. */
+async function copiaOpenWithSecret(h, secret){
+  const header = {v: 1, id: h.id, pw: h.pw, rec: h.rec, bio: null};
+  const tries = /^[0-9A-HJKMNP-TV-Z]{24}$/.test(vaultNormalizeRecovery(secret)) ? [vaultUnwrapRecovery, vaultUnwrapPassword] : [vaultUnwrapPassword];
+  for (const f of tries) {
+    let dek; try { dek = await f(header, secret); } catch (e) { continue; }
+    try { return {key: await vaultImportDataKey(dek), audioKey: await vaultDeriveAudioKey(dek, h.id)}; } finally { dek.fill(0); }
+  }
+  throw copiaError('Clave');
+}
+/* Recorre y autentica TODA la copia, por tramos (nunca carga el archivo entero) y sin restaurar nada.
+   abrir(cabecera) → {key, audioKey}. Devuelve un resumen o lanza un error con .copia = motivo. */
+async function copiaVerify(file, abrir, onProgress){
+  let pos = 0;
+  const take = async n => {
+    if (pos + n > file.size) throw copiaError('Cortada');
+    const b = new Uint8Array(await file.slice(pos, pos + n).arrayBuffer());
+    if (b.length !== n) throw copiaError('Cortada');
+    pos += n; return b;
+  };
+  const view = b => new DataView(b.buffer, b.byteOffset, b.byteLength);
+  const bad = () => copiaError('Alterada');
+  const magic = vaultEnc.encode(COPIA_MAGIC), first = await take(Math.min(magic.length, file.size));
+  if (first.some((x, i) => x !== magic[i])) throw copiaError('NoEsCopia');
+  if (first.length < magic.length) throw copiaError(first.length ? 'Cortada' : 'NoEsCopia');
+  const fb = await take(4), formato = view(fb).getUint32(0);
+  if (formato > COPIA_FORMATO) throw copiaError('FormatoNuevo');
+  if (formato !== COPIA_FORMATO) throw bad();
+  const lb = await take(4), largo = view(lb).getUint32(0);
+  if (largo < 2 || largo > COPIA_MAX_CABECERA) throw bad();
+  const cab = await take(largo);
+  let h;
+  try { h = JSON.parse(vaultDec.decode(cab)); vaultParseHeader(JSON.stringify({v: 1, id: h.id, pw: h.pw, rec: h.rec, bio: null})); } catch (e) { throw bad(); }
+  if (h.formato !== COPIA_FORMATO || (h.contenido !== 'completa' && h.contenido !== 'solo-texto') || !Number.isSafeInteger(h.bloques) || h.bloques < 2 || h.bloques > COPIA_MAX_BLOQUES || !Number.isFinite(h.creado)) throw bad();
+  const {key, audioKey} = await abrir(h);
+  let cadena = await copiaSha(copiaJoin([magic, fb, lb, cab]));
+  let registros = 0, audios = 0, fragmentos = 0, bytesAudio = 0, config = false, fin = false, stats = {cuadernos: null, notas: null}, cur = null;
+  const names = new Set(), audioIds = new Set();
+  // Partes sin fragmentos (no deberían existir) no esperan ningún bloque A.
+  const skipEmpty = () => { while (cur && cur.part < cur.detail.parts.length && cur.detail.parts[cur.part].chunks === 0) { if (cur.detail.parts[cur.part].bytes !== 0) throw bad(); cur.part++; } };
+  const closeAudio = () => { if (cur && cur.part < cur.detail.parts.length) throw bad(); cur = null; };
+  for (let i = 0; i < h.bloques; i++) {
+    const inicio = pos, tb = await take(1), nlb = await take(4), nl = view(nlb).getUint32(0);
+    const tipo = String.fromCharCode(tb[0]);
+    if (!COPIA_TIPOS.includes(tipo) || nl < 1 || nl > COPIA_MAX_NOMBRE) throw bad();
+    const nb = await take(nl), dlb = await take(8), dl = Number(view(dlb).getBigUint64(0));
+    if (!Number.isSafeInteger(dl) || dl > COPIA_MAX_BLOQUE) throw bad();
+    const datos = await take(dl);
+    if ((tipo === 'F') !== (i === h.bloques - 1)) throw bad();
+    try {
+      const nombre = vaultDec.decode(nb);
+      if (tipo !== 'F') cadena = await copiaSha(copiaJoin([cadena, tb, nlb, nb, dlb, await copiaSha(datos)]));
+      if (tipo === 'R') {
+        closeAudio();
+        if (!/^[a-z0-9.-]{1,60}$/.test(nombre) || names.has(nombre)) throw bad();
+        names.add(nombre);
+        const text = await vaultOpenRecord(key, h.id, nombre, vaultDec.decode(datos));
+        registros++; if (nombre === 'conversaciones') stats = copiaCount(text);
+      } else if (tipo === 'C') {
+        closeAudio();
+        if (config || nombre !== 'config') throw bad();
+        JSON.parse(vaultDec.decode(await vaultOpen(key, JSON.parse(vaultDec.decode(datos)), copiaAad(h.id, 'config'))));
+        config = true;
+      } else if (tipo === 'M') {
+        closeAudio();
+        const m = JSON.parse(vaultDec.decode(datos));
+        if (h.contenido !== 'completa' || !anValidMeta(m) || m.id !== nombre || audioIds.has(m.id) || m.state !== 'cerrado' || !m.key || !m.sealed || m.parts < 1) throw bad();
+        audioIds.add(m.id);
+        const cek = await anOpenCek(audioKey, h.id, m.id, m.key), detail = await anOpenDetail(audioKey, h.id, m.id, m.sealed);
+        if (detail.parts.length !== m.parts) throw bad();
+        cur = {id: m.id, cek, detail, part: 0, n: 0, bytes: 0}; skipEmpty(); audios++;
+      } else if (tipo === 'A') {
+        if (!cur || cur.part >= cur.detail.parts.length || nombre !== cur.id + '|' + cur.part + '|' + cur.n) throw bad();
+        const plain = await anOpenChunk(cur.cek, h.id, cur.id, cur.part, cur.n, datos);
+        cur.bytes += plain.length; bytesAudio += plain.length; plain.fill(0); cur.n++; fragmentos++;
+        if (cur.n === cur.detail.parts[cur.part].chunks) {
+          if (cur.bytes !== cur.detail.parts[cur.part].bytes) throw bad();
+          cur.part++; cur.n = 0; cur.bytes = 0; skipEmpty();
+        }
+      } else {
+        closeAudio();
+        if (nombre !== 'fin') throw bad();
+        const f = JSON.parse(vaultDec.decode(await vaultOpen(key, JSON.parse(vaultDec.decode(datos)), copiaAad(h.id, 'fin'))));
+        if (!f || f.bloques !== h.bloques || f.bytes !== inicio || f.registros !== registros || f.audios !== audios || f.fragmentos !== fragmentos || f.cadena !== vb64(cadena)) throw bad();
+        fin = true;
+      }
+    } catch (e) { throw e && e.copia ? e : bad(); }
+    if (onProgress) { try { onProgress(pos, file.size); } catch (e) {} }
+  }
+  if (!fin || !config || pos !== file.size) throw bad();
+  return {formato, creado: h.creado, contenido: h.contenido, id: h.id, bytes: file.size, registros, audios, fragmentos, bytesAudio, cuadernos: stats.cuadernos, notas: stats.notas};
+}
+/*COPIA-END*/
+
+/* ---------- Copia cifrada en uso (K1): solo lee lo guardado; nunca escribe ni borra ---------- */
+/*COPIA-USO-START*/
+let copiaBusyN = 0;
+const copiaEl = id => document.getElementById(id);
+const copiaSay = t => { copiaEl('copiaMsg').textContent = t || ''; };
+function copiaSummary(r){
+  const out = ['creada el ' + convStamp(r.creado)];
+  if (Number.isInteger(r.cuadernos)) out.push(r.cuadernos === 1 ? '1 cuaderno' : r.cuadernos + ' cuadernos');
+  if (Number.isInteger(r.notas)) out.push(r.notas === 1 ? '1 nota' : r.notas + ' notas');
+  out.push(r.contenido === 'completa' ? (r.audios === 1 ? '1 audio cifrado' : r.audios + ' audios cifrados') : 'solo texto, sin audios');
+  out.push('archivo de ' + (r.bytes < 104858 ? Math.max(1, Math.round(r.bytes / 1024)) + ' KB' : mb(r.bytes)));
+  return out.join(' · ');
+}
+/* Pide un dato secreto en el formulario propio de la copia. Devuelve null si se cancela. */
+function copiaAsk(title){
+  return new Promise(resolve => {
+    const f = copiaEl('copiaClaveForm'), input = copiaEl('copiaClave');
+    f.hidden = false; copiaEl('copiaClaveTitle').textContent = title; input.value = ''; input.focus();
+    const done = value => { f.hidden = true; f.onsubmit = null; copiaEl('copiaClaveCancel').onclick = null; input.value = ''; resolve(value); };
+    f.onsubmit = ev => { ev.preventDefault(); done(input.value); };
+    copiaEl('copiaClaveCancel').onclick = () => done(null);
+  });
+}
+/* Audios por nota para una copia completa. Cada audio se comprueba entero antes de entrar: uno dañado o a medio
+   guardar no entra (se cuenta y se avisa), así la copia siempre pasa su propia comprobación. */
+async function copiaAudios(w){
+  if (!anUsable()) return 0;
+  const n = await anStoredCount();
+  if (n === null) throw new Error('no se pudieron leer los audios guardados');
+  if (n === 0) return 0;
+  const db = await anDb(), hid = vault.header.id, kAudio = vault.audioKey; let omitidos = 0;
+  for (const m of await anListMeta(db)) {
+    try {
+      if (!anValidMeta(m) || m.state !== 'cerrado' || !m.key || !m.sealed || m.parts < 1) throw new Error('ficha');
+      const cek = await anOpenCek(kAudio, hid, m.id, m.key), detail = await anOpenDetail(kAudio, hid, m.id, m.sealed), chunks = [];
+      if (detail.parts.length !== m.parts) throw new Error('partes');
+      for (let part = 0; part < detail.parts.length; part++) {
+        const blobs = await anPartChunks(db, m.id, part); let bytes = 0;
+        if (blobs.length !== detail.parts[part].chunks) throw new Error('fragmentos');
+        for (let i = 0; i < blobs.length; i++) { const plain = await anOpenChunk(cek, hid, m.id, part, i, blobs[i]); bytes += plain.length; plain.fill(0); chunks.push({part, n: i, blob: blobs[i]}); }
+        if (bytes !== detail.parts[part].bytes) throw new Error('tamaño');
+      }
+      await w.audio(m, chunks);
+    } catch (e) { omitidos++; logDiag('Copia cifrada: un audio no entró en la copia (' + anErrName(e) + ').'); }
+  }
+  return omitidos;
+}
+/* Crea la copia. filePassword: solo con la protección apagada (contraseña elegida para el archivo). */
+async function copiaCreate(filePassword){
+  if (copiaBusyN) return null;
+  if (vaultBusy() || convSaving) { copiaSay('Primero terminá de grabar, transcribir o guardar.'); return null; }
+  if (vault.state !== 'off' && vault.state !== 'open') return null;
+  const abierta = vault.state === 'open', completa = abierta && copiaEl('copiaCompleta').checked;
+  copiaBusyN++;
+  try {
+    let header, key;
+    if (abierta) {
+      await vault.flush();
+      if (vault.pending.size) { copiaSay('Hay cambios que todavía no se pudieron guardar cifrados. No se creó la copia.'); return null; }
+      header = vault.header; key = vault.key;
+    } else {
+      copiaSay('Preparando la contraseña de la copia…');
+      const c = await vaultCreate(filePassword);
+      try { key = await vaultImportDataKey(c.dek); } finally { c.dek.fill(0); }
+      header = c.header;
+    }
+    copiaSay('Armando la copia…');
+    const now = Date.now(), w = copiaWriter(header, key, completa ? 'completa' : 'solo-texto', now);
+    if (abierta) { for (const [name, raw] of vault.rawRecords()) await w.registro(name, raw); }
+    else for (const [k, name] of Object.entries(VAULT_KEYS)) { const plain = vaultStore.getItem(k); if (plain !== null) await w.registro(name, await vaultSealRecord(key, header.id, name, plain)); }
+    await w.config({cfg: localStorage.getItem(CKEY), generador: localStorage.getItem(GKEY)});
+    const omitidos = completa ? await copiaAudios(w) : 0;
+    const file = new File([await w.finish()], copiaName(now), {type: 'application/octet-stream'});
+    // Antes de entregarla se comprueba entera, con las claves ya abiertas.
+    copiaSay('Comprobando la copia…');
+    const r = await copiaVerify(file, async () => ({key, audioKey: abierta ? vault.audioKey : null}));
+    download(file);
+    logDiag('Copia cifrada: creada · ' + r.contenido + ' · ' + r.registros + ' registros · ' + r.audios + ' audios · ' + r.bytes + ' bytes' + (omitidos ? ' · ' + omitidos + ' audios omitidos' : ''));
+    copiaSay('Copia creada y comprobada: ' + copiaSummary(r) + '.\n' +
+      (omitidos ? (omitidos === 1 ? 'Atención: un audio dañado o a medio guardar no entró en la copia.' : 'Atención: ' + omitidos + ' audios dañados o a medio guardar no entraron en la copia.') + '\n' : '') +
+      (vault.frozen.size ? 'Atención: hay datos dañados en este navegador que la copia no pudo incluir.\n' : '') +
+      'Se descargó como «' + file.name + '». ' + (abierta ? 'Se abre con tu contraseña actual o con tu código de recuperación (aunque después cambies la contraseña).' : 'Se abre solo con la contraseña que acabás de elegir.') +
+      '\nPara confirmar que la descarga terminó bien, tocá «Verificar una copia» y elegí ese archivo. Guardalo fuera del celular.');
+    return file;
+  } catch (e) {
+    logDiag('Copia cifrada: no se creó (' + anErrName(e) + ')');
+    copiaSay('No se pudo crear la copia (' + ((e && e.message) || 'error') + '). No se cambió nada de lo guardado.');
+    return null;
+  } finally { copiaBusyN = Math.max(0, copiaBusyN - 1); }
+}
+/* Comprueba un archivo elegido por el usuario. No restaura ni guarda nada. */
+async function copiaCheck(file){
+  if (copiaBusyN || !file) return null;
+  if (vaultBusy() || convSaving) { copiaSay('Primero terminá de grabar, transcribir o guardar.'); return null; }
+  copiaBusyN++;
+  try {
+    copiaSay('Leyendo «' + file.name + '»…');
+    let last = 0;
+    const r = await copiaVerify(file, async h => {
+      const secret = await copiaAsk('Contraseña o código de recuperación de esta copia');
+      if (secret === null) throw copiaError('Cancelada');
+      copiaSay('Abriendo la copia…');
+      return copiaOpenWithSecret(h, secret);
+    }, (pos, size) => { const now = Date.now(); if (now - last > 400) { last = now; copiaSay('Comprobando la copia… ' + Math.floor(pos / size * 100) + ' %'); } });
+    logDiag('Copia cifrada: comprobada · ' + r.registros + ' registros · ' + r.audios + ' audios · ' + r.bytes + ' bytes');
+    copiaSay('Copia correcta: ' + copiaSummary(r) + '.\nEstá entera y se abre con lo que escribiste. No se cargó ni se cambió nada en la app.');
+    return r;
+  } catch (e) {
+    const code = e && e.copia;
+    logDiag('Copia cifrada: la comprobación falló (' + (code || anErrName(e)) + ')');
+    copiaSay(code ? e.message : 'No se pudo leer el archivo (' + anErrName(e) + ').');
+    return null;
+  } finally { copiaBusyN = Math.max(0, copiaBusyN - 1); }
+}
+copiaEl('copiaCrear').onclick = async () => {
+  if (copiaBusyN) return;
+  if (vaultBusy() || convSaving) return copiaSay('Primero terminá de grabar, transcribir o guardar.');
+  if (vault.state === 'open') {
+    // Se pide la contraseña para confirmar que la recordás: sin ella (o sin el código) la copia no sirve.
+    const pw = await vaultAskPassword('Escribí tu contraseña (la copia se va a abrir con ella)'); if (pw === null) return;
+    copiaSay('Comprobando la contraseña…');
+    try { (await vault.checkPassword(pw)).fill(0); } catch (e) { return copiaSay('La contraseña no es correcta. No se creó la copia.'); }
+    return copiaCreate(null);
+  }
+  if (vault.state !== 'off') return;
+  copiaSay(''); copiaEl('copiaPw1').value = ''; copiaEl('copiaPw2').value = ''; copiaEl('copiaPwForm').hidden = false; copiaEl('copiaPw1').focus();
+};
+copiaEl('copiaPwCancel').onclick = () => { copiaEl('copiaPw1').value = ''; copiaEl('copiaPw2').value = ''; copiaEl('copiaPwForm').hidden = true; };
+copiaEl('copiaPwForm').onsubmit = async ev => {
+  ev.preventDefault();
+  const a = copiaEl('copiaPw1').value, problem = vaultPasswordProblem(a, copiaEl('copiaPw2').value);
+  if (problem) return copiaSay(problem);
+  copiaEl('copiaPw1').value = ''; copiaEl('copiaPw2').value = ''; copiaEl('copiaPwForm').hidden = true;
+  await copiaCreate(a);
+};
+copiaEl('copiaVerificar').onclick = () => { if (!copiaBusyN) copiaEl('copiaArchivo').click(); };
+copiaEl('copiaArchivo').addEventListener('change', () => {
+  const f = copiaEl('copiaArchivo').files && copiaEl('copiaArchivo').files[0];
+  copiaEl('copiaArchivo').value = '';
+  if (f) copiaCheck(f);
+});
+/*COPIA-USO-END*/
+
 /* ---------- Audio guardado (solo en este dispositivo) ---------- */
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 let dbP = null;
@@ -4789,7 +5130,7 @@ async function refreshAudioBox(){
   $('audioUndoRow').hidden = !previous;
 }
 const audioBtns = on => ['aDown', 'aMp3', 'aTx', 'aDel', 'aUndoAudio'].forEach(id => $(id).disabled = on);
-const audioBusy = () => recording || busy || outstanding > 0 || feeding;
+const audioBusy = () => recording || busy || outstanding > 0 || feeding || copiaBusyN > 0;
 const audioMsg = t => $('audioMsg').textContent = t;
 $('recordDownloadAudio').onclick = () => {
   if (audioBusy()) return flash('Esperá a que termine la grabación y la transcripción para descargar el audio.');
@@ -4987,6 +5328,7 @@ $('rec').onclick = async () => {
     if (!window.isSecureContext || !navigator.mediaDevices) { setStatus('El navegador no deja usar el micrófono con la página abierta de esta forma (' + location.protocol + '). Abrila desde una dirección que empiece con https.'); return; }
     if (feeding || busy || outstanding > 0) { setStatus('Todavía se está transcribiendo: esperá a que termine para grabar de nuevo.'); return; }
     if (convSaving) { setStatus('Esperá a que termine de guardarse la nota.'); return; }
+    if (copiaBusyN > 0) { setStatus('Esperá a que termine la copia cifrada.'); return; }
     recEng = eng(); $('rec').disabled = true; audioOk = false;
     if (recEng === 'whisper' && $('saveAudio').checked && anUsable()) audioOk = true;   // E2: el audio va cifrado a su nota; el aviso del audio viejo no aplica
     else if (recEng === 'whisper' && $('saveAudio').checked) {
@@ -5170,7 +5512,7 @@ $('text').addEventListener('input', updWC);
 setInterval(updWC, 300);
 initErgonomics(); loadCfg(); $('recordSaveAudio').checked = $('saveAudio').checked; updateModelHint();
 // Protección cifrada: no bloquear mientras se graba o transcribe; guardar el borrador antes de bloquear.
-vaultSetHooks(() => recording || busy || outstanding > 0 || feeding || anBusyN > 0, saveDraft);   // cifrar un archivo también cuenta como uso
+vaultSetHooks(() => recording || busy || outstanding > 0 || feeding || anBusyN > 0 || copiaBusyN > 0, saveDraft);   // cifrar un archivo, y crear o comprobar una copia, también cuentan como uso
 vaultWhenReady(() => { loadNotes(); loadDict(); loadPeople(); loadGenerator(); updateGeneratorUI(); renderList(); convInit(); restoreDraft(); updWC(); });
 vaultWhenReady(() => { if (anUsable()) anReviewOnOpen(); });   // E2: después de cargar notas y borrador (el candado ya se tomó al desbloquear)
 refreshAudioBox();

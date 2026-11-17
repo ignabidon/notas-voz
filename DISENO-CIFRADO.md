@@ -46,6 +46,7 @@ Fecha: 16/11/2026. Rama: `seguridad-02-cifrado-2026-11-16`. Reemplaza la propues
 - **Audios:** desde el paso E2 (16/11/2026), los audios nuevos guardados con «Conservar audio» y la protección abierta van cifrados y unidos a su nota (detalle en `docs/DISENO-ALMACENAMIENTO-CIFRADO-2026-11-16.md`, 2.4). Los guardados sin protección, o antes de E2, siguen sin cifrar en la base vieja. **Mientras haya audios por nota guardados, no se puede quitar la protección** (su clave sale de ella); el recorrido completo (copia + borrar audios, D3) llega con AO. Solo una pestaña escribe datos protegidos a la vez.
 - **Huella en Brave/Android:** depende de que la llave de acceso quede en el Administrador de contraseñas de Google, que admite PRF. Brave usa el mismo código WebAuthn que Chromium, pero **no está probado en el Motorola**. Si no funciona, la app lo dice y se sigue usando la contraseña.
 - Si se borran los «datos del sitio» en Brave, se pierden las notas, como pasa hoy. La protección no es una copia de seguridad.
+- **Copia cifrada (K1, 17/11/2026):** Ajustes → Privacidad permite crear un archivo `.dictanota` cifrado y verificarlo. **Todavía no se puede restaurar** (K2). Formato en `docs/DISENO-ALMACENAMIENTO-CIFRADO-2026-11-16.md`, 2.6.
 
 ## Plan para la app de Android
 
