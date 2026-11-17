@@ -635,6 +635,133 @@ body.delta-recording #convComposer{display:none!important}
   .pill{order:3;flex:0 0 100%;display:flex;align-items:center;gap:6px;padding:0;font-size:14px;line-height:1.3;color:var(--mut)}
   .pill svg{width:15px;height:15px;flex:none}
 }
+
+/* Clínica editorial · ChatGPT · 16/11/2026. Solo presentación, sin alterar estados ni controles. */
+:root{--editorial-coral:#B53D3B;--editorial-amber:#B78228;--editorial-chat:#EDF4F5}
+
+/* Dictar: el micrófono y el tiempo establecen la jerarquía visual. */
+body[data-view="grabacion"] .c-rec{box-shadow:0 8px 28px #12262C0B}
+body[data-view="grabacion"] .record-head h2{font-weight:800;letter-spacing:-.8px}
+body[data-view="grabacion"] .record-overline{letter-spacing:1.8px}
+body[data-view="grabacion"] .record-clock #clock{font-size:clamp(54px,14vw,66px);font-weight:650;letter-spacing:-1.5px;line-height:1.1}
+body[data-view="grabacion"] .record-caption-label{color:var(--mut);font-weight:550}
+body[data-view="grabacion"] .c-rec #rec{width:clamp(136px,38vw,150px);height:clamp(136px,38vw,150px);min-height:136px;border-width:6px;border-color:#D5E7EC;box-shadow:0 0 0 9px #EEF5F6,0 12px 24px #12262C18;font-size:max(16px,calc(16px * var(--text-scale)));font-weight:750}
+body[data-view="grabacion"] .c-rec #rec.on{background:var(--editorial-coral);color:#FFF;border-color:#F5DDDB;box-shadow:0 0 0 9px #FBEFEE,0 10px 24px #B53D3B20}
+body[data-view="grabacion"] .c-rec #rec.on.paused{background:var(--editorial-amber);color:var(--ink);border-color:#F5E8CF;box-shadow:0 0 0 9px #FCF5E8}
+body[data-view="grabacion"]:has(#rec.on.paused) .record-clock #clock.on{color:#946219}
+body[data-view="grabacion"] .capture-shortcuts button,
+body[data-view="grabacion"] #recordDownloadAudio,
+body[data-view="grabacion"] .audio-shortcut{background:#FFF;color:var(--acc);border:1px solid #C9DDE3;box-shadow:none;font-weight:650}
+body[data-view="grabacion"] .audio-tools{border-top:1px solid var(--line);padding-top:14px}
+#studioDockCapture.paused .capture-dot{background:var(--editorial-amber);box-shadow:0 0 0 3px #F6E9CE}
+#studioDockCapture.paused #studioDockMode{color:#946219}
+
+/* Cuadernos: conversaciones privadas, notas legibles, acciones discretas. */
+body[data-view="transcripcion"] .conv-h{font-weight:800;letter-spacing:-.45px}
+body[data-view="transcripcion"] .conv-item{background:#FFFEFC;border-color:#D3E1E5;border-radius:18px;box-shadow:0 3px 14px #12262C0B;gap:6px}
+body[data-view="transcripcion"] .conv-item>span{letter-spacing:-.25px;line-height:1.35}
+body[data-view="transcripcion"] .conv-bubble{background:var(--editorial-chat);border-color:#CFDFE4;border-radius:20px 20px 6px 20px;box-shadow:0 4px 14px #12262C0B;padding:16px 17px}
+body[data-view="transcripcion"] .conv-text{color:var(--ink);line-height:1.72}
+body[data-view="transcripcion"] .conv-meta{border-top:1px solid #D3E1E5;padding-top:9px;margin-top:14px;gap:6px 10px;font-size:max(12px,calc(12px * var(--text-scale)));color:var(--mut)}
+body[data-view="transcripcion"] .conv-stamp{color:#335B65;font-weight:750}
+body[data-view="transcripcion"] .conv-actions{border-top:1px solid #D3E1E5;padding-top:10px;margin-top:12px;gap:8px}
+body[data-view="transcripcion"] .conv-actions button{background:#FFF;color:#31515B;border-color:#CEDFE4;font-weight:650;min-height:48px}
+body[data-view="transcripcion"] #convComposer textarea#text{background:#FFF;border-color:#C9DBE1}
+body[data-view="transcripcion"] #convComposer label{font-weight:700}
+
+/* Navegación: mismo orden y mismas zonas táctiles; selección visible además del color. */
+.studio-dock .studio-nav a[aria-current="page"]{background:#E1EEF2;color:var(--acc);font-weight:800;box-shadow:inset 0 0 0 1px #C3DAE1}
+.studio-dock .studio-nav a[aria-current="page"] svg{stroke-width:2.25}
+
+/* Correcciones de ergonomía: lectura libre y editor amplio con el mismo textarea. */
+:root{--line-strong:#768F97}
+input,textarea,select,button{border-color:var(--line-strong)}
+body[data-view="transcripcion"] #convComposer textarea#text,
+body[data-view="transcripcion"] .conv-actions button,
+body[data-view="grabacion"] .capture-shortcuts button,
+body[data-view="grabacion"] .audio-shortcut,#pause,#mark,#studioDockPause{border-color:var(--line-strong)}
+body[data-view="transcripcion"] .conv-actions button.danger{color:var(--error)}
+#pause.p{background:var(--acc-soft);color:var(--acc);border-color:var(--line-strong)}
+body[data-view="transcripcion"] .conv-actions button{font-size:max(14px,calc(14px * var(--text-scale)))}
+button:disabled,#pause:disabled,#mark:disabled,#recordDownloadAudio:disabled,
+body[data-view="grabacion"] .c-rec #rec:disabled{opacity:1;background:#EEF1F2;color:#596E75;border-color:#91A2A8;box-shadow:none}
+.studio-dock .studio-nav a[aria-current="page"]{box-shadow:inset 0 3px 0 var(--acc),inset 0 0 0 1px #C3DAE1}
+.conv-heading{flex-wrap:wrap}.conv-heading button{white-space:normal;max-width:100%}
+body[data-view="transcripcion"] #studioDockStart{background:var(--card);color:var(--acc);border-color:var(--line-strong)}
+#convExpandEditor,#convMinimizeEditor{min-height:48px;font-size:max(14px,calc(14px * var(--text-scale)));white-space:normal}
+#convExpandEditor{flex:2;text-align:left;color:var(--mut);background:var(--card)}
+#convMinimizeEditor{display:none}
+body:not([data-view="transcripcion"]) #convExpandEditor,
+body:not([data-view="transcripcion"]) #convMinimizeEditor{display:none}
+body[data-view="transcripcion"]:not(.conv-editor-expanded) #convComposer,
+body[data-view="transcripcion"]:not(.conv-editor-expanded) #save{display:none}
+body[data-view="transcripcion"] .studio-dock #studioDockNotes{display:flex;gap:8px}
+body[data-view="transcripcion"].conv-editor-expanded:not(:has(#studioDockCapture:not([hidden]))) > .wrap{visibility:hidden}
+body[data-view="transcripcion"].conv-editor-expanded:not(:has(#studioDockCapture:not([hidden]))) .studio-dock{
+ top:var(--visual-top,0px);bottom:auto;left:0;transform:none;width:100%;max-width:none;
+ height:var(--visual-height,100dvh);border-radius:0;display:flex;flex-direction:column;gap:6px;
+ padding:8px max(8px,env(safe-area-inset-right)) max(6px,env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left));z-index:6}
+body[data-view="transcripcion"].conv-editor-expanded:not(:has(#studioDockCapture:not([hidden]))) #convComposer{display:flex;flex-direction:column;flex:1;min-height:0;gap:4px}
+body[data-view="transcripcion"].conv-editor-expanded #convExpandEditor{display:none}
+body[data-view="transcripcion"].conv-editor-expanded #convMinimizeEditor{display:flex;align-items:center;justify-content:center}
+body[data-view="transcripcion"].conv-editor-expanded #studioDockNotes{flex-shrink:0}
+body[data-view="transcripcion"].conv-editor-expanded #studioDockNotes button{flex:1;min-width:0;min-height:48px;padding:6px;font-size:max(14px,calc(14px * var(--text-scale)))}
+body[data-view="transcripcion"].conv-editor-expanded #studioDockNotes svg{display:none}
+body[data-view="transcripcion"].conv-editor-expanded .studio-nav{flex-shrink:0;margin-top:0}
+body[data-view="transcripcion"].conv-editor-expanded .studio-nav a{flex-direction:row;min-height:48px}
+body[data-view="transcripcion"].conv-editor-expanded .studio-nav svg{display:none}
+body[data-view="transcripcion"].conv-editor-expanded #convComposer .editor-area{flex:1;min-height:56px;margin:0;display:flex}
+body[data-view="transcripcion"].conv-editor-expanded #convComposer textarea#text{width:100%;height:100%;min-height:56px;max-height:none;resize:none}
+#convComposer .conv-target{flex-shrink:0;max-height:36px;margin:0}
+#convComposer .conv-compose-actions{flex-shrink:0;display:flex;margin:0;gap:8px}
+#convComposer .conv-compose-actions button{min-height:48px;min-width:0;flex:1;white-space:normal;font-size:max(14px,calc(14px * var(--text-scale)))}
+#convComposer .meta{flex-shrink:0}
+#convComposer #noteTools{flex-shrink:0;max-height:40%;overflow:auto;margin:0;padding:10px}
+#convComposer #noteTools:not([open]){display:none}
+#convComposer #transcriptionHelp{flex-shrink:0}
+body.conv-editor-expanded #flash{flex-shrink:0;max-height:42px;margin:0}
+body.conv-editor-expanded #nativeInterim{max-height:32px;overflow:auto;flex-shrink:0}
+body.conv-editor-expanded #transcriptionDock{flex-shrink:0}
+body[data-view="grabacion"].record-mic-visible #studioDockStart{display:none}
+body:has(#studioDockCapture:not([hidden])) #convComposer{display:none!important}
+body.delta-recording .rec-caption{display:none}
+body.delta-recording .recrow{padding-top:0;gap:6px}
+body.delta-recording .c-rec #clock{margin:0}
+body.delta-recording .record-caption-label{margin-top:4px}
+body.delta-recording .c-rec #rec{margin-top:4px;margin-bottom:6px}
+.transcription-dock-top{align-items:center;margin-bottom:0;gap:6px}
+#transcriptionDockTitle{font-size:max(13px,calc(13px * var(--text-scale)));line-height:1.3}
+#transcriptionDockToggle{background:transparent;color:var(--acc);border-color:var(--line-strong);min-height:48px;padding:4px 8px;font-size:13px;flex:none}
+#transcriptionDockDetails[hidden]{display:none}
+#transcriptionDockDetails{max-height:25vh;overflow:auto}
+.transcription-dock{padding:6px 10px;margin-bottom:4px}
+body.delta-recording #transcriptionDockBar{height:3px;margin-top:3px}
+@media(max-height:700px){body.delta-recording .top{margin-bottom:0;padding-bottom:0}body.delta-recording .c-rec{padding-top:6px}body.delta-recording .record-head h2,body.delta-recording .record-overline{display:none}body.delta-recording .record-clock #clock{font-size:48px}}
+@media(max-width:380px) and (max-height:700px){
+ body.delta-recording .recrow{display:grid;grid-template-columns:minmax(0,1fr) 136px;align-items:center;gap:8px}
+ body.delta-recording .record-clock{min-width:0}
+ body.delta-recording .record-clock #clock{font-size:28px;letter-spacing:-1px}
+ body.delta-recording .record-caption-label{font-size:max(14px,calc(14px * var(--text-scale)));line-height:1.35}
+ body.delta-recording .c-rec #rec{width:136px;height:136px;margin:4px 0}
+ body.delta-recording .recrow .side{grid-column:1/-1;width:100%}
+}
+@media(max-height:760px){html[data-text-size="large"] body.delta-recording .record-head h2,html[data-text-size="large"] body.delta-recording .record-overline{display:none}}
+@media(max-height:540px){
+ body[data-view="transcripcion"].conv-editor-expanded.delta-transcribing #convComposer .conv-target{max-height:18px;font-size:12px;line-height:1.5}
+ body[data-view="transcripcion"].conv-editor-expanded #transcriptionDock{display:grid;grid-template-columns:minmax(0,1fr) 116px;align-items:center;gap:3px 8px}
+ body[data-view="transcripcion"].conv-editor-expanded .transcription-dock-top{grid-column:1;grid-row:1}
+ body[data-view="transcripcion"].conv-editor-expanded #transcriptionDockToggle,
+ body[data-view="transcripcion"].conv-editor-expanded #transcriptionDockDetails,
+ body[data-view="transcripcion"].conv-editor-expanded #transcriptionDockTime{display:none}
+ body[data-view="transcripcion"].conv-editor-expanded #transcriptionDockCancel{grid-column:2;grid-row:1;margin:0;min-height:48px;padding:4px;font-size:13px;white-space:normal}
+ body[data-view="transcripcion"].conv-editor-expanded #transcriptionDockBar{grid-column:1/-1;grid-row:2;height:3px;margin:0}
+}
+@media(max-height:480px){
+ body.conv-editor-expanded #convComposer>label,body.conv-editor-expanded #convComposer>.meta,
+ body.conv-editor-expanded #transcriptionHelp{display:none}
+ body.conv-editor-expanded .conv-target{max-height:32px;font-size:12px}
+ body.conv-editor-expanded .studio-dock{gap:4px}
+}
 </style>
 </head>
 <body data-view="grabacion">
@@ -882,57 +1009,7 @@ body.delta-recording #convComposer{display:none!important}
       </div>
       <div id="convUndoRow" class="conv-undo" role="status" hidden><span id="convUndoText"></span><button type="button" id="convUndo">Deshacer</button></div>
     </div>
-    <details id="noteTools"><summary>Herramientas de la nota</summary>
-      <div class="editor-quick-actions">
-        <button type="button" id="correctSelection" aria-haspopup="dialog">Corregir selección</button>
-        <button type="button" class="ghost" id="copyAll">Copiar</button>
-        <button type="button" class="ghost" id="selAll">Seleccionar todo</button>
-        <button type="button" class="ghost" id="share">Compartir</button>
-      </div>
-    <div class="lbl-row">
-      <label for="text">Mensaje sin guardar <span class="opt">(editable)</span></label>
-      <details class="text-tools"><summary>Otras herramientas</summary>
-        <div class="tools">
-          <button class="ghost danger" id="clear" title="Podés deshacer el borrado">Borrar texto</button>
-          <button class="ghost" id="undoClear" style="display:none">Deshacer borrado</button>
-        </div>
-      </details>
-    </div>
-    <div id="busy" role="status"></div>
-    <p class="hint selection-help" id="selectionHelp">Tocá una palabra o seleccioná una frase para corregirla.</p>
-    <p class="hint where-audio">¿Buscás el audio? Está en <b>Dictar → Tus audios guardados</b>. <button type="button" class="ghost" data-go-view="grabacion" data-go-target="audioBox">Ver audios guardados</button></p>
 
-    <div id="learn"></div>
-
-    <details class="studio-workflow"><summary>Exportar este mensaje</summary><div class="studio-workflow-body"><p class="hint">Exporta solo el texto en edición. Para todo un cuaderno, usá «Copiar todo» o «Descargar .txt» en el cuaderno.</p><div id="legacyNoteFields" hidden><div class="note-details">
-      <label for="title">Título de la nota <span class="opt">(opcional)</span></label>
-      <input type="text" id="title" placeholder="Ej.: Nota de sesión · 15/11">
-    </div>
-
-    <label style="margin-top:14px">Etiquetas</label>
-    <div id="chips"></div>
-    <div class="row tagrow">
-      <input type="text" id="tagIn" placeholder="Agregar una etiqueta">
-      <button id="tagAdd" aria-label="Agregar etiqueta">+</button>
-      <button id="tagSug">Sugerir etiquetas</button>
-    </div>
-
-    <div class="row save-row">
-
-      <button id="newn">Nota nueva</button>
-    </div>
-    </div>
-
-    <div class="group export-group">
-      <div class="gl">Exportar</div>
-      <div class="row" style="margin-top:6px">
-        <button id="doc">Exportar a Word</button>
-        <button id="txt">Descargar .txt</button>
-
-      </div>
-    </div>
-</div></details>
-    </details>
   </section>
 
   <!-- 3 · Anonimizar -->
@@ -1027,11 +1104,14 @@ body.delta-recording #convComposer{display:none!important}
       <span class="transcription-spinner" aria-hidden="true"></span>
       <strong id="transcriptionDockTitle" role="status" aria-live="polite">Whisper está transcribiendo</strong>
       <span id="transcriptionDockTime" aria-label="Tiempo de procesamiento" aria-live="off"></span>
+      <button type="button" id="transcriptionDockToggle" aria-expanded="false" aria-controls="transcriptionDockDetails">Detalles</button>
     </div>
+    <div id="transcriptionDockDetails" hidden>
     <p id="transcriptionDockMessage">Esperá mientras se completa la transcripción.</p>
     <div class="transcription-dock-bottom">
       <span id="transcriptionDockParts"></span>
       <span id="transcriptionDockPercent"></span>
+    </div>
     </div>
     <div id="transcriptionDockBar" class="transcription-dock-bar" role="progressbar" aria-label="Avance de Whisper" aria-valuemin="0" aria-valuemax="100"><i id="transcriptionDockBarFill"></i></div>
     <button type="button" id="transcriptionDockCancel" hidden>Cancelar transcripción</button>
@@ -1047,8 +1127,61 @@ body.delta-recording #convComposer{display:none!important}
     </div>
     <div id="nativeInterim" role="status" aria-live="polite" class="hint"></div>
     <div class="meta"><span id="wc">0 palabras</span><span id="cc"></span></div>
+    <details id="noteTools"><summary>Herramientas de la nota</summary>
+      <div class="editor-quick-actions">
+        <button type="button" id="correctSelection" aria-haspopup="dialog">Corregir selección</button>
+        <button type="button" class="ghost" id="copyAll">Copiar</button>
+        <button type="button" class="ghost" id="selAll">Seleccionar todo</button>
+        <button type="button" class="ghost" id="share">Compartir</button>
+      </div>
+    <div class="lbl-row">
+      <label for="text">Mensaje sin guardar <span class="opt">(editable)</span></label>
+      <details class="text-tools"><summary>Otras herramientas</summary>
+        <div class="tools">
+          <button class="ghost danger" id="clear" title="Podés deshacer el borrado">Borrar texto</button>
+          <button class="ghost" id="undoClear" style="display:none">Deshacer borrado</button>
+        </div>
+      </details>
+    </div>
+    <div id="busy" role="status"></div>
+    <p class="hint selection-help" id="selectionHelp">Tocá una palabra o seleccioná una frase para corregirla.</p>
+    <p class="hint where-audio">¿Buscás el audio? Está en <b>Dictar → Tus audios guardados</b>. <button type="button" class="ghost" data-go-view="grabacion" data-go-target="audioBox">Ver audios guardados</button></p>
+
+    <div id="learn"></div>
+
+    <details class="studio-workflow"><summary>Exportar este mensaje</summary><div class="studio-workflow-body"><p class="hint">Exporta solo el texto en edición. Para todo un cuaderno, usá «Copiar todo» o «Descargar .txt» en el cuaderno.</p><div id="legacyNoteFields" hidden><div class="note-details">
+      <label for="title">Título de la nota <span class="opt">(opcional)</span></label>
+      <input type="text" id="title" placeholder="Ej.: Nota de sesión · 15/11">
+    </div>
+
+    <label style="margin-top:14px">Etiquetas</label>
+    <div id="chips"></div>
+    <div class="row tagrow">
+      <input type="text" id="tagIn" placeholder="Agregar una etiqueta">
+      <button id="tagAdd" aria-label="Agregar etiqueta">+</button>
+      <button id="tagSug">Sugerir etiquetas</button>
+    </div>
+
+    <div class="row save-row">
+
+      <button id="newn">Nota nueva</button>
+    </div>
+    </div>
+
+    <div class="group export-group">
+      <div class="gl">Exportar</div>
+      <div class="row" style="margin-top:6px">
+        <button id="doc">Exportar a Word</button>
+        <button id="txt">Descargar .txt</button>
+
+      </div>
+    </div>
+</div></details>
+    </details>
 </div>
   <div class="dock-actions" id="studioDockNotes">
+    <button type="button" id="convExpandEditor" aria-controls="convComposer" aria-expanded="false">Escribí una nota…</button>
+    <button type="button" id="convMinimizeEditor" aria-label="Volver al cuaderno sin descartar la nota">Volver</button>
     <button type="button" id="studioDockStart" aria-label="Empezar a grabar"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4M8 22h8"/></svg><span>Grabar</span></button>
     <button type="button" class="p" id="save" title="Guarda el mensaje en el cuaderno, con la fecha y hora de guardado. No descarga archivos."><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 3h12l4 4v14H3V3zM7 3v6h10V3M7 21v-8h10v8"/></svg><span>Guardar</span></button>
   </div>
@@ -1153,6 +1286,9 @@ document.addEventListener('DOMContentLoaded',function(){
   const syncStart=()=>{startAction.disabled=startButton.disabled;};
   new MutationObserver(syncStart).observe(startButton,{attributes:true,attributeFilter:['disabled']});
   syncStart();
+  if (window.IntersectionObserver) new IntersectionObserver(entries => {
+    document.body.classList.toggle('record-mic-visible', entries[0].isIntersecting && entries[0].intersectionRatio >= .99);
+  }, {threshold:[0,.99,1]}).observe(startButton);
   startAction.addEventListener('click',()=>startButton.click());
   /* Atajos entre pantallas (por ejemplo, «Ver audios guardados»): cambian de pantalla y, si corresponde, bajan hasta ese bloque. */
   document.querySelectorAll('[data-go-view]').forEach(link=>{
@@ -2238,7 +2374,7 @@ function renderList(){
    Notas la agrega ahí. Todo se muestra con textContent. Las notas anteriores (notasvoz.gamma.v1) no se tocan. */
 const convStore = convMakeStore(vaultStore, () => vault.state === 'off' || vault.state === 'open');
 let convOpenId = null, convTargetId = null, convTargetSet = false, convEditingId = null, convFromAudio = false, convRecordedAt = null;
-let convComposeNew = false;
+let convComposeNew = false, convEditorCollapsed = false;
 let convUndoData = null, convUndoTimer = null, convMoveMode = null;
 const convHas = id => !!(convStore.data && convStore.data.conversations.some(c => c.id === id));
 const convTitleOf = id => { const c = convStore.data && convStore.data.conversations.find(x => x.id === id); return c ? c.title : ''; };
@@ -2251,6 +2387,7 @@ function convDest(){
 function convResetPending(){ convTargetId = null; convTargetSet = false; convEditingId = null; convFromAudio = false; convRecordedAt = null; }
 /* Al empezar un mensaje nuevo (grabación, archivo o primera letra) se fija su destino. */
 function convStartPending(fromAudio){
+  if (fromAudio) convEditorCollapsed = false;
   if (convEditingId) { if (fromAudio) convFromAudio = true; refreshConvTarget(); return; }
   if (!convTargetSet || !$('text').value.trim()) {
     convTargetId = fromAudio && document.body.dataset.view !== 'transcripcion' ? null : convOpenId;
@@ -2270,12 +2407,26 @@ function refreshConvTarget(){
 }
 function convShowMsg(t){ $('convMsg').textContent = t || ''; }
 function convButton(label, fn, cls){ const b = document.createElement('button'); b.type = 'button'; b.textContent = label; if (cls) b.className = cls; b.onclick = fn; return b; }
+/* Solo presentación: conserva el mismo editor, borrador, destino y acciones de guardado. */
+function refreshConvEditor(){
+  const hasText = !!$('text').value.trim();
+  const expanded = !convEditorCollapsed && !!(convComposeNew || convEditingId || hasText);
+  document.body.classList.toggle('conv-editor-expanded', expanded);
+  $('convExpandEditor').textContent = hasText || convEditingId ? 'Seguir editando · sin guardar' : 'Escribí una nota…';
+  $('convExpandEditor').setAttribute('aria-expanded', String(expanded));
+  $('save').hidden = !hasText;
+}
+$('convExpandEditor').onclick = () => { convEditorCollapsed = false; convComposeNew = true; refreshConvEditor(); $('text').focus(); };
+$('convMinimizeEditor').onclick = () => { convEditorCollapsed = true; $('text').blur(); refreshConvEditor(); $('convExpandEditor').focus(); };
+$('text').addEventListener('focus', () => { convEditorCollapsed = false; convComposeNew = true; refreshConvEditor(); });
+$('text').addEventListener('input', refreshConvEditor);
 function renderConv(){
   const data = convStore.data;
   if (convOpenId && !convHas(convOpenId)) convOpenId = null;
   const composing = !!(convOpenId || convComposeNew || $('text').value.trim() || convTargetSet || convEditingId);
   document.body.classList.toggle('conv-open', !!convOpenId);
   document.body.classList.toggle('conv-composing', composing);
+  refreshConvEditor();
   $('convListView').hidden = !!convOpenId; $('convOpenView').hidden = !convOpenId;
   const list = $('convList'); list.textContent = '';
   if (!convOpenId) {
@@ -2336,6 +2487,7 @@ async function convCopy(text){
 function convEdit(id){
   const e = convEntry(id); if (!e) return;
   if ($('text').value.trim() && !convEditingId) return flash('Primero guardá o descartá la nota que estás escribiendo.');
+  convEditorCollapsed = false;
   convEditingId = id; cur = null; $('text').value = e.text; baseline = e.text; resetEdit(); resetLive(); updWC(); saveDraft();
   renderConv(); $('text').focus();
 }
@@ -2374,6 +2526,7 @@ function convBeginNew(){
     document.querySelector('[data-delta-view="transcripcion"]').click();
     renderConv(); flash('Primero guardá o descartá la nota pendiente. Su cuaderno de destino no cambió.'); return false;
   }
+  convEditorCollapsed = false;
   convResetPending(); convOpenId = null; convComposeNew = true;
   document.querySelector('[data-delta-view="transcripcion"]').click(); renderConv();
   $('text').focus(); return true;
@@ -2406,6 +2559,8 @@ $('convDeleteEmpty').onclick = () => {
 };
 /* Limpia el editor después de guardar: no deja copia para deshacer (ya está guardado) ni borra los avisos de lo aprendido. */
 function convClearComposer(){
+  convComposeNew = false;
+  convEditorCollapsed = false; $('noteTools').open = false;
   cur = null; $('title').value = ''; $('text').value = ''; baseline = ''; tags = []; renderChips();
   anonBackup = null; $('undo').disabled = true; $('anon').disabled = false; $('anonRes').textContent = ''; $('susBox').innerHTML = '';
   resetLive(); convResetPending(); updWC(); saveDraft(); renderConv();
@@ -2925,6 +3080,7 @@ function appendMachine(t, sep){
   ta.value += sp(ta.value) + t;
   ta.scrollTop = ta.scrollHeight;
   baseline = pristine ? ta.value : baseline + sp(baseline) + t;
+  refreshConvEditor();
 }
 /* Al empezar a grabar: borra lo anterior (si está tildado) y deja el texto base limpio */
 function prepareNew(){
@@ -3416,6 +3572,7 @@ function editorFeedbackState(whisper, recording, paused, processing, failed, nat
 }
 function refreshEditorFeedback(){
   const state = editorFeedbackState(recEng === 'whisper', recording, paused, busy || outstanding > 0 || feeding || modelLoading, dead || !!modelErr, nativeSession?.phase);
+  $('recordLabel').textContent = recording ? (paused ? 'Grabación en pausa' : 'Grabando') : (busy || outstanding > 0 || feeding || modelLoading) ? 'Transcribiendo el audio' : 'Tocá el micrófono para empezar';
   const text = $('text'), help = $('transcriptionHelp');
   if (text.placeholder !== state.placeholder) text.placeholder = state.placeholder;
   if (help.textContent !== state.help) help.textContent = state.help;
@@ -3428,7 +3585,7 @@ function transcriptionDockState(whisper, recording, busy, outstanding, feeding, 
   if (!active) return {active:false, cancel:false, progress:null};
   return {
     active:true,
-    title:recording ? (isPaused ? 'Grabación en pausa · Whisper por partes' : 'Grabación en curso · Whisper por partes') : 'Whisper está terminando la transcripción',
+    title:recording ? (isPaused ? 'Whisper por partes · en pausa' : 'Whisper por partes') : 'Whisper está terminando la transcripción',
     message:recording ? (isPaused ? 'La captura está en pausa. El texto aparece al procesar cada fragmento; podés reanudar o detener.' : 'Podés seguir grabando. El texto aparece al procesar cada fragmento; en grabaciones cortas, después de detener.') : 'Esperá mientras se completa la transcripción. Podés revisar el texto.',
     parts:outstanding > 0 ? outstanding + (outstanding === 1 ? ' parte pendiente' : ' partes pendientes') : loading ? 'Preparando el modelo…' : feeding ? 'Leyendo audio guardado…' : recording && !busy ? (isPaused ? 'No hay fragmentos pendientes.' : 'Reuniendo audio para el próximo fragmento…') : 'Procesando el último fragmento…',
     processing:busy || outstanding > 0 || feeding || loading,
@@ -3443,6 +3600,10 @@ function refreshTranscriptionDock(){
   );
   const state = transcriptionDockState(recEng === 'whisper', recording, busy, outstanding, feeding, modelLoading, dead || !!modelErr, hasProgress, !!(engine && typeof engine.terminate === 'function'), paused);
   const dock = $('transcriptionDock');
+  if (state.active && dock.hidden) {
+    $('transcriptionDockDetails').hidden = true;
+    $('transcriptionDockToggle').setAttribute('aria-expanded', 'false');
+  }
   // Mantiene el indicador como fuente única, sin repintar los mismos valores cada 500 ms.
   if (dock.hidden === state.active) dock.hidden = !state.active;
   document.body.classList.toggle('delta-transcribing', state.active);
@@ -3465,6 +3626,10 @@ function refreshTranscriptionDock(){
   const cancel = $('transcriptionDockCancel');
   if (cancel.hidden === state.cancel) cancel.hidden = !state.cancel;
 }
+$('transcriptionDockToggle').onclick = () => {
+  const details = $('transcriptionDockDetails'); details.hidden = !details.hidden;
+  $('transcriptionDockToggle').setAttribute('aria-expanded', String(!details.hidden));
+};
 function updProgress(){
   refreshEditorFeedback();
   const tp = $('tp'), bz = $('busy');

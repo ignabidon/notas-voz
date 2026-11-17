@@ -1,3 +1,7 @@
+## 16/11/2026 · Correcciones de lectura y edición del PR #48 (ChatGPT)
+
+Cambios de presentación, estructura del editor y estado visual en memoria, autorizados por el usuario después de la revisión independiente. Se conserva un solo textarea `#text`, el borrador existente y su destino. Herramientas se mueve dentro del mismo editor; Volver no descarta, y Guardar/Cancelar conservan sus acciones existentes. Sin claves o datos persistidos nuevos, orígenes, dependencias, cambios de CSP, captura, Worker, modelos ni cifrado. Los audios de main siguen sin cifrar; E2/#47 continúa separado. Pruebas de laboratorio con datos ficticios; Motorola pendiente.
+
 ## 16/11/2026 · Etapa A estética (Claude, PR #41)
 
 Solo presentación en Audio, Anonimizar, Ajustes y encabezado: sin nuevos datos persistidos, claves, dependencias, orígenes ni cambios de CSP, cifrado, parámetros de Whisper o almacenamiento de audio. Sin `innerHTML` con datos del usuario; íconos SVG en línea. «Procesamiento local» pasa a verse también en el celular (el texto no cambia; nunca «sin nube»). `#audioBox` y las acciones de audio siguen siempre disponibles; la tarjeta repetida «Descargar audio» solo se muestra si hay un audio. Prueba técnica local; **sin prueba en el Motorola**. Sigue abierto el hallazgo 4 (proteger `main`): los pasos para el usuario están en [docs/PRUEBA-MOTOROLA-Y-PENDIENTES-USUARIO-2026-11-16.md](docs/PRUEBA-MOTOROLA-Y-PENDIENTES-USUARIO-2026-11-16.md).
