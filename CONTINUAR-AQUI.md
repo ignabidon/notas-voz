@@ -1,5 +1,10 @@
 # CONTINUAR AQUÍ — DictaNota
 
+> **Correcciones del PR #48 autorizadas por el usuario tras la revisión (16/11/2026, Argentina).** Base main `aab2b903`; PR visual inicial `b6ae882`. Rama local `correcciones-clinica-editorial-2026-11-16`, que actualiza el PR #48 (`visual-clinica-editorial-chatgpt-2026-11-16`). Compositor compacto vacío, editor amplio con el mismo `#text`, Volver sin descartar, aviso de Whisper con Detalles, micrófono visible en captura y ajustes de contraste/controles. El alcance ya incluye HTML y JS de presentación; **no es solamente CSS**. No se cambian almacenamiento, cifrado, captura, Worker ni modelos.
+>
+> Main sigue sin estas correcciones. E2/#47 permanece en `71bb17f`, separado; #49 contiene feedback posterior del Motorola y no se incorpora aquí. B3 (menús de notas) y el reproductor E3 no se adelantan. Pruebas nuevas: `tests/editor-browser.mjs`, añadidas al CI; datos ficticios y estados de captura/teclado simulados. **No fusionar ni publicar sin permiso. Motorola físico pendiente.**
+
+
 > **▶ ESTADO AL 16/11/2026, 18:40 (Claude Fable 5.2).** En `main` ya están: la **Etapa N** (pestañas Dictar / Cuadernos; PR #43 de ChatGPT), la continuidad (PR #42) y el **diseño del almacenamiento cifrado** (PR #44). Los tres se unieron con permiso del usuario, con merge normal.
 > **E1 está hecho (PR #45, a la espera de que el usuario lo una; sin probar en el Motorola). PRÓXIMO PASO: E2** una vez unido. Antes: E1, por indicación del usuario. Todo lo necesario está en el tablero de nombre fijo **[docs/PLAN-ALMACENAMIENTO-CIFRADO.md](docs/PLAN-ALMACENAMIENTO-CIFRADO.md)**: qué incluye cada paso (E1 → E2 → K1 → E3 → K2 → T → AO), de qué depende, su estado y las trece decisiones del usuario. Un paso por vez; **plan corto y permiso explícito antes de programar**. La Etapa B sigue pendiente y E3 la espera.
 > Nada de lo unido hoy está probado en el Motorola. Los bloques de abajo son anteriores a estas uniones.

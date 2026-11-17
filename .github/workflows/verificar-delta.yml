@@ -33,3 +33,6 @@ jobs:
       - name: Verificar pantalla Notas en Chrome (hojas y mensajes, datos ficticios)
         run: node tests/notas-browser.mjs
         timeout-minutes: 4
+      - name: Verificar lectura y edición móvil en Chrome (estados simulados)
+        run: node tests/editor-browser.mjs
+        timeout-minutes: 4

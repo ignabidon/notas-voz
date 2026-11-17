@@ -2,6 +2,12 @@
 
 > Antes de editar: leer [SEGURIDAD.md](SEGURIDAD.md) y [AGENTS.md](AGENTS.md).
 
+## Correcciones móviles de Clínica editorial (PR #48, sin publicar)
+
+Al abrir un cuaderno, el acceso «Escribí una nota…» deja espacio para leer. Escribir, Editar o recibir una transcripción abre un editor amplio. **Volver** conserva el texto sin guardarlo; **Guardar** confirma los cambios y **Cancelar edición** mantiene la nota original. Las herramientas y la corrección siguen dentro del mismo editor.
+
+El aviso único de Whisper muestra un resumen y permite abrir **Detalles**. El micrófono y los controles de pausa/detención conservan prioridad. Grabar inferior aparece en Dictar cuando el círculo sale de la vista; en Cuadernos es secundario frente a Guardar. Bordes reforzados, Borrar en rojo y filas adaptadas a letra Grande. Pruebas técnicas y capturas con datos ficticios; **Motorola real pendiente**. Esto no incorpora E2 ni cifra audios.
+
 ## Rediseño claro y navegación (16/11/2026)
 
 Esta rama incorpora la estética Clínica contemporánea y disposición de chat. Inicio: grabar, «Ver cuadernos guardados» o «Escribir una nota». Una nota es un texto escrito o transcripto; un cuaderno reúne notas y se puede renombrar. Dentro de un cuaderno, Grabar/Guardar agrega una nota allí. «Nueva nota» inicia un cuaderno independiente al guardar y protege cualquier borrador pendiente.

@@ -152,7 +152,7 @@ try {
  await run('recording=false;document.getElementById("convBack").click()');
  assert.equal(await run('document.body.classList.contains("conv-composing")'),false,'lista sin editor cuando no hay borrador');
  await run('document.getElementById("convNewNote").click()');
- assert.equal(await run('getComputedStyle(document.getElementById("convComposer")).display'),'block');
+ assert.ok(await run('document.getElementById("text").getBoundingClientRect().height>100'),'editor visible y amplio');
  // 13) Las notas viejas siguen intactas al final.
  assert.equal(await run('localStorage.getItem("notasvoz.gamma.v1")'),JSON.stringify(viejas));
  console.log('NOTAS OK: migración, cuaderno nuevo, agregar, captura global, editar sin cambiar la fecha, mover y deshacer, copiar y pasar todo, descartar, recuperación, textos hostiles y anchos 320/360/412.');
