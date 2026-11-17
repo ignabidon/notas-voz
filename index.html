@@ -1705,7 +1705,7 @@ async function vaultLockNow(){
   if (vault.state !== 'open') return false;
   if (vaultBusy()) { vaultPanelMsg('No se bloquea mientras grabás o transcribís.'); return false; }
   e3Stop();
-  try { vaultBeforeLock(); } catch (e) {}
+  try { await vaultBeforeLock(); } catch (e) {}
   await vault.flush();
   if (vault.pending.size) { vaultPanelMsg('No se pudo guardar todo cifrado; no se bloqueó para no perder texto.'); return false; }
   vault.state = 'locked'; vault.cache = new Map(); vault.key = null; vault.audioKey = null;
@@ -1836,7 +1836,7 @@ function vaultInitUI(){
     if (problem) { vaultPanelMsg(problem); return; }
     vaultEl('vaultSetupGo').disabled = true; vaultPanelMsg('Cifrando… puede tardar unos segundos.');
     try {
-      try { vaultBeforeLock(); } catch (e) {}
+      try { await vaultBeforeLock(); } catch (e) {}
       const {recovery, dek} = await vault.enable(vaultEl('vaultNew').value);
       await vaultTakeTabLock();
       vaultEl('vaultNew').value = ''; vaultEl('vaultNew2').value = ''; vaultEl('vaultSetup').hidden = true;
@@ -2607,12 +2607,14 @@ document.addEventListener('keydown', ev => { if (ev.key === 'Escape' && convMenu
 function convButton(label, fn, cls){ const b = document.createElement('button'); b.type = 'button'; b.textContent = label; if (cls) b.className = cls; b.onclick = fn; return b; }
 /* Solo presentación: conserva el mismo editor, borrador, destino y acciones de guardado. */
 function refreshConvEditor(){
-  const hasText = !!$('text').value.trim();
-  const expanded = !convEditorCollapsed && !!(convComposeNew || convEditingId || hasText);
+  const hasText = !!$('text').value.trim(), hasAudio = !!convAudioId;
+  const expanded = !convEditorCollapsed && !!(convComposeNew || convEditingId || hasText || hasAudio);
   document.body.classList.toggle('conv-editor-expanded', expanded);
-  $('convExpandEditor').textContent = hasText || convEditingId ? 'Seguir editando · sin guardar' : 'Escribí una nota…';
+  $('convExpandEditor').textContent = hasText || hasAudio || convEditingId ? 'Seguir editando · sin guardar' : 'Escribí una nota…';
   $('convExpandEditor').setAttribute('aria-expanded', String(expanded));
-  $('save').hidden = !hasText;
+  $('save').hidden = !(hasText || hasAudio);
+  const saveLabel = $('save').querySelector('span');
+  if (saveLabel) saveLabel.textContent = hasAudio && !hasText ? 'Guardar solo audio' : 'Guardar';
 }
 $('convExpandEditor').onclick = () => { convEditorCollapsed = false; convComposeNew = true; refreshConvEditor(); $('text').focus(); };
 $('convMinimizeEditor').onclick = () => { convEditorCollapsed = true; $('text').blur(); refreshConvEditor(); $('convExpandEditor').focus(); };
@@ -2622,7 +2624,7 @@ function renderConv(){
   e3Stop();
   const data = convStore.data;
   if (convOpenId && !convHas(convOpenId)) convOpenId = null;
-  const composing = !!(convOpenId || convComposeNew || $('text').value.trim() || convTargetSet || convEditingId);
+  const composing = !!(convOpenId || convComposeNew || $('text').value.trim() || convAudioId || convTargetSet || convEditingId);
   document.body.classList.toggle('conv-open', !!convOpenId);
   document.body.classList.toggle('conv-composing', composing);
   refreshConvEditor();
@@ -2845,7 +2847,7 @@ $('save').onclick = async () => {
   try { await convSave(); } finally { convSaving = false; }
 };
 async function convSave(){
-  const text = $('text').value; if (!text.trim()) return flash('No hay texto para guardar.');
+  const text = $('text').value; if (!text.trim() && !convAudioId) return flash('No hay texto ni audio para guardar.');
   if (anBusyN > 0) return flash('Esperá unos segundos: se está guardando el audio cifrado.');
   if (!pendingOk()) return;
   if (!convStore.data) return flash('No se guardó: los cuadernos no están disponibles. ' + ($('convMsg').textContent || 'Desbloqueá la app y volvé a intentar.'));
@@ -2858,6 +2860,14 @@ async function convSave(){
     try { const m = await anGetMeta(await anDb(), convAudioId); audioParts = m && anValidMeta(m) && m.state === 'cerrado' && m.parts >= 1 ? m.parts : null; }
     catch (e) { return flash('No se guardó: no se pudo comprobar el audio guardado (' + anErrName(e) + '). El texto y su audio siguen en el editor.'); }
   }
+  // Una nota sin texto requiere audio cifrado, cerrado y verificado completo; no basta con una referencia pendiente.
+  if (!text.trim() && convAudioId) {
+    if (!anUsable() || !audioParts) return flash('No se guardó: todavía no hay un audio por nota confirmado. El borrador sigue disponible.');
+    try {
+      const health = await anAudioHealth(await anDb(), vault.audioKey, vault.header.id, convAudioId);
+      if (!health.ok) return flash('No se guardó: el audio está incompleto o dañado (' + health.why + '). Se conserva sin modificar para recuperarlo.');
+    } catch (e) { return flash('No se guardó: no se pudo verificar el audio (' + anErrName(e) + '). Se conserva sin modificar.'); }
+  }
   // Un audio pendiente solo se une a SU nota: nunca a otra que ya tiene audio ni a uno que use otra nota.
   if (convAudioId && (convAudioInUse(convStore.data, convAudioId, editing ? editing.id : null) || (editing && editing.audioId && editing.audioId !== convAudioId)))
     return flash('No se guardó: el audio pendiente pertenece a otra nota. El texto sigue en el editor; copialo y cancelá o descartá.');
@@ -2868,7 +2878,8 @@ async function convSave(){
       if (convAudioId) next = convSetAudio(next, editing.id, convAudioId, convAudioMs, audioParts);
     } else {
       const r = convAddEntry(convStore.data, {conversationId: convDest(), kind: convFromAudio ? 'audio' : 'texto', savedAt: now,
-        tzOffsetMin: new Date(now).getTimezoneOffset(), recordedAt: convRecordedAt, text, audioId: convAudioId, durationMs: convAudioMs, audioParts});
+        tzOffsetMin: new Date(now).getTimezoneOffset(), recordedAt: convRecordedAt, text, audioId: convAudioId, durationMs: convAudioMs, audioParts,
+        transcriptionStatus: convFromAudio ? ((dead || failedParts) ? 'error' : text.trim() ? 'listo' : 'pendiente') : 'listo'});
       next = r.data; dest = r.conversation.id; savedAt = now;
     }
   } catch (e) { return flash('No se guardó: ' + e.message); }
@@ -2889,8 +2900,10 @@ async function convSave(){
   if ($('learnAuto').checked) learnFromEdits();
   else { showSuggestions(suggest(baseline, text, D.rules.map(r => r.a.toLowerCase()))); baseline = text; }
   convComposeNew = false; convOpenId = dest; convClearComposer();
+  const draftCleared = await saveDraft();
   const when = convStamp(savedAt), where = convTitleOf(dest);
-  flash(editing ? 'Cambios guardados. La fecha no cambió.' : (where === when ? 'Guardado como cuaderno nuevo · ' + when : 'Guardado en «' + where + '» · ' + when));
+  const msg = editing ? 'Cambios guardados. La fecha no cambió.' : (where === when ? 'Guardado como cuaderno nuevo · ' + when : 'Guardado en «' + where + '» · ' + when);
+  flash(msg + (draftCleared ? '' : ' Atención: no se pudo confirmar la limpieza del borrador; podría reaparecer al abrir. La nota sí quedó guardada.'));
 }
 function convInit(){
   const r = convStore.load();
@@ -3983,7 +3996,8 @@ function maybeDone(){
 function fail(e){
   dead = true; jobs.length = 0; outstanding = 0; busy = false; feeding = false;
   logDiag('Se detuvo la transcripción de esta grabación' + (e && e.stage ? ' (etapa: ' + e.stage + ')' : '') + '. El audio guardado se puede transcribir de nuevo.');
-  setStatus('No se pudo transcribir: ' + (e.message || e) + '. Si es la primera vez, hace falta internet para descargar lo necesario.');
+  setStatus('No se pudo transcribir: ' + (e.message || e) + '. Si es la primera vez, hace falta internet para descargar lo necesario.' +
+    ($('saveAudio').checked ? ' Si el audio termina de guardarse, podés confirmarlo como una nota sin texto.' : ' Conservar audio estaba desactivado: esta grabación no quedará guardada. Podés escribir una nota manual.'));
   unlockWake();
   maybeDone();
 }
@@ -4572,7 +4586,7 @@ async function e3Recover(id){
     if (!h.ok) throw new Error('El audio está dañado o todavía no terminó de guardarse. Se conserva sin cambios.');
     if (e3Used(id)) return;
     const r = convAddEntry(convStore.data, {conversationId: null, kind: 'audio', savedAt: Date.now(),
-      tzOffsetMin: new Date().getTimezoneOffset(), recordedAt: h.m.createdAt, text: 'Audio recuperado (sin transcripción).',
+      tzOffsetMin: new Date().getTimezoneOffset(), recordedAt: h.m.createdAt, text: '', transcriptionStatus: 'pendiente',
       audioId: id, durationMs: anTotalMs(h.detail), audioParts: h.detail.parts.length});
     await e3Write(r.data);
     convOpenId = r.conversation.id;
@@ -4674,7 +4688,7 @@ function anLinkPending(job, id, ms){
   }
   if (job.baseParts != null && convAudioBase === null && convEditingId) convAudioBase = job.baseParts;
   e3AfterAudioSaved();
-  convAudioId = id; convAudioMs = ms; saveDraft(); return true;
+  convAudioId = id; convAudioMs = ms; saveDraft(); refreshConvEditor(); return true;
 }
 /* Revisión completa de un audio ANTES de ampliarlo o recortarlo (segunda revisión de E2):
    1) la ficha, la clave y el detalle se abren; 2) las claves guardadas son exactamente (parte, n) sin huecos, sobrantes ni cambios de lugar
@@ -5750,11 +5764,40 @@ $('listPreview').addEventListener('change', () => { saveCfg(); renderConv(); });
 document.querySelectorAll('input[name=eng]').forEach(r => r.addEventListener('change', () => { setStatus(''); saveCfg(); }));
 
 /* ---------- Borrador autoguardado: sobrevive a recargas y cierres ---------- */
-let lastDraft = '';
+let lastDraft = '', draftWriteQueue = Promise.resolve(), draftErrorShown = false;
 const snap = () => JSON.stringify({title: $('title').value, text: $('text').value, tags, cur, baseline,
   conv: {open: convOpenId, target: convTargetId, targetSet: convTargetSet, editing: convEditingId, fromAudio: convFromAudio, recordedAt: convRecordedAt,
     audioId: convAudioId, audioMs: convAudioMs, audioBase: convAudioBase}});
-function saveDraft(){ const x = snap(); if (x === lastDraft) return; lastDraft = x; try { vaultStore.setItem(DRAFT, x); } catch (e) {} }
+/* El borrador se considera persistido únicamente tras confirmar la escritura. Una cola
+   evita que un snapshot anterior sobrescriba al borrador nuevo después de un Guardar. */
+async function draftWriteConfirmed(value, store, protection){
+  store.setItem(DRAFT, value);
+  if (protection.state === 'open') {
+    await protection.flush();
+    if (!protection.saved(DRAFT)) return false;
+  }
+  return store.getItem(DRAFT) === value;
+}
+function saveDraft(){
+  const value = snap();
+  const write = draftWriteQueue.then(async () => {
+    if (value === lastDraft) return true;
+    if (vault.readOnly || (vault.state !== 'off' && vault.state !== 'open')) return false;
+    try {
+      if (!await draftWriteConfirmed(value, vaultStore, vault)) throw new Error('escritura no confirmada');
+      lastDraft = value; draftErrorShown = false;
+      return true;
+    } catch (e) {
+      if (!draftErrorShown) {
+        draftErrorShown = true;
+        flash('El borrador sigue visible, pero no se pudo confirmar su guardado. No cierres DictaVoz: liberá espacio y volvé a intentar.');
+      }
+      return false;
+    }
+  });
+  draftWriteQueue = write.then(() => {}, () => {});
+  return write;
+}
 function restoreDraft(){
   try {
     const d = JSON.parse(vaultStore.getItem(DRAFT) || 'null');
