@@ -1,3 +1,11 @@
+## 17/11/2026 · Entrega 2, revisión independiente y correcciones de P1/P4 (ChatGPT, PR #59 sin fusionar)
+
+- **Autoguardado:** sin bóveda, el borrador se escribe sincrónicamente al editar y al ocultar/cerrar la página; con bóveda se mantiene la confirmación cifrada y se evita pisar versiones nuevas desde la cola. El navegador no garantiza completar un cifrado ante cierre forzado.
+- **Bloqueo:** si el borrador no se confirma, bloquear o activar protección no borra ni recarga el editor; informa el problema.
+- **Recuperación:** si un borrador viejo coincide con la nota ya confirmada por texto, audio y origen/identificador de edición, no se restaura como duplicado; se intenta limpiar, sin descartar borradores genuinamente distintos.
+- **Pruebas agregadas:** `tests/entrega2.test.mjs` cubre cierre sin bóveda, cola pendiente, fallo de bloqueo, conciliación y preservación de cambios diferentes. Registro de detalles y limitaciones en `docs/ENTREGA2-ARQUITECTURA-B-IMPLEMENTACION-2026-11-17.md`.
+- **Alcance:** sin cambios de formato de copia, K2/T/AO, migraciones ni borrados. Código guardado en la rama del PR #59; ver CI de esa rama. **Sin prueba física nueva en el Motorola ni merge a `main`**.
+
 ## 17/11/2026 · Nombre visible: DictaVoz (decisión del usuario)
 
 - **Decisión de Ignacio (17/11, 9:27):** el nombre de la aplicación pasa a **DictaVoz** porque ya existe otra app «Dictanota». **Solo cambia lo que se ve dentro de la app**; el repositorio (`ignabidon/notas-voz`) y la dirección del sitio **no cambian**.
