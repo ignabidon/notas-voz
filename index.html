@@ -4468,6 +4468,7 @@ async function e3Part(s, part, seconds = 0){
     if (!e3Alive(s) || request !== s.request) return;
     s.button.textContent = 'Pausar'; s.button.setAttribute('aria-label', 'Pausar audio de esta nota');
   } catch (e) {
+    if (e && e.name === 'AbortError') return; /* el usuario pausó o cambió de parte mientras arrancaba: no es un fallo */
     if (e3Alive(s) && request === s.request) e3Failure(s, 'No se pudo reproducir el audio. Puede estar dañado o tener un formato no compatible. Se conserva sin cambios.');
   } finally { pieces.length = 0; }
 }
@@ -4480,7 +4481,7 @@ async function e3Play(root, entry, button, range, status, clock){
       s.timer = setTimeout(() => { if (e3Alive(s)) { e3Stop(); status.textContent = 'Audio liberado tras la pausa. Tocá Reproducir para volver a escucharlo.'; } }, E3_PAUSE_MS);
     } else {
       try { await s.audio.play(); if (e3Alive(s)) { button.textContent = 'Pausar'; button.setAttribute('aria-label', 'Pausar audio de esta nota'); } }
-      catch (e) { e3Failure(s, 'No se pudo reanudar. Tocá Reproducir para intentar otra vez.'); }
+      catch (e) { if (e && e.name === 'AbortError') return; e3Failure(s, 'No se pudo reanudar. Tocá Reproducir para intentar otra vez.'); }
     }
     return;
   }

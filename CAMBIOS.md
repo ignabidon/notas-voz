@@ -6,6 +6,7 @@
 - **Llave de acceso:** una huella registrada antes del cambio sigue apareciendo como «DictaNota» en el administrador de contraseñas; funciona igual.
 - **Pruebas técnicas:** 166/166 Node y diez suites de Chrome en verde. **Motorola: sin probar** (se verá el nuevo nombre al abrir la página).
 - **Nota del usuario:** tiene limitaciones técnicas para probar en el Motorola; se evitan las pruebas que se puedan hacer en laboratorio (registrado en `docs/PRUEBA-CORTA-MOTOROLA.md`).
+- **Corrección de un fallo real del reproductor (descubierta por el CI de este PR):** si se tocaba «Pausar» mientras el navegador todavía estaba arrancando la reproducción, el navegador cancelaba esa orden (`AbortError`) y la app lo trataba como «No se pudo reproducir el audio» y soltaba el audio. Ahora un `AbortError` al reproducir o reanudar se toma como una pausa normal (2 líneas en `e3Part` y `e3Play`). En un celular lento esto se podía ver como un mensaje de error falso; la prueba `e3-browser` lo mostraba solo con la máquina cargada (fallaba 8 de 12 en paralelo, también en `main`; con la corrección, 12 de 12).
 
 ## 17/11/2026 · Reporte de la prueba en el Motorola y pendientes anotados (Claude, solo documentación)
 
