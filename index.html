@@ -5487,6 +5487,7 @@ async function k2ReadPlan(file,verified,key){
       }else{
         const plain=type==='P' ? await copia2Open(key,h.id,'meta|'+name,bytes):bytes;
         const meta=JSON.parse(vaultDec.decode(plain));
+        if(type==='P')throw new Error('Esta copia incluye audios originalmente sin cifrar. Su restauración todavía no está habilitada, para evitar dejarlos en claro con la bóveda activada. No se escribió nada.');
         if(meta.id!==name||meta.state!=='cerrado'||!anValidMeta(meta)||
            (type==='P'&&!anPlainValidMeta(meta))||
            (type==='M'&&(!meta.key||!meta.sealed||meta.mode===AN_PLAIN_MODE)))throw copiaError('Alterada');
@@ -5527,6 +5528,7 @@ async function k2RestoreEmpty(file,secret){
   if(!(await vaultTakeTabLock())||vault.readOnly)throw new Error('Cerrá las otras pestañas antes de restaurar.');
   const open=h=>copiaOpenWithSecret(h,secret);
   const verified=await copia2Verify(file,open);  // primera pasada: autenticar archivo COMPLETO
+  if(verified.claro>0)throw new Error('Este respaldo contiene audios que estaban en claro. Todavía no se pueden restaurar con seguridad; no se escribió nada.');
   if(!(await k2StorageEmpty()))throw new Error('Aparecieron datos mientras se verificaba la copia. No se escribió nada.');
   const {key,audioKey}=await open((await k2Header(file)));
   const plan=await k2ReadPlan(file,verified,key);
@@ -5744,6 +5746,7 @@ copiaEl('copiaRestArchivo').addEventListener('change',async()=>{
     if(secret===null)return;
     copiaSay('Comprobando la integridad antes de escribir…');
     const summary=await copia2Verify(file,h=>copiaOpenWithSecret(h,secret));
+    if(summary.claro>0)throw new Error('El archivo contiene audio originalmente sin cifrar. Por ahora no puede restaurarse sin comprometer la protección; no se cambió nada.');
     if(!confirm('Se restaurarán '+(summary.notas??'las')+' notas y '+summary.audios+' audios en esta instalación VACÍA. '+(summary.contenido==='solo-texto'?'Esta copia NO contiene audios. ':'')+'No se pueden mezclar ni reemplazar datos. ¿Continuar?'))return;
     copiaBusyN--;
     const result=await k2RestoreEmpty(file,secret);
