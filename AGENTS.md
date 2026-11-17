@@ -8,6 +8,8 @@
 
 **Leer también README.md y CAMBIOS.md antes de editar.**
 
+**Auditoría de almacenamiento definitivo (17/11/2026):** leer también [docs/AUDITORIA-ALMACENAMIENTO-DEFINITIVO-2026-11-17.md](docs/AUDITORIA-ALMACENAMIENTO-DEFINITIVO-2026-11-17.md) antes de proponer cambios de audios, borradores, copias, K2, T o AO. Es una **recomendación de investigación, no una decisión aprobada ni permiso para implementar o borrar**. Priorizar siempre el código actualizado y el tablero vigente.
+
 ## Coordinación y autoría (acordado con el usuario, 16/11/2026)
 
 - Registrar **solo en documentación** quién implementó cada entrega: ChatGPT, Claude u otro responsable confirmado, rama/PR, SHA base, alcance, pruebas y pendientes. Usar CAMBIOS.md y el informe de continuidad. No poner nombres de IA, créditos ni identificación del agente en la interfaz.
