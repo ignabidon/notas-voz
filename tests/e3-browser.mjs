@@ -150,6 +150,10 @@ try {
   await waitFor("$('e3AudioList').textContent.includes('Audio sin nota')",'lista con el audio sin nota');
   assert.match(await run("$('e3AudioList').textContent"),/Audio sin nota/);
   await run(`e3Recover(${JSON.stringify(orphan)})`);
+  assert.equal(await run(`convStore.data.entries.filter(e=>e.audioId===${JSON.stringify(orphan)}).length`),0, 'no se confirma una nota sin intervención manual');
+  assert.equal(await run('convAudioId'),orphan,'la grabación recuperada queda en el borrador');
+  assert.equal(await run("document.querySelector('#save span').textContent"),'Guardar solo audio');
+  await run('(async()=>{ await convSave(); return true; })()');
   assert.equal(await run(`convStore.data.entries.filter(e=>e.audioId===${JSON.stringify(orphan)}).length`),1);
   const recovered=await run('convStore.data.entries.at(-1)');
   assert.equal(recovered.text, '', 'recuperar un audio no debe añadir una transcripción ficticia');
