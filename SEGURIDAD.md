@@ -26,6 +26,14 @@ Cambio de presentación y ayudas; sin datos persistentes nuevos, claves nuevas, 
 - **Alcance:** solo la propia aplicación del usuario (`index.html` en `main`, su sitio de GitHub Pages y la configuración del repositorio). No se probó ningún sitio ajeno.
 - **Regla de datos:** todas las pruebas usan información ficticia. Nunca datos reales de pacientes, ni en pruebas, ni en capturas, ni en diagnósticos.
 
+## 16/11/2026 · Segunda revisión de E2: candado antes de escribir, borrador viejo y audio dañado (hallazgos 1 y 7)
+
+**[código + prueba técnica]** Rama `e2-cifrado-audios-por-nota`, sobre `745f36b`. Detalle en `CAMBIOS.md`.
+- **Candado:** se pide **antes** de cualquier escritura de datos protegidos o de la cabecera (activar, desbloquear con contraseña o huella, recuperar con código). Sin candado: solo lectura, y la recuperación y la activación se rechazan sin escribir. **Si el navegador no ofrece Web Locks o da un error, falla cerrada** (solo lectura). Límite: no protege frente a una pestaña abierta con una versión anterior del código. No se declara inofensiva ninguna escritura fuera del candado.
+- **Borrador viejo:** la nota guarda `audioParts` (partes de audio confirmadas, dentro del registro cifrado de cuadernos); cancelar nunca recorta por debajo de ese número.
+- **Audio dañado:** antes de ampliarlo o recortarlo se revisan clave, detalle, posiciones y la etiqueta de cada fragmento; si algo falla no se toca y se avisa. Sin datos nuevos ni claves nuevas: `audioParts` es un campo más del registro cifrado de cuadernos.
+**No probado en el Motorola ni en Brave; los «cortes» de las pruebas son simulados.**
+
 ## 16/11/2026 · Correcciones de E2 tras la revisión de ChatGPT (hallazgos 1 y 7)
 
 **[código + prueba técnica]** Misma rama `e2-cifrado-audios-por-nota`. Riesgos verificados en `2c88ce1` y corregidos:

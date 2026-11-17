@@ -94,7 +94,7 @@ try {
   assert.equal(await run(`getDb().then(db => new Promise(r => { const q = db.transaction('meta').objectStore('meta').getAll(); q.onsuccess = () => r(q.result.length); }))`), 0, 'con la protección abierta no se escribe nada en la base vieja');
 
   // 5) Guardar la nota: queda unida al audio, con su duración.
-  await run(`(async () => { const t = document.getElementById('text'); t.value = 'Persona Inventada Uno: texto inventado X-901'; t.dispatchEvent(new Event('input', {bubbles: true})); document.getElementById('save').click(); await vault.flush(); return true; })()`);
+  await run(`(async () => { const t = document.getElementById('text'); t.value = 'Persona Inventada Uno: texto inventado X-901'; t.dispatchEvent(new Event('input', {bubbles: true})); document.getElementById('save').click(); await new Promise(r => setTimeout(r, 50)); while (convSaving) await new Promise(r => setTimeout(r, 20)); await vault.flush(); return true; })()`);
   const nota = JSON.parse(await run(`JSON.stringify(convStore.data.entries[convStore.data.entries.length - 1])`));
   assert.equal(nota.audioId, g1.id); assert.equal(typeof nota.durationMs, 'number');
   assert.equal(await run('convAudioId'), null, 'el editor queda limpio');

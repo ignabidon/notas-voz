@@ -36,6 +36,9 @@ jobs:
       - name: Verificar correcciones de E2 en Chrome (dos pestañas, sin espacio, notas A y B, cortes; datos ficticios)
         run: node tests/e2-correcciones-browser.mjs
         timeout-minutes: 5
+      - name: Verificar segunda revisión de E2 en Chrome (candado entre pestañas, borrador viejo, audio dañado, ficha final y borrado; datos ficticios)
+        run: node tests/e2-revision2-browser.mjs
+        timeout-minutes: 6
       - name: Verificar pantalla Notas en Chrome (hojas y mensajes, datos ficticios)
         run: node tests/notas-browser.mjs
         timeout-minutes: 4
