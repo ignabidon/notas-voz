@@ -4,9 +4,9 @@
 
 ## Alcance acotado
 
-Se incorpora una opción de **restauración en una instalación completamente vacía**, para respaldos `.dictanota` de formato 1 (K1) y formato 2 (P2 experimental). **No se permite fusionar datos, restaurar encima de notas actuales ni reemplazar la base existente**. La etapa de reemplazo seguro se diseñará por separado, con confirmaciones explícitas y ensayo de retorno. La configuración y los registros cifrados vuelven a usar las mismas claves del archivo y la misma contraseña o código de recuperación; **la huella no viaja**.
+Se incorpora una opción de **restauración en una instalación completamente vacía**, para respaldos `.dictanota` de formato 1 (K1) y, experimentalmente, formato 2 **solo con audio cifrado**. Los archivos formato 2 con audio originalmente en claro se rechazan íntegros antes de escribir. **No se permite fusionar datos, restaurar encima de notas actuales ni reemplazar la base existente**. La etapa de reemplazo seguro se diseñará por separado, con confirmaciones explícitas y ensayo de retorno. La configuración y los registros cifrados vuelven a usar las mismas claves del archivo y la misma contraseña o código de recuperación; **la huella no viaja**.
 
-La copia versión 2 **no incluye todavía el audio heredado `notasvoz-gamma-audio`**. El botón de exportación vigente K1 produce formato 1, y con bóveda apagada solo exporta texto. Por eso ninguna de estas opciones puede anunciarse como «copia íntegra de todos los audios»; recuperar no vuelve a crear audios que nunca estuvieron en el archivo. El programa debe señalar esa limitación antes de publicar la función.
+**Resguardo adicional:** restaurar fragmentos originalmente en claro dentro de una bóveda que se abre con contraseña haría parecer que están protegidos cuando no lo están. Por ese motivo, el restaurador experimental rechaza los respaldos formato 2 que contengan bloques P/B (audios en claro) hasta diseñar una restauración que garantice cifrado real o preserve con claridad el modo original.\n\nLa copia versión 2 **no incluye todavía el audio heredado `notasvoz-gamma-audio`**. El botón de exportación vigente K1 produce formato 1, y con bóveda apagada solo exporta texto. Por eso ninguna de estas opciones puede anunciarse como «copia íntegra de todos los audios»; recuperar no vuelve a crear audios que nunca estuvieron en el archivo. El programa debe señalar esa limitación antes de publicar la función.
 
 ## Resguardos del ensayo
 
@@ -20,7 +20,7 @@ La copia versión 2 **no incluye todavía el audio heredado `notasvoz-gamma-audi
 
 ## Revisión y pruebas requeridas
 
-- Prueba Chrome de restauración con fixture fijo inventado de formato 2; contraseña errónea; copia cortada; un borrador preexistente; lote interrumpido; audio íntegro; recarga con bóveda cerrada; segunda restauración rechazada.
+- Prueba Chrome de restauración del archivo fijo inventado de formato 1 con audio cifrado; rechazo de fixture formato 2 con audio claro; contraseña errónea; copia cortada; un borrador preexistente; lote interrumpido; audio íntegro; recarga con bóveda cerrada; segunda restauración rechazada.
 - **Agregar en revisión cruzada antes de merge:** pruebas de formato 1 (texto y audio cifrado), cortes en cada paso, fallo de cuota en localStorage e IndexedDB, doble pestaña, corrupción de fichas y recuperación de lotes parciales. Asegurar que no se restauran metadatos que no tengan todas sus partes.
 - Ensayar conservación de notas y referencias después de volver a abrir, tanto con archivo «solo texto» como «completa». Las pruebas sin Motorola no validan el navegador real del usuario.
 - Bloquear activación hasta que la matriz de pruebas y la auditoría independiente estén completas y los PR #59 y #60 estén revisados.
