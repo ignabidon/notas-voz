@@ -5225,6 +5225,202 @@ async function copiaVerify(file, abrir, onProgress){
 }
 /*COPIA-END*/
 
+/* ---------- Respaldo formato 2: ensayo de compatibilidad, sin interfaz ni restauración ----------
+   El formato 1 permanece intacto. La copia 2 cifra también fragmentos guardados en claro.
+   AES-GCM de cada bloque y final + cadena SHA-256; autenticidad depende de la contraseña
+   o código de recuperación del ARCHIVO, no del modo de los audios de origen. */
+/*COPIA2-START*/
+const COPIA2_FORMATO = 2, COPIA2_TIPOS = 'RCMAPBIF';
+function copia2Head(tipo,nombre,largo){
+  const n=vaultEnc.encode(nombre);
+  if (!COPIA2_TIPOS.includes(tipo) || tipo.length !== 1 || n.length < 1 || n.length > COPIA_MAX_NOMBRE ||
+      !Number.isSafeInteger(largo) || largo < 0 || largo > COPIA_MAX_BLOQUE) throw new Error('bloque de copia 2 inválido');
+  return copiaJoin([new Uint8Array([tipo.charCodeAt(0)]),copiaU32(n.length),n,copiaU64(largo)]);
+}
+const copia2Seal = async (key,id,kind,bytes) => vaultEnc.encode(JSON.stringify(await vaultSeal(key,bytes,copiaAad(id,'v2-'+kind))));
+const copia2Open = async (key,id,kind,bytes) => vaultOpen(key,JSON.parse(vaultDec.decode(bytes)),copiaAad(id,'v2-'+kind));
+const copia2AudioIndex = m => ({id:m.id,mode:m.mode === AN_PLAIN_MODE ? 'claro' : 'cifrado',
+  parts:m.parts,chunks:m.mode === AN_PLAIN_MODE ? m.plain.parts.reduce((t,p)=>t+p.chunks,0) : null,
+  bytes:m.bytes});
+function copia2Writer(header,key,contenido,creado){
+  if (contenido !== 'completa' && contenido !== 'solo-texto') throw new Error('contenido inválido');
+  const blocks=[], audios=[], seen=new Set(); let registros=0,fragmentos=0,config=false,phase=0;
+  const add=async (tipo,nombre,datos) => {
+    const b=datos instanceof Uint8Array ? datos : new Uint8Array(await datos.arrayBuffer());
+    blocks.push({head:copia2Head(tipo,nombre,b.length),hash:await copiaSha(b),data:datos,size:b.length});
+  };
+  return {
+    async registro(nombre,raw){
+      if (phase>0 || !/^[a-z0-9.-]{1,60}$/.test(nombre)) throw new Error('orden de registros inválido');
+      await add('R',nombre,vaultEnc.encode(raw)); registros++;
+    },
+    async config(obj){
+      if (phase>0 || config) throw new Error('orden de configuración inválido');
+      await add('C','config',await vaultEnc.encode(JSON.stringify(await vaultSeal(key,vaultEnc.encode(JSON.stringify(obj)),copiaAad(header.id,'config')))));
+      config=true;phase=1;
+    },
+    async audioCifrado(meta,chunks){
+      if (contenido !== 'completa' || phase!==1 || !config || !anValidMeta(meta) || meta.mode === AN_PLAIN_MODE ||
+          meta.state!=='cerrado' || !meta.key || !meta.sealed || seen.has(meta.id)) throw new Error('audio cifrado inválido');
+      seen.add(meta.id); const index=copia2AudioIndex(meta);
+      index.chunks=chunks.length; audios.push(index);
+      await add('M',meta.id,vaultEnc.encode(JSON.stringify(meta)));
+      for (const c of chunks){await add('A',meta.id+'|'+c.part+'|'+c.n,c.blob); fragmentos++;}
+    },
+    async audioClaro(meta,chunks){
+      if (contenido !== 'completa' || phase!==1 || !config || !anPlainValidMeta(meta) ||
+          meta.state!=='cerrado' || seen.has(meta.id)) throw new Error('audio en claro inválido');
+      const expected=[];
+      meta.plain.parts.forEach((p,i)=>{for(let n=0;n<p.chunks;n++)expected.push([i,n,p.hashes[n]]);});
+      if (chunks.length!==expected.length) throw new Error('audio incompleto');
+      for(let i=0;i<chunks.length;i++){
+        const c=chunks[i], x=expected[i];
+        if(c.part!==x[0] || c.n!==x[1] || !(c.blob instanceof Blob) || await anPlainHash(c.blob)!==x[2])
+          throw new Error('audio no coincide con su ficha');
+      }
+      seen.add(meta.id); audios.push(copia2AudioIndex(meta));
+      await add('P',meta.id,await copia2Seal(key,header.id,'meta|'+meta.id,vaultEnc.encode(JSON.stringify(meta))));
+      for(const c of chunks){
+        await add('B',meta.id+'|'+c.part+'|'+c.n,await copia2Seal(key,header.id,
+          'chunk|'+meta.id+'|'+c.part+'|'+c.n,new Uint8Array(await c.blob.arrayBuffer())));
+        fragmentos++;
+      }
+    },
+    async finish(){
+      if (!config) throw new Error('falta configuración');
+      const inventario={formato:COPIA2_FORMATO,contenido, audios,exclusiones:[]};
+      await add('I','inventario',await copia2Seal(key,header.id,'inventario',vaultEnc.encode(JSON.stringify(inventario))));
+      const total=blocks.length+1;
+      const cab=vaultEnc.encode(JSON.stringify({formato:COPIA2_FORMATO,creado,app:'Delta 11',id:header.id,pw:header.pw,rec:header.rec,contenido,bloques:total}));
+      const prefijo=copiaJoin([vaultEnc.encode(COPIA_MAGIC),copiaU32(COPIA2_FORMATO),copiaU32(cab.length),cab]);
+      let cadena=await copiaSha(prefijo), bytes=prefijo.length;
+      for(const b of blocks){cadena=await copiaSha(copiaJoin([cadena,b.head,b.hash]));bytes+=b.head.length+b.size;}
+      const fin=vaultEnc.encode(JSON.stringify(await vaultSeal(key,vaultEnc.encode(JSON.stringify({
+        bloques:total,bytes,registros,audios:audios.length,fragmentos,cadena:vb64(cadena)
+      })),copiaAad(header.id,'fin'))));
+      const parts=[prefijo];for(const b of blocks)parts.push(b.head,b.data);
+      parts.push(copia2Head('F','fin',fin.length),fin);
+      return new Blob(parts,{type:'application/octet-stream'});
+    }
+  };
+}
+/* Verifica versiones 1 y 2; nunca restaura. La versión 1 usa su lector original sin cambios.
+   En la versión 2 se autentican fragmentos AES-GCM y fragmentos originalmente en claro,
+   cada uno por sus nombres/posiciones; el manifiesto debe coincidir exactamente. */
+async function copia2Verify(file,open,onProgress){
+  const magic=vaultEnc.encode(COPIA_MAGIC);
+  if(file.size<magic.length+8) throw copiaError('Cortada');
+  const prefix=new Uint8Array(await file.slice(0,magic.length+4).arrayBuffer());
+  if(prefix.subarray(0,magic.length).some((x,i)=>x!==magic[i]))throw copiaError('NoEsCopia');
+  const format=new DataView(prefix.buffer,prefix.byteOffset+magic.length,4).getUint32(0);
+  if(format===1)return copiaVerify(file,open,onProgress);
+  if(format>COPIA2_FORMATO)throw copiaError('FormatoNuevo');
+  if(format!==COPIA2_FORMATO)throw copiaError('Alterada');
+  let pos=0;
+  const bad=()=>copiaError('Alterada');
+  const take=async n=>{
+    if(!Number.isSafeInteger(n)||n<0 || pos+n>file.size)throw copiaError('Cortada');
+    const bytes=new Uint8Array(await file.slice(pos,pos+n).arrayBuffer());if(bytes.length!==n)throw copiaError('Cortada');
+    pos+=n;return bytes;
+  };
+  const num32=b=>new DataView(b.buffer,b.byteOffset,b.byteLength).getUint32(0);
+  const num64=b=>Number(new DataView(b.buffer,b.byteOffset,b.byteLength).getBigUint64(0));
+  await take(magic.length);
+  const fb=await take(4),lb=await take(4),length=num32(lb);
+  if(length<2||length>COPIA_MAX_CABECERA)throw bad();
+  const cab=await take(length);let h;
+  try{
+    h=JSON.parse(vaultDec.decode(cab));
+    vaultParseHeader(JSON.stringify({v:1,id:h.id,pw:h.pw,rec:h.rec,bio:null}));
+    if(h.formato!==2 || !Number.isSafeInteger(h.bloques) || h.bloques<3 ||
+       h.bloques>COPIA_MAX_BLOQUES || !Number.isFinite(h.creado) ||
+       !['completa','solo-texto'].includes(h.contenido))throw bad();
+  }catch(e){throw bad();}
+  const {key,audioKey}=await open(h);
+  if(!key)throw bad();
+  let cadena=await copiaSha(copiaJoin([magic,fb,lb,cab]));
+  let registros=0,fragmentos=0,config=false,inventory=null,footer=false,bytesAudio=0,stats={cuadernos:null,notas:null};
+  let phase=0,cur=null;const names=new Set(),audioIds=new Set(),audios=[];
+  const close=()=>{
+    if(cur && (cur.part<cur.detail.parts.length))throw bad();
+    cur=null;
+  };
+  const skip=()=>{
+    while(cur && cur.part<cur.detail.parts.length && cur.detail.parts[cur.part].chunks===0){
+      if(cur.detail.parts[cur.part].bytes!==0)throw bad();
+      cur.part++;
+    }
+  };
+  for(let i=0;i<h.bloques;i++){
+    const start=pos,tb=await take(1),nbLen=await take(4),nl=num32(nbLen);
+    const tipo=String.fromCharCode(tb[0]);
+    if(!COPIA2_TIPOS.includes(tipo)||nl<1||nl>COPIA_MAX_NOMBRE)throw bad();
+    const nameBytes=await take(nl),sizeBytes=await take(8),size=num64(sizeBytes);
+    if(!Number.isSafeInteger(size)||size>COPIA_MAX_BLOQUE)throw bad();
+    const data=await take(size),name=vaultDec.decode(nameBytes);
+    if((tipo==='F')!==(i===h.bloques-1))throw bad();
+    try{
+      if(tipo!=='F')cadena=await copiaSha(copiaJoin([cadena,tb,nbLen,nameBytes,sizeBytes,await copiaSha(data)]));
+      if(tipo==='R'){
+        if(phase!==0||names.has(name)||!/^[a-z0-9.-]{1,60}$/.test(name))throw bad();
+        names.add(name);const raw=await vaultOpenRecord(key,h.id,name,vaultDec.decode(data));
+        if(name==='conversaciones')stats=copiaCount(raw);registros++;
+      }else if(tipo==='C'){
+        if(phase!==0||config||name!=='config')throw bad();
+        JSON.parse(vaultDec.decode(await vaultOpen(key,JSON.parse(vaultDec.decode(data)),copiaAad(h.id,'config'))));
+        config=true;phase=1;
+      }else if(tipo==='M'||tipo==='P'){
+        if(phase!==1||h.contenido!=='completa')throw bad();
+        close();
+        const m=JSON.parse(vaultDec.decode(tipo==='P' ? await copia2Open(key,h.id,'meta|'+name,data) : data));
+        if(!anValidMeta(m)||m.id!==name||audioIds.has(m.id)||m.state!=='cerrado'||m.parts<1)throw bad();
+        if(tipo==='P'&&!anPlainValidMeta(m))throw bad();
+        if(tipo==='M'&&(m.mode===AN_PLAIN_MODE||!m.key||!m.sealed))throw bad();
+        audioIds.add(m.id);
+        const detail=tipo==='P' ? m.plain : await anOpenDetail(audioKey,h.id,m.id,m.sealed);
+        const cek=tipo==='P' ? null : await anOpenCek(audioKey,h.id,m.id,m.key);
+        if(detail.parts.length!==m.parts)throw bad();
+        cur={meta:m,id:m.id,detail,cek,mode:tipo==='P'?'claro':'cifrado',part:0,n:0,bytes:0,seen:0};
+        skip();audios.push(copia2AudioIndex(m));
+      }else if(tipo==='A'||tipo==='B'){
+        if(phase!==1||!cur||cur.part>=cur.detail.parts.length ||
+           tipo!==(cur.mode==='claro'?'B':'A')||name!==cur.id+'|'+cur.part+'|'+cur.n)throw bad();
+        const plain=tipo==='B' ? await copia2Open(key,h.id,'chunk|'+name,data) :
+          await anOpenChunk(cur.cek,h.id,cur.id,cur.part,cur.n,data);
+        if(tipo==='B' && anB64(new Uint8Array(await crypto.subtle.digest('SHA-256',plain)))!==cur.detail.parts[cur.part].hashes[cur.n])
+          throw bad();
+        cur.bytes+=plain.length;bytesAudio+=plain.length;plain.fill(0);fragmentos++;cur.seen++;cur.n++;
+        if(cur.n===cur.detail.parts[cur.part].chunks){
+          if(cur.bytes!==cur.detail.parts[cur.part].bytes)throw bad();
+          cur.part++;cur.n=0;cur.bytes=0;skip();
+        }
+        audios[audios.length-1].chunks=cur.seen;
+      }else if(tipo==='I'){
+        if(phase!==1||inventory||name!=='inventario')throw bad();
+        close();
+        inventory=JSON.parse(vaultDec.decode(await copia2Open(key,h.id,'inventario',data)));
+        if(!inventory||inventory.formato!==2||inventory.contenido!==h.contenido ||
+           !Array.isArray(inventory.audios)||!Array.isArray(inventory.exclusiones) ||
+           inventory.exclusiones.length||JSON.stringify(inventory.audios)!==JSON.stringify(audios))throw bad();
+        phase=2;
+      }else{
+        if(phase!==2||!inventory||name!=='fin')throw bad();
+        const f=JSON.parse(vaultDec.decode(await vaultOpen(key,JSON.parse(vaultDec.decode(data)),copiaAad(h.id,'fin'))));
+        if(f.bloques!==h.bloques||f.bytes!==start||f.registros!==registros||
+           f.audios!==audios.length||f.fragmentos!==fragmentos||f.cadena!==vb64(cadena))throw bad();
+        footer=true;
+      }
+    }catch(e){throw e && e.copia?e:bad();}
+    if(onProgress){try{onProgress(pos,file.size)}catch(e){}}
+  }
+  if(!footer||!config||!inventory||pos!==file.size)throw bad();
+  return {formato:2,creado:h.creado,contenido:h.contenido,id:h.id,bytes:file.size,
+    registros,audios:audios.length,fragmentos,bytesAudio,cuadernos:stats.cuadernos,notas:stats.notas,
+    claro:audios.filter(x=>x.mode==='claro').length,cifrado:audios.filter(x=>x.mode==='cifrado').length};
+}
+/*COPIA2-END*/
+
+
 /* ---------- Copia cifrada en uso (K1): solo lee lo guardado; nunca escribe ni borra ---------- */
 /*COPIA-USO-START*/
 let copiaBusyN = 0;
