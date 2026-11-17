@@ -65,3 +65,11 @@ Pruebas nuevas en `tests/entrega2.test.mjs`: cierre sin bóveda sin esperar micr
 ## Coordinación
 
 Se mantiene `main` intacto y el PR sin fusionar. No se editan ramas de otras IA ni los documentos abiertos de los PR #58/#52/#49/#37. La autoría se documenta solo aquí y en el PR, nunca en la interfaz. Todo ensayo usa notas inventadas y audio sintético; no hay datos reales de pacientes.
+
+## Segunda revisión cruzada de seguridad del PR #59 (17/11/2026)
+
+- **Autobloqueo si el borrador no llega al disco:** para no dejar el texto expuesto después de los 15 minutos, ahora se coloca una **cobertura de privacidad** que impide interactuar con la interfaz y pide contraseña. No hay recarga: el borrador y las claves permanecen temporalmente en RAM para evitar pérdida irreparable por cuota agotada. **No es un bloqueo criptográfico y no debe presentarse como tal**. Al autenticar, se recupera el mismo editor y se pide liberar espacio y confirmar el guardado. El bloqueo manual sigue negándose a descartar un borrador no confirmado. Se comprueba el recorrido con contraseña incorrecta/correcta en Chrome, además del caso aislado Node.
+- **Notas con texto y audio:** antes de enlazar el audio se ejecuta `anAudioHealth` aun si hay texto transcripto. Un fragmento alterado impide confirmar la nota, y tanto texto como audio quedan disponibles para recuperación. Esto agrega lectura/descifrado al guardar una nota que lleva audio, por lo que su costo con grabaciones largas debe medirse.
+- **Texto de recuperación de huérfanos:** no invita a reproducir desde el borrador, donde aún no existe reproductor; indica que se puede escuchar desde la nota confirmada.
+- **Pendiente para decisión futura:** una protección con garantía de bloqueo criptográfico incluso ante error de cuota exigiría un mecanismo de persistencia alternativo verificable o permitir descartar expresamente lo no guardado; ninguna de esas decisiones se toma aquí. No se declara K2, biblioteca unificada ni respaldo completo.
+- **Pruebas añadidas:** casos Node de autobloqueo fallido, Chrome de cobertura visual/autenticación/recuperación y Chrome de guardado de texto con fragmento de audio alterado. Sin prueba en Motorola; no fusionar automáticamente este PR ni tocar los PR #60/#61.

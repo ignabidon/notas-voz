@@ -5,6 +5,14 @@
 - Se agrega prueba de Chrome y CI para el escenario con audio sintético e integridad/tamper. Decisiones, pendientes y límites en `docs/ENTREGA2-P2-RESPALDO-V2-PREPARACION.md`.
 - **Motorola: no se probará a pedido del propietario**; los resultados de laboratorio no se atribuirán al teléfono. Sin K2/T/AO, cambios a bases históricas, migraciones, borrados ni fusión automática.
 
+## 17/11/2026 · Segunda revisión del PR #59 (ChatGPT; sin merge)
+
+- Ante falta de espacio, el autobloqueo ahora **oculta la interfaz y exige contraseña**, sin recargar ni perder el borrador. La bóveda permanece abierta **en RAM**: es un escudo de privacidad, no bloqueo criptográfico; queda registrado ese límite.
+- Guardar nota con **texto más audio** también verifica íntegramente los fragmentos. Si están dañados no confirma el vínculo ni pierde el texto.
+- Se aclara cuándo se puede reproducir un audio huérfano recuperado.
+- Nuevas pruebas Node/Chrome de escudo, contraseña correcta/errónea, conservación del editor y audio dañado con transcripción. CI y auditoría posterior deben comprobarse en el SHA final; Motorola pendiente.
+- Ninguna fusión, migración, K2, T, AO ni cambio de formato; los PR #60 y #61 siguen separados.
+
 ## 17/11/2026 · Entrega 2, revisión independiente y correcciones de P1/P4 (ChatGPT, PR #59 sin fusionar)
 
 - **Autoguardado:** sin bóveda, el borrador se escribe sincrónicamente al editar y al ocultar/cerrar la página; con bóveda se mantiene la confirmación cifrada y se evita pisar versiones nuevas desde la cola. El navegador no garantiza completar un cifrado ante cierre forzado.

@@ -106,7 +106,9 @@ try {
   assert.equal(g2.id, g1.id, 'mismo audio');
   const l2 = JSON.parse(await leerAudio(g1.id));
   assert.equal(l2.length, 2); assert.deepEqual(l2[0].sha, g1.sha, 'la primera parte no cambió'); assert.deepEqual(l2[1].sha, g2.sha);
-  await run(`document.getElementById('save').click(); vault.flush().then(() => true)`);
+  await run(`document.getElementById('save').click(); true`);
+  await waitFor('!convSaving && convAudioId === null', 'edición confirmada tras la comprobación del audio');
+  await run('vault.flush().then(() => true)');
   assert.equal(await run(`convStore.data.entries.find(e => e.id === ${JSON.stringify(nota.id)}).audioId`), g1.id);
 
   // 7) Archivo cargado (bytes inventados, nombre inventado): se guarda cifrado en partes de 1 MB y cuenta como «ocupado».
@@ -179,6 +181,20 @@ try {
     return JSON.stringify({notSaved: convStore.data.entries.length === before, pending: convAudioId === id, exists: !!(await anGetMeta(db,id))});
   })()`));
   assert.equal(bad.notSaved && bad.pending && bad.exists, true, 'conservar el audio dañado y el borrador sin inventar éxito');
+
+  // Integridad también con texto: un audio alterado no debe aceptarse solamente porque hay transcripción.
+  const badWithText = JSON.parse(await run(`(async () => {
+    convClearComposer(); convOpenId = null; convStartPending(true);
+    const id = await anSaveFile(new File([new Uint8Array([4,8,1,3])], 'con-texto-inventado.mp3', {type:'audio/mpeg'}), 900);
+    $('text').value = 'Texto inventado asociado a un audio corrupto'; refreshConvEditor();
+    const db = await anDb(), before = convStore.data.entries.length;
+    await anPutChunk(db, id, 0, 0, new Blob([new Uint8Array([2,2,2])]));
+    await convSave();
+    return JSON.stringify({notSaved: convStore.data.entries.length === before, pending: convAudioId === id,
+      textKept: $('text').value.includes('Texto inventado'), exists: !!(await anGetMeta(db, id))});
+  })()`));
+  assert.equal(badWithText.notSaved && badWithText.pending && badWithText.textKept && badWithText.exists, true,
+    'la nota con texto tampoco confirma un vínculo a un audio dañado');
 
   // 9) Cortes: una grabación interrumpida y un archivo a medio guardar; al volver a abrir se resuelven (tabla 2.5).
   const corte = JSON.parse(await run(`(async () => {
