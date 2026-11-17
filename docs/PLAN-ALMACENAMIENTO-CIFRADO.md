@@ -2,7 +2,7 @@
 
 > **Este archivo no cambia de nombre.** Los pedidos que Ignacio copia y pega apuntan acá. Es el tablero: dice qué paso toca, qué hay que hacer en cada uno y en qué estado está.
 > **El diseño completo** (el porqué de cada cosa) está en [DISENO-ALMACENAMIENTO-CIFRADO-2026-11-16.md](DISENO-ALMACENAMIENTO-CIFRADO-2026-11-16.md). Si este tablero y el diseño no coinciden, vale el diseño; si el diseño y el código no coinciden, vale el código, y avisale a Ignacio.
-> Última actualización: 17/11/2026 (Claude). **E1 y E2 unidos a `main`** (E2 por el PR #50, que integra el #47 sobre el `main` con Clínica editorial). Próximo paso: **K1**. La Etapa N y el PR #48 ya están en `main`.
+> Última actualización: 17/11/2026 (Claude). **E1, E2 y K1 unidos a `main`.** Próximo paso: **B3** (Etapa B, menú de las burbujas) y después **E3**, que lo espera. K2 y T: siempre con consulta previa a Ignacio. La Etapa N y el PR #48 ya están en `main`.
 
 ## Si sos la IA a la que le pidieron un paso, empezá acá
 
@@ -49,7 +49,7 @@ Orden decidido por Ignacio: **E1 → E2 → K1 → E3 → K2 → T → AO**.
 |---|---|---|---|---|---|
 | **E1** | Base nueva de audios por nota, sin activar | — | Sonnet 5.5 | Modelo estándar, razonamiento medio | Unido a `main` (`aab2b90`, PR #45) |
 | **E2** | Cifrado de audios y guardado por nota | E1 | Opus 5.5 | El más capaz de tu plan, razonamiento alto | Unido a `main` (PR #50, que integra el #47; 17/11/2026). Sin probar en el Motorola |
-| **K1** | Copia cifrada: exportar y verificar | E2 | Opus 5.5 | El más capaz de tu plan, razonamiento alto | Pendiente |
+| **K1** | Copia cifrada: exportar y verificar | E2 | Opus 5.5 | El más capaz de tu plan, razonamiento alto | Unido a `main` (17/11/2026). Sin probar en el Motorola |
 | **E3** | Reproductor en la burbuja, espacio en Ajustes | E2, K1 y Etapa B3 | Sonnet 5.5 | Modelo estándar, razonamiento medio | Pendiente |
 | **K2** | Restaurar una copia cifrada | K1 | Opus 5.5 | El más capaz de tu plan, razonamiento alto | Pendiente |
 | **T** | Mudar el texto al depósito grande | K1 y K2 | Opus 5.5 | El más capaz de tu plan, razonamiento alto | Pendiente |
@@ -186,3 +186,4 @@ Tomadas el 16/11/2026. Detalle y opciones descartadas, en el diseño completo.
 - 16/11/2026, 19:20 · Claude (Opus 5.5): correcciones de E2 por la revisión de ChatGPT sobre `2c88ce1`, con permiso de Ignacio, en el mismo PR #47: no se puede quitar la protección con audios guardados (hasta AO); el audio no se cruza entre notas A y B ni se borra si lo usa otra; Guardar espera la confirmación del disco; una sola pestaña escribe todo lo protegido; audio incompleto marcado sin duración; cancelar quita lo agregado; audio dañado conservado. Prueba nueva `tests/e2-correcciones-browser.mjs` (dos pestañas reales, sin espacio, cortes). Detalle y límites: `CAMBIOS.md`. Motorola: sin probar. Pide una nueva revisión independiente antes de unir.
 - 16/11/2026, 21:00 · Claude (Sonnet 5.5): segunda revisión de E2 corregida en el PR #47 (candado antes de escribir y falla cerrada; `audioParts` contra el borrador viejo; revisión completa del audio antes de ampliar o recortar; avisos veraces de ficha final y borrado). Sin unir, sin K1. Cortes de las pruebas simulados; Brave/Motorola sin probar. Qué debe comprobar la próxima revisión: ver CAMBIOS.md.
 - 17/11/2026 · Claude: E2 integrado sobre el `main` con Clínica editorial (PR #50; el #47 tenía cruces en `index.html` y `CAMBIOS.md`). Revisión independiente del código combinado sin hallazgos graves; 159/159 Node y ocho suites de Chrome; prueba extra de laboratorio con el micrófono sintético de Chrome por la interfaz real. Registrada la forma de trabajo acordada con Ignacio el 17/11 y el avance real de la Etapa B (B1 y B2 en el #48). Motorola: sin probar. Próximo paso: **K1**.
+- 17/11/2026 · Claude: K1 programado (plan contado a Ignacio al empezar, según el acuerdo del 17/11): formato 1 del archivo `.dictanota`, «Crear copia cifrada» y «Verificar una copia» en Ajustes → Privacidad, archivo de ejemplo fijo en `tests/`. Solo lee: no restaura ni modifica nada. Se agregó al formato una huella encadenada (`cadena`) en el bloque final; detalle en el diseño, 2.6. Con la protección apagada la copia lleva una contraseña propia y solo texto. Motorola: sin probar (descarga y selección del archivo en Brave). Próximo paso: **B3**, después **E3**.

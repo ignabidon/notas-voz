@@ -234,6 +234,16 @@ bloque × N:  tipo (u8) · largo del nombre (u32) · nombre · largo de datos (u
   La app restaurada queda con el mismo `id`, la misma contraseña y el mismo código; la huella se registra de nuevo.
 - **Versionado:** `formato` entero. Un lector que encuentre un formato mayor al que conoce **se niega** («esta copia es de una versión más nueva») y nunca interpreta a medias. Cada registro conserva su propio esquema (`CONV_SCHEMA`, etc.). Cada formato publicado deja en `tests/` un **archivo de ejemplo fijo, con datos inventados**, que todas las versiones futuras (web y Android) deben poder abrir.
 - **Android:** la app restaura la copia y agrega la envoltura `android` (Keystore + BiometricPrompt) a la cabecera, como prevé `DISENO-CIFRADO.md`. `vaultParseHeader` ignora campos que no conoce y los `{...h}` los conservan (verificado). El mismo `index.html` y la misma IndexedDB sirven dentro del WebView; pasar los audios a archivos nativos es una decisión posterior.
+- **Implementado en K1 (17/11/2026), formato 1. Precisiones que valen como parte del formato:**
+  - Números en orden de red (big-endian). El largo de la cabecera es de hasta 64 KB; el nombre de un bloque, de 1 a 200 bytes UTF-8; los datos de un bloque, hasta 64 MB.
+  - `bloques` cuenta todos los bloques, incluido F. `app` vale «Delta 11».
+  - Nombres: R lleva el nombre del registro (`notas`, `conversaciones`, …); C se llama `config` y su contenido es `{cfg, generador}` (los textos de `notasvoz.gamma.cfg.v1` y `notasvoz.gamma.generator.v1`, o `null`); M lleva el id del audio y su ficha en JSON; A se llama `<audioId>|<parte>|<n>`; F se llama `fin`.
+  - Orden: cada M va seguido de **todos** sus A, en orden de parte y de posición. Solo entran audios `cerrado` y sanos. F es siempre el último y después no hay nada.
+  - C y F son `{iv, ct}` en JSON, cifrados con la clave de datos; AAD `dictanota|v1|<id>|copia|config` y `…|copia|fin`.
+  - F contiene `{bloques, bytes, registros, audios, fragmentos, cadena}`. `bytes` es el tamaño de todo lo anterior a F. **`cadena` (agregado al diseño):** huella encadenada, `c0 = SHA-256(marca ‖ formato ‖ largo ‖ cabecera)` y, por cada bloque anterior a F, `c = SHA-256(c ‖ encabezado del bloque ‖ SHA-256(datos))`, en base64. Autentica también la cabecera en claro, los nombres, el orden y las fichas de audio, y detecta un registro reemplazado por otro más viejo de la misma protección.
+  - El lector recorre el archivo por tramos (nunca entero en memoria) y, antes de descargar, la app comprueba la copia recién armada.
+  - Un lector debe aceptar nombres de registro que no conoce (`[a-z0-9.-]`, hasta 60): se autentican igual. Qué hacer con ellos lo decide la restauración (K2).
+  - Archivo de ejemplo fijo: `tests/copia-formato-1.dictanota` (contraseña de prueba en `tests/delta.test.mjs`, código en `tests/copia-formato-1.codigo.txt`). **No se regenera.**
 - **Sin probar:** que Brave/Android descargue un `Blob` compuesto de cientos de MB. Si falla: copia «solo texto» + audios en volúmenes de ≤200 MB.
 
 ### 2.7 Espacio

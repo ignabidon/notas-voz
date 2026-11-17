@@ -1365,7 +1365,7 @@ test('cifrado: la app lee y escribe lo protegido solo a través del almacén cif
   const main = html.replace(/\/\*VAULT-CORE-START\*\/[\s\S]*?\/\*VAULT-CORE-END\*\//, '');
   assert.doesNotMatch(main, /localStorage\.(getItem|setItem|removeItem)\(\s*(KEY|DRAFT|UNDO|PKEY|DKEY)\b/);
   assert.match(html, /vaultWhenReady\(\(\) => \{ loadNotes\(\); loadDict\(\); loadPeople\(\);[^\n]*restoreDraft\(\);/);
-  assert.match(html, /vaultSetHooks\(\(\) => recording \|\| busy \|\| outstanding > 0 \|\| feeding \|\| anBusyN > 0, saveDraft\);/, 'cifrar un archivo cuenta como uso');
+  assert.match(html, /vaultSetHooks\(\(\) => recording \|\| busy \|\| outstanding > 0 \|\| feeding \|\| anBusyN > 0 \|\| copiaBusyN > 0, saveDraft\);/, 'cifrar un archivo y crear o comprobar una copia cuentan como uso');
   assert.match(html, /const VAULT_IDLE_MS = 15 \* 60 \* 1000;/);
   assert.match(html, /const VAULT_PBKDF2_IT = 600000;/);
   assert.ok(html.indexOf('const vault = createVault(localStorage)') < html.indexOf('function loadNotes()'), 'el almacén cifrado se crea antes que la app');
@@ -2070,3 +2070,135 @@ test('revisión 2: la ficha final sin espacio y el borrado fallido no dan avisos
   assert.match(html, /quitado = await anDeleteAudio\(audio\)/);
   assert.match(html, /anDeleteAudio\(pendingAudio\)\.then\(ok => flash\(ok \?/, 'descartar espera el borrado antes de decir que se hizo');
 });
+
+/* ---------- Copia cifrada, paso K1 (formato 1; datos inventados) ---------- */
+const copiaBlock = (html.match(/\/\*COPIA-START\*\/([\s\S]*?)\/\*COPIA-END\*\//) || [])[1];
+const copiaUso = (html.match(/\/\*COPIA-USO-START\*\/([\s\S]*?)\/\*COPIA-USO-END\*\//) || [])[1];
+const copiaApi = (() => {
+  const v = html.match(/\/\*VAULT-CORE-START\*\/([\s\S]*?)\/\*VAULT-CORE-END\*\//)[1];
+  return new Function(v + anBlock + copiaBlock + `;return {copiaWriter, copiaVerify, copiaOpenWithSecret, copiaName, copiaHead, COPIA_MAGIC, COPIA_MSG,
+    vaultCreate, vaultImportDataKey, vaultDeriveAudioKey, vaultSealRecord, vaultOpenRecord, vaultWithPassword,
+    anNewMeta, anSetState, anNewCek, anSealChunk, anSealDetail};`)();
+})();
+const COPIA_PASS = 'frase de prueba inventada 901';
+/* Arma una copia de ejemplo con datos inventados: tres registros, ajustes y un audio de dos partes (tres fragmentos). */
+async function copiaEjemplo(opts = {}){
+  const c = copiaApi, {header, dek, recovery} = await c.vaultCreate(COPIA_PASS);
+  const key = await c.vaultImportDataKey(dek), audioKey = await c.vaultDeriveAudioKey(dek, header.id);
+  const conv = {schema: 1, conversations: [{id: 'c1', title: 'Cuaderno inventado', createdAt: 1, updatedAt: 2}],
+    entries: [{id: 'e1', conversationId: 'c1', kind: 'audio', savedAt: 1, text: 'Persona Inventada Uno, X-901', audioId: 'audio-inventado-1'},
+      {id: 'e2', conversationId: 'c1', kind: 'texto', savedAt: 2, text: 'madre de X-901'}]};
+  const w = c.copiaWriter(header, key, opts.contenido || 'completa', 1763340000000);
+  await w.registro('conversaciones', await c.vaultSealRecord(key, header.id, 'conversaciones', JSON.stringify(conv)));
+  await w.registro('personas', await c.vaultSealRecord(key, header.id, 'personas', JSON.stringify([{names: ['Persona Inventada Uno'], code: 'X-901', rel: ''}])));
+  await w.registro('diccionario', await c.vaultSealRecord(key, header.id, 'diccionario', 'pasiente => paciente'));
+  await w.config({cfg: '{"textSize":"normal"}', generador: '{"prefix":"X","next":902,"digits":3,"mode":"sequential"}'});
+  if (!opts.sinAudio) {
+    const id = 'audio-inventado-1', k = await c.anNewCek(audioKey, header.id, id);
+    const datos = [[0, 0, new Uint8Array(700).fill(7)], [0, 1, new Uint8Array(300).fill(8)], [1, 0, new Uint8Array(50).fill(9)]];
+    const chunks = [];
+    for (const [part, n, bytes] of datos) chunks.push({part, n, blob: await c.anSealChunk(k.cek, header.id, id, part, n, bytes)});
+    const detail = {parts: [{mime: 'audio/webm', chunks: 2, bytes: 1000, ms: 2000, origin: 'grabado', complete: true}, {mime: 'audio/mpeg', chunks: 1, bytes: 50, ms: 500, origin: 'cargado', name: 'inventado.mp3', complete: true}]};
+    const meta = {...c.anSetState(c.anNewMeta(id, 1763340000000, 'grabando'), 'cerrado'), parts: 2, bytes: 1050, key: k.box, sealed: await c.anSealDetail(audioKey, header.id, id, detail)};
+    await w.audio(meta, opts.audioAlReves ? [chunks[1], chunks[0], chunks[2]] : chunks);
+  }
+  const blob = await w.finish();
+  dek.fill(0);
+  return {blob, bytes: new Uint8Array(await blob.arrayBuffer()), header, key, audioKey, recovery, abrir: async () => ({key, audioKey})};
+}
+const copiaFalla = async (bytes, abrir) => { try { await copiaApi.copiaVerify(new Blob([bytes]), abrir); return null; } catch (e) { return e.copia || ('otro: ' + e.message); } };
+
+test('copia K1: se arma y se comprueba con la contraseña y con el código; otra clave no la abre', async () => {
+  assert.ok(copiaBlock && copiaUso, 'faltan los bloques COPIA');
+  const c = copiaApi, e = await copiaEjemplo();
+  assert.equal(new TextDecoder().decode(e.bytes.subarray(0, 16)), 'DICTANOTA-COPIA\n');
+  const r = await c.copiaVerify(e.blob, h => c.copiaOpenWithSecret(h, COPIA_PASS));
+  assert.deepEqual({formato: r.formato, contenido: r.contenido, registros: r.registros, audios: r.audios, fragmentos: r.fragmentos, bytesAudio: r.bytesAudio, cuadernos: r.cuadernos, notas: r.notas, bytes: r.bytes},
+    {formato: 1, contenido: 'completa', registros: 3, audios: 1, fragmentos: 3, bytesAudio: 1050, cuadernos: 1, notas: 2, bytes: e.bytes.length});
+  assert.equal(r.creado, 1763340000000); assert.equal(r.id, e.header.id);
+  // El código de recuperación también la abre (escrito en minúsculas y sin guiones).
+  assert.equal((await c.copiaVerify(e.blob, h => c.copiaOpenWithSecret(h, e.recovery.toLowerCase().replace(/-/g, ' ')))).registros, 3);
+  assert.equal(await copiaFalla(e.bytes, h => c.copiaOpenWithSecret(h, 'otra frase inventada 902')), 'Clave');
+  assert.equal(await copiaFalla(e.bytes, h => c.copiaOpenWithSecret(h, 'ABCD-EFGH-JKMN-PQRS-TVWX-YZ01')), 'Clave');
+  // La cabecera en claro no lleva la huella, y en todo el archivo no aparece texto de las notas.
+  const claro = Buffer.from(e.bytes).toString('latin1');
+  assert.doesNotMatch(claro, /Persona Inventada|X-901|pasiente|"bio"|inventado\.mp3/);
+  const cab = JSON.parse(Buffer.from(e.bytes.subarray(24, 24 + new DataView(e.bytes.buffer).getUint32(20))).toString('utf8'));
+  assert.deepEqual(Object.keys(cab).sort(), ['app', 'bloques', 'contenido', 'creado', 'formato', 'id', 'pw', 'rec']);
+  assert.equal(cab.bloques, 9, 'tres registros, ajustes, ficha, tres fragmentos y fin');
+  assert.match(c.copiaName(new Date(2026, 10, 17, 9, 5).getTime()), /^DictaNota-copia-2026-11-17\.dictanota$/);
+});
+
+test('copia K1: una copia cortada o alterada en cualquier lugar se rechaza entera', async () => {
+  const e = await copiaEjemplo(), n = e.bytes.length;
+  assert.equal(await copiaFalla(e.bytes, e.abrir), null, 'la copia intacta pasa');
+  // Cortada en cada posición (de a 5 bytes y en los últimos 40): nunca pasa, y dice que está incompleta.
+  const cortes = new Set([0, 1, 15, 16, 20, 23, 24]);
+  for (let i = 0; i < n; i += 5) cortes.add(i);
+  for (let i = Math.max(0, n - 40); i < n; i++) cortes.add(i);
+  for (const i of cortes) {
+    const why = await copiaFalla(e.bytes.subarray(0, i), e.abrir);
+    assert.ok(why === 'Cortada' || (i === 0 && why === 'NoEsCopia'), 'corte en ' + i + ': ' + why);
+  }
+  // Un byte cambiado en cualquier lugar (de a 3): siempre se rechaza.
+  for (let i = 0; i < n; i += 3) {
+    const b = e.bytes.slice(); b[i] ^= 0x20;
+    const why = await copiaFalla(b, e.abrir);
+    assert.ok(['Alterada', 'NoEsCopia', 'FormatoNuevo', 'Cortada'].includes(why), 'byte ' + i + ': ' + why);
+  }
+  // Datos de más al final.
+  assert.equal(await copiaFalla(new Uint8Array([...e.bytes, 0]), e.abrir), 'Alterada');
+  // Un archivo que no es una copia.
+  assert.equal(await copiaFalla(new TextEncoder().encode('Persona Inventada Uno: esto es un texto cualquiera.'), e.abrir), 'NoEsCopia');
+  assert.equal(await copiaFalla(new Uint8Array(0), e.abrir), 'NoEsCopia');
+});
+
+test('copia K1: formato más nuevo, bloques fuera de lugar y copias mezcladas se rechazan', async () => {
+  const c = copiaApi, e = await copiaEjemplo();
+  // Formato mayor: se niega antes de pedir la contraseña.
+  const nuevo = e.bytes.slice(); new DataView(nuevo.buffer).setUint32(16, 2);
+  let pidio = false;
+  assert.equal(await copiaFalla(nuevo, async () => { pidio = true; return e.abrir(); }), 'FormatoNuevo');
+  assert.equal(pidio, false, 'no pide la contraseña de un formato que no conoce');
+  assert.match(c.COPIA_MSG.FormatoNuevo, /versión más nueva/);
+  // Fragmentos de audio en otro orden: el archivo se arma, pero no pasa la comprobación.
+  assert.equal(await copiaFalla((await copiaEjemplo({audioAlReves: true})).bytes, e.abrir).then(x => x), 'Alterada');
+  // Una copia «solo texto» no puede llevar audios.
+  await assert.rejects(copiaEjemplo({contenido: 'solo-texto'}), /solo texto/);
+  const solo = await copiaEjemplo({contenido: 'solo-texto', sinAudio: true});
+  const r = await c.copiaVerify(solo.blob, solo.abrir);
+  assert.deepEqual([r.contenido, r.audios, r.fragmentos, r.registros], ['solo-texto', 0, 0, 3]);
+  // Las claves de otra protección no abren esta copia (cada copia va atada a su id).
+  assert.equal(await copiaFalla(e.bytes, solo.abrir), 'Alterada');
+  // Cambiar la contraseña después no afecta a la copia: sigue abriendo con la que valía al crearla.
+  assert.equal((await c.copiaVerify(e.blob, h => c.copiaOpenWithSecret(h, COPIA_PASS))).audios, 1);
+  // Nombres y tamaños de bloque fuera de rango.
+  assert.throws(() => c.copiaHead('X', 'a', 1)); assert.throws(() => c.copiaHead('R', '', 1)); assert.throws(() => c.copiaHead('R', 'a'.repeat(201), 1)); assert.throws(() => c.copiaHead('R', 'a', -1));
+});
+
+test('copia K1: el archivo de ejemplo fijo del formato 1 se sigue abriendo', async () => {
+  const c = copiaApi, bytes = readFileSync(new URL('./copia-formato-1.dictanota', import.meta.url));
+  const file = new Blob([bytes]);
+  const r = await c.copiaVerify(file, h => c.copiaOpenWithSecret(h, COPIA_PASS));
+  assert.deepEqual({formato: r.formato, contenido: r.contenido, registros: r.registros, audios: r.audios, fragmentos: r.fragmentos, bytesAudio: r.bytesAudio, cuadernos: r.cuadernos, notas: r.notas, creado: r.creado},
+    {formato: 1, contenido: 'completa', registros: 3, audios: 1, fragmentos: 3, bytesAudio: 1050, cuadernos: 1, notas: 2, creado: 1763340000000});
+  // También con su código de recuperación (inventado, guardado junto al archivo solo para esta prueba).
+  const codigo = readFileSync(new URL('./copia-formato-1.codigo.txt', import.meta.url), 'utf8').trim();
+  assert.match(codigo, /^([0-9A-Z]{4}-){5}[0-9A-Z]{4}$/);
+  assert.equal((await c.copiaVerify(file, h => c.copiaOpenWithSecret(h, codigo))).registros, 3);
+});
+
+test('copia K1: solo lee; no escribe, no borra y no sale a la red', () => {
+  assert.doesNotMatch(copiaBlock, /localStorage|indexedDB|fetch\(|XMLHttpRequest|innerHTML|\beval\b|new Function|document\.|setItem|removeItem/);
+  assert.doesNotMatch(copiaUso, /setItem\(|removeItem\(|anPut\w*\(|anDelete\w*\(|anTruncate\w*\(|\.put\(|\.delete\(|\.clear\(|fetch\(|XMLHttpRequest|innerHTML|\beval\b|new Function|convStore\.save|vault\.(enable|disable|changePassword|newRecovery|addBio|removeBio)/);
+  // Lo protegido se lee por el almacén cifrado o como registros ya cifrados; nunca en claro desde localStorage.
+  assert.deepEqual([...copiaUso.matchAll(/localStorage\.getItem\((\w+)\)/g)].map(m => m[1]).sort(), ['CKEY', 'GKEY']);
+  assert.match(copiaUso, /vault\.rawRecords\(\)/); assert.match(copiaUso, /vaultStore\.getItem\(k\)/);
+  // Se comprueba entera antes de descargarla.
+  assert.ok(copiaUso.indexOf('await copiaVerify(file') < copiaUso.indexOf('download(file)'), 'primero se comprueba, después se descarga');
+  for (const id of ['copiaPanel', 'copiaCrear', 'copiaVerificar', 'copiaArchivo', 'copiaContenido', 'copiaCompleta', 'copiaSoloTexto', 'copiaPwForm', 'copiaClaveForm', 'copiaMsg']) assert.ok(ids.includes(id), 'falta #' + id);
+  // La interfaz no promete lo que todavía no existe ni usa palabras prohibidas.
+  const panel = html.match(/<section class="vault-panel" id="copiaPanel"[\s\S]*?<\/section>/)[0];
+  assert.match(panel, /crear y comprobar/); assert.doesNotMatch(panel + copiaUso, /cifrado seguro|sin nube|restaurad[ao] correctamente/i);
+});
+

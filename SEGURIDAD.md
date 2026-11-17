@@ -30,6 +30,19 @@ Cambio de presentación y ayudas; sin datos persistentes nuevos, claves nuevas, 
 - **Alcance:** solo la propia aplicación del usuario (`index.html` en `main`, su sitio de GitHub Pages y la configuración del repositorio). No se probó ningún sitio ajeno.
 - **Regla de datos:** todas las pruebas usan información ficticia. Nunca datos reales de pacientes, ni en pruebas, ni en capturas, ni en diagnósticos.
 
+## 17/11/2026 · Copia cifrada: crear y verificar (paso K1, hallazgo 1)
+
+**[código + prueba técnica]** Ajustes → Privacidad → «Copia cifrada». Detalle del formato en `docs/DISENO-ALMACENAMIENTO-CIFRADO-2026-11-16.md`, 2.6.
+- **Solo lee.** Crear o verificar una copia no escribe ni borra nada en `localStorage` ni en IndexedDB (hay pruebas que comparan todo antes y después). **No restaura**: eso es K2.
+- **Qué viaja cifrado:** los registros de la protección tal como están guardados, los ajustes y el generador de códigos, y (en la copia «Completa») las fichas y los fragmentos de los audios por nota, sin recifrar. La huella (`bio`) no viaja.
+- **Qué queda a la vista en el archivo:** la fecha de creación, el id de la protección, los parámetros para derivar la clave (sal e iteraciones), si es completa o de solo texto, y los nombres y tamaños de los bloques (nombres de registros como «conversaciones», identificadores aleatorios de audios y sus tamaños). **Ningún texto, título, nombre de persona, nombre de archivo ni audio en claro.**
+- **Integridad:** cada pieza se autentica con AES-GCM y el bloque final cifrado lleva los totales y una huella encadenada de todo lo anterior: un archivo cortado, alterado, reordenado o mezclado con otra copia se rechaza entero. Un formato más nuevo se rechaza sin pedir la contraseña.
+- **Con qué se abre:** con la contraseña o el código de recuperación que valían **al crearla**. Cambiar la contraseña después no cierra las copias viejas: si una contraseña quedó expuesta, hay que borrar las copias hechas con ella. La interfaz lo dice.
+- **Protección apagada:** la copia igual sale cifrada, con una contraseña elegida para ese archivo (PBKDF2-SHA256, 600.000 iteraciones). Quien tenga el archivo puede probar contraseñas sin límite: conviene una frase larga. Lleva solo texto (los audios de «Mis grabaciones» no entran, D7).
+- **Audios dañados o a medio guardar** no entran en la copia; se cuentan y se avisa. No se tocan.
+- Sin orígenes nuevos ni cambios en la CSP: la descarga usa un enlace `blob:`, ya permitido. Crear y verificar cuentan como uso para el autobloqueo.
+- **No probado en el Motorola:** que Brave descargue el archivo con la extensión `.dictanota`, que el selector de archivos lo deje elegir, y copias grandes (cientos de MB).
+
 ## 16/11/2026 · Segunda revisión de E2: candado antes de escribir, borrador viejo y audio dañado (hallazgos 1 y 7)
 
 **[código + prueba técnica]** Rama `e2-cifrado-audios-por-nota`, sobre `745f36b`. Detalle en `CAMBIOS.md`.
@@ -73,6 +86,7 @@ Cambio de presentación y ayudas; sin datos persistentes nuevos, claves nuevas, 
    - *16/11/2026, audio por nota (paso E1):* base IndexedDB nueva `notasvoz-dictanota-audio` (`meta`, `chunks`), escrita pero apagada en E1. `notasvoz-gamma-audio` no cambia. Detalle en `docs/DISENO-ALMACENAMIENTO-CIFRADO-2026-11-16.md`.
    - *16/11/2026, correcciones de E2:* sin claves nuevas. El borrador (cifrado) suma el campo `audioBase` (cuántas partes tenía el audio de la nota en edición). El detalle cifrado de cada parte puede llevar `incompleta: true` (falta de espacio) o `interrumpida: true`. La segunda pestaña no escribe nada protegido (`vault.readOnly`).
    - *16/11/2026, audio por nota (paso E2):* la base `notasvoz-dictanota-audio` **se usa** solo con la protección abierta y «Conservar audio» encendido. `chunks`: fragmentos **cifrados** (`IV ‖ AES-GCM`). `meta`: id aleatorio, estado, fecha, tamaño total y cantidad de partes **en claro**; clave del audio **envuelta** y detalle de las partes (formato, tamaños, duración, origen y nombre del archivo cargado) **cifrado**. El vínculo nota → audio (`audioId`) vive dentro del registro cifrado de cuadernos, y el borrador recuerda el audio pendiente (también cifrado). Ningún fragmento se escribe sin pasar por `anSealChunk` (hay una prueba que lo exige). La clave de audios no se guarda: se deriva al desbloquear y la clave de datos en bruto se pone en cero. Sin protección no se escribe nada ahí.
+   - *17/11/2026, copia cifrada (paso K1):* **no guarda datos nuevos en el navegador.** Produce un archivo descargado por acción del usuario (ver la sección del 17/11). `vault.rawRecords()` solo lee los registros ya cifrados.
    - *16/11/2026:* el aprendizaje automático de correcciones agrega líneas `a => b` al diccionario existente (`notasvoz.gamma.dict.v1`, **sin cifrar**) y el campo booleano `learnAuto` a la configuración existente (`notasvoz.gamma.cfg.v1`). No hay claves nuevas. Solo se aprenden palabras en minúscula y sin cifras (no nombres propios), pero provienen de lo dictado: no usar datos reales. El aviso de lo aprendido usa `textContent`.
 
 ## Qué está confirmado
@@ -144,7 +158,8 @@ Todo lo demás está en `default-src 'none'` (sin objetos, sin marcos, sin formu
 - [x] Decisión del usuario sobre el cifrado (punto 1): **toda la app**, huella + contraseña + código de recuperación, autobloqueo de 15 minutos y audios en una segunda etapa (16/11/2026). Implementado en `seguridad-02-cifrado-2026-11-16`.
 - [ ] Probar la protección cifrada en Brave del Motorola con datos ficticios: activar, anotar el código, registrar la huella, recargar, desbloquear con huella y con contraseña, autobloqueo con la pantalla apagada y tiempo de desbloqueo. **Confirmación del usuario necesaria.**
 - [x] Cifrar los audios guardados (segunda etapa): **hecho en E2 para los audios nuevos por nota** (16/11/2026, sin probar en el Motorola). El audio suelto viejo no se migra (D7).
-- [ ] Copia cifrada exportable (respaldo y paso a una futura app de Android; ver `DISENO-CIFRADO.md`).
+- [x] Copia cifrada exportable, **crear y verificar** (K1, 17/11/2026; prueba técnica, sin probar en el Motorola).
+- [ ] Copia cifrada: **restaurar** (K2). Hasta entonces la copia no se puede volver a cargar en la app.
 - [ ] Evaluar CSP más estricta (huellas/nonce en lugar de `'unsafe-inline'`) cuando el código se estabilice.
 - [ ] Agregar fecha y resultado a este archivo cuando se complete cada punto.
 
