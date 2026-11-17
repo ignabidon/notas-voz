@@ -1,5 +1,7 @@
 # DictaNota — Prueba Delta
 
+> **¿Querés usar DictaNota sin leer documentación técnica?** Empezá por la [Guía del propietario](GUIA-DEL-PROPIETARIO.md): uso cotidiano, seguridad, copias de notas y cómo seguir las novedades del proyecto.
+
 > Antes de editar: leer [SEGURIDAD.md](SEGURIDAD.md) y [AGENTS.md](AGENTS.md).
 
 ## Rediseño claro y navegación (16/11/2026)
