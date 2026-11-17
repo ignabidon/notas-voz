@@ -5498,7 +5498,7 @@ async function k2ReadPlan(file,verified,key){
       const prefix=current.id+'|';
       if(!name.startsWith(prefix))throw copiaError('Alterada');
       const parts=name.slice(prefix.length).split('|');
-      if(parts.length!==2||!^(0|[1-9][0-9]*)$/.test(parts[0])||!^(0|[1-9][0-9]*)$/.test(parts[1]))throw copiaError('Alterada');
+      if(parts.length!==2||!/^(0|[1-9][0-9]*)$/.test(parts[0])||!/^(0|[1-9][0-9]*)$/.test(parts[1]))throw copiaError('Alterada');
       plan.chunks.push({type,name,id:current.id,part:Number(parts[0]),index:Number(parts[1]),start,size});
     }else if(type!=='I'&&type!=='F')throw copiaError('Alterada');
   }
