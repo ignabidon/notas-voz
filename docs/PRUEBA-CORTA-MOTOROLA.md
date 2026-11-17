@@ -3,7 +3,7 @@
 > **Para:** Ignacio. Este archivo no cambia de nombre. Lo mantiene la IA que haga cada paso.
 > **No es obligatoria para seguir avanzando.** Las IA prueban todo lo posible en laboratorio; esto es solo lo que **únicamente se ve en tu teléfono**. Hacé lo que puedas, cuando puedas.
 > **Usá solo datos inventados.** Nada de pacientes reales.
-> Última actualización: 17/11/2026 (después de E2, K1 y B3).
+> Última actualización: 17/11/2026 (después de E2, K1, B3 y E3).
 
 ## Antes de empezar
 
@@ -29,8 +29,22 @@ Anotá cada uno como **bien** o **falló**. Si falló, sacá una captura de pant
 | # | Qué hacés | Qué deberías ver |
 |---|---|---|
 | 7 | En **Ajustes → Protección con contraseña y huella**, tocá **Activar protección**. Usá una contraseña de prueba y **anotá el código** que te muestra. | Dice que está activada. |
-| 8 | En **Dictar**, encendé **Conservar audio**, grabá 20 segundos, **Detener** y **Guardar**. | Dice «Audio guardado cifrado» y la nota se guarda. (Todavía no se puede escuchar desde la app: llega en un paso próximo.) |
+| 8 | En **Dictar**, encendé **Conservar audio**, grabá 20 segundos, **Detener** y **Guardar**. | Dice «Audio guardado cifrado» y la nota se guarda. |
 | 9 | Sin cerrar DictaNota, abrí la misma dirección en **otra pestaña** y poné la contraseña. | Aparece un aviso: «DictaNota está abierta en otra pestaña». Es correcto. Cerrá una de las dos. |
+
+### Si te animás, cinco más (reproductor y espacio, paso E3)
+
+Hacelos con la protección activada (paso 7) y la nota con audio del paso 8.
+
+| # | Qué hacés | Qué deberías ver |
+|---|---|---|
+| 10 | En **Cuadernos**, abrí la nota con audio y tocá **Reproducir**. | Se escucha tu grabación. El botón pasa a **Pausar** y avanza el reloj. |
+| 11 | Mientras suena, arrastrá la barra hacia el final y soltala. Después tocá **Pausar** y **Reanudar**. | Salta a ese punto y sigue. Si la grabación tiene varias partes, sigue con la siguiente sin cortes largos. |
+| 12 | Con el audio sonando, andá a **Ajustes**, bajá a **Espacio y audios guardados** y tocá **Actualizar espacio**. | Ves cuántos audios hay y cuánto pesan, y el espacio libre. El audio se detuvo al salir de la pantalla. Tocá **Solicitar almacenamiento persistente** y fijate si dice «Sí» o «No». |
+| 13 | En la nota, tocá **⋯** y **Quitar audio de esta nota**; aceptá. | El texto de la nota sigue igual; el reproductor desaparece. |
+| 14 | En **Ajustes → Espacio y audios guardados**, mirá la lista. En el audio que guardaste tocá **Ver nota**. | Te lleva al cuaderno de esa nota. (Si algún día aparece un «Audio sin nota», tiene **Crear nota** y **Borrar audio**; no se borra solo.) |
+
+Dos cosas para mirar: si, con el audio sonando, la app **se bloquea sola a los 15 minutos** (es lo acordado), y si en un audio **largo** adelantar tarda mucho.
 
 **Importante sobre el paso 7:** mientras haya audios cifrados guardados, la app no deja quitar la protección. Como tus datos son de prueba, no pasa nada; si querés volver atrás, avisale a la IA.
 

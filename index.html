@@ -4644,7 +4644,7 @@ window.addEventListener('pagehide', e3Stop);
 
 /* ---------- Audio por nota en uso (E2) ----------
    Solo con la protección abierta y «Conservar audio» encendido. Con la protección apagada,
-   «Conservar audio» sigue usando la base histórica, como antes (D2). El reproductor llega en E3. */
+   «Conservar audio» sigue usando la base histórica, como antes (D2). El reproductor (E3) está en el bloque «E3» más arriba. */
 let anDbP = null, anBusyN = 0;
 const anUsable = () => vault.state === 'open' && !!vault.audioKey && !!vault.header;
 function anDb(){

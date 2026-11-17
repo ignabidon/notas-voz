@@ -2,7 +2,7 @@
 
 > **Este archivo no cambia de nombre.** Los pedidos que Ignacio copia y pega apuntan acá. Es el tablero: dice qué paso toca, qué hay que hacer en cada uno y en qué estado está.
 > **El diseño completo** (el porqué de cada cosa) está en [DISENO-ALMACENAMIENTO-CIFRADO-2026-11-16.md](DISENO-ALMACENAMIENTO-CIFRADO-2026-11-16.md). Si este tablero y el diseño no coinciden, vale el diseño; si el diseño y el código no coinciden, vale el código, y avisale a Ignacio.
-> Última actualización: 17/11/2026 (Claude). **E1, E2 y K1 unidos a `main`; la Etapa B quedó completa con B3.** Próximo paso: **E3** (ya no espera nada). K2 y T: siempre con consulta previa a Ignacio.
+> Última actualización: 17/11/2026 (Claude). **E1, E2 y K1 unidos a `main`; la Etapa B quedó completa con B3; E3 programado por ChatGPT (PR #54) y cerrado por Claude: pruebas en verde, falta unir.** Próximo paso: **K2**. K2 y T: siempre con consulta previa a Ignacio.
 
 ## Si sos la IA a la que le pidieron un paso, empezá acá
 
@@ -50,7 +50,7 @@ Orden decidido por Ignacio: **E1 → E2 → K1 → E3 → K2 → T → AO**.
 | **E1** | Base nueva de audios por nota, sin activar | — | Sonnet 5.5 | Modelo estándar, razonamiento medio | Unido a `main` (`aab2b90`, PR #45) |
 | **E2** | Cifrado de audios y guardado por nota | E1 | Opus 5.5 | El más capaz de tu plan, razonamiento alto | Unido a `main` (PR #50, que integra el #47; 17/11/2026). Sin probar en el Motorola |
 | **K1** | Copia cifrada: exportar y verificar | E2 | Opus 5.5 | El más capaz de tu plan, razonamiento alto | Unido a `main` (17/11/2026). Sin probar en el Motorola |
-| **E3** | Reproductor en la burbuja, espacio en Ajustes | E2, K1 y Etapa B3 | Sonnet 5.5 | Modelo estándar, razonamiento medio | Pendiente |
+| **E3** | Reproductor en la burbuja, espacio en Ajustes | E2, K1 y Etapa B3 | Sonnet 5.5 | Modelo estándar, razonamiento medio | PR abierto: #54 (código de ChatGPT) y su cierre de Claude (prueba arreglada y documentos). Sin probar en el Motorola |
 | **K2** | Restaurar una copia cifrada | K1 | Opus 5.5 | El más capaz de tu plan, razonamiento alto | Pendiente |
 | **T** | Mudar el texto al depósito grande | K1 y K2 | Opus 5.5 | El más capaz de tu plan, razonamiento alto | Pendiente |
 | **AO** | Anonimización con original recuperable | T y Etapa C1 | Sonnet 5.5 u Opus 5.5 | Cualquiera de los dos niveles | Pendiente |
@@ -188,3 +188,5 @@ Tomadas el 16/11/2026. Detalle y opciones descartadas, en el diseño completo.
 - 17/11/2026 · Claude: E2 integrado sobre el `main` con Clínica editorial (PR #50; el #47 tenía cruces en `index.html` y `CAMBIOS.md`). Revisión independiente del código combinado sin hallazgos graves; 159/159 Node y ocho suites de Chrome; prueba extra de laboratorio con el micrófono sintético de Chrome por la interfaz real. Registrada la forma de trabajo acordada con Ignacio el 17/11 y el avance real de la Etapa B (B1 y B2 en el #48). Motorola: sin probar. Próximo paso: **K1**.
 - 17/11/2026 · Claude: K1 programado (plan contado a Ignacio al empezar, según el acuerdo del 17/11): formato 1 del archivo `.dictanota`, «Crear copia cifrada» y «Verificar una copia» en Ajustes → Privacidad, archivo de ejemplo fijo en `tests/`. Solo lee: no restaura ni modifica nada. Se agregó al formato una huella encadenada (`cadena`) en el bloque final; detalle en el diseño, 2.6. Con la protección apagada la copia lleva una contraseña propia y solo texto. Motorola: sin probar (descarga y selección del archivo en Brave). Próximo paso: **B3**, después **E3**.
 - 17/11/2026 · Claude: **B3** hecho (no es un paso de este tablero, pero E3 lo esperaba): Copiar y Editar a la vista, Mover y Borrar en el menú «⋯»; lista de cuadernos con fecha corta y vista previa que se puede apagar. Solo presentación; un campo opcional nuevo (`listPreview`) en la configuración existente. Próximo paso: **E3**.
+- 17/11/2026 · ChatGPT (Codex): E3 programado en el PR #54 (`d0f6b45`): reproductor por nota, panel de espacio y audios sin nota. Quedó sin cerrar: la prueba `tests/e3-browser.mjs` fallaba y no había documentación.
+- 17/11/2026 · Claude (Sonnet 5.5): E3 cerrado sobre ese código, a pedido de Ignacio: prueba `e3-browser` arreglada (solo la prueba; seis corridas seguidas en verde), las diez suites de Chrome y 166/166 Node en verde, y documentos al día (`CAMBIOS.md`, `SEGURIDAD.md`, `AGENTS.md`, `README.md`, este tablero y la prueba corta del Motorola). Falta que Ignacio autorice unirlo. Motorola: sin probar. Próximo paso: **K2** (con consulta previa).

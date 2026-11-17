@@ -98,6 +98,7 @@ try {
   })()`);
   const createNote = async (text, parts=1) => {
     await run(`(async()=>{ convClearComposer(); convOpenId=null; convStartPending(true);
+      $('replace').checked=false; /* sin «empezar de cero»: el segundo archivo se suma como segunda parte del mismo audio */
       for(let i=0;i<${parts};i++)await anSaveFile(wav(),5000);
       $('text').value=${JSON.stringify(text)}; $('text').dispatchEvent(new Event('input',{bubbles:true})); await convSave();
     })()`);
@@ -144,7 +145,9 @@ try {
   }
   // Audio huérfano recuperado con confirmación persistente de la nota.
   const orphan=await run("(async()=>{convClearComposer();await anSaveFile(wav(),5000);const id=convAudioId;convClearComposer();return id})()");
-  await run(`document.querySelector('[data-delta-view=ajustes]').click(); await e3RefreshSpace();`);
+  await run(`document.querySelector('[data-delta-view=ajustes]').click(); true`);
+  // Abrir Ajustes ya actualiza el panel por su cuenta: se espera el resultado en lugar de pedir otra actualización que lo pisaría.
+  await waitFor("$('e3AudioList').textContent.includes('Audio sin nota')",'lista con el audio sin nota');
   assert.match(await run("$('e3AudioList').textContent"),/Audio sin nota/);
   await run(`e3Recover(${JSON.stringify(orphan)})`);
   assert.equal(await run(`convStore.data.entries.filter(e=>e.audioId===${JSON.stringify(orphan)}).length`),1);
@@ -155,14 +158,14 @@ try {
   await run(`e3Remove(${JSON.stringify(recovered.id)},${JSON.stringify(orphan)})`);
   assert.equal(await run(`convEntry(${JSON.stringify(recovered.id)}).audioId`),orphan);
   assert.equal(await run(`anDb().then(db=>anGetMeta(db,${JSON.stringify(orphan)})).then(Boolean)`),true);
-  await run('Storage.prototype.setItem=__set;await vault.flush()');
+  await run('(async()=>{Storage.prototype.setItem=__set;await vault.flush();return true})()');
   await run(`e3Remove(${JSON.stringify(recovered.id)},${JSON.stringify(orphan)})`);
   assert.equal(await run(`convEntry(${JSON.stringify(recovered.id)}).audioId`),null);
   assert.equal(await run(`convEntry(${JSON.stringify(recovered.id)}).text`),recovered.text);
   assert.equal(await run(`convEntry(${JSON.stringify(recovered.id)}).savedAt`),recovered.savedAt);
   assert.equal(await run(`anDb().then(db=>anGetMeta(db,${JSON.stringify(orphan)})).then(Boolean)`),false);
   // Referencia inexistente: texto intacto y sin fallo de la pantalla.
-  await run(`await anDeleteAudio(${JSON.stringify(B.audioId)});convOpen(${JSON.stringify(B.conversationId)});document.querySelector('.note-audio button').click()`);
+  await run(`(async()=>{await anDeleteAudio(${JSON.stringify(B.audioId)});convOpen(${JSON.stringify(B.conversationId)});document.querySelector('.note-audio button').click();return true})()`);
   await waitFor("document.querySelector('.note-audio-status').textContent.includes('no disponible')",'audio ausente');
   assert.equal(await run('__urls.size'),0);
   // Autobloqueo no se inhibe por reproducción; se fuerza el reloj de inactividad.
