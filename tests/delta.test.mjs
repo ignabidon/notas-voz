@@ -1753,7 +1753,8 @@ test('audio por nota E2: solo se usa con la protección abierta y nunca sin cifr
   assert.match(fuera, /async function anSaveFile\(f, ms\)\{\n  if \(!anUsable\(\) \|\| !\$\('saveAudio'\)\.checked\) return null;/);
   // Primero el audio, después el vínculo; guardar espera a que termine de cifrarse.
   assert.match(fuera, /if \(anBusyN > 0\) return flash\('Esperá unos segundos: se está guardando el audio cifrado\.'\);/);
-  assert.match(fuera, /text, audioId: convAudioId, durationMs: convAudioMs, audioParts\}\)/);
+  assert.match(fuera, /text, audioId: convAudioId, durationMs: convAudioMs, audioParts,/);
+  assert.match(fuera, /transcriptionStatus: convFromAudio \?/,'un audio sin texto retiene el estado de la transcripción');
   assert.match(fuera, /audioId: convAudioId, audioMs: convAudioMs, audioBase: convAudioBase\}\}\);/, 'el borrador recuerda el audio pendiente y cuántas partes tenía');
   assert.match(fuera, /\|\| \(d\.conv && typeof d\.conv\.audioId === 'string' && d\.conv\.audioId\)\)\) \{/, 'un audio pendiente sin texto también se recupera');
   // La revisión al abrir no crea la base si no existe.
