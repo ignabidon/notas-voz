@@ -2,6 +2,7 @@
 
 > **Un solo lugar.** Estos pedidos reemplazan a los que había en el tablero y a los archivos `PROMPT-*.txt` de `docs/` (históricos). Sirven igual para Claude y para ChatGPT: cambia solo el paso. Creado el 17/11/2026 (Claude, solo documentación).
 > **Para qué:** que las dos IA lean **el mismo conjunto de documentos, en el mismo orden**, y trabajen sobre el mismo estado.
+> **⚠ Mientras el PR #62 no esté unido a `main`:** `docs/INDICE.md`, `docs/DECISIONES.md`, este archivo y el `CONTINUAR-AQUI.md` nuevo existen **solo en la rama `docs/ordenar-documentacion-2026-11-17`**. Agregá al final de cualquier pedido: «Los documentos nuevos están en la rama docs/ordenar-documentacion-2026-11-17 (PR #62); leelos de ahí». Cuando se una, esta advertencia se borra.
 
 ## 1. Pedido base (el que se usa casi siempre)
 
