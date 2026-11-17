@@ -8,8 +8,8 @@ const scripts = [...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)].map(
 const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map(m => m[1]);
 
 test('título y punto único de entrada', () => {
-  assert.match(html, /<title>DictaNota · Prueba Delta/);
-  assert.match(html, /<h1>DictaNota<\/h1>/);
+  assert.match(html, /<title>DictaVoz · Prueba Delta/);
+  assert.match(html, /<h1>DictaVoz<\/h1>/);
   assert.match(html, /DELTA 11 · VERSIÓN DE PRUEBA/);
 });
 
@@ -2126,7 +2126,7 @@ test('copia K1: se arma y se comprueba con la contraseña y con el código; otra
   const cab = JSON.parse(Buffer.from(e.bytes.subarray(24, 24 + new DataView(e.bytes.buffer).getUint32(20))).toString('utf8'));
   assert.deepEqual(Object.keys(cab).sort(), ['app', 'bloques', 'contenido', 'creado', 'formato', 'id', 'pw', 'rec']);
   assert.equal(cab.bloques, 9, 'tres registros, ajustes, ficha, tres fragmentos y fin');
-  assert.match(c.copiaName(new Date(2026, 10, 17, 9, 5).getTime()), /^DictaNota-copia-2026-11-17\.dictanota$/);
+  assert.match(c.copiaName(new Date(2026, 10, 17, 9, 5).getTime()), /^DictaVoz-copia-2026-11-17\.dictanota$/);
 });
 
 test('copia K1: una copia cortada o alterada en cualquier lugar se rechaza entera', async () => {

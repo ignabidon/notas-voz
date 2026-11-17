@@ -18,7 +18,7 @@
 ## Una sola versión oficial
 - Repositorio: ignabidon/notas-voz, rama activa: **main**.
 - Única aplicación web: **/index.html**.
-- Nombre visible: **DictaNota**, etapa **Prueba Delta 11**.
+- Nombre visible: **DictaVoz** (antes DictaNota; las claves internas y la extensión `.dictanota` no cambian), etapa **Prueba Delta 11**.
 - Publicación: https://ignabidon.github.io/notas-voz/
 - No crear carpetas paralelas como delta-v2, nueva-gamma o copias index2.html.
 - Versionar cambios mediante commits; documentarlos en CAMBIOS.md.

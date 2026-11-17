@@ -250,7 +250,7 @@ try {
   const antesB = await foto(), audiosAntes = await nAudios(A);
   await escribir(B, 'Texto inventado de la segunda pestaña');
   await guardar(B);
-  assert.match((await avisos(B)).join(' '), /No se guardó: DictaNota está abierta en otra pestaña/);
+  assert.match((await avisos(B)).join(' '), /No se guardó: DictaVoz está abierta en otra pestaña/);
   await B.run('saveDraft(); persistUndo(); true');
   assert.equal(await B.run(`(() => { try { vaultStore.setItem(PKEY, '[]'); return 'escribió'; } catch (e) { return e.name; } })()`), 'OtraPestana');
   assert.equal(await B.run(`document.getElementById('saveAudio').checked = true; anSaveFile(new File([new Uint8Array(1000)], 'b.mp3', {type: 'audio/mpeg'}), 1000)`), null);

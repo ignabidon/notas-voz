@@ -95,7 +95,7 @@ try {
   await waitFor('window.__dl.length === 1', 'descarga de la copia sin protección', 60000);
   assert.match(await msg(), /Copia creada y comprobada: .*1 cuaderno · 1 nota · solo texto, sin audios/);
   assert.match(await msg(), /solo con la contraseña que acabás de elegir/);
-  assert.match(await run('window.__dl[0].name'), /^DictaNota-copia-\d{4}-\d{2}-\d{2}\.dictanota$/);
+  assert.match(await run('window.__dl[0].name'), /^DictaVoz-copia-\d{4}-\d{2}-\d{2}\.dictanota$/);
   assert.equal(await foto(), antesA, 'crear la copia no cambió nada de lo guardado');
   assert.equal(await run(`vault.state + '|' + localStorage.getItem('notasvoz.boveda.v1')`), 'off|null', 'la protección sigue apagada y no se creó ninguna cabecera');
   assert.equal(await run(`document.getElementById('copiaPw1').value + document.getElementById('copiaPw2').value`), '', 'la contraseña no queda en el formulario');
@@ -170,7 +170,7 @@ try {
   v = await comprobar('window.__malos.cortado', PASS); assert.equal(v.r, null); assert.match(v.msg, /incompleta/);
   v = await comprobar('window.__malos.alterado', PASS); assert.equal(v.r, null); assert.match(v.msg, /dañada o fue modificada/);
   v = await comprobar('window.__malos.nuevo'); assert.equal(v.r, null); assert.match(v.msg, /versión más nueva/);
-  v = await comprobar('window.__malos.otro'); assert.equal(v.r, null); assert.match(v.msg, /no es una copia de DictaNota/);
+  v = await comprobar('window.__malos.otro'); assert.equal(v.r, null); assert.match(v.msg, /no es una copia de DictaVoz/);
   assert.equal(await foto(), antesB, 'ninguna comprobación cambió nada');
 
   // «Solo texto»: sin audios y más liviana.
