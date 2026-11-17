@@ -66,7 +66,18 @@ try{
  assert.ok(saved.bad,'alteración detectada');assert.ok(saved.cut,'corte detectado');
  assert.equal(saved.text,'solo-texto');assert.equal(saved.textAudios,0);
  assert.ok(saved.size>r.bytes);
- console.log('BIBLIOTECA P2 + RESPALDO 2 OK:',r.chunks,'fragmentos; cifrado de copia autenticado');
+ // Archivo fijo reproducible por futuras versiones: no depende de AES aleatorio generado hoy.
+ const fixture=readFileSync(new URL('./copia-formato-2.dictanota.base64',import.meta.url),'utf8').trim();
+ const fixed=JSON.parse(await run('(async()=>{' +
+  'const text=atob('+JSON.stringify(fixture)+');' +
+  'const bytes=Uint8Array.from(text,x=>x.charCodeAt(0)),file=new Blob([bytes]);' +
+  "const ok=await copia2Verify(file,h=>copiaOpenWithSecret(h,'clave-fixture-dictavoz-903'));" +
+  'let wrong="";try{await copia2Verify(file,h=>copiaOpenWithSecret(h,"contraseña falsa"))}catch(e){wrong=e.copia;}' +
+  'return JSON.stringify({bytes:file.size,version:ok.formato,clear:ok.claro,encrypted:ok.cifrado,blocks:ok.fragmentos,wrong});' +
+  '})()'));
+ assert.equal(fixed.bytes,1712);assert.equal(fixed.version,2);assert.equal(fixed.clear,1);
+ assert.equal(fixed.encrypted,0);assert.equal(fixed.blocks,1);assert.equal(fixed.wrong,'Clave');
+ console.log('BIBLIOTECA P2 + RESPALDO 2 OK:',r.chunks,'fragmentos; cifrado de copia autenticado; fixture fijo válido');
 }finally{
  try{ws?.close()}catch(e){}
  chrome.kill('SIGKILL');server.close();
