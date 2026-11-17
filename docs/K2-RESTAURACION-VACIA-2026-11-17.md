@@ -10,6 +10,8 @@ Se incorpora una opción de **restauración en una instalación completamente va
 
 La copia versión 2 **no incluye todavía el audio heredado `notasvoz-gamma-audio`**. El botón de exportación vigente K1 produce formato 1, y con bóveda apagada solo exporta texto. Por eso ninguna de estas opciones puede anunciarse como «copia íntegra de todos los audios»; recuperar no vuelve a crear audios que nunca estuvieron en el archivo. El programa debe señalar esa limitación antes de publicar la función.
 
+**Bloqueo de integración (grave):** con la bóveda apagada, las otras pestañas todavía no toman siempre el candado de escritura; aunque K2 lo adquiera, no puede impedir por sí solo que una pestaña antigua escriba simultáneamente. La interfaz exige confirmar que se cerraron las demás pestañas, pero esa confirmación **no reemplaza** implementar y probar el bloqueo universal sin bóveda. **No publicar ni unir el PR #61 hasta resolverlo.**
+
 ## Resguardos del ensayo
 
 1. No se admite una instalación que tenga registros de DictaVoz, datos de configuración, notas, borradores, fragmentos de audio en la biblioteca nueva ni audio en la base antigua. Se comprueba nuevamente después de validar el archivo.
