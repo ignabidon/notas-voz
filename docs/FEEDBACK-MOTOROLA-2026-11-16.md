@@ -15,7 +15,7 @@
 | Guardar una nota en un cuaderno | **Confirmado por observación del usuario** | Al tocar Guardar, ve la nota como burbuja de chat y el texto se lee mejor. No se verificó que se conserve tras recargar. |
 | Abrir **Editar** en una nota guardada | **Confirmado por observación del usuario** | Vuelve a un editor demasiado bajo. No se confirmó haber guardado posteriormente esa edición. |
 | Acciones de burbuja «Copiar» y «Mover» | **Visibles, no verificadas funcionalmente** | Las identificó en la pantalla; no describió una copia pegada ni el resultado de un movimiento. |
-| Descarga del audio | **Confirmado por observación del usuario** | Se descargó un archivo de **168 KB**. Esto comprueba la acción de descarga, **no** que se reproduzca, cubra todo el audio ni que convierta a MP3. |
+| Descarga y reproducción del audio | **Confirmado por prueba comunicada por el usuario** | Descargó un archivo de **168 KB**; después lo reprodujo e informó «se escucha bien el audio descargado». La descarga y la reproducción audibles quedan comprobadas. No se informó una comparación detallada entre duración original y archivo, ni prueba de MP3 o de retranscripción. |
 | Reproductor dentro de la burbuja | **No disponible todavía en `main`** | Es trabajo planificado para E3; no es un fallo de la descarga actual. |
 | TXT, compartir, anonimización, seguridad, huella, recuperación, rendimiento Base/Small | **Sin nueva confirmación** | Estos pasos no se detallan en esta devolución y no deben marcarse como validados por extensión. |
 
@@ -65,7 +65,7 @@
 
 ## 3. Pendientes que siguen siendo del propietario
 
-- Reproducir el archivo descargado y comprobar que se escucha completo; opcionalmente verificar MP3 y la opción de retranscribir el audio.
+- **Reproducción del archivo descargado: realizada y se escucha bien (16/11).** Solo queda comprobar la duración completa si se busca una validación rigurosa; siguen pendientes por separado MP3 y la opción de retranscribir el audio.
 - Verificar que la nota guardada **persiste después de cerrar y reabrir** la app y que una edición guardada persiste también.
 - Confirmar con pasos separados **Pausar/Reanudar**, grabar desde dentro de un cuaderno y cambio de destino al guardar (la opción nueva desde Dictar no existe aún).
 - Probar con datos ficticios **Anonimizar/Deshacer** y comprobar que no queden identificadores.
