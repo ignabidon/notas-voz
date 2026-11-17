@@ -3,15 +3,15 @@
 > **Este archivo no cambia de nombre.** Los pedidos que Ignacio copia y pega apuntan acá. Es el tablero: dice qué paso toca, qué hay que hacer en cada uno y en qué estado está.
 > **Lo que Ignacio decidió** está en [DECISIONES.md](DECISIONES.md) (no se repite acá). **Los pedidos para copiar y pegar** están en [PEDIDOS.md](PEDIDOS.md). **El mapa de documentos**, en [INDICE.md](INDICE.md).
 > **El diseño completo** (el porqué de cada cosa) está en [DISENO-ALMACENAMIENTO-CIFRADO-2026-11-16.md](DISENO-ALMACENAMIENTO-CIFRADO-2026-11-16.md). Si este tablero y el diseño no coinciden, vale el diseño; si el diseño y el código no coinciden, vale el código, y avisale a Ignacio.
-> Última actualización: 17/11/2026, mediodía (Claude, solo documentación). **E1, E2, K1 y E3 unidos a `main`; la Etapa B quedó completa con B3.** K2 tiene un **ensayo en borrador (PR #61, de ChatGPT) sin autorización registrada**: ver «Entrega 2» más abajo y la pregunta P3 de `DECISIONES.md`. K2 y T: siempre con consulta previa a Ignacio.
+> Última actualización: 17/11/2026, mediodía (Claude, solo documentación). **E1, E2, K1 y E3 unidos a `main`; la Etapa B quedó completa con B3.** **K2 quedó autorizado por Ignacio el 17/11** (ensayo y reemplazo; `DECISIONES.md`, A4 y A5); hoy existe solo el ensayo, en borrador (PR #61, de ChatGPT). **T sigue exigiendo su permiso explícito.**
 
 ## Si sos la IA a la que le pidieron un paso, empezá acá
 
 1. Leé, en este orden: `AGENTS.md`, `SEGURIDAD.md`, `docs/INDICE.md`, `CONTINUAR-AQUI.md`, `docs/DECISIONES.md`, **este archivo** y, si hace falta el porqué, el diseño completo. Después, el código real que vas a tocar en `/index.html`. Revisá también `main` y los PR abiertos.
 2. Buscá tu paso en la tabla de abajo. **Hacé solo ese paso.** Si su estado no es «Pendiente», si ya tiene **dueño**, o si alguno de los pasos de los que depende no está «Unido a `main`», frená y avisale a Ignacio. Para tomar un paso sin dueño, anotá tu nombre y tu PR en la columna «Dueño» **antes** de programar.
-3. **Antes de programar, contale a Ignacio el plan en lenguaje simple.** Desde el 17/11/2026 (ver «Forma de trabajo» más abajo) no hace falta esperar su aprobación, **salvo en K2 y T**, donde sí hay que esperar su permiso explícito. Todos estos pasos tocan almacenamiento. Si sos otra IA, confirmá con Ignacio que el acuerdo vale también para vos.
+3. **Antes de programar, contale a Ignacio el plan en lenguaje simple.** Desde el 17/11/2026 (ver «Forma de trabajo» más abajo) no hace falta esperar su aprobación, **salvo en T**, donde sí hay que esperar su permiso explícito. K2 ya fue autorizado (A4, A5). Todos estos pasos tocan almacenamiento. Si sos otra IA, confirmá con Ignacio que el acuerdo vale también para vos.
 4. Trabajá en una rama nueva desde el `main` actualizado. No uses la rama de otra IA. Revisá los PR abiertos antes de empezar.
-5. Al terminar: pruebas, registro en `CAMBIOS.md`, PR, y **actualizá la columna «Estado» de este archivo en el mismo PR**. Unir a `main` (merge normal, sin squash) solo con el CI en verde y dentro del acuerdo del 17/11; **K2 y T no se unen sin el permiso explícito de Ignacio**.
+5. Al terminar: pruebas, registro en `CAMBIOS.md`, PR, y **actualizá la columna «Estado» de este archivo en el mismo PR**. Unir a `main` (merge normal, sin squash) solo con el CI en verde y dentro del acuerdo del 17/11; **T no se une sin el permiso explícito de Ignacio; K2 se une según `DECISIONES.md` (A5)**.
 6. Informá siempre en tres niveles: código guardado · pruebas técnicas · probado en el Motorola.
 
 ### Reglas que valen para todos los pasos
@@ -35,7 +35,7 @@ El orden general del proyecto es **Etapa N → B → E → C → D**. Estos paso
 | **B** (jerarquía y densidad: B1, B2, B3) | **Completa.** B1 y B2 dentro del PR #48 (`2153dee`); **B3 el 17/11/2026** (menú «⋯» en las notas, lista con fecha corta y vista previa). Sin probar en el Motorola |
 
 - **Ignacio indicó (16/11/2026, 18:06) que la próxima IA retome desde E1.** E1, E2, K1 y K2 no tocan la burbuja y pueden ir antes de la Etapa B. **E3 espera a B3** (el reproductor vive en la burbuja ya limpia).
-- **Forma de trabajo (decisión de Ignacio, 17/11/2026, sesión con Claude):** el plan se le cuenta en simple al empezar, sin esperar aprobación; se une a `main` con el CI en verde; **K2 y T siempre con consulta previa**; las pruebas que no puede hacer en el celular no frenan el avance (laboratorio ampliado y lista corta para el Motorola); lo guardado hoy en su celular son datos de prueba. Detalle en `AGENTS.md`.
+- **Forma de trabajo (decisión de Ignacio, 17/11/2026, sesión con Claude):** el plan se le cuenta en simple al empezar, sin esperar aprobación; se une a `main` con el CI en verde; **T siempre con consulta previa; K2 ya autorizado (A4, A5)**; las pruebas que no puede hacer en el celular no frenan el avance (laboratorio ampliado y lista corta para el Motorola); lo guardado hoy en su celular son datos de prueba. Detalle en `AGENTS.md`.
 - **Vocabulario:** desde la Etapa N, en la interfaz «hoja» se llama **«cuaderno»** y las pestañas son Dictar / Cuadernos / Anonimizar / Ajustes. Los ids internos, las claves y los nombres de funciones (`conv…`) no cambiaron. El diseño se escribió antes de esa unión y dice «hoja»: es lo mismo.
 - El diseño cita líneas de `index.html` de `3383584`. La Etapa N cambió textos en el lugar (59 líneas), así que las referencias siguen sirviendo de guía; confirmá siempre en el código actual.
 - Para resolver un cruce en `CAMBIOS.md` y `CONTINUAR-AQUI.md`, Claude unió `main` dentro de la rama del PR #43 (solo esos dos archivos, conservando ambos textos) antes de unirlo. `index.html` y las pruebas de ChatGPT no se tocaron; el CI volvió a pasar.
@@ -52,9 +52,9 @@ Orden decidido por Ignacio: **E1 → E2 → K1 → E3 → K2 → T → AO**. **D
 | **E2** | Cifrado de audios y guardado por nota | E1 | Claude (Opus 5.5); revisó ChatGPT | Opus 5.5 / el más capaz | Unido a `main` (PR #50, que integra el #47; 17/11). Sin probar en el Motorola |
 | **K1** | Copia cifrada: exportar y verificar | E2 | Claude | Opus 5.5 / el más capaz | Unido a `main` (PR #51; 17/11). Sin probar en el Motorola |
 | **E3** | Reproductor en la burbuja, espacio en Ajustes | E2, K1, B3 | ChatGPT (código, #54); Claude (cierre, #55) | Sonnet 5.5 / estándar | Unido a `main` (PR #55; 17/11). Motorola: reproducir, quitar audio y panel de espacio probados por Ignacio; adelantar/pausar y «Ver nota» sin probar |
-| **K2** | Restaurar una copia cifrada | K1 | **ChatGPT, solo el ensayo en borrador (PR #61)**. El reemplazo de datos: sin dueño | Opus 5.5 / el más capaz | **Pendiente.** Ensayo en instalación vacía en el PR #61 (borrador, bloqueado por el candado universal sin bóveda). **Sin permiso registrado de Ignacio (P3)** |
-| **T** | Mudar el texto al depósito grande | K1 y K2 | Sin dueño | Opus 5.5 / el más capaz | Pendiente. Antes: P7 y P3 |
-| **AO** | Anonimización con original recuperable | T y Etapa C1 | Sin dueño | Sonnet 5.5 u Opus 5.5 / cualquiera | Pendiente. Antes: P6 |
+| **K2** | Restaurar una copia cifrada | K1 | **ChatGPT, solo el ensayo en borrador (PR #61)**. El reemplazo de datos: sin dueño ni PR todavía | Opus 5.5 / el más capaz | **Autorizado por Ignacio el 17/11 (ensayo y reemplazo).** Hoy solo existe el ensayo en el PR #61 (borrador, bloqueado por el candado universal sin bóveda). Se une con revisión cruzada sin hallazgos graves y CI en verde (A5) |
+| **T** | Mudar el texto al depósito grande | K1 y K2 | Sin dueño | Opus 5.5 / el más capaz | Pendiente. **Permiso explícito de Ignacio antes de programar.** Texto en la misma base que los audios (A9). Antes: K2 terminado |
+| **AO** | Anonimización con original recuperable | T y Etapa C1 | Sin dueño | Sonnet 5.5 u Opus 5.5 / cualquiera | Pendiente. Antes: T y reglas de AO (Q2) |
 
 Estados posibles: Pendiente · Plan aprobado · PR abierto (n.º) · Unido a `main` (commit) · Probado en el Motorola (fecha).
 
@@ -68,8 +68,8 @@ Viene de la auditoría del PR #58 y de la decisión A1 de `DECISIONES.md`. Usa f
 | P1 | Confirmar y recuperar borradores | #59 | ChatGPT | PR abierto, borrador, con correcciones tras revisión | — |
 | P4 (parcial) | Nota de solo audio; Whisper fallido conserva el borrador | #59 | ChatGPT | PR abierto, borrador | U14 |
 | P2 | Biblioteca única de audio, sin activar; copia formato 2 (ensayo) | #60 (sobre #59) | ChatGPT | PR abierto, borrador, CI verde en su rama | Formato 2 de copia |
-| P3 | Completar K2 | #61 (sobre #60) | ChatGPT | PR abierto, borrador, **bloqueado**: falta el candado de escritura universal sin bóveda | **K2** del tablero |
-| P5, P6 | «Conservar audio» por defecto; retirar rutas históricas | — | Sin dueño | Pendiente. Antes: P1 y P2 de `DECISIONES.md` | — |
+| P3 | Completar K2 | #61 (sobre #60) | ChatGPT | PR abierto, borrador, **bloqueado**: falta el candado de escritura universal sin bóveda. K2 autorizado (A4) | **K2** del tablero |
+| P5, P6 | «Conservar audio» por defecto; retirar rutas históricas | — | Sin dueño | Pendiente. Autorizados por Ignacio (A6, A7, A8); dependen de A2 y de las copias | — |
 | P7 | T, AO y Android, por etapas separadas | — | Sin dueño | Pendiente | **T** y **AO** del tablero |
 
 **Orden obligatorio:** #59 → #60 → #61. Están apilados: si se une uno fuera de orden, los siguientes se rehacen. Hasta que se unan, valen como **trabajo en curso**, no como reglas.
@@ -134,7 +134,7 @@ Las secciones entre paréntesis son del diseño completo.
 
 ## Decisiones de Ignacio
 
-Todas están en [DECISIONES.md](DECISIONES.md): D1–D13 (almacenamiento), U (experiencia), W (forma de trabajo), A (arquitectura B) y las preguntas abiertas (P). No se copian acá para que no se desactualicen.
+Todas están en [DECISIONES.md](DECISIONES.md): D1–D13 (almacenamiento), U (experiencia), W (forma de trabajo), A (arquitectura B) y las preguntas abiertas (Q). No se copian acá para que no se desactualicen.
 
 ## Historial de este tablero
 
@@ -150,3 +150,4 @@ Todas están en [DECISIONES.md](DECISIONES.md): D1–D13 (almacenamiento), U (ex
 - 17/11/2026 · ChatGPT (Codex): E3 programado en el PR #54 (`d0f6b45`): reproductor por nota, panel de espacio y audios sin nota. Quedó sin cerrar: la prueba `tests/e3-browser.mjs` fallaba y no había documentación.
 - 17/11/2026 · Claude (Sonnet 5.5): E3 cerrado sobre ese código, a pedido de Ignacio: prueba `e3-browser` arreglada (solo la prueba; seis corridas seguidas en verde), las diez suites de Chrome y 166/166 Node en verde, y documentos al día (`CAMBIOS.md`, `SEGURIDAD.md`, `AGENTS.md`, `README.md`, este tablero y la prueba corta del Motorola). Falta que Ignacio autorice unirlo. Motorola: sin probar. Próximo paso: **K2** (con consulta previa).
 - 17/11/2026, mediodía · Claude (Sonnet 5.5): ordenada la documentación (solo documentación; PR de orden). Se agregó la columna «Dueño» y el cruce con la Entrega 2 (#58 a #61); los pedidos pasaron a `PEDIDOS.md`; el resumen de decisiones, a `DECISIONES.md`. Marcado como pregunta abierta (P3) que el PR #61 trae un ensayo de K2 sin permiso registrado. Motorola: sin probar.
+- 17/11/2026, tarde · Claude (Sonnet 5.5): anotadas las respuestas de Ignacio: K2 autorizado (ensayo y reemplazo, se une con revisión cruzada sin hallazgos graves; A4 y A5), arquitectura B confirmada (A1 a A3), «Conservar audio» por defecto en instalaciones nuevas (A6), retirar compatibilidad y borrar datos de prueba viejos (A7, A8), T en la misma base que los audios (A9). Próximo: revisión cruzada de #59 → #60 → #61.

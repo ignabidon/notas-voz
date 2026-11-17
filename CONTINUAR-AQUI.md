@@ -34,16 +34,21 @@ DictaVoz (antes DictaNota; solo cambió lo visible): transcribe voz a texto en e
 
 **Cadena de PR:** #59 → #60 → #61 están apilados. **Se unen en ese orden o no se unen**; si #59 cambia, los otros dos se rehacen sobre él.
 
-## Lo que hay que resolver antes de seguir (para Ignacio)
+## Pasos a seguir (en este orden)
 
-1. **¿K2 está autorizado?** El tablero dice que K2 se consulta siempre. El PR #61 implementa un ensayo acotado de K2 (solo instalación vacía) y no cita tu permiso. Confirmalo (sí / no / solo como ensayo) y queda anotado en `docs/DECISIONES.md`.
-2. **Bloqueante conocido de #61:** con la protección apagada, otra pestaña todavía puede escribir mientras se restaura. Hasta resolverlo no se une.
-3. **Decisiones de la auditoría todavía sin responder** (lista en `docs/DECISIONES.md`, grupo «Pendientes»): retención por defecto, retirar datos de prueba históricos, T, AO, borrado de bases viejas.
-4. `main` sigue **sin protección** en GitHub (verificado el 17/11). Lo activa Ignacio; los pasos están en `docs/PRUEBA-MOTOROLA-Y-PENDIENTES-USUARIO-2026-11-16.md`, sección 2.
+Anotados con las respuestas de Ignacio del 17/11/2026 (detalle en `docs/DECISIONES.md`, grupo A).
 
-## Próximo paso
+1. **Fusionar este PR de orden (#62)** cuando Ignacio lo revise. Mientras tanto, los documentos nuevos viven solo en la rama `docs/ordenar-documentacion-2026-11-17`.
+2. **Revisión cruzada de la Entrega 2, en orden y por una IA distinta de ChatGPT:** primero **#59**, después **#60**, después **#61**. Pedidos listos en `docs/PEDIDOS.md`, sección 4. El informe de cada uno vuelve a su dueña para corregir en su rama.
+3. **Resolver el bloqueante de #61:** con la protección apagada, otra pestaña todavía puede escribir mientras se restaura. Sin esto, K2 no se une (A5).
+4. **K2 está autorizado** (ensayo **y** reemplazo, con respaldo verificado previo y doble confirmación) y **se une sin consultar de nuevo** si tiene revisión cruzada sin hallazgos graves, el CI en verde y el bloqueante resuelto (A4, A5). **El reemplazo todavía no está programado:** hace falta un PR y un dueño aparte; el #61 es solo el ensayo en instalación vacía.
+5. **Después de las revisiones, mejoras de uso** (U16): primero **elegir cuaderno y nombre desde Dictar** (U12) y el **rediseño de Ajustes**. El rediseño empieza con una **maqueta** y no se programa hasta que Ignacio la apruebe.
+6. **«Conservar audio» activado de entrada** en instalaciones nuevas, con aviso de privacidad (A6), **cuando** la copia y la restauración cubran también el audio sin protección (A2).
+7. **Retirar la compatibilidad con el audio suelto viejo** y borrar sus datos de prueba (A7, A8). Es el único borrado autorizado y solo para datos de prueba; cualquier otro se consulta.
+8. **T** (mudar el texto a la misma base que los audios, A9): **con permiso explícito de Ignacio** antes de programar y de unir. Después, AO (reglas todavía sin decidir, Q2).
+9. **Pendiente de Ignacio:** proteger `main` en GitHub (sigue sin protección; pasos en `docs/PRUEBA-MOTOROLA-Y-PENDIENTES-USUARIO-2026-11-16.md`, sección 2).
 
-Según el tablero: **revisión cruzada de #59** (la hace una IA distinta de la que lo programó), luego #60 y #61 en orden. K2 de reemplazo, T y AO **no empiezan** sin permiso explícito. Pedido listo en [docs/PEDIDOS.md](docs/PEDIDOS.md).
+**Todavía sin decidir:** cuándo se publica el formato 2 de copia (Q1), las reglas de AO (Q2) y el orden de los pendientes menores (Q3: deshacer una edición guardada, reintentar Whisper, mensaje de «otra pestaña», voseo).
 
 ## Estado de las pruebas (tres niveles, siempre separados)
 
@@ -51,9 +56,9 @@ Según el tablero: **revisión cruzada de #59** (la hace una IA distinta de la q
 - **Pruebas técnicas:** 166 de 166 en Node y diez suites de Chrome en verde para `main` (CAMBIOS.md, 17/11). Los PR traen las suyas en el CI.
 - **Probado en el Motorola:** grabar, guardar, reproducir, editar, protección con contraseña, quitar audio y panel de espacio. **Sin probar:** copia cifrada, adelantar/pausar el audio, «Ver nota» y todo lo de los PR abiertos. Ignacio tiene limitaciones técnicas para probar: las IA hacen todo lo posible en laboratorio y piden solo lo que únicamente se ve en el teléfono (`docs/PRUEBA-CORTA-MOTOROLA.md`).
 
-## Pendientes de producto anotados (sin decidir ni empezar)
+## Pendientes de producto sin prioridad
 
-Rediseño de Ajustes (maqueta primero, esperar aprobación) · deshacer una edición ya guardada · mensaje de «otra pestaña» más claro · elegir cuaderno y nombre desde Dictar · «querés» transcripto como «queréis» · modo oscuro opcional · autoría en Ajustes · motor Whisper propio dentro del repositorio. Detalle y estado de cada uno: `docs/DECISIONES.md`.
+Deshacer una edición ya guardada · reintentar Whisper desde el audio guardado · mensaje de «otra pestaña» más claro · «querés» transcripto como «queréis» · modo oscuro opcional · autoría en Ajustes · motor Whisper propio dentro del repositorio. Los dos que sí tienen prioridad (elegir cuaderno desde Dictar y rediseño de Ajustes) están en «Pasos a seguir». Detalle: `docs/DECISIONES.md`.
 
 ## Historia
 
