@@ -1,5 +1,11 @@
 # CONTINUAR AQUÍ — DictaNota
 
+> **▶ ESTADO AL 17/11/2026 (Claude).** `main` incluye el PR #48 (Clínica editorial y correcciones móviles, unido el 16/11 a la noche) y, con el **PR #50**, el paso **E2** (audios cifrados y guardados con su nota), que integra el PR #47 sobre ese `main` y agrega una revisión independiente. **PRÓXIMO PASO: K1** (copia cifrada: exportar y verificar). Después: B3 → E3 → K2 → T → AO, según el tablero [docs/PLAN-ALMACENAMIENTO-CIFRADO.md](docs/PLAN-ALMACENAMIENTO-CIFRADO.md).
+> **Forma de trabajo acordada el 17/11** (detalle en AGENTS.md): plan contado al empezar, sin esperar aprobación; unión a `main` con CI en verde, salvo K2 y T; pruebas de laboratorio ampliadas y lista corta para el Motorola; los datos del celular del usuario son de prueba.
+> **Pedidos del usuario tras usar la app en el Motorola (PR #49, documentación sin unir):** el editor chico ya se resolvió con el #48; siguen pendientes elegir cuaderno y nombre desde Dictar, y el voseo («querés» transcripto como «queréis»).
+> **PR abiertos que no son de este plan:** #49 y #37 (documentación), #22 y #1 (borradores viejos). `main` sigue sin protección en GitHub.
+> Nada de E1, E2 ni del #48 está probado en el Motorola. **Los bloques de abajo son anteriores y se conservan como historia**: donde digan que el #48 o E2 no están unidos, vale este.
+
 > **Correcciones del PR #48 autorizadas por el usuario tras la revisión (16/11/2026, Argentina).** Base main `aab2b903`; PR visual inicial `b6ae882`. Rama local `correcciones-clinica-editorial-2026-11-16`, que actualiza el PR #48 (`visual-clinica-editorial-chatgpt-2026-11-16`). Compositor compacto vacío, editor amplio con el mismo `#text`, Volver sin descartar, aviso de Whisper con Detalles, micrófono visible en captura y ajustes de contraste/controles. El alcance ya incluye HTML y JS de presentación; **no es solamente CSS**. No se cambian almacenamiento, cifrado, captura, Worker ni modelos.
 >
 > Main sigue sin estas correcciones. E2/#47 permanece en `71bb17f`, separado; #49 contiene feedback posterior del Motorola y no se incorpora aquí. B3 (menús de notas) y el reproductor E3 no se adelantan. Pruebas nuevas: `tests/editor-browser.mjs`, añadidas al CI; datos ficticios y estados de captura/teclado simulados. **No fusionar ni publicar sin permiso. Motorola físico pendiente.**
