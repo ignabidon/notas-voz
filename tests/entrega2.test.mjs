@@ -95,8 +95,10 @@ test('P4: guardado sin texto requiere audio íntegro; recuperación no inventa t
   assert.match(html,/if \(!text\.trim\(\) && convAudioId\) \{[\s\S]*?anAudioHealth\(/);
   assert.match(html,/if \(saveLabel\) saveLabel\.textContent = hasAudio && !hasText \? 'Guardar solo audio'/);
   const recover=html.match(/async function e3Recover\(id\)\{[\s\S]*?\n\}/)?.[0] || '';
-  assert.match(recover,/text: '', transcriptionStatus: 'pendiente'/);
-  assert.doesNotMatch(recover,/text: 'Audio recuperado/);
+  assert.match(recover,/convAudioId = id; convAudioMs = anTotalMs\(h.detail\)/);
+  assert.match(recover,/const saved = await saveDraft\(\)/);
+  assert.match(recover,/Audio recuperado como borrador/);
+  assert.doesNotMatch(recover,/convAddEntry\(|e3Write\(/);
 });
 
 test('P1/P4: el formato de copia y los identificadores criptográficos no cambian', () => {
