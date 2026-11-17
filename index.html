@@ -951,7 +951,7 @@ body.delta-recording #transcriptionDockBar{height:3px;margin-top:3px}
         </section>
         <section class="vault-panel" id="copiaPanel" aria-labelledby="copiaTitle">
           <h4 id="copiaTitle">Copia cifrada</h4>
-          <p class="hint">Descarga un archivo con tus cuadernos, notas, personas, diccionario y ajustes, cifrado. Sirve de respaldo. Por ahora la copia se puede <b>crear y comprobar</b>; volver a cargarla en la app llega en una versión próxima. No cambia nada de lo que ya está guardado.</p>
+          <p class="hint">Podés crear y comprobar una copia cifrada. La restauración experimental solo funciona en una instalación completamente vacía, nunca mezcla ni reemplaza datos existentes. Se conserva la contraseña de la copia y deberás registrar de nuevo la huella. Los audios antiguos de «Mis grabaciones» no están incluidos.</p>
           <p class="hint" id="copiaOffHint">La protección está apagada: la copia igual sale cifrada, con una contraseña que elegís solo para ese archivo. Lleva el texto, no los audios de «Mis grabaciones».</p>
           <fieldset id="copiaContenido" class="copia-opciones" hidden>
             <legend>Qué lleva la copia</legend>
@@ -960,6 +960,8 @@ body.delta-recording #transcriptionDockBar{height:3px;margin-top:3px}
           </fieldset>
           <div class="row"><button type="button" id="copiaCrear" class="p">Crear copia cifrada</button><button type="button" id="copiaVerificar">Verificar una copia</button></div>
           <input type="file" id="copiaArchivo" hidden>
+           <div class="row"><button type="button" id="copiaRestaurar">Restaurar en instalación vacía (experimental)</button></div>
+           <input type="file" id="copiaRestArchivo" accept=".dictanota" hidden>
           <form id="copiaPwForm" class="vault-box" hidden>
             <p class="hint">Elegí una contraseña para este archivo. Si la olvidás, <b>la copia no se puede abrir</b>.</p>
             <label for="copiaPw1">Contraseña de la copia (al menos 8 caracteres; mejor una frase)</label>
@@ -5420,6 +5422,171 @@ async function copia2Verify(file,open,onProgress){
 }
 /*COPIA2-END*/
 
+/* K2: restauración experimental SOLO en una instalación vacía. No mezcla ni reemplaza.
+   Dos lecturas: la primera autentica la copia entera; la segunda prepara las escrituras.
+   El registro de recuperación contiene exclusivamente identificadores de datos NUEVOS. */
+/*K2-START*/
+const K2_JOURNAL = 'notasvoz.k2.restauracion.v1';
+function k2LocalEmpty(){
+  if (vault.state !== 'off') return false;
+  for (let i=0;i<localStorage.length;i++){
+    const name=localStorage.key(i);
+    if (name && name.startsWith('notasvoz.') && name !== K2_JOURNAL) return false;
+  }
+  return true;
+}
+async function k2StorageEmpty(){
+  if (!k2LocalEmpty() || localStorage.getItem(K2_JOURNAL)) return false;
+  const fresh=await anDb();
+  if ((await anTx(fresh,['meta'],'readonly',t=>t.objectStore('meta').count())) ||
+      (await anTx(fresh,['chunks'],'readonly',t=>t.objectStore('chunks').count()))) return false;
+  const old=await getDb();
+  if ((await anTx(old,['meta'],'readonly',t=>t.objectStore('meta').count())) ||
+      (await anTx(old,['chunks'],'readonly',t=>t.objectStore('chunks').count()))) return false;
+  return k2LocalEmpty();
+}
+async function k2ReadPlan(file,verified,key){
+  let pos=0;
+  const take=async n=>{
+    if (!Number.isSafeInteger(n) || n<0 || pos+n>file.size) throw copiaError('Cortada');
+    const bytes=new Uint8Array(await file.slice(pos,pos+n).arrayBuffer());
+    if(bytes.length!==n) throw copiaError('Cortada');
+    pos+=n;return bytes;
+  };
+  const u32=b=>new DataView(b.buffer,b.byteOffset,b.byteLength).getUint32(0);
+  const u64=b=>Number(new DataView(b.buffer,b.byteOffset,b.byteLength).getBigUint64(0));
+  const magic=await take(vaultEnc.encode(COPIA_MAGIC).length);
+  if (vaultDec.decode(magic)!==COPIA_MAGIC) throw copiaError('NoEsCopia');
+  const format=u32(await take(4)),n=u32(await take(4));
+  if(n<2||n>COPIA_MAX_CABECERA)throw copiaError('Alterada');
+  const h=JSON.parse(vaultDec.decode(await take(n)));
+  if(format!==verified.formato||h.formato!==format||h.id!==verified.id||
+     h.contenido!==verified.contenido||!Number.isSafeInteger(h.bloques)||
+     h.bloques> COPIA_MAX_BLOQUES)throw copiaError('Alterada');
+  const header=vaultParseHeader(JSON.stringify({v:1,id:h.id,pw:h.pw,rec:h.rec,bio:null}));
+  const plan={header,records:new Map(),cfg:null,audios:[],chunks:[]};
+  let current=null;
+  for(let i=0;i<h.bloques;i++){
+    const type=String.fromCharCode((await take(1))[0]),nameLen=u32(await take(4));
+    if(nameLen<1||nameLen>COPIA_MAX_NOMBRE)throw copiaError('Alterada');
+    const name=vaultDec.decode(await take(nameLen)),size=u64(await take(8)),start=pos;
+    if(!Number.isSafeInteger(size)||size>COPIA_MAX_BLOQUE||pos+size>file.size)throw copiaError('Alterada');
+    pos+=size;
+    if(type==='R'||type==='C'||type==='M'||type==='P'){
+      const bytes=new Uint8Array(await file.slice(start,pos).arrayBuffer());
+      if(type==='R'){
+        if(!/^[a-z0-9.-]{1,60}$/.test(name)||plan.records.has(name))throw copiaError('Alterada');
+        const raw=vaultDec.decode(bytes);
+        await vaultOpenRecord(key,h.id,name,raw);
+        plan.records.set(name,raw);
+      }else if(type==='C'){
+        if(name!=='config'||plan.cfg)throw copiaError('Alterada');
+        plan.cfg=JSON.parse(vaultDec.decode(await vaultOpen(key,JSON.parse(vaultDec.decode(bytes)),copiaAad(h.id,'config'))));
+        if(!plan.cfg||typeof plan.cfg!=='object'||(plan.cfg.cfg!==null&&typeof plan.cfg.cfg!=='string')||
+           (plan.cfg.generador!==null&&typeof plan.cfg.generador!=='string'))throw copiaError('Alterada');
+      }else{
+        const plain=type==='P' ? await copia2Open(key,h.id,'meta|'+name,bytes):bytes;
+        const meta=JSON.parse(vaultDec.decode(plain));
+        if(meta.id!==name||meta.state!=='cerrado'||!anValidMeta(meta)||
+           (type==='P'&&!anPlainValidMeta(meta))||
+           (type==='M'&&(!meta.key||!meta.sealed||meta.mode===AN_PLAIN_MODE)))throw copiaError('Alterada');
+        if(plan.audios.some(m=>m.id===meta.id))throw copiaError('Alterada');
+        current=meta;plan.audios.push(meta);
+      }
+    }else if(type==='A'||type==='B'){
+      if(!current||type===(current.mode===AN_PLAIN_MODE?'A':'B'))throw copiaError('Alterada');
+      const prefix=current.id+'|';
+      if(!name.startsWith(prefix))throw copiaError('Alterada');
+      const parts=name.slice(prefix.length).split('|');
+      if(parts.length!==2||!^(0|[1-9][0-9]*)$/.test(parts[0])||!^(0|[1-9][0-9]*)$/.test(parts[1]))throw copiaError('Alterada');
+      plan.chunks.push({type,name,id:current.id,part:Number(parts[0]),index:Number(parts[1]),start,size});
+    }else if(type!=='I'&&type!=='F')throw copiaError('Alterada');
+  }
+  if(!plan.cfg||pos!==file.size||plan.audios.length!==verified.audios||
+     plan.records.size!==verified.registros||plan.chunks.length!==verified.fragmentos)throw copiaError('Alterada');
+  return plan;
+}
+async function k2Rollback(){
+  const raw=localStorage.getItem(K2_JOURNAL);
+  if(!raw||localStorage.getItem(VAULT_HEADER))return false; // cabecera escrita = confirmación
+  const j=JSON.parse(raw);
+  if(!j||j.version!==1||!Array.isArray(j.ids)||!Array.isArray(j.names))throw new Error('Lote de restauración desconocido; no se tocó.');
+  const db=await anDb();
+  for(const id of j.ids) { if(typeof id!=='string'||id.length>64)throw new Error('Identificador de lote inválido'); await anDelete(db,id); }
+  for(const name of j.names) { if(!/^[a-z0-9.-]{1,60}$/.test(name))throw new Error('Registro de lote inválido');localStorage.removeItem(VAULT_REC_PREFIX+name); }
+  localStorage.removeItem(CKEY);localStorage.removeItem(GKEY);
+  localStorage.removeItem(K2_JOURNAL);
+  return true;
+}
+async function k2RestoreEmpty(file,secret){
+  if(!(file instanceof Blob)||!secret)throw new Error('Seleccioná una copia y escribí su contraseña o código.');
+  if(vaultBusy()||convSaving||copiaBusyN)throw new Error('Primero terminá de grabar, transcribir o guardar.');
+  if(!globalThis.navigator?.locks?.request)throw new Error('Este navegador no permite impedir escrituras de otra pestaña.');
+  if(localStorage.getItem(K2_JOURNAL))await k2Rollback();
+  if(!(await k2StorageEmpty()))throw new Error('Esta instalación ya contiene datos o ajustes. No se mezcló ni reemplazó nada.');
+  if(!(await vaultTakeTabLock())||vault.readOnly)throw new Error('Cerrá las otras pestañas antes de restaurar.');
+  const open=h=>copiaOpenWithSecret(h,secret);
+  const verified=await copia2Verify(file,open);  // primera pasada: autenticar archivo COMPLETO
+  if(!(await k2StorageEmpty()))throw new Error('Aparecieron datos mientras se verificaba la copia. No se escribió nada.');
+  const {key,audioKey}=await open((await k2Header(file)));
+  const plan=await k2ReadPlan(file,verified,key);
+  if(!(await k2StorageEmpty()))throw new Error('La instalación dejó de estar vacía. No se escribió nada.');
+  const db=await anDb();
+  const journal={version:1,ids:plan.audios.map(m=>m.id),names:[...plan.records.keys()]};
+  localStorage.setItem(K2_JOURNAL,JSON.stringify(journal));
+  if(localStorage.getItem(K2_JOURNAL)!==JSON.stringify(journal))throw new Error('No pudo confirmarse el lote de restauración.');
+  let committed=false;
+  try{
+    for(const meta of plan.audios) await anPutMeta(db,{...meta,state:'importando'});
+    for(const c of plan.chunks){
+      const bytes=new Uint8Array(await file.slice(c.start,c.start+c.size).arrayBuffer());
+      const clear=c.type==='B' ? await copia2Open(key,plan.header.id,'chunk|'+c.name,bytes):bytes;
+      await anPutChunk(db,c.id,c.part,c.index,new Blob([clear],{type:'application/octet-stream'}));
+      if(c.type==='B')clear.fill(0);
+    }
+    for(const meta of plan.audios){
+      await anPutMeta(db,meta);
+      const health=meta.mode===AN_PLAIN_MODE ? await anPlainHealth(db,meta.id) :
+        await anAudioHealth(db,audioKey,plan.header.id,meta.id);
+      if(!health.ok)throw new Error('El audio '+meta.id+' no se guardó íntegro.');
+    }
+    for(const [name,raw] of plan.records){
+      localStorage.setItem(VAULT_REC_PREFIX+name,raw);
+      if(localStorage.getItem(VAULT_REC_PREFIX+name)!==raw)throw new Error('Registro sin confirmar.');
+    }
+    if(plan.cfg.cfg!==null)localStorage.setItem(CKEY,plan.cfg.cfg);
+    if(plan.cfg.generador!==null)localStorage.setItem(GKEY,plan.cfg.generador);
+    // Punto de confirmación: todos los registros y audios ya fueron escritos y verificados.
+    const serialized=JSON.stringify(plan.header);
+    localStorage.setItem(VAULT_HEADER,serialized);
+    if(localStorage.getItem(VAULT_HEADER)!==serialized)throw new Error('Cabecera sin confirmar.');
+    committed=true;
+    try{localStorage.removeItem(K2_JOURNAL)}catch(e){}
+    return verified;
+  }catch(e){
+    if(!committed)try{await k2Rollback()}catch(cleanup){throw new Error('Restauración no confirmada; no borres los datos del sitio. Reintentá desde esta pestaña. '+cleanup.message);}
+    throw e;
+  }
+}
+async function k2Header(file){
+  const magic=vaultEnc.encode(COPIA_MAGIC).length;
+  const first=new Uint8Array(await file.slice(magic+4,magic+8).arrayBuffer());
+  if(first.length!==4)throw copiaError('Cortada');
+  const length=new DataView(first.buffer).getUint32(0);
+  if(length<2||length>COPIA_MAX_CABECERA)throw copiaError('Alterada');
+  return JSON.parse(vaultDec.decode(new Uint8Array(await file.slice(magic+8,magic+8+length).arrayBuffer())));
+}
+async function k2ResumeCleanup(){
+  try{
+    if(!localStorage.getItem(K2_JOURNAL))return;
+    if(localStorage.getItem(VAULT_HEADER)){localStorage.removeItem(K2_JOURNAL);return;}
+    if(await vaultTakeTabLock())await k2Rollback();
+  }catch(e){console.warn('K2: el lote interrumpido se conserva para recuperación, sin publicar datos.',e&&e.name);}
+}
+void k2ResumeCleanup();
+/*K2-END*/
+
+
 
 /* ---------- Copia cifrada en uso (K1): solo lee lo guardado; nunca escribe ni borra ---------- */
 /*COPIA-USO-START*/
@@ -5562,6 +5729,31 @@ copiaEl('copiaArchivo').addEventListener('change', () => {
   copiaEl('copiaArchivo').value = '';
   if (f) copiaCheck(f);
 });
+
+/* K2 interfaz: la contraseña se solicita después de elegir el archivo y se comprueba
+   antes de mostrar la confirmación. Sin opción para reemplazar o combinar. */
+copiaEl('copiaRestaurar').onclick=()=>{if(!copiaBusyN)copiaEl('copiaRestArchivo').click();};
+copiaEl('copiaRestArchivo').addEventListener('change',async()=>{
+  const el=copiaEl('copiaRestArchivo'),file=el.files&&el.files[0];el.value='';
+  if(!file||copiaBusyN)return;
+  if(vaultBusy()||convSaving)return copiaSay('Terminá primero la grabación, transcripción o guardado.');
+  copiaBusyN++;
+  try{
+    if(!(await k2StorageEmpty()))throw new Error('Esta instalación ya contiene datos o ajustes. No se reemplazó nada.');
+    const secret=await copiaAsk('Contraseña o código de recuperación de la copia que vas a restaurar');
+    if(secret===null)return;
+    copiaSay('Comprobando la integridad antes de escribir…');
+    const summary=await copia2Verify(file,h=>copiaOpenWithSecret(h,secret));
+    if(!confirm('Se restaurarán '+(summary.notas??'las')+' notas y '+summary.audios+' audios en esta instalación VACÍA. '+(summary.contenido==='solo-texto'?'Esta copia NO contiene audios. ':'')+'No se pueden mezclar ni reemplazar datos. ¿Continuar?'))return;
+    copiaBusyN--;
+    const result=await k2RestoreEmpty(file,secret);
+    copiaBusyN++;
+    copiaSay('Restauración confirmada: '+copiaSummary(result)+'. Recargando para abrir la bóveda…');
+    location.reload();
+  }catch(e){copiaSay('No se restauró: '+((e&&e.message)||'error')+'. No borres manualmente datos del navegador.');}
+  finally{copiaBusyN=Math.max(0,copiaBusyN-1);}
+});
+
 /*COPIA-USO-END*/
 
 /* ---------- Audio guardado (solo en este dispositivo) ---------- */
