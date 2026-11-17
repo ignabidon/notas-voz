@@ -1,3 +1,8 @@
+## 16/11/2026 · Reproducción del audio descargado, confirmada en Motorola (solo documentación)
+
+- **Confirmación posterior del propietario:** el archivo descargado de **168 KB** se reprodujo y «se escucha bien». Se actualizan [Guía del propietario](GUIA-DEL-PROPIETARIO.md), [feedback de Motorola](docs/FEEDBACK-MOTOROLA-2026-11-16.md) y [pruebas pendientes](docs/PRUEBA-MOTOROLA-Y-PENDIENTES-USUARIO-2026-11-16.md).
+- **Alcance de la validación:** descarga y reproducción audible del archivo de prueba; **no** prueba MP3, retranscripción ni comparación exacta de duración del audio. Solo documentación, en el mismo PR #49; sin modificaciones de código.
+
 ## 16/11/2026 · Feedback real del Motorola y actualización de la Guía (solo documentación)
 
 - **Responsable de la documentación:** ChatGPT (GPT-6), con resultados comunicados por el propietario. Rama `docs/guia-del-propietario-2026-11-16`, PR #49. `main` revisado en `aab2b903`.
