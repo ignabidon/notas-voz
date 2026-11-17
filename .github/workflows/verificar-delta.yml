@@ -21,6 +21,8 @@ jobs:
           node-version: '22'
       - name: Comprobar código
         run: node --test tests/delta.test.mjs
+      - name: Entrega 2: borradores confirmados y notas de solo audio (pruebas Node)
+        run: node --test tests/entrega2.test.mjs
       - name: Verificar interfaz en Chrome (estados simulados)
         run: node tests/browser.mjs
         timeout-minutes: 3
