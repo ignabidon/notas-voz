@@ -737,6 +737,14 @@ body.delta-recording .c-rec #rec{margin-top:4px;margin-bottom:6px}
 .transcription-dock{padding:6px 10px;margin-bottom:4px}
 body.delta-recording #transcriptionDockBar{height:3px;margin-top:3px}
 @media(max-height:700px){body.delta-recording .top{margin-bottom:0;padding-bottom:0}body.delta-recording .c-rec{padding-top:6px}body.delta-recording .record-head h2,body.delta-recording .record-overline{display:none}body.delta-recording .record-clock #clock{font-size:48px}}
+@media(max-width:380px) and (max-height:700px){
+ body.delta-recording .recrow{display:grid;grid-template-columns:minmax(0,1fr) 136px;align-items:center;gap:8px}
+ body.delta-recording .record-clock{min-width:0}
+ body.delta-recording .record-clock #clock{font-size:28px;letter-spacing:-1px}
+ body.delta-recording .record-caption-label{font-size:max(14px,calc(14px * var(--text-scale)));line-height:1.35}
+ body.delta-recording .c-rec #rec{width:136px;height:136px;margin:4px 0}
+ body.delta-recording .recrow .side{grid-column:1/-1;width:100%}
+}
 @media(max-height:760px){html[data-text-size="large"] body.delta-recording .record-head h2,html[data-text-size="large"] body.delta-recording .record-overline{display:none}}
 @media(max-height:540px){
  body[data-view="transcripcion"].conv-editor-expanded.delta-transcribing #convComposer .conv-target{max-height:18px;font-size:12px;line-height:1.5}
