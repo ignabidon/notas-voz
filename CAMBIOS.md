@@ -1,3 +1,23 @@
+## 17/11/2026 · Correcciones del PR #60 a pedido del propietario (Claude, misma rama; sin merge)
+
+Pedido de Ignacio con seis puntos. Base: `314843d` (cabeza del #60). No se tocaron #59, #61 ni `main`. Nada nuevo se conectó a la interfaz habitual ni se implementó K2.
+
+- **1 · Quitar la protección:** la guarda contaba **todas** las fichas de audio; una ficha sin cifrar (ensayo P2) trababa quitar la protección sin motivo. Ahora `anStoredKinds()` separa cifrados y sin cifrar y `vault.disableGuard` cuenta solo los cifrados. Para no abrir un hueco, «sin cifrar» exige la marca `mode: claro` **y** ninguna clave (`anIsPlainMeta`); una ficha ambigua o dañada cuenta como cifrada.
+- **2 · Panel de almacenamiento (Ajustes):** antes decía «N audio(s) cifrado(s)» incluyendo los sin cifrar y les ofrecía «Preparar nota» y «Borrar audio», que usan la clave de la protección. Ahora muestra las dos cantidades por separado («SIN CIFRAR (ensayo, no protegidos)»), lista los sin cifrar **sin botones** (también con la protección apagada) y marca los cortados como «a medio guardar». `anAudioHealth`, `e3Play`, `e3Recover` y `e3Remove` rechazan una ficha sin cifrar sin tocarla.
+- **3 · La copia no se presenta como completa si falta algo:**
+  - *Formato 1 (el que usa la app):* los audios sin cifrar no entran (el formato 1 solo lleva cifrados), pero antes se contaban como «dañados o a medio guardar». Ahora se cuentan aparte y el mensaje dice «Atención, la copia NO está completa: N audios guardados sin cifrar no entraron…». La copia de solo texto también lo avisa. **El formato 1, su lector y su archivo fijo no cambian.**
+  - *Formato 2 (ensayo):* el inventario cifrado ahora trae `exclusiones` (cada audio que no entró, con su motivo: `a-medio-guardar`, `danado`, `cifrado-sin-clave`, `solo-texto`) y `biblioteca` (cuántos audios había). El lector devuelve `exclusiones`, `motivos` y `todoIncluido`, y `copia2Describe` nunca dice «completa» si falta un audio.
+- **4 · Copias mezcladas:** se comprobó que el formato 2 verifica audios cifrados y sin cifrar en la misma copia, en ambos órdenes, con contraseña y con código de recuperación.
+- **5 · Cortes, archivos incompletos, memoria e inventario:**
+  - Cada audio entra **entero o nada** en la copia 2 (los bloques se arman aparte y se agregan juntos); antes un fallo a mitad podía dejar medio audio.
+  - El fragmento sin cifrar se vuelve a comprobar en el momento de cifrarlo: si cambió, el audio queda excluido como dañado.
+  - Los fragmentos ya cifrados para la copia se guardan como `Blob` y no como memoria de JavaScript (audios largos).
+  - El escritor no arma la copia si lo incluido más lo excluido no suma lo que había en la biblioteca; después de cerrarla no acepta nada más.
+  - Nuevo recorrido de laboratorio `copia2Audios` (bloque `COPIA2-USO`, solo lee, sin botón).
+- **Pruebas nuevas:** `tests/p2-correcciones.test.mjs` (Node, 9 pruebas: inventario, exclusiones, copia mezclada, corte en cada límite de bloque, byte cambiado en cada bloque, escritor todo-o-nada, formato 1 intacto) y `tests/p2-correcciones-browser.mjs` (Chrome: corte real de escritura simulado, guarda, panel, copia 1 con avisos, copia 2 mezclada, fragmento alterado, protección quitada con audios sin cifrar presentes). Ajustada una prueba de `delta.test.mjs` que fijaba el texto viejo de la guarda. Se comprobó que en el código anterior los tres problemas se reproducen.
+- **Resultados:** Node 166 + 10 + 9 en verde; las 13 suites de Chrome en verde. `e2-correcciones-browser` falló una vez en local sin mensaje y pasó en las tres corridas siguientes (también con el código anterior): se anota como posible inestabilidad, a mirar en el CI.
+- **Decisiones del propietario recibidas con este pedido:** los datos guardados hoy son de prueba y pueden descartarse (no hacen falta migraciones complejas); sin pruebas en el Motorola hasta una etapa más avanzada; las pruebas de Node y Chrome siguen siendo obligatorias; **no autoriza borrar datos automáticamente ni desproteger información futura**. Este cambio no borra ni migra nada.
+
 ## 17/11/2026 · Revisión cruzada del PR #60 — transición entre modalidades (ChatGPT)
 
 - Sincronizado el PR #60 con el #59 corregido mediante un **commit de fusión en la rama apilada**; sin squash, sin force-push y sin fusionar `main`.

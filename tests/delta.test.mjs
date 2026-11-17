@@ -1946,7 +1946,10 @@ test('correcciones E2: quitar la protección se impide si hay audios que quedar�
   audios = 0; await v.disable('frase de prueba larga');
   assert.equal(v.state, 'off');
   // En la app: la guarda cuenta los audios sin crear la base y el botón la consulta antes de pedir la contraseña.
-  assert.match(html, /vault\.disableGuard = async \(\) => \{\n  const n = await anStoredCount\(\);/);
+  // Desde la corrección del PR #60: solo cuentan los audios cifrados; uno guardado sin cifrar (ensayo P2) no la traba.
+  assert.match(html, /vault\.disableGuard = async \(\) => \{\n  const k = await anStoredKinds\(\);\n[^\n]*\n  const n = k\.cifrados;/);
+  // Lo «sin cifrar» exige la marca expresa y ninguna clave: una ficha ambigua o dañada cuenta como cifrada.
+  assert.match(html, /const anIsPlainMeta = m => !!m && typeof m === 'object' && m\.mode === AN_PLAIN_MODE && m\.key == null && m\.sealed == null;/);
   const btn = html.slice(html.indexOf("vaultEl('vaultDisable').addEventListener"), html.indexOf("// Bloqueo automático tras 15 minutos"));
   assert.ok(btn.indexOf('vault.disableGuard()') < btn.indexOf('vaultAskPassword('));
 });

@@ -4479,6 +4479,9 @@ async function anReadAudio(db, kAudio, hid, id){
    versión 2 y restauración probada. Esta capa no migra ni borra el audio de la base anterior. */
 /*P2-BIBLIOTECA-START*/
 const AN_PLAIN_MODE = 'claro', AN_PLAIN_MAX_BYTES = 30 * 1024 * 1024;
+/* ¿La ficha es de un audio guardado SIN cifrar? Solo si lo dice expresamente y no trae clave ni detalle cifrado.
+   Cualquier otra ficha (también una dañada o ambigua) se trata como cifrada: así nunca se la da por «libre» de la protección. */
+const anIsPlainMeta = m => !!m && typeof m === 'object' && m.mode === AN_PLAIN_MODE && m.key == null && m.sealed == null;
 function anPlainValidMeta(m){
   return anValidMeta(m) && m.mode === AN_PLAIN_MODE && m.key == null && m.sealed == null &&
     m.plain && typeof m.plain === 'object' && Array.isArray(m.plain.parts) &&
@@ -4628,6 +4631,7 @@ async function e3Play(root, entry, button, range, status, clock){
     const meta = await anGetMeta(s.db, s.id);
     if (!e3Alive(s)) return;
     if (!meta) { e3Failure(s, 'Audio no disponible. El texto se conserva. Podés quitar la referencia desde ⋯.'); return; }
+    if (anIsPlainMeta(meta)) { e3Failure(s, 'Este audio está guardado sin cifrar (ensayo) y todavía no se reproduce desde la nota. Se conserva sin cambios.'); return; }
     if (!anValidMeta(meta) || meta.state !== 'cerrado') throw new Error('ficha');
     s.detail = await anOpenDetail(vault.audioKey, s.hid, s.id, meta.sealed);
     if (!e3Alive(s)) return;
@@ -4685,6 +4689,8 @@ async function e3Remove(entryId, audioId){
   if (convAudioId === audioId || (entryId && convEditingId === entryId)) return flash('Primero guardá o cancelá la edición de esta nota.');
   if (!entryId && e3Used(audioId)) return flash('El audio ya está unido a una nota o borrador; se conserva.');
   if (entryId && (!convEntry(entryId) || convEntry(entryId).audioId !== audioId)) return;
+  try { if (!entryId && anIsPlainMeta(await anGetMeta(await anDb(), audioId))) return flash('Ese audio está guardado sin cifrar (ensayo): no se borra desde acá. Se conserva sin cambios.'); }
+  catch (e) { return flash('No se pudo comprobar el audio. No se borró nada.'); }
   if (!confirm(entryId ? '¿Quitar el audio de esta nota? El texto queda guardado. Si ninguna otra nota lo usa, el audio se borra. No se puede deshacer.' : '¿Borrar este audio sin nota? No se puede deshacer.')) return;
   convSaving = true; e3Stop();
   try {
@@ -4703,6 +4709,7 @@ async function e3Recover(id){
   convSaving = true;
   try {
     const db = await anDb(), h = await anAudioHealth(db, vault.audioKey, vault.header.id, id);
+    if (!h.ok && h.why === 'sin cifrar') throw new Error('Ese audio está guardado sin cifrar (ensayo): no se puede preparar una nota con él. Se conserva sin cambios.');
     if (!h.ok) throw new Error('El audio está dañado o todavía no terminó de guardarse. Se conserva sin cambios.');
     if (e3Used(id)) return;
     convClearComposer(); convOpenId = null; convComposeNew = true; convStartPending(true);
@@ -4729,23 +4736,26 @@ async function e3RefreshSpace(){
   if (!valid()) return;
   const list = $('e3AudioList'); list.textContent = ''; $('e3SpaceMsg').textContent = 'Consultando espacio…';
   try {
-    const count = await anStoredCount();
-    const metas = count ? await anListMeta(await anDb()) : [];
+    // Cifrados y sin cifrar se cuentan y se muestran por separado: nunca se presenta un audio sin cifrar como protegido.
+    const kinds = await anStoredKinds(), metas = kinds ? kinds.metas : [];
+    const cifrados = metas.filter(m => !anIsPlainMeta(m)), claros = metas.filter(anIsPlainMeta);
     const storage = navigator.storage;
     let estimate = null, persisted = null;
     try { estimate = storage && storage.estimate ? await storage.estimate() : null; } catch (e) {}
     try { persisted = storage && storage.persisted ? await storage.persisted() : null; } catch (e) {}
     if (!valid()) return;
-    const bytes = metas.reduce((t, m) => t + (Number.isFinite(m.bytes) ? m.bytes : 0), 0);
+    const sum = list => list.reduce((t, m) => t + (m && Number.isFinite(m.bytes) ? m.bytes : 0), 0);
     const free = estimate && Number.isFinite(estimate.quota) && Number.isFinite(estimate.usage) ? Math.max(0, estimate.quota - estimate.usage) : null;
-    $('e3SpaceMsg').textContent = (count === null ? 'No se pudieron consultar los audios.' : metas.length + ' audio(s) cifrado(s) · ' + mb(bytes)) +
+    $('e3SpaceMsg').textContent = (kinds === null ? 'No se pudieron consultar los audios.' : cifrados.length + ' audio(s) cifrado(s) · ' + mb(sum(cifrados)) +
+      (claros.length ? ' · ' + claros.length + ' audio(s) SIN CIFRAR (ensayo, no protegidos) · ' + mb(sum(claros)) : '')) +
       (free === null ? ' · Espacio libre no disponible.' : ' · Espacio libre estimado del sitio: ' + mb(free) + (free < 50 * 1024 * 1024 ? ' · Queda poco espacio. Creá una copia y revisá tus audios.' : ''));
     $('e3Persistence').textContent = 'Protegido contra la limpieza automática: ' + (persisted === null ? 'no disponible.' : persisted ? 'Sí.' : 'No. Creá una copia cifrada como respaldo.');
     let textBytes = 0; for (let i = 0; i < localStorage.length; i++) { const key = localStorage.key(i); if (key && key.startsWith('notasvoz.')) textBytes += 2 * (key.length + (localStorage.getItem(key) || '').length); }
     $('e3TextSpace').textContent = 'Texto, ajustes y registros: aproximadamente ' + mb(textBytes) + '. El cupo de texto depende del navegador; no se mide escribiendo datos de prueba.' +
       (textBytes >= 4 * 1024 * 1024 ? ' Uso alto: se acerca a la referencia habitual de 5 MB. Creá una copia.' : textBytes >= 2.5 * 1024 * 1024 ? ' Supera la mitad de la referencia habitual de 5 MB.' : '');
+    const order = (a, b) => $('e3Sort').value === 'size' ? (b.bytes || 0) - (a.bytes || 0) : (b.createdAt || 0) - (a.createdAt || 0);
     if (anUsable()) {
-      const sorted = metas.slice().sort((a, b) => $('e3Sort').value === 'size' ? b.bytes - a.bytes : b.createdAt - a.createdAt);
+      const sorted = cifrados.slice().sort(order);
       for (const m of sorted) {
         const row = document.createElement('div'); row.className = 'e3-audio-row';
         const entries = convStore.data ? convStore.data.entries.filter(e => e.audioId === m.id) : [];
@@ -4757,8 +4767,17 @@ async function e3RefreshSpace(){
         else if (entries.length) actions.append(convButton('Ver nota', () => { document.querySelector('[data-delta-view="transcripcion"]').click(); convOpen(entries[0].conversationId); }));
         row.append(actions); list.append(row);
       }
-      if (!sorted.length) list.textContent = 'Todavía no hay audios cifrados guardados.';
-    } else list.textContent = 'Los audios por nota se guardan con la protección activada.';
+      if (!sorted.length) list.append('Todavía no hay audios cifrados guardados.');
+    } else list.append(cifrados.length ? 'Hay audios cifrados: desbloqueá la protección para verlos.' : 'Los audios por nota se guardan con la protección activada.');
+    // Audios sin cifrar del ensayo P2: solo se informan. Sin reproducir, unir a notas, recuperar ni borrar desde acá,
+    // porque esas acciones usan la clave de la protección y no corresponden a un audio sin cifrar.
+    for (const m of claros.slice().sort(order)) {
+      const row = document.createElement('div'); row.className = 'e3-audio-row'; row.dataset.modo = 'claro';
+      const info = document.createElement('p');
+      info.textContent = 'Audio SIN CIFRAR (ensayo, no protegido)' + (m.state === 'cerrado' ? '' : ' · a medio guardar') + ' · ' + fmt(m.createdAt) + ' · ' + mb(m.bytes || 0) +
+        ' · No se reproduce ni entra en la copia cifrada actual.';
+      row.append(info); list.append(row);
+    }
     const old = await audioGetMeta(), previous = await audioGetPrevious();
     if (!valid()) return;
     $('e3Legacy').hidden = !old && !previous;
@@ -4822,6 +4841,7 @@ async function anAudioHealth(db, kAudio, hid, id){
   const t0 = (globalThis.performance || Date).now();
   const m = await anGetMeta(db, id);
   if (!m) return {ok: false, m: null, why: 'no existe'};
+  if (anIsPlainMeta(m)) return {ok: false, m, why: 'sin cifrar'};   // P2: no es un audio de la protección; no se amplía, recorta ni recupera por acá
   if (!anValidMeta(m) || m.state !== 'cerrado' || !m.key || !m.sealed) return {ok: false, m, why: 'ficha'};
   let cek, detail;
   try { cek = await anOpenCek(kAudio, hid, id, m.key); detail = await anOpenDetail(kAudio, hid, id, m.sealed); }
@@ -5031,10 +5051,32 @@ function anStoredCount(){
     r.onerror = () => res(creating ? 0 : null);
   });
 }
-/* Quitar la protección haría ilegibles los audios cifrados (su clave sale de la protección). Hasta AO, se impide. */
+/* Audios guardados, separados en cifrados y sin cifrar (ensayo P2). Sin crear la base. null: no se pudo saber.
+   Solo cuenta como «sin cifrar» lo que anIsPlainMeta reconoce; todo lo demás, aun dañado, cuenta como cifrado. */
+function anStoredKinds(){
+  if (!globalThis.indexedDB) return Promise.resolve({total: 0, cifrados: 0, claros: 0, metas: []});
+  return new Promise(res => {
+    let creating = false;
+    const r = indexedDB.open(AN_DB);
+    r.onupgradeneeded = () => { creating = true; try { r.transaction.abort(); } catch (e) {} };
+    r.onsuccess = () => {
+      const db = r.result;
+      if (!db.objectStoreNames.contains('meta')) { db.close(); return res({total: 0, cifrados: 0, claros: 0, metas: []}); }
+      anTx(db, ['meta'], 'readonly', t => t.objectStore('meta').getAll()).then(metas => {
+        db.close();
+        const claros = metas.filter(anIsPlainMeta).length;
+        res({total: metas.length, cifrados: metas.length - claros, claros, metas});
+      }, () => { db.close(); res(null); });
+    };
+    r.onerror = () => res(creating ? {total: 0, cifrados: 0, claros: 0, metas: []} : null);
+  });
+}
+/* Quitar la protección haría ilegibles los audios cifrados (su clave sale de la protección). Hasta AO, se impide.
+   Los audios sin cifrar (ensayo P2) no dependen de la protección: no la traban. */
 vault.disableGuard = async () => {
-  const n = await anStoredCount();
-  if (n === null) return 'No se pudo comprobar si hay audios guardados cifrados. Por seguridad, la protección sigue activa.';
+  const k = await anStoredKinds();
+  if (k === null) return 'No se pudo comprobar si hay audios guardados cifrados. Por seguridad, la protección sigue activa.';
+  const n = k.cifrados;
   if (n === 0) return '';
   return 'La protección no se puede quitar todavía: hay ' + (n === 1 ? 'un audio guardado' : n + ' audios guardados') + ' con tus notas, y solo se pueden abrir con ella. ' +
     'Si la quitaras ahora, esos audios no se podrían volver a escuchar nunca. Más adelante, la app va a ofrecer una copia y borrar esos audios antes de quitarla. Por ahora sigue activa.';
@@ -5261,6 +5303,34 @@ async function copiaVerify(file, abrir, onProgress){
    o código de recuperación del ARCHIVO, no del modo de los audios de origen. */
 /*COPIA2-START*/
 const COPIA2_FORMATO = 2, COPIA2_TIPOS = 'RCMAPBIF';
+/* Motivos por los que un audio de la biblioteca NO entra en una copia 2. Toda ausencia queda declarada en el
+   inventario (cifrado y encadenado): la copia nunca omite un audio en silencio ni se presenta como completa si falta alguno. */
+const COPIA2_MOTIVOS = {
+  'a-medio-guardar': 'quedó a medio guardar',
+  'danado': 'está dañado o no pasó su comprobación',
+  'cifrado-sin-clave': 'está cifrado y la protección no está abierta',
+  'solo-texto': 'la copia es de solo texto'
+};
+/* Comprueba el inventario contra lo que se leyó. Pura: no toca almacenamiento. Lanza si algo no cierra. */
+function copia2CheckInventory(inv, audios, contenido){
+  const fail = () => { throw new Error('inventario inconsistente'); };
+  if (!inv || typeof inv !== 'object' || inv.formato !== COPIA2_FORMATO || inv.contenido !== contenido ||
+      !Array.isArray(inv.audios) || !Array.isArray(inv.exclusiones)) fail();
+  if (JSON.stringify(inv.audios) !== JSON.stringify(audios)) fail();
+  if (contenido !== 'completa' && audios.length) fail();
+  const ids = new Set(audios.map(x => x.id));
+  if (ids.size !== audios.length) fail();
+  for (const x of inv.exclusiones) {
+    if (!x || typeof x !== 'object' || Object.keys(x).sort().join() !== 'id,modo,motivo' || typeof x.id !== 'string' || !x.id || x.id.length > 64 ||
+        (x.modo !== 'claro' && x.modo !== 'cifrado') || !Object.prototype.hasOwnProperty.call(COPIA2_MOTIVOS, x.motivo) || ids.has(x.id)) fail();
+    if ((contenido === 'solo-texto') !== (x.motivo === 'solo-texto')) fail();
+    if (x.motivo === 'cifrado-sin-clave' && x.modo !== 'cifrado') fail();
+    ids.add(x.id);
+  }
+  // biblioteca: cuántos audios había al crearla. Lo que entró más lo excluido tiene que sumar exactamente eso.
+  if (inv.biblioteca !== undefined && (!Number.isSafeInteger(inv.biblioteca) || inv.biblioteca !== audios.length + inv.exclusiones.length)) fail();
+  return {exclusiones: inv.exclusiones.length, biblioteca: inv.biblioteca === undefined ? null : inv.biblioteca};
+}
 function copia2Head(tipo,nombre,largo){
   const n=vaultEnc.encode(nombre);
   if (!COPIA2_TIPOS.includes(tipo) || tipo.length !== 1 || n.length < 1 || n.length > COPIA_MAX_NOMBRE ||
@@ -5274,30 +5344,41 @@ const copia2AudioIndex = m => ({id:m.id,mode:m.mode === AN_PLAIN_MODE ? 'claro' 
   bytes:m.bytes});
 function copia2Writer(header,key,contenido,creado){
   if (contenido !== 'completa' && contenido !== 'solo-texto') throw new Error('contenido inválido');
-  const blocks=[], audios=[], seen=new Set(); let registros=0,fragmentos=0,config=false,phase=0;
-  const add=async (tipo,nombre,datos) => {
+  const blocks=[], audios=[], exclusiones=[], seen=new Set(); let registros=0,fragmentos=0,config=false,phase=0,closed=false;
+  // Los bloques se arman en «out» y se agregan juntos: si un audio falla a mitad, no queda medio audio en la copia.
+  // Los fragmentos ya cifrados para la copia se guardan como Blob, no como memoria de JavaScript (audios largos).
+  const make=async (tipo,nombre,datos,out) => {
     const b=datos instanceof Uint8Array ? datos : new Uint8Array(await datos.arrayBuffer());
-    blocks.push({head:copia2Head(tipo,nombre,b.length),hash:await copiaSha(b),data:datos,size:b.length});
+    const block={head:copia2Head(tipo,nombre,b.length),hash:await copiaSha(b),data:tipo==='B' ? new Blob([b]) : datos,size:b.length};
+    if (out) out.push(block); else blocks.push(block);
   };
+  const add=(tipo,nombre,datos) => make(tipo,nombre,datos,null);
+  const open1=() => { if (closed) throw new Error('la copia ya se cerró'); };
   return {
     async registro(nombre,raw){
+      open1();
       if (phase>0 || !/^[a-z0-9.-]{1,60}$/.test(nombre)) throw new Error('orden de registros inválido');
       await add('R',nombre,vaultEnc.encode(raw)); registros++;
     },
     async config(obj){
+      open1();
       if (phase>0 || config) throw new Error('orden de configuración inválido');
       await add('C','config',await vaultEnc.encode(JSON.stringify(await vaultSeal(key,vaultEnc.encode(JSON.stringify(obj)),copiaAad(header.id,'config')))));
       config=true;phase=1;
     },
     async audioCifrado(meta,chunks){
+      open1();
       if (contenido !== 'completa' || phase!==1 || !config || !anValidMeta(meta) || meta.mode === AN_PLAIN_MODE ||
-          meta.state!=='cerrado' || !meta.key || !meta.sealed || seen.has(meta.id)) throw new Error('audio cifrado inválido');
-      seen.add(meta.id); const index=copia2AudioIndex(meta);
-      index.chunks=chunks.length; audios.push(index);
-      await add('M',meta.id,vaultEnc.encode(JSON.stringify(meta)));
-      for (const c of chunks){await add('A',meta.id+'|'+c.part+'|'+c.n,c.blob); fragmentos++;}
+          meta.state!=='cerrado' || !meta.key || !meta.sealed || seen.has(meta.id) || !Array.isArray(chunks) ||
+          chunks.some(c => !c || !(c.blob instanceof Blob) || !anIsInt(c.part) || !anIsInt(c.n))) throw new Error('audio cifrado inválido');
+      const out=[];
+      await make('M',meta.id,vaultEnc.encode(JSON.stringify(meta)),out);
+      for (const c of chunks) await make('A',meta.id+'|'+c.part+'|'+c.n,c.blob,out);
+      const index=copia2AudioIndex(meta); index.chunks=chunks.length;
+      seen.add(meta.id); audios.push(index); blocks.push(...out); fragmentos+=chunks.length;
     },
     async audioClaro(meta,chunks){
+      open1();
       if (contenido !== 'completa' || phase!==1 || !config || !anPlainValidMeta(meta) ||
           meta.state!=='cerrado' || seen.has(meta.id)) throw new Error('audio en claro inválido');
       const expected=[];
@@ -5308,17 +5389,35 @@ function copia2Writer(header,key,contenido,creado){
         if(c.part!==x[0] || c.n!==x[1] || !(c.blob instanceof Blob) || await anPlainHash(c.blob)!==x[2])
           throw new Error('audio no coincide con su ficha');
       }
-      seen.add(meta.id); audios.push(copia2AudioIndex(meta));
-      await add('P',meta.id,await copia2Seal(key,header.id,'meta|'+meta.id,vaultEnc.encode(JSON.stringify(meta))));
-      for(const c of chunks){
-        await add('B',meta.id+'|'+c.part+'|'+c.n,await copia2Seal(key,header.id,
-          'chunk|'+meta.id+'|'+c.part+'|'+c.n,new Uint8Array(await c.blob.arrayBuffer())));
-        fragmentos++;
+      const out=[];
+      await make('P',meta.id,await copia2Seal(key,header.id,'meta|'+meta.id,vaultEnc.encode(JSON.stringify(meta))),out);
+      for(let i=0;i<chunks.length;i++){
+        const c=chunks[i], plain=new Uint8Array(await c.blob.arrayBuffer());
+        // Se vuelve a comprobar lo que se cifra: si el fragmento cambió después de revisarlo, el audio no entra.
+        if (anB64(await copiaSha(plain))!==expected[i][2]) { plain.fill(0); throw new Error('audio cambió durante la copia'); }
+        try { await make('B',meta.id+'|'+c.part+'|'+c.n,await copia2Seal(key,header.id,'chunk|'+meta.id+'|'+c.part+'|'+c.n,plain),out); }
+        finally { plain.fill(0); }
       }
+      seen.add(meta.id); audios.push(copia2AudioIndex(meta)); blocks.push(...out); fragmentos+=chunks.length;
     },
-    async finish(){
+    /* Un audio de la biblioteca que no entra. Siempre con motivo: queda escrito en el inventario. */
+    exclusion(meta,modo,motivo){
+      open1();
+      const id=meta && typeof meta.id==='string' && meta.id ? meta.id.slice(0,64) : null;
+      if (phase!==1 || !config || !id || seen.has(id) || (modo!=='claro' && modo!=='cifrado') ||
+          !Object.prototype.hasOwnProperty.call(COPIA2_MOTIVOS,motivo) || (contenido==='solo-texto')!==(motivo==='solo-texto'))
+        throw new Error('exclusión inválida');
+      seen.add(id); exclusiones.push({id,modo,motivo});
+    },
+    resumen(){ return {audios:audios.length,exclusiones:exclusiones.map(x=>({...x}))}; },
+    /* biblioteca: cuántos audios había al empezar (lo cuenta quien recorre la base). Si no cierra, no se arma la copia. */
+    async finish(biblioteca){
+      open1();
       if (!config) throw new Error('falta configuración');
-      const inventario={formato:COPIA2_FORMATO,contenido, audios,exclusiones:[]};
+      const inventario={formato:COPIA2_FORMATO,contenido,audios,exclusiones,biblioteca:audios.length+exclusiones.length};
+      if (biblioteca !== undefined && biblioteca !== inventario.biblioteca) throw new Error('el inventario no coincide con la biblioteca');
+      copia2CheckInventory(inventario,audios,contenido);
+      closed=true;
       await add('I','inventario',await copia2Seal(key,header.id,'inventario',vaultEnc.encode(JSON.stringify(inventario))));
       const total=blocks.length+1;
       const cab=vaultEnc.encode(JSON.stringify({formato:COPIA2_FORMATO,creado,app:'Delta 11',id:header.id,pw:header.pw,rec:header.rec,contenido,bloques:total}));
@@ -5429,9 +5528,7 @@ async function copia2Verify(file,open,onProgress){
         if(phase!==1||inventory||name!=='inventario')throw bad();
         close();
         inventory=JSON.parse(vaultDec.decode(await copia2Open(key,h.id,'inventario',data)));
-        if(!inventory||inventory.formato!==2||inventory.contenido!==h.contenido ||
-           !Array.isArray(inventory.audios)||!Array.isArray(inventory.exclusiones) ||
-           inventory.exclusiones.length||JSON.stringify(inventory.audios)!==JSON.stringify(audios))throw bad();
+        copia2CheckInventory(inventory,audios,h.contenido);
         phase=2;
       }else{
         if(phase!==2||!inventory||name!=='fin')throw bad();
@@ -5444,11 +5541,70 @@ async function copia2Verify(file,open,onProgress){
     if(onProgress){try{onProgress(pos,file.size)}catch(e){}}
   }
   if(!footer||!config||!inventory||pos!==file.size)throw bad();
+  const excl=inventory.exclusiones, motivos={};
+  for(const x of excl)motivos[x.motivo]=(motivos[x.motivo]||0)+1;
   return {formato:2,creado:h.creado,contenido:h.contenido,id:h.id,bytes:file.size,
     registros,audios:audios.length,fragmentos,bytesAudio,cuadernos:stats.cuadernos,notas:stats.notas,
-    claro:audios.filter(x=>x.mode==='claro').length,cifrado:audios.filter(x=>x.mode==='cifrado').length};
+    claro:audios.filter(x=>x.mode==='claro').length,cifrado:audios.filter(x=>x.mode==='cifrado').length,
+    exclusiones:excl.length,motivos,biblioteca:inventory.biblioteca===undefined?null:inventory.biblioteca,
+    // Solo es «todo incluido» si es una copia con audios y no falta ninguno.
+    todoIncluido:h.contenido==='completa'&&excl.length===0};
+}
+/* Resumen en palabras de una copia 2 comprobada. Nunca dice «completa» si falta algún audio. */
+function copia2Describe(r){
+  const n=(k,uno,varios)=>k===1?uno:k+' '+varios;
+  const out=[r.contenido==='completa' ? n(r.audios,'1 audio','audios')+' ('+n(r.cifrado,'1 cifrado','cifrados')+', '+n(r.claro,'1 guardado sin cifrar y cifrado en la copia','guardados sin cifrar y cifrados en la copia')+')' : 'solo texto, sin audios'];
+  if(r.exclusiones){
+    const det=Object.keys(r.motivos).sort().map(m=>n(r.motivos[m],'1 audio','audios')+' '+COPIA2_MOTIVOS[m]);
+    out.push('INCOMPLETA: faltan '+n(r.exclusiones,'1 audio','audios')+' de la biblioteca ('+det.join('; ')+')');
+  }else if(r.contenido==='completa')out.push('incluye todos los audios de la biblioteca');
+  return out.join(' · ');
 }
 /*COPIA2-END*/
+/* ---------- Respaldo formato 2 · recorrido de la biblioteca (ensayo de laboratorio; ningún botón lo llama) ----------
+   Solo LEE. Cada audio de la biblioteca termina en uno de dos lugares: dentro de la copia, o en la lista de
+   exclusiones con su motivo. Al final se compara con la cantidad de audios que había: si no cierra, no hay copia. */
+/*COPIA2-USO-START*/
+async function copia2Audios(w, contenido, opts){
+  opts = opts || {};
+  const k = await anStoredKinds();
+  if (k === null) throw new Error('no se pudieron leer los audios guardados');
+  const kAudio = opts.kAudio || null, hid = opts.hid || null;
+  const db = k.total ? await anDb() : null;
+  for (let i = 0; i < k.metas.length; i++) {
+    const m0 = k.metas[i], claro = anIsPlainMeta(m0), modo = claro ? 'claro' : 'cifrado';
+    const ref = m0 && typeof m0.id === 'string' && m0.id ? m0 : {id: 'ficha-ilegible-' + (i + 1)};
+    if (contenido !== 'completa') { w.exclusion(ref, modo, 'solo-texto'); continue; }
+    // Se vuelve a leer la ficha: si cambió desde el recuento, se usa la actual.
+    const m = typeof ref.id === 'string' && m0 === ref ? await anGetMeta(db, ref.id) : null;
+    if (!m || !anValidMeta(m)) { w.exclusion(ref, modo, 'danado'); continue; }
+    if (m.state !== 'cerrado') { w.exclusion(m, modo, 'a-medio-guardar'); continue; }
+    try {
+      if (claro) {
+        const h = await anPlainHealth(db, m.id);
+        if (!h.ok) { w.exclusion(m, modo, 'danado'); continue; }
+        const chunks = [];
+        for (let part = 0; part < h.m.plain.parts.length; part++)
+          for (let n = 0; n < h.m.plain.parts[part].chunks; n++) chunks.push({part, n, blob: await anGetChunk(db, m.id, part, n)});
+        await w.audioClaro(h.m, chunks);
+      } else {
+        if (!kAudio || !hid) { w.exclusion(m, modo, 'cifrado-sin-clave'); continue; }
+        const h = await anAudioHealth(db, kAudio, hid, m.id);
+        if (!h.ok) { w.exclusion(m, modo, 'danado'); continue; }
+        const chunks = [];
+        for (let part = 0; part < h.detail.parts.length; part++)
+          for (let n = 0; n < h.detail.parts[part].chunks; n++) chunks.push({part, n, blob: await anGetChunk(db, m.id, part, n)});
+        await w.audioCifrado(h.m, chunks);
+      }
+    } catch (e) {
+      // El escritor agrega cada audio entero o nada: un fallo a mitad no deja medio audio en la copia.
+      logDiag('Copia 2: un audio no entró (' + anErrName(e) + ').');
+      w.exclusion(m, modo, 'danado');
+    }
+  }
+  return k.total;
+}
+/*COPIA2-USO-END*/
 
 
 /* ---------- Copia cifrada en uso (K1): solo lee lo guardado; nunca escribe ni borra ---------- */
@@ -5475,14 +5631,17 @@ function copiaAsk(title){
   });
 }
 /* Audios por nota para una copia completa. Cada audio se comprueba entero antes de entrar: uno dañado o a medio
-   guardar no entra (se cuenta y se avisa), así la copia siempre pasa su propia comprobación. */
+   guardar no entra (se cuenta y se avisa), así la copia siempre pasa su propia comprobación.
+   El formato 1 solo lleva audios cifrados: los audios sin cifrar del ensayo P2 no entran y se cuentan aparte
+   (sinCifrar), para no confundirlos con audios dañados ni presentar la copia como completa. */
 async function copiaAudios(w){
-  if (!anUsable()) return 0;
+  if (!anUsable()) return {omitidos: 0, sinCifrar: 0};
   const n = await anStoredCount();
   if (n === null) throw new Error('no se pudieron leer los audios guardados');
-  if (n === 0) return 0;
-  const db = await anDb(), hid = vault.header.id, kAudio = vault.audioKey; let omitidos = 0;
+  if (n === 0) return {omitidos: 0, sinCifrar: 0};
+  const db = await anDb(), hid = vault.header.id, kAudio = vault.audioKey; let omitidos = 0, sinCifrar = 0;
   for (const m of await anListMeta(db)) {
+    if (anIsPlainMeta(m)) { sinCifrar++; continue; }
     try {
       if (!anValidMeta(m) || m.state !== 'cerrado' || !m.key || !m.sealed || m.parts < 1) throw new Error('ficha');
       const cek = await anOpenCek(kAudio, hid, m.id, m.key), detail = await anOpenDetail(kAudio, hid, m.id, m.sealed), chunks = [];
@@ -5496,7 +5655,16 @@ async function copiaAudios(w){
       await w.audio(m, chunks);
     } catch (e) { omitidos++; logDiag('Copia cifrada: un audio no entró en la copia (' + anErrName(e) + ').'); }
   }
-  return omitidos;
+  if (sinCifrar) logDiag('Copia cifrada: ' + sinCifrar + ' audio(s) sin cifrar no entran en el formato 1.');
+  return {omitidos, sinCifrar};
+}
+/* Texto de lo que la copia NO lleva. Vacío solo si no falta nada. */
+function copiaFaltantes(omitidos, sinCifrar, completa){
+  const out = [];
+  if (omitidos) out.push(omitidos === 1 ? 'un audio dañado o a medio guardar no entró en la copia' : omitidos + ' audios dañados o a medio guardar no entraron en la copia');
+  if (sinCifrar) out.push((sinCifrar === 1 ? 'un audio guardado sin cifrar no entró' : sinCifrar + ' audios guardados sin cifrar no entraron') +
+    (completa ? ' (este tipo de copia solo lleva audios cifrados)' : ''));
+  return out.length ? 'Atención, la copia NO está completa: ' + out.join('; ') + '.\n' : '';
 }
 /* Crea la copia. filePassword: solo con la protección apagada (contraseña elegida para el archivo). */
 async function copiaCreate(filePassword){
@@ -5522,15 +5690,17 @@ async function copiaCreate(filePassword){
     if (abierta) { for (const [name, raw] of vault.rawRecords()) await w.registro(name, raw); }
     else for (const [k, name] of Object.entries(VAULT_KEYS)) { const plain = vaultStore.getItem(k); if (plain !== null) await w.registro(name, await vaultSealRecord(key, header.id, name, plain)); }
     await w.config({cfg: localStorage.getItem(CKEY), generador: localStorage.getItem(GKEY)});
-    const omitidos = completa ? await copiaAudios(w) : 0;
+    const faltan = completa ? await copiaAudios(w) : {omitidos: 0, sinCifrar: 0}, omitidos = faltan.omitidos;
+    // Una copia de solo texto tampoco lleva los audios sin cifrar: se avisa igual, para que nadie la crea completa.
+    if (!completa) { const k = await anStoredKinds(); if (k === null) throw new Error('no se pudieron leer los audios guardados'); faltan.sinCifrar = k.claros; }
     const file = new File([await w.finish()], copiaName(now), {type: 'application/octet-stream'});
     // Antes de entregarla se comprueba entera, con las claves ya abiertas.
     copiaSay('Comprobando la copia…');
     const r = await copiaVerify(file, async () => ({key, audioKey: abierta ? vault.audioKey : null}));
     download(file);
-    logDiag('Copia cifrada: creada · ' + r.contenido + ' · ' + r.registros + ' registros · ' + r.audios + ' audios · ' + r.bytes + ' bytes' + (omitidos ? ' · ' + omitidos + ' audios omitidos' : ''));
+    logDiag('Copia cifrada: creada · ' + r.contenido + ' · ' + r.registros + ' registros · ' + r.audios + ' audios · ' + r.bytes + ' bytes' + (omitidos ? ' · ' + omitidos + ' audios omitidos' : '') + (faltan.sinCifrar ? ' · ' + faltan.sinCifrar + ' sin cifrar no incluidos' : ''));
     copiaSay('Copia creada y comprobada: ' + copiaSummary(r) + '.\n' +
-      (omitidos ? (omitidos === 1 ? 'Atención: un audio dañado o a medio guardar no entró en la copia.' : 'Atención: ' + omitidos + ' audios dañados o a medio guardar no entraron en la copia.') + '\n' : '') +
+      copiaFaltantes(omitidos, faltan.sinCifrar, completa) +
       (vault.frozen.size ? 'Atención: hay datos dañados en este navegador que la copia no pudo incluir.\n' : '') +
       'Se descargó como «' + file.name + '». ' + (abierta ? 'Se abre con tu contraseña actual o con tu código de recuperación (aunque después cambies la contraseña).' : 'Se abre solo con la contraseña que acabás de elegir.') +
       '\nPara confirmar que la descarga terminó bien, tocá «Verificar una copia» y elegí ese archivo. Guardalo fuera del celular.');

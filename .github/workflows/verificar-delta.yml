@@ -58,3 +58,8 @@ jobs:
       - name: Ensayar biblioteca unificada y respaldo formato 2 (no activados)
         run: node tests/p2-biblioteca-browser.mjs
         timeout-minutes: 5
+      - name: Correcciones PR 60 - inventario, exclusiones, copias mezcladas y cortes (Node)
+        run: node --test tests/p2-correcciones.test.mjs
+      - name: Correcciones PR 60 en Chrome (guarda, panel, copia 1 con avisos, copia 2 mezclada; datos ficticios)
+        run: node tests/p2-correcciones-browser.mjs
+        timeout-minutes: 5
