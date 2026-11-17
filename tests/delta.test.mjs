@@ -1735,7 +1735,9 @@ test('audio por nota E1: candado de una sola pestaña', async () => {
 });
 
 test('audio por nota E2: solo se usa con la protección abierta y nunca sin cifrar', () => {
-  const fuera = html.replace(/\/\*AUDIONOTA-START\*\/[\s\S]*?\/\*AUDIONOTA-END\*\//, '');
+  // La biblioteca P2 es un ensayo sin conexiones de producción: auditar E2 por separado.
+  const fuera = html.replace(/\/\*AUDIONOTA-START\*\/[\s\S]*?\/\*AUDIONOTA-END\*\//, '')
+    .replace(/\/\*P2-BIBLIOTECA-START\*\/[\s\S]*?\/\*P2-BIBLIOTECA-END\*\//, '');
   assert.equal((html.match(/notasvoz-gamma-audio/g) || []).length, 1, 'la base histórica sigue igual');
   assert.doesNotMatch(fuera, /notasvoz-dictanota-audio/, 'nada fuera del bloque nombra la base nueva');
   assert.doesNotMatch(anBlock, /localStorage|fetch\(|XMLHttpRequest|innerHTML|\beval\b|new Function|gamma|document\./);
