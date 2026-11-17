@@ -4443,6 +4443,87 @@ async function anReadAudio(db, kAudio, hid, id){
 }
 /*AUDIONOTA-END*/
 
+/* ---------- P2 · Biblioteca unificada: modalidad SIN bóveda (ensayo, NO conectada a la captura) ----------
+   Misma base AN_DB/meta/chunks e IDs que E2; los fragmentos NO se cifran.
+   Una ficha «claro» se distingue de una ficha AES-GCM; nunca inferir la modalidad por falta de key.
+   La integridad SHA-256 detecta deterioros accidentales, NO autentica contra alguien que modifica
+   el audio y las huellas a la vez. Antes de activar este recorrido en la interfaz faltan copia
+   versión 2 y restauración probada. Esta capa no migra ni borra el audio de la base anterior. */
+/*P2-BIBLIOTECA-START*/
+const AN_PLAIN_MODE = 'claro', AN_PLAIN_MAX_BYTES = 30 * 1024 * 1024;
+function anPlainValidMeta(m){
+  return anValidMeta(m) && m.mode === AN_PLAIN_MODE && m.key == null && m.sealed == null &&
+    m.plain && typeof m.plain === 'object' && Array.isArray(m.plain.parts) &&
+    m.plain.parts.length === m.parts && m.parts >= 1 && m.parts <= 100000 &&
+    m.plain.parts.every(p => p && (p.origin === 'grabado' || p.origin === 'cargado') &&
+      typeof p.mime === 'string' && p.mime.length < 100 &&
+      (p.name == null || (typeof p.name === 'string' && p.name.length <= 255)) &&
+      anIsInt(p.chunks) && p.chunks > 0 && anIsInt(p.bytes) &&
+      (p.ms === null || anIsInt(p.ms)) && p.complete === true &&
+      Array.isArray(p.hashes) && p.hashes.length === p.chunks &&
+      p.hashes.every(h => typeof h === 'string' && /^[A-Za-z0-9+/]{43}=$/.test(h))) &&
+    m.plain.parts.reduce((n,p) => n + p.bytes, 0) === m.bytes;
+}
+const anPlainHash = async blob => anB64(new Uint8Array(await crypto.subtle.digest('SHA-256', await blob.arrayBuffer())));
+async function anPlainHealth(db, id){
+  const m = await anGetMeta(db, id);
+  if (!m || !anPlainValidMeta(m) || m.state !== 'cerrado') return {ok:false, m, why:'ficha o escritura pendiente'};
+  const b = anChunkBounds(id);
+  const keys = await anTx(db, ['chunks'], 'readonly', t => t.objectStore('chunks').getAllKeys(IDBKeyRange.bound(b.lower,b.upper)));
+  const expected = [];
+  m.plain.parts.forEach((p,part) => { for(let n=0;n<p.chunks;n++) expected.push([id,part,n]); });
+  if (keys.length !== expected.length || keys.some((k,i) => !Array.isArray(k) || k[0] !== expected[i][0] || k[1] !== expected[i][1] || k[2] !== expected[i][2]))
+    return {ok:false,m,why:'fragmentos faltantes o sobrantes'};
+  let total = 0;
+  for (let part=0;part<m.plain.parts.length;part++){
+    const p = m.plain.parts[part]; let bytes = 0;
+    for (let n=0;n<p.chunks;n++){
+      const blob = await anGetChunk(db,id,part,n);
+      if (!(blob instanceof Blob)) return {ok:false,m,why:'fragmento faltante'};
+      bytes += blob.size;
+      if (await anPlainHash(blob) !== p.hashes[n]) return {ok:false,m,why:'fragmento alterado'};
+    }
+    if (bytes !== p.bytes) return {ok:false,m,why:'tamaño'};
+    total += bytes;
+  }
+  return {ok:total === m.bytes,m,why:total === m.bytes ? '' : 'tamaño'};
+}
+/* Se usa solo desde pruebas P2. No hay botón ni llamada en el flujo de grabación todavía.
+   El orden ficha-escribiendo → chunks → ficha-cerrado permite detectar cortes sin perder datos. */
+async function anPlainStageFile(db, file, ms){
+  if (vault.state !== 'off') throw new Error('El audio en claro no se puede escribir con la bóveda abierta.');
+  if (!(file instanceof Blob) || !anIsInt(file.size) || file.size < 1 || file.size > AN_PLAIN_MAX_BYTES) throw new Error('archivo fuera de límite');
+  const id = anNewId(), plan = anFilePlan(file.size);
+  if (!plan.length || !anIsInt(ms)) throw new Error('duración o archivo inválidos');
+  const part = {mime:String(file.type || 'application/octet-stream').slice(0,99), origin:'cargado',
+    name:String(file.name || '').slice(0,255), chunks:plan.length, bytes:file.size, ms, complete:true, hashes:[]};
+  const writing = {...anNewMeta(id,Date.now(),'escribiendo'),mode:AN_PLAIN_MODE,parts:1,bytes:file.size,plain:{parts:[part]}};
+  await anPutMeta(db,writing);
+  for(const c of plan){
+    const blob = file.slice(c.start,c.end);
+    part.hashes.push(await anPlainHash(blob));
+    await anPutChunk(db,id,0,c.n,blob);
+  }
+  const closed = {...writing,state:'cerrado',plain:{parts:[{...part,hashes:part.hashes.slice()}]}};
+  await anPutMeta(db,closed);
+  const health = await anPlainHealth(db,id);
+  if (!health.ok) throw new Error('audio incompleto o alterado; se conserva sin confirmar');
+  return id;
+}
+async function anPlainRead(db,id){
+  const h=await anPlainHealth(db,id);
+  if (!h.ok) throw new Error('audio no disponible o alterado (' + h.why + ')');
+  const out=[];
+  for(let part=0;part<h.m.plain.parts.length;part++){
+    const p=h.m.plain.parts[part], pieces=[];
+    for(let n=0;n<p.chunks;n++) pieces.push(await anGetChunk(db,id,part,n));
+    out.push({mime:p.mime,origin:p.origin,ms:p.ms,blob:new Blob(pieces,{type:p.mime})});
+  }
+  return out;
+}
+/*P2-BIBLIOTECA-END*/
+
+
 /* ---------- E3: reproducción a pedido y espacio ---------- */
 let e3Current = null, e3Epoch = 0, e3PanelEpoch = 0, e3PersistAsked = false;
 const E3_PAUSE_MS = 60000;
