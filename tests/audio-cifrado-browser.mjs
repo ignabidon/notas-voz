@@ -130,6 +130,56 @@ try {
   await waitFor(`anDb().then(db => anGetMeta(db, ${JSON.stringify(f.id)})).then(m => m === undefined)`, 'audio descartado');
   assert.equal(await run('convAudioId'), null);
 
+  // Entrega 2: confirmar una nota exclusivamente con audio cifrado, aunque Whisper no haya producido texto.
+  const only = JSON.parse(await run(`(async () => {
+    convClearComposer(); convOpenId = null; convStartPending(true);
+    const id = await anSaveFile(new File([new Uint8Array([1,2,3,4,5,6])], 'audio-inventado.mp3', {type:'audio/mpeg'}), 1200);
+    $('text').value = ''; refreshConvEditor();
+    const button = $('save').querySelector('span').textContent, visible = !$('save').hidden;
+    dead = true; await convSave(); dead = false;
+    const entry = convStore.data.entries.at(-1);
+    return JSON.stringify({id, button, visible, entry, remaining: convAudioId});
+  })()`));
+  assert.ok(only.id && only.visible);
+  assert.equal(only.button, 'Guardar solo audio');
+  assert.equal(only.entry.audioId, only.id);
+  assert.equal(only.entry.text, '', 'no fabricar texto para sortear validaciones');
+  assert.equal(only.entry.transcriptionStatus, 'error');
+  assert.equal(only.entry.audioParts, 1);
+  assert.equal(only.remaining, null, 'el editor se limpia solo al confirmar el guardado');
+
+  // Sin lugar para cifrar la nota, el audio y el borrador sobreviven y se puede reintentar.
+  const quota = JSON.parse(await run(`(async () => {
+    convClearComposer(); convOpenId = null; convStartPending(true);
+    const id = await anSaveFile(new File([new Uint8Array([5,4,3,2,1])], 'cuota-inventada.mp3', {type:'audio/mpeg'}), 1200);
+    const count = convStore.data.entries.length;
+    const original = Storage.prototype.setItem;
+    Storage.prototype.setItem = function(k,v) {
+      if (k === 'notasvoz.boveda.v1.r.conversaciones') throw new DOMException('cuota','QuotaExceededError');
+      return original.call(this,k,v);
+    };
+    try { await convSave(); }
+    finally { Storage.prototype.setItem = original; }
+    const unchanged = convStore.data.entries.length === count && convAudioId === id;
+    const retained = !!(await anGetMeta(await anDb(), id));
+    await convSave();
+    return JSON.stringify({unchanged, retained, saved: convStore.data.entries.at(-1).audioId === id});
+  })()`));
+  assert.equal(quota.unchanged, true, 'no limpiar ni dar por guardada una nota cuya escritura falló');
+  assert.equal(quota.retained, true, 'el audio persiste tras la cuota agotada');
+  assert.equal(quota.saved, true, 'reintento confirma el vínculo');
+
+  // Fragmento alterado: una nota sin texto no puede confirmar un audio dañado; no se borra nada.
+  const bad = JSON.parse(await run(`(async () => {
+    convClearComposer(); convOpenId = null; convStartPending(true);
+    const id = await anSaveFile(new File([new Uint8Array([9,9,9,9,9])], 'danado-inventado.mp3', {type:'audio/mpeg'}), 1200);
+    const db = await anDb(), before = convStore.data.entries.length;
+    await anPutChunk(db, id, 0, 0, new Blob([new Uint8Array([0,1,2])]));
+    await convSave();
+    return JSON.stringify({notSaved: convStore.data.entries.length === before, pending: convAudioId === id, exists: !!(await anGetMeta(db,id))});
+  })()`));
+  assert.equal(bad.notSaved && bad.pending && bad.exists, true, 'conservar el audio dañado y el borrador sin inventar éxito');
+
   // 9) Cortes: una grabación interrumpida y un archivo a medio guardar; al volver a abrir se resuelven (tabla 2.5).
   const corte = JSON.parse(await run(`(async () => {
     const r = anBeginRecording('audio/webm');
