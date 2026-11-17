@@ -4578,22 +4578,27 @@ async function e3Remove(entryId, audioId){
   finally { convSaving = false; renderConv(); void e3RefreshSpace(); }
 }
 async function e3Recover(id){
-  if (!anUsable() || convAudioWork() || copiaBusyN || !(await anLockOk())) return flash('No se puede crear la nota ahora. Terminá las tareas pendientes y usá la pestaña con permiso para guardar.');
+  if (!anUsable() || convAudioWork() || copiaBusyN || !(await anLockOk())) return flash('No se puede recuperar el audio ahora. Terminá las tareas pendientes y usá la pestaña con permiso para guardar.');
   if (convAudioWork() || copiaBusyN || e3Used(id)) return;
+  // Recuperar nunca descarta un mensaje que el usuario todavía no confirmó.
+  if ($('text').value.trim() || convAudioId || convEditingId || $('title').value.trim())
+    return flash('Primero guardá o descartá el borrador actual. No se reemplazó nada.');
   convSaving = true;
   try {
     const db = await anDb(), h = await anAudioHealth(db, vault.audioKey, vault.header.id, id);
     if (!h.ok) throw new Error('El audio está dañado o todavía no terminó de guardarse. Se conserva sin cambios.');
     if (e3Used(id)) return;
-    const r = convAddEntry(convStore.data, {conversationId: null, kind: 'audio', savedAt: Date.now(),
-      tzOffsetMin: new Date().getTimezoneOffset(), recordedAt: h.m.createdAt, text: '', transcriptionStatus: 'pendiente',
-      audioId: id, durationMs: anTotalMs(h.detail), audioParts: h.detail.parts.length});
-    await e3Write(r.data);
-    convOpenId = r.conversation.id;
-    document.querySelector('[data-delta-view="transcripcion"]').click(); renderConv(); flash('Audio recuperado en un cuaderno nuevo. Podés escucharlo y editar el texto.');
+    convClearComposer(); convOpenId = null; convComposeNew = true; convStartPending(true);
+    convAudioId = id; convAudioMs = anTotalMs(h.detail); convRecordedAt = h.m.createdAt;
+    const saved = await saveDraft();
+    document.querySelector('[data-delta-view="transcripcion"]').click(); renderConv();
+    flash(saved
+      ? 'Audio recuperado como borrador. Escuchalo, agregá texto si querés y tocá Guardar solo audio para confirmar.'
+      : 'El audio está disponible como borrador, pero no se pudo confirmar el guardado del borrador. No cierres la app sin resolverlo.');
   } catch (e) { flash(e.message); }
   finally { convSaving = false; void e3RefreshSpace(); }
 }
+
 async function e3RequestPersist(){
   if (!navigator.storage || !navigator.storage.persist) { $('e3Persistence').textContent = 'Este navegador no permite solicitar protección contra la limpieza automática.'; return; }
   try { const yes = await navigator.storage.persist(); $('e3Persistence').textContent = 'Protegido contra la limpieza automática: ' + (yes ? 'Sí.' : 'No. Creá una copia cifrada como respaldo.'); }
@@ -4631,7 +4636,7 @@ async function e3RefreshSpace(){
         const info = document.createElement('p'); info.textContent = (orphan ? 'Audio sin nota' : pending ? 'Audio en edición' : 'Audio de ' + entries.length + ' nota(s)') + ' · ' + fmt(m.createdAt) + ' · ' + mb(m.bytes) + (anDamaged.has(m.id) ? ' · Dañado: conservado sin cambios' : '');
         row.append(info);
         const actions = document.createElement('div'); actions.className = 'row';
-        if (orphan) actions.append(convButton('Crear nota', () => void e3Recover(m.id)), convButton('Borrar audio', () => void e3Remove(null, m.id), 'ghost danger'));
+        if (orphan) actions.append(convButton('Preparar nota', () => void e3Recover(m.id)), convButton('Borrar audio', () => void e3Remove(null, m.id), 'ghost danger'));
         else if (entries.length) actions.append(convButton('Ver nota', () => { document.querySelector('[data-delta-view="transcripcion"]').click(); convOpen(entries[0].conversationId); }));
         row.append(actions); list.append(row);
       }
