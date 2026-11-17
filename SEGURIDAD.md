@@ -30,6 +30,14 @@ Cambio de presentación y ayudas; sin datos persistentes nuevos, claves nuevas, 
 - **Alcance:** solo la propia aplicación del usuario (`index.html` en `main`, su sitio de GitHub Pages y la configuración del repositorio). No se probó ningún sitio ajeno.
 - **Regla de datos:** todas las pruebas usan información ficticia. Nunca datos reales de pacientes, ni en pruebas, ni en capturas, ni en diagnósticos.
 
+## 17/11/2026 · Reproducción de audios (paso E3, hallazgo 1)
+
+**[código + prueba técnica]** Con la protección abierta, un audio solo se descifra cuando el usuario toca **Reproducir**, un fragmento a la vez; la parte en curso se arma como `Blob` y se le da una URL temporal (`blob:`). Al terminar, pausar más de 60 s, cambiar de cuaderno o de pestaña, bloquear o salir de la página, se revoca la URL y se descarta la clave del audio de la memoria. Los datos cifrados en disco no se tocan al reproducir (la prueba compara el contenido antes y después).
+- **Límite que sigue:** mientras suena, la voz está descifrada en la memoria de la página y accesible por esa URL. Es inherente a escuchar; no se anonimiza (D1).
+- **Autobloqueo:** reproducir **no** lo frena (D11); la prueba fuerza el reloj de inactividad y verifica que el audio se libera.
+- **Sin cambios:** claves, formatos, CSP, orígenes y dependencias. Un audio dañado o ausente no rompe la pantalla ni se borra: se avisa y el texto sigue.
+- **Sin probar en el Motorola:** reproducción real en Brave/Android y `navigator.storage.persist()`.
+
 ## 17/11/2026 · Copia cifrada: crear y verificar (paso K1, hallazgo 1)
 
 **[código + prueba técnica]** Ajustes → Privacidad → «Copia cifrada». Detalle del formato en `docs/DISENO-ALMACENAMIENTO-CIFRADO-2026-11-16.md`, 2.6.

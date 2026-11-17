@@ -48,3 +48,8 @@ jobs:
       - name: Verificar lectura y edición móvil en Chrome (estados simulados)
         run: node tests/editor-browser.mjs
         timeout-minutes: 4
+
+
+      - name: Verificar reproductor E3 y almacenamiento
+        run: node tests/e3-browser.mjs
+        timeout-minutes: 4
