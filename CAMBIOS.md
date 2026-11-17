@@ -1,3 +1,23 @@
+## 16/11/2026 · Reproducción del audio descargado, confirmada en Motorola (solo documentación)
+
+- **Confirmación posterior del propietario:** el archivo descargado de **168 KB** se reprodujo y «se escucha bien». Se actualizan [Guía del propietario](GUIA-DEL-PROPIETARIO.md), [feedback de Motorola](docs/FEEDBACK-MOTOROLA-2026-11-16.md) y [pruebas pendientes](docs/PRUEBA-MOTOROLA-Y-PENDIENTES-USUARIO-2026-11-16.md).
+- **Alcance de la validación:** descarga y reproducción audible del archivo de prueba; **no** prueba MP3, retranscripción ni comparación exacta de duración del audio. Solo documentación, en el mismo PR #49; sin modificaciones de código.
+
+## 16/11/2026 · Feedback real del Motorola y actualización de la Guía (solo documentación)
+
+- **Responsable de la documentación:** ChatGPT (GPT-6), con resultados comunicados por el propietario. Rama `docs/guia-del-propietario-2026-11-16`, PR #49. `main` revisado en `aab2b903`.
+- **Comprobación comunicada:** el usuario completó en términos generales el punto 3 de la guía (flujo de grabación/transcripción/guardado), vio las notas como chat, abrió Editar y descargó un archivo de audio de **168 KB**. Pausar/reanudar, integridad/reproducción del archivo y persistencia de la edición no se verificaron individualmente en el relato. No se extiende a todas las pruebas técnicas del Motorola.
+- **Observaciones:** texto de edición muy pequeño, al corregir una nota nueva y al editar una burbuja; propuesta de seleccionar **nombre/cuaderno destino antes de grabar** (nuevo por defecto); Whisper transforma «si querés» en «si queréis». En el código, el compositor está en 90 px (76 px con teclado) y Whisper usa `language:'spanish', task:'transcribe'` (no traducción deliberada al español de España).
+- **Documentado:** [registro de feedback del Motorola](docs/FEEDBACK-MOTOROLA-2026-11-16.md), [Guía del propietario](GUIA-DEL-PROPIETARIO.md), [pruebas pendientes](docs/PRUEBA-MOTOROLA-Y-PENDIENTES-USUARIO-2026-11-16.md), y continuidad. E2/#47 y rediseño visual/#48 siguen en PR abiertos. El reproductor en burbujas permanece pendiente (E3).
+- **Alcance:** documentación solamente; sin modificación de `index.html`, transcripción, datos guardados ni pruebas automáticas. **Motorola: observaciones del usuario**, no ejecución de una batería automatizada. Próxima implementación requiere revisión y autorización separada.
+
+## 16/11/2026 · Guía del propietario (solo documentación)
+
+- **Responsable:** ChatGPT (GPT-6). Rama: `docs/guia-del-propietario-2026-11-16`. Base: `main` en `aab2b903`. Alcance: `GUIA-DEL-PROPIETARIO.md`, enlace en `README.md` y este registro. Sin cambios de aplicación, almacenamiento, cifrado o pruebas.
+- **Qué agrega:** instrucciones para grabar, escribir, guardar, corregir y anonimizar notas, organizar cuadernos, conservar audios, usar la protección, descargar copias parciales, hacer pruebas en el Motorola y supervisar el trabajo por PR.
+- **Estado que documenta:** E2 (PR #47) y Clínica editorial (PR #48) siguen abiertos; no se los presenta como publicados. Mantiene advertencias sobre audios sin cifrar, respaldos integrales pendientes y pruebas físicas no realizadas.
+- **Verificación:** lectura cruzada con `index.html`, `README.md`, `AGENTS.md`, `SEGURIDAD.md`, `DISENO-CIFRADO.md`, el tablero del almacenamiento y los PR abiertos. Solo documentación: **no se ejecutaron pruebas automáticas ni prueba en el Motorola**. No unir este PR sin permiso del propietario.
+
 ## 16/11/2026 · Paso E1: base nueva de audios por nota, SIN ACTIVAR
 
 - **Responsable:** Claude (Sonnet 5.5), con permiso explícito del usuario (plan mostrado y aprobado). Rama: `e1-base-audios-por-nota`. Base: `fc86681` (`main`). Alcance: solo el paso E1 del tablero [docs/PLAN-ALMACENAMIENTO-CIFRADO.md](docs/PLAN-ALMACENAMIENTO-CIFRADO.md).

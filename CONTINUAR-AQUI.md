@@ -1,5 +1,10 @@
 # CONTINUAR AQUÍ — DictaNota
 
+> **ACTUALIZACIÓN DE CONTEXTO — 16/11/2026, comprobación contra `main` `aab2b903`.** El texto histórico de abajo se escribió antes de los PR más recientes y no es un inventario vigente. **E1/#45 ya está unido a `main`** (base de audio por nota apagada). **E2/#47 sigue abierto y no integrado; PR #48 («Clínica editorial») sigue abierto como borrador; PR #49 («Guía del propietario») sigue abierto.** Verificar de nuevo al retomar.
+>
+> **Prueba real y feedback del propietario (16/11):** [docs/FEEDBACK-MOTOROLA-2026-11-16.md](docs/FEEDBACK-MOTOROLA-2026-11-16.md). Confirmó recorrido básico de Dictar a Guardar en cuaderno y descarga de audio (168 KB). Encontró editor demasiado pequeño, quiere cambiar el nombre y el destino a un cuaderno desde Dictar, y observó «si queréis» por «si querés» en Whisper. **No implementar automáticamente estas mejoras por leer este archivo**; son requisitos para un PR funcional futuro tras revisión de dependencias, B1/B3 y el PR #48. No confundir el feedback con pruebas de MP3, huella, respaldo, anonimización o reproducción íntegra del audio.
+>
+
 > **▶ ESTADO AL 16/11/2026, 18:40 (Claude Fable 5.2).** En `main` ya están: la **Etapa N** (pestañas Dictar / Cuadernos; PR #43 de ChatGPT), la continuidad (PR #42) y el **diseño del almacenamiento cifrado** (PR #44). Los tres se unieron con permiso del usuario, con merge normal.
 > **E1 está hecho (PR #45, a la espera de que el usuario lo una; sin probar en el Motorola). PRÓXIMO PASO: E2** una vez unido. Antes: E1, por indicación del usuario. Todo lo necesario está en el tablero de nombre fijo **[docs/PLAN-ALMACENAMIENTO-CIFRADO.md](docs/PLAN-ALMACENAMIENTO-CIFRADO.md)**: qué incluye cada paso (E1 → E2 → K1 → E3 → K2 → T → AO), de qué depende, su estado y las trece decisiones del usuario. Un paso por vez; **plan corto y permiso explícito antes de programar**. La Etapa B sigue pendiente y E3 la espera.
 > Nada de lo unido hoy está probado en el Motorola. Los bloques de abajo son anteriores a estas uniones.
