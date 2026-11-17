@@ -102,7 +102,41 @@ try{
   assert.equal(opened.cuadernos,1);
   assert.equal(opened.notas,2);
   assert.equal(opened.audio,true);
-  console.log('K2 OK: formato 1, 2 notas/1 audio cifrado, clave incorrecta/corte, versión 2 clara rechazada, perfil ocupado, lote interrumpido, reapertura e integridad de audio');
+
+  // Segundo origen del mismo servidor = almacenamiento totalmente independiente.
+  // Construir formato 2 con los fragmentos CIFRADOS de la copia fija v1 y recuperarlos.
+  await call('Page.navigate',{url:'http://127.0.0.1:'+server.address().port+'/'});
+  for(let i=0;i<120;i++){
+    if(await run('document.readyState==="complete" && typeof k2RestoreEmpty==="function"'))break;
+    await new Promise(r=>setTimeout(r,100));
+    if(i===119)throw Error('Segunda instalación no inició');
+  }
+  assert.equal(await run('k2StorageEmpty()'),true);
+  const version2=JSON.parse(await run('(async()=>{' +
+    'const f='+v1+',pass="frase de prueba inventada 901",h=await k2Header(f),opened=await copiaOpenWithSecret(h,pass);'+
+    'const verified=await copia2Verify(f,header=>copiaOpenWithSecret(header,pass));'+
+    'const plan=await k2ReadPlan(f,verified,opened.key);'+
+    'const w=copia2Writer(plan.header,opened.key,"completa",Date.now());'+
+    'for(const [name,raw] of plan.records)await w.registro(name,raw);'+
+    'await w.config(plan.cfg);'+
+    'for(const m of plan.audios){'+
+    'const chunks=plan.chunks.filter(c=>c.id===m.id).map(c=>({part:c.part,n:c.index,blob:f.slice(c.start,c.start+c.size)}));'+
+    'await w.audioCifrado(m,chunks);'+
+    '}'+
+    'const file2=await w.finish(),check=await copia2Verify(file2,header=>copiaOpenWithSecret(header,pass));'+
+    'const restored=await k2RestoreEmpty(file2,pass),db=await anDb(),metas=await anListMeta(db);'+
+    'const health=await anAudioHealth(db,opened.audioKey,h.id,metas[0].id);'+
+    'return JSON.stringify({format:restored.formato,audios:restored.audios,fragmentos:restored.fragmentos,'+
+    'notas:restored.notas,check:check.formato,health:health.ok,header:!!localStorage.getItem(VAULT_HEADER)});'+
+    '})()'));
+  assert.equal(version2.format,2);
+  assert.equal(version2.check,2);
+  assert.equal(version2.audios,1);
+  assert.equal(version2.fragmentos,3);
+  assert.equal(version2.notas,2);
+  assert.equal(version2.health,true);
+  assert.equal(version2.header,true);
+  console.log('K2 OK: formatos 1 y 2 cifrados, audio íntegro, claves erróneas, cortes, audio claro rechazado, instalación ocupada y recuperación del lote');
 }finally{
   try{ws?.close()}catch(e){}
   chrome.kill('SIGKILL');server.close();
