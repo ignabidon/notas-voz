@@ -1,6 +1,7 @@
-# DictaNota · Prueba corta en el celular
+# DictaVoz · Prueba corta en el celular
 
 > **Para:** Ignacio. Este archivo no cambia de nombre. Lo mantiene la IA que haga cada paso.
+> **Aviso de Ignacio (17/11/2026):** tengo **limitaciones técnicas para hacer pruebas en el Motorola**. **Si una prueba se puede evitar, se evita**: las IA deben probar todo en laboratorio y pedirme solo lo que únicamente se ve en el teléfono, con pasos cortos y de a pocos. Los pasos que siguen sin probar **no frenan** el avance.
 > **No es obligatoria para seguir avanzando.** Las IA prueban todo lo posible en laboratorio; esto es solo lo que **únicamente se ve en tu teléfono**.
 > **Usá solo datos inventados.** Nada de pacientes reales.
 > Última actualización: 17/11/2026, 9:19 (con tu reporte de la prueba en el Motorola, ya con E3 unido a `main`).
@@ -59,12 +60,13 @@ Marcá cada uno como **bien** o **falló**. Si falló, sacá una captura.
 ### Ajustes: qué habría que resolver
 Ideas para cuando se encare (no están decididas): agrupar por tarea («Protección», «Copias», «Audio y espacio», «Transcripción», «Aspecto»), que cada grupo se abra aparte con una línea corta, textos más breves, y un buscador o un acceso rápido a lo que más se usa. Antes de programar, la IA te muestra una maqueta y espera tu aprobación.
 
-## Nombre de la aplicación (pendiente)
+## Nombre de la aplicación (decidido el 17/11/2026)
 
-Hablaste con ChatGPT y encontraron que **ya existe otra aplicación llamada Dictanota** (dato tuyo; Claude no lo verificó). Se pensó renombrar a **DictaVoz**.
-- **Qué hay hoy:** en `main` **no hay ningún documento que decida el cambio**. Solo existe una propuesta de ChatGPT, sin unir (PR #52, `docs/VISION-EXPERIENCIA-DICTAVOZ.md`), que lista «DictaVoz» como nombre candidato y dice expresamente que **no se cambie aún** el nombre visible, el repositorio, las rutas ni las claves.
-- **Qué habría que revisar antes de cambiar:** el nombre aparece unas 30 veces en `index.html` (título, encabezado y textos) y en README y documentos. **Lo que no se debe renombrar** porque guarda tus datos: las claves `notasvoz.dictanota.v2` y `notasvoz-dictanota-audio`, el candado `dictanota-una-pestana` y las claves históricas «gamma». Lo delicado: la extensión **`.dictanota`** de la copia cifrada (si se cambia, las copias viejas tienen que seguir abriéndose) y la dirección del sitio (`ignabidon.github.io/notas-voz/`), que cambiaría si se renombra el repositorio.
-- **Lo que falta:** que decidas el nombre final (y que verifiques que «DictaVoz» tampoco esté tomado). Después, una IA hace un plan corto y lo ejecuta.
+La app se llama ahora **DictaVoz** (antes DictaNota, que ya usaba otra aplicación). Cambió **solo lo que se ve dentro de la app**: título, encabezado, avisos y el nombre del archivo de copia (`DictaVoz-copia-AAAA-MM-DD.dictanota`).
+- **No cambia** (decisión de Ignacio): el repositorio y la dirección del sitio (`ignabidon.github.io/notas-voz/`), las claves internas de lo guardado, el candado de una pestaña y la extensión `.dictanota`. Así no se pierde ninguna nota ni copia ya hecha.
+- Una llave de acceso (huella) creada antes del cambio sigue apareciendo como «DictaNota» en el administrador de contraseñas del teléfono. Funciona igual.
+- **Para vos:** si tenías el acceso directo en la pantalla principal, puede seguir mostrando el nombre viejo hasta que lo vuelvas a agregar. No afecta el funcionamiento.
+- Falta que verifiques por tu cuenta que «DictaVoz» tampoco esté tomado.
 
 ## Cómo contarlo
 

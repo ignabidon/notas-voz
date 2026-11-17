@@ -10,7 +10,7 @@
 
 <meta name="theme-color" content="#F4F7F8">
 <meta name="studio-design" content="delta-11">
-<title>DictaNota · Prueba Delta</title>
+<title>DictaVoz · Prueba Delta</title>
 <style>
 :root{color-scheme:light;--bg:#F4F7F8;--bg2:#E6F0F3;--card:#FFFFFF;--ink:#12262C;--mut:#4F646A;--line:#D6E1E5;--acc:#0E5A6B;--acc-ink:#FFFFFF;--acc-soft:#E6F0F3;--rec:#FBEAEA;--rec-ink:#9B2C26;--note-bg:#FFF4DD;--note-ink:#7A4E00;--surface-soft:#F4F7F8;--shadow-color:#12262C12;--bar-l:65%;--error:#9B2C26;--error-bg:#FBEAEA;--success:#23634B;--success-bg:#E8F3EC}
 
@@ -787,12 +787,12 @@ body.delta-recording #transcriptionDockBar{height:3px;margin-top:3px}
   <div class="brand">
     <span class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7"/></svg></span>
     <div>
-      <h1>DictaNota</h1>
+      <h1>DictaVoz</h1>
       <p class="sub">Tu voz, en texto.</p>
     </div>
   </div>
   <span class="pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Procesamiento local</span>
-  <button type="button" id="topLock" class="ghost top-lock" hidden aria-label="Bloquear DictaNota"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Bloquear</button>
+  <button type="button" id="topLock" class="ghost top-lock" hidden aria-label="Bloquear DictaVoz"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Bloquear</button>
 </header>
 
 <main class="layout">
@@ -876,7 +876,7 @@ body.delta-recording #transcriptionDockBar{height:3px;margin-top:3px}
   <details class="card c-set" id="ajustes" open>
     <summary>Ajustes</summary>
     <div class="body">
-      <div class="screen-title"><span class="screen-overline">PERSONALIZACIÓN</span><h2>Ajustes</h2><p>Configurá DictaNota a tu manera.</p></div>
+      <div class="screen-title"><span class="screen-overline">PERSONALIZACIÓN</span><h2>Ajustes</h2><p>Configurá DictaVoz a tu manera.</p></div>
 
       <section class="settings-module" id="settingsReading"><div class="settings-module-top"><span class="module-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 19 8.5 6l5 13M5.5 14.5h6"/><path d="m14.5 19 3-8 3 8M15.7 16.5h4.6"/></svg></span><h3>Lectura y comodidad</h3></div>
         <div class="label-row"><label for="textSize">Tamaño del texto</label><button type="button" class="info-toggle" aria-label="Ayuda sobre tamaño del texto" aria-expanded="false" aria-controls="textSizeHelp"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7v1"/></svg></button></div>
@@ -918,7 +918,7 @@ body.delta-recording #transcriptionDockBar{height:3px;margin-top:3px}
           <h4 id="vaultTitle">Protección con contraseña y huella</h4>
           <p class="hint" id="vaultStatus" role="status"></p>
           <div id="vaultOff" hidden>
-            <p class="hint">Cifra en este celular las notas, el borrador, la copia para deshacer, la tabla de personas y el diccionario. Para abrir DictaNota vas a usar tu huella o una contraseña. Si olvidás la contraseña y perdés el código de recuperación, <b>nadie puede recuperar las notas</b>.</p>
+            <p class="hint">Cifra en este celular las notas, el borrador, la copia para deshacer, la tabla de personas y el diccionario. Para abrir DictaVoz vas a usar tu huella o una contraseña. Si olvidás la contraseña y perdés el código de recuperación, <b>nadie puede recuperar las notas</b>.</p>
             <button type="button" id="vaultEnable" class="p">Activar protección</button>
             <form id="vaultSetup" hidden>
               <label for="vaultNew">Contraseña nueva (al menos 8 caracteres; mejor una frase)</label>
@@ -1001,12 +1001,12 @@ body.delta-recording #transcriptionDockBar{height:3px;margin-top:3px}
       </details>
       </section>
       <section class="settings-module" id="settingsDictionary"><div class="settings-module-top"><span class="module-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4.5h10.5A2.5 2.5 0 0 1 18 7v12.5H7.5A2.5 2.5 0 0 1 5 17z"/><path d="M5 17a2.5 2.5 0 0 1 2.5-2.5H18"/></svg></span><h3>Diccionario</h3></div>
-        <div class="chk-row"><label class="chk"><input type="checkbox" id="learnAuto" checked><span><b>Aprender de mis correcciones</b></span></label><button type="button" class="info-toggle" aria-label="Ayuda sobre aprendizaje de correcciones" aria-expanded="false" aria-controls="learnHelp"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7v1"/></svg></button></div><p class="hint help-content" id="learnHelp" hidden>Si corregís una palabra en el texto de una nota, DictaNota la recuerda y la escribe bien la próxima vez, sin que toques ningún botón. Aprende solo palabras en minúscula que se parecen a lo que escribió Whisper; nunca nombres con mayúscula ni números. Aparece un aviso con «Deshacer» por si fue un error.</p>
+        <div class="chk-row"><label class="chk"><input type="checkbox" id="learnAuto" checked><span><b>Aprender de mis correcciones</b></span></label><button type="button" class="info-toggle" aria-label="Ayuda sobre aprendizaje de correcciones" aria-expanded="false" aria-controls="learnHelp"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7v1"/></svg></button></div><p class="hint help-content" id="learnHelp" hidden>Si corregís una palabra en el texto de una nota, DictaVoz la recuerda y la escribe bien la próxima vez, sin que toques ningún botón. Aprende solo palabras en minúscula que se parecen a lo que escribió Whisper; nunca nombres con mayúscula ni números. Aparece un aviso con «Deshacer» por si fue un error.</p>
         <details class="studio-dictionary">
       <summary>Corregir palabras frecuentes <small>Opcional · para errores que se repiten</small></summary>
       <p class="hint" id="dictHelp">Escribí qué palabra sale mal y por cuál reemplazarla, una corrección por línea. No hace falta explicar el motivo.</p>
       <p class="hint">Ejemplo: <code>contra transferencia =&gt; contratransferencia</code></p>
-      <p class="hint">Lo que DictaNota aprende de tus correcciones se agrega abajo, en «Aprendido de tus correcciones». Podés editar o borrar esas líneas. Se guarda automáticamente en este navegador y se aplica a las próximas transcripciones. Para corregir el texto que ya tenés, tocá «Aplicar al texto actual».</p>
+      <p class="hint">Lo que DictaVoz aprende de tus correcciones se agrega abajo, en «Aprendido de tus correcciones». Podés editar o borrar esas líneas. Se guarda automáticamente en este navegador y se aplica a las próximas transcripciones. Para corregir el texto que ya tenés, tocá «Aplicar al texto actual».</p>
       <p class="hint">También podés escribir un término técnico solo, como <code>Winnicott</code>: la app intentará corregir variantes parecidas. Revisá el resultado. Para nombres de pacientes, usá Personas y códigos.</p>
       <label for="dict" style="margin-top:12px">Tus palabras y correcciones</label>
       <textarea id="dict" aria-describedby="dictHelp" class="mono" spellcheck="false" autocapitalize="off"></textarea>
@@ -1114,7 +1114,7 @@ body.delta-recording #transcriptionDockBar{height:3px;margin-top:3px}
     <details id="peopleBox" class="studio-patients">
       <summary>Personas y códigos <small>· opcional: qué código lleva cada nombre</small></summary>
       <div class="anon-explain people-explain">
-        <p><b>¿Qué es esto?</b> Una lista que le dice a DictaNota: «cuando aparezca <b>este nombre</b>, escribí <b>este código</b>». Así, en todas tus notas la misma persona tiene siempre el mismo código y vos sabés quién es.</p>
+        <p><b>¿Qué es esto?</b> Una lista que le dice a DictaVoz: «cuando aparezca <b>este nombre</b>, escribí <b>este código</b>». Así, en todas tus notas la misma persona tiene siempre el mismo código y vos sabés quién es.</p>
         <p class="hint">Es opcional. Si no cargás a nadie, los nombres se ocultan como [Persona 1], [Persona 2]… La lista se guarda <b>solo en este navegador</b> y contiene nombres reales (no está cifrada).</p>
       </div>
       <div id="pFormPreview" class="anon-formpreview" role="status" aria-live="polite"></div>
@@ -1256,7 +1256,7 @@ body.delta-recording #transcriptionDockBar{height:3px;margin-top:3px}
       <button type="button" id="studioDockStop">Detener grabación</button>
     </div>
   </div>
-<nav class="studio-nav" aria-label="Pantallas de DictaNota">
+<nav class="studio-nav" aria-label="Pantallas de DictaVoz">
   <a href="#grabacion" data-delta-view="grabacion" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2.5" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3.5M8.5 21.5h7"/></svg><span>Dictar</span></a>
   <a href="#transcripcion" data-delta-view="transcripcion"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 2.5h8l4 4V21H7zM15 2.5v4h4M10 11h6M10 15h6M10 19h4"/></svg><span>Cuadernos</span></a>
   <a href="#anonimizar" id="studioAnonLink" data-delta-view="anonimizar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v6c0 4 8 9 8 9s8-5 8-9V6z"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg><span>Anonimizar</span></a>
@@ -1265,7 +1265,7 @@ body.delta-recording #transcriptionDockBar{height:3px;margin-top:3px}
 <dialog id="correctionDialog" aria-labelledby="correctionTitle" aria-describedby="correctionDescription">
   <form id="correctionForm">
     <h2 id="correctionTitle">Corregir selección</h2>
-    <p class="hint" id="correctionDescription">Cambiá esta aparición. Si la corrección es de una palabra mal transcripta, DictaNota la aprende sola para la próxima vez (se puede apagar en Ajustes → Diccionario).</p>
+    <p class="hint" id="correctionDescription">Cambiá esta aparición. Si la corrección es de una palabra mal transcripta, DictaVoz la aprende sola para la próxima vez (se puede apagar en Ajustes → Diccionario).</p>
     <label for="correctionOriginal">Texto seleccionado</label>
     <input id="correctionOriginal" type="text" readonly>
     <label for="correctionReplacement">Reemplazar por…</label>
@@ -1288,7 +1288,7 @@ body.delta-recording #transcriptionDockBar{height:3px;margin-top:3px}
 <div id="vaultLock" class="vault-lock" role="dialog" aria-modal="true" aria-labelledby="vaultLockTitle" hidden>
   <div class="vault-lock-card">
     <span class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>
-    <h2 id="vaultLockTitle">DictaNota está bloqueada</h2>
+    <h2 id="vaultLockTitle">DictaVoz está bloqueada</h2>
     <p class="hint">Tus notas están cifradas en este celular.</p>
     <button type="button" id="vaultBioUnlock" class="p" hidden>Desbloquear con huella</button>
     <form id="vaultLockForm">
@@ -1497,7 +1497,7 @@ function createVault(storage, opts){
   v.setError = msg => { v.error = msg; v.onError(msg); };
   /* Una sola pestaña escribe (diseño 2.5). La otra queda en «solo lectura»: ve los datos pero no guarda nada protegido,
      ni notas, ni borrador, ni personas, ni diccionario, ni la cabecera. Así no pisa lo que guarda la primera. */
-  const readOnlyError = () => { const e = new Error('DictaNota está abierta en otra pestaña: en esta no se guarda nada. Cerrala y recargá esta.'); e.name = 'OtraPestana'; return e; };
+  const readOnlyError = () => { const e = new Error('DictaVoz está abierta en otra pestaña: en esta no se guarda nada. Cerrala y recargá esta.'); e.name = 'OtraPestana'; return e; };
   const assertWritable = () => { if (v.readOnly) throw readOnlyError(); };
   // Pide el candado. Si no se consigue (otra pestaña lo tiene, el navegador no lo ofrece o falla), falla cerrada: solo lectura.
   v.acquire = async () => {
@@ -1506,7 +1506,7 @@ function createVault(storage, opts){
     v.readOnly = !ok;
     return ok;
   };
-  const lockDenied = () => { const e = new Error('No se cambió nada: DictaNota está abierta en otra pestaña, o este navegador no permite comprobarlo. Cerrá las demás pestañas y recargá esta.'); e.name = 'OtraPestana'; return e; };
+  const lockDenied = () => { const e = new Error('No se cambió nada: DictaVoz está abierta en otra pestaña, o este navegador no permite comprobarlo. Cerrá las demás pestañas y recargá esta.'); e.name = 'OtraPestana'; return e; };
   // ¿Llegó cifrado al almacenamiento? (no basta con la copia en memoria: diseño 2.1, punto 3)
   v.saved = k => !v.pending.has(k) && !v.frozen.has(k);
   v.flush = () => {
@@ -1684,9 +1684,9 @@ function vaultTakeTabLock(){
     const ok = !!l.ok && l.soportado !== false;
     vault.readOnly = !ok;
     const w = vaultEl('tabLockWarn');
-    const why = ok ? '' : l.fallo ? 'No se pudo comprobar si DictaNota está abierta en otra pestaña (el navegador dio un error).'
-      : l.soportado === false ? 'Este navegador no permite comprobar si DictaNota está abierta en otra pestaña.'
-      : 'DictaNota está abierta en otra pestaña.';
+    const why = ok ? '' : l.fallo ? 'No se pudo comprobar si DictaVoz está abierta en otra pestaña (el navegador dio un error).'
+      : l.soportado === false ? 'Este navegador no permite comprobar si DictaVoz está abierta en otra pestaña.'
+      : 'DictaVoz está abierta en otra pestaña.';
     if (w) { w.hidden = ok; w.textContent = ok ? '' : why + ' En esta podés leer, pero por seguridad no se guarda nada (ni notas, ni borrador, ni audios). Cerrá las demás pestañas y recargá esta.'; }
     return ok;
   });
@@ -1721,15 +1721,15 @@ async function vaultBioEvaluate(credId, prfSalt){
   return new Uint8Array(out);
 }
 async function vaultBioRegister(dek){
-  if (!window.PublicKeyCredential || !navigator.credentials || !navigator.credentials.create) throw new Error('Este navegador no permite usar la huella para DictaNota.');
+  if (!window.PublicKeyCredential || !navigator.credentials || !navigator.credentials.create) throw new Error('Este navegador no permite usar la huella para DictaVoz.');
   const prfSalt = vaultRandom(32);
   const cred = await navigator.credentials.create({publicKey: {
-    rp: {name: 'DictaNota'}, user: {id: vaultRandom(16), name: 'DictaNota', displayName: 'DictaNota'}, challenge: vaultRandom(32),
+    rp: {name: 'DictaVoz'}, user: {id: vaultRandom(16), name: 'DictaVoz', displayName: 'DictaVoz'}, challenge: vaultRandom(32),
     pubKeyCredParams: [{type: 'public-key', alg: -7}, {type: 'public-key', alg: -257}],
     authenticatorSelection: {authenticatorAttachment: 'platform', residentKey: 'preferred', userVerification: 'required'},
     timeout: 120000, extensions: {prf: {eval: {first: prfSalt}}}}});
   const ext = cred.getClientExtensionResults ? cred.getClientExtensionResults() : {};
-  if (!ext.prf || ext.prf.enabled === false) throw new Error('Tu navegador o tu administrador de llaves de acceso no admite la función que necesita DictaNota (PRF). Seguí usando la contraseña.');
+  if (!ext.prf || ext.prf.enabled === false) throw new Error('Tu navegador o tu administrador de llaves de acceso no admite la función que necesita DictaVoz (PRF). Seguí usando la contraseña.');
   const credId = new Uint8Array(cred.rawId);
   const out = ext.prf.results && ext.prf.results.first ? new Uint8Array(ext.prf.results.first) : await vaultBioEvaluate(credId, prfSalt);
   await vault.addBio(dek, credId, prfSalt, out);
@@ -1864,7 +1864,7 @@ function vaultInitUI(){
     try { const dek = await vault.checkPassword(pw); await vaultOfferBio(dek); } catch (e) { vaultPanelMsg(vaultFriendly(e)); }
   });
   vaultEl('vaultBioRemove').addEventListener('click', () => {
-    if (!confirm('¿Dejar de usar la huella? Vas a desbloquear solo con la contraseña. La llave de acceso «DictaNota» se puede borrar después desde el Administrador de contraseñas de Google.')) return;
+    if (!confirm('¿Dejar de usar la huella? Vas a desbloquear solo con la contraseña. La llave de acceso («DictaNota» si la creaste antes del cambio de nombre, o «DictaVoz») se puede borrar después desde el Administrador de contraseñas de Google.')) return;
     vault.removeBio(); vaultRefreshPanel(); vaultPanelMsg('Ya no se usa la huella.');
   });
   vaultEl('vaultChangePw').addEventListener('click', async () => {
@@ -1876,7 +1876,7 @@ function vaultInitUI(){
   });
   vaultEl('vaultDisable').addEventListener('click', async () => {
     if (vaultBusy()) { vaultPanelMsg('Primero detené y terminá de transcribir.'); return; }
-    if (vault.readOnly) { vaultPanelMsg('DictaNota está abierta en otra pestaña: desde esta no se puede quitar la protección.'); return; }
+    if (vault.readOnly) { vaultPanelMsg('DictaVoz está abierta en otra pestaña: desde esta no se puede quitar la protección.'); return; }
     const why = vault.disableGuard ? await vault.disableGuard() : '';
     if (why) { vaultPanelMsg(why); return; }
     if (!confirm('¿Quitar la protección? Las notas, el borrador, las personas y el diccionario vuelven a guardarse SIN cifrar en este navegador.')) return;
@@ -2849,7 +2849,7 @@ async function convSave(){
   if (anBusyN > 0) return flash('Esperá unos segundos: se está guardando el audio cifrado.');
   if (!pendingOk()) return;
   if (!convStore.data) return flash('No se guardó: los cuadernos no están disponibles. ' + ($('convMsg').textContent || 'Desbloqueá la app y volvé a intentar.'));
-  if (vault.readOnly) return flash('No se guardó: DictaNota está abierta en otra pestaña. El texto sigue en el editor; cerrá la otra pestaña y recargá esta.');
+  if (vault.readOnly) return flash('No se guardó: DictaVoz está abierta en otra pestaña. El texto sigue en el editor; cerrá la otra pestaña y recargá esta.');
   const now = Date.now(), editing = convEditingId && convEntry(convEditingId);
   // Cuántas partes tiene el audio que se va a confirmar. Queda escrito en la nota: así, un borrador viejo que sobreviva a un corte
   // nunca puede hacer que «Cancelar» recorte partes ya confirmadas.
@@ -4108,7 +4108,7 @@ function fmtClock(ms){
 function endClock(){ if (tRun) { tAcc += Date.now() - tRun; tRun = 0; } }
 function beginClock(){ tAcc = 0; tRun = Date.now(); paused = false; clearInterval(clockT); clockT = setInterval(updClock, 250); updClock(); }
 function refreshTitle(){
-  const base = 'DictaNota · Prueba Delta';
+  const base = 'DictaVoz · Prueba Delta';
   let p = '';
   if (recording) p = (paused ? '⏸ ' : '● ') + fmtClock(elapsedMs());
   else if (busy || outstanding > 0 || feeding) p = '⏳ Transcribiendo';
@@ -4655,7 +4655,7 @@ function anDb(){
 let anLockWarned = false;
 async function anLockOk(){
   const ok = await vaultTakeTabLock();
-  if (!ok && !anLockWarned) { anLockWarned = true; flash('DictaNota está abierta en otra pestaña: en esta no se guardan audios. Cerrá la otra y recargá.'); }
+  if (!ok && !anLockWarned) { anLockWarned = true; flash('DictaVoz está abierta en otra pestaña: en esta no se guardan audios. Cerrá la otra y recargá.'); }
   return ok;
 }
 function anTargetNow(){
@@ -4755,12 +4755,12 @@ function anRecErr(r, e){
     : 'No se pudo guardar el audio cifrado (' + anErrName(e) + '): esta grabación queda sin audio. La transcripción sigue igual.');
 }
 /* Falló el último paso (la ficha final: no hay espacio u otro error). Los fragmentos YA están guardados, pero la ficha sigue «grabando»:
-   NO está marcada como incompleta ni cerrada. Se recupera sola al abrir DictaNota (revisión al abrir). El aviso dice exactamente eso. */
+   NO está marcada como incompleta ni cerrada. Se recupera sola al abrir DictaVoz (revisión al abrir). El aviso dice exactamente eso. */
 function anRecFinishErr(r, e){
   r.failed = true;
   logDiag('Audio cifrado: no se pudo escribir la ficha final (' + anErrName(e) + '); queda sin cerrar y se recupera al abrir.');
   if (r.finishWarned) return; r.finishWarned = true;
-  flash('El audio se guardó hasta donde llegó, pero no se pudo cerrar su ficha (' + anErrName(e) + '). Queda sin cerrar y se recupera la próxima vez que abras DictaNota: no borres los datos del sitio. La transcripción sigue igual.');
+  flash('El audio se guardó hasta donde llegó, pero no se pudo cerrar su ficha (' + anErrName(e) + '). Queda sin cerrar y se recupera la próxima vez que abras DictaVoz: no borres los datos del sitio. La transcripción sigue igual.');
 }
 /* Cada fragmento de 10 s se cifra apenas llega; ante un corte se pierden como mucho esos 10 s. */
 function anRecChunk(r, data){
@@ -4963,8 +4963,8 @@ async function anReviewOnOpen(){
 const COPIA_MAGIC = 'DICTANOTA-COPIA\n', COPIA_FORMATO = 1, COPIA_TIPOS = 'RCMAF';
 const COPIA_MAX_CABECERA = 65536, COPIA_MAX_NOMBRE = 200, COPIA_MAX_BLOQUE = 64 * 1024 * 1024, COPIA_MAX_BLOQUES = 5000000;
 const COPIA_MSG = {
-  NoEsCopia: 'Ese archivo no es una copia de DictaNota.',
-  FormatoNuevo: 'Esta copia es de una versión más nueva de DictaNota. Actualizá la app para abrirla.',
+  NoEsCopia: 'Ese archivo no es una copia de DictaVoz.',
+  FormatoNuevo: 'Esta copia es de una versión más nueva de DictaVoz. Actualizá la app para abrirla.',
   Clave: 'La contraseña o el código no abren esta copia.',
   Cortada: 'La copia está incompleta: el archivo se cortó. Volvé a crearla o a descargarla.',
   Alterada: 'La copia está dañada o fue modificada: no pasó la comprobación.',
@@ -4983,7 +4983,7 @@ function copiaHead(tipo, nombre, largo){
 }
 function copiaName(now){
   const d = new Date(now), p = n => String(n).padStart(2, '0');
-  return 'DictaNota-copia-' + d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + '.dictanota';
+  return 'DictaVoz-copia-' + d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + '.dictanota';
 }
 function copiaCount(text){
   try { const d = JSON.parse(text); return {cuadernos: Array.isArray(d.conversations) ? d.conversations.length : null, notas: Array.isArray(d.entries) ? d.entries.length : null}; }
@@ -5602,7 +5602,7 @@ $('loadAudioFile').addEventListener('change', () => {
   if (f.size > IMPORT_MAX_BYTES) return flash('Ese archivo supera 30 MB. Cortalo en partes.');
   if (f.type && !/^(audio|video)\//.test(f.type)) return flash('Ese archivo no parece un audio. Elegí un archivo de sonido (MP3, M4A, WAV, OGG…).');
   const guarda = anUsable() && $('saveAudio').checked;
-  if (!confirm('¿Transcribir «' + f.name + '» (' + mb(f.size) + ')? ' + (guarda ? 'El archivo se guarda cifrado en DictaNota, unido a la nota.' : 'El archivo no se guarda en DictaNota.') + ' Guardá antes las correcciones del editor: el texto actual se reemplaza si «Empezar de cero al grabar» está activado.')) return;
+  if (!confirm('¿Transcribir «' + f.name + '» (' + mb(f.size) + ')? ' + (guarda ? 'El archivo se guarda cifrado en DictaVoz, unido a la nota.' : 'El archivo no se guarda en DictaVoz.') + ' Guardá antes las correcciones del editor: el texto actual se reemplaza si «Empezar de cero al grabar» está activado.')) return;
   transcribeBlob(() => f, null, 'el audio cargado', true);
 });
 

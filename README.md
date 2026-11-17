@@ -1,4 +1,6 @@
-# DictaNota — Prueba Delta
+# DictaVoz — Prueba Delta
+
+> **Nombre (17/11/2026):** la aplicación se llamaba DictaNota y desde hoy se llama **DictaVoz**, porque ya existía otra app con el nombre anterior. Cambió solo lo que se ve dentro de la app. El repositorio (`ignabidon/notas-voz`), la dirección del sitio, las claves internas de lo guardado y la extensión `.dictanota` de las copias **no cambian**, para no perder datos ni enlaces. Los documentos históricos de este repositorio siguen diciendo «DictaNota».
 
 > Antes de editar: leer [SEGURIDAD.md](SEGURIDAD.md) y [AGENTS.md](AGENTS.md).
 
@@ -44,17 +46,17 @@ En **Ajustes → Privacidad y almacenamiento → Protección con contraseña y h
 
 1. Tocá **Activar protección** y elegí una contraseña de al menos 8 caracteres (mejor una frase).
 2. Anotá en papel el **código de recuperación** (o usá «Copiar código» y pegalo en un lugar seguro). Se muestra una sola vez y sirve si olvidás la contraseña. Si lo perdiste, en Ajustes podés crear un **nuevo código de recuperación** con tu contraseña. **Sin la contraseña ni el código, nadie puede recuperar las notas.**
-3. Tocá **Activar huella**. El celular crea una llave de acceso «DictaNota» y desde ahí abrís con la huella.
+3. Tocá **Activar huella**. El celular crea una llave de acceso «DictaVoz» (si la creaste antes del cambio de nombre, aparece como «DictaNota») y desde ahí abrís con la huella.
 
 Se bloquea a los 15 minutos sin uso (nunca mientras grabás o transcribís) o con el botón **Bloquear** de arriba. Desde el paso E2 (17/11/2026), con la protección activada y «Conservar audio» encendido, **los audios nuevos se guardan cifrados y unidos a su nota** (desde el paso E3 se escuchan desde la burbuja de la nota con **Reproducir**, y mientras haya audios cifrados no se puede quitar la protección). Los audios guardados antes en «Mis grabaciones», o con la protección apagada, **siguen sin cifrar**. Lo que descargás, copiás o compartís sale sin cifrar.
 
-**Copia cifrada (17/11/2026):** en **Ajustes → Privacidad y almacenamiento → Copia cifrada** podés **crear** un archivo de respaldo cifrado (`DictaNota-copia-AAAA-MM-DD.dictanota`) con tus cuadernos, notas, personas, diccionario y ajustes, y **verificar** que una copia descargada está entera. Con la protección activada se abre con tu contraseña o tu código de recuperación y puede incluir los audios cifrados; con la protección apagada elegís una contraseña solo para ese archivo y lleva solo texto. **Todavía no se puede volver a cargar la copia en la app**: eso llega en un paso próximo. Guardá el archivo fuera del celular. Estado: probado en Chrome de laboratorio; **falta probarlo en el Motorola**. Estado: probado en Chrome de laboratorio con una huella simulada; **falta probarlo en el Motorola**. Detalles en [DISENO-CIFRADO.md](DISENO-CIFRADO.md).
+**Copia cifrada (17/11/2026):** en **Ajustes → Privacidad y almacenamiento → Copia cifrada** podés **crear** un archivo de respaldo cifrado (`DictaVoz-copia-AAAA-MM-DD.dictanota`) con tus cuadernos, notas, personas, diccionario y ajustes, y **verificar** que una copia descargada está entera. Con la protección activada se abre con tu contraseña o tu código de recuperación y puede incluir los audios cifrados; con la protección apagada elegís una contraseña solo para ese archivo y lleva solo texto. **Todavía no se puede volver a cargar la copia en la app**: eso llega en un paso próximo. Guardá el archivo fuera del celular. Estado: probado en Chrome de laboratorio; **falta probarlo en el Motorola**. Estado: probado en Chrome de laboratorio con una huella simulada; **falta probarlo en el Motorola**. Detalles en [DISENO-CIFRADO.md](DISENO-CIFRADO.md).
 
 ## Funciones
 - Grabación de voz, cronómetro, pausa/reanudación, marcas y detención.
 - **Cuatro pantallas:** Audio, Texto, **Anonimizar** y Ajustes, accesibles desde la barra inferior. Mientras se graba, mantiene **Pausar/Reanudar** y **Detener** sin importar qué pantalla esté abierta.
 - Transcripción local con Whisper. Descargar o cambiar de modelo puede requerir conexión a internet.
-- Corrección contextual de palabras o frases. **DictaNota aprende sola de lo que corregís** (se puede apagar en Ajustes → Diccionario) y también podés escribir reglas a mano en el diccionario.
+- Corrección contextual de palabras o frases. **DictaVoz aprende sola de lo que corregís** (se puede apagar en Ajustes → Diccionario) y también podés escribir reglas a mano en el diccionario.
 - Edición de texto; pantalla **Anonimizar** (explica para qué sirve, asocia cada nombre con un código y permite deshacer; revisar siempre).
 - Borrador, notas y audio guardados en el navegador; el botón Guardar solicita además un archivo TXT descargable; exportación y diagnósticos técnicos.
 
@@ -66,7 +68,7 @@ Se bloquea a los 15 minutos sin uso (nunca mientras grabás o transcribís) o co
 
 **Audios:** en la pestaña Audio, debajo del micrófono, el botón **Mis grabaciones** lleva a «Tus audios guardados» (también hay accesos en Texto y en Ajustes → Audio). Al terminar de guardarse una grabación aparece un **aviso verde «Grabación completa»** con el botón «Descargar audio», y un punto verde en la pestaña Audio si estás en otra pantalla. Cuando termina una transcripción, aparece un punto en la pestaña Texto. **Cargar un audio:** el botón «Cargar un audio para transcribir» transcribe un archivo del celular (hasta 30 MB y 15 minutos inclusive). **No lo guarda**, salvo que la protección esté activada y «Conservar audio» encendido: en ese caso queda cifrado y unido a su nota. Desde ahí descargás, convertís a MP3, transcribís de nuevo, borrás o recuperás el audio anterior.
 
-**Aprendizaje automático:** cuando corregís una palabra del texto, DictaNota la recuerda sola (sin botón) y la usa en próximas transcripciones. Verás el aviso «Aprendí tu corrección…» con **Deshacer**. Solo aprende errores de transcripción parecidos (palabras que se escriben o suenan casi igual), nunca nombres con mayúscula, números ni cambios de contenido, y no aprende de la anonimización. Lo aprendido queda en Ajustes → Diccionario, bajo «Aprendido de tus correcciones», donde podés borrarlo. Se apaga con «Aprender de mis correcciones».
+**Aprendizaje automático:** cuando corregís una palabra del texto, DictaVoz la recuerda sola (sin botón) y la usa en próximas transcripciones. Verás el aviso «Aprendí tu corrección…» con **Deshacer**. Solo aprende errores de transcripción parecidos (palabras que se escriben o suenan casi igual), nunca nombres con mayúscula, números ni cambios de contenido, y no aprende de la anonimización. Lo aprendido queda en Ajustes → Diccionario, bajo «Aprendido de tus correcciones», donde podés borrarlo. Se apaga con «Aprender de mis correcciones».
 
 **Cómo probarlo en el celular (datos ficticios):** (1) Abrí Anonimizar y leé la explicación; cargá una persona con código, volvé a Texto con un texto de prueba y anonimizá; deshacé. (2) En Texto corregí una palabra mal transcripta, cerrá el teclado y buscá el aviso «Aprendí…»; revisalo en Ajustes → Diccionario. (3) Grabá con «Conservar audio» y recuperalo desde Audio, Texto y Ajustes. Estado: pruebas automáticas y navegador de laboratorio; **sin prueba en el Motorola todavía**.
 
@@ -195,7 +197,7 @@ Se usa VisualViewport cuando está disponible y el navegador puede aceptar `inte
 
 Los prototipos web (`gamma-studio`, `gamma-profesional`, `gamma`, `prueba` y la web original), el experimento Android Alfa y su workflow se retiraron de **main**, pero se conservaron en la rama de archivo: [archivo-antes-de-delta-2026-11-15](https://github.com/ignabidon/notas-voz/tree/archivo-antes-de-delta-2026-11-15). También siguen en el historial de Git.
 
-La URL del repositorio permanece como **ignabidon/notas-voz** para no cambiar los enlaces. El nombre visible de la app es **DictaNota**.
+La URL del repositorio permanece como **ignabidon/notas-voz** para no cambiar los enlaces. El nombre visible de la app es **DictaVoz** (antes DictaNota).
 
 ## Guardar y descargar
 

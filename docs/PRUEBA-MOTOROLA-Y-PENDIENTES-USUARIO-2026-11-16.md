@@ -2,12 +2,13 @@
 
 > ## ▶ Actualización del 17/11/2026, 9:19 (Claude)
 > **Lo que ya está hecho** (unido a `main`, sin que tengas que hacer nada más): el PR #41 (Etapa A), la Etapa N (Dictar / Cuadernos), E1, E2 (audios cifrados), K1 (copia cifrada: crear y verificar), B3 (menú ⋯ de las notas) y **E3 (reproductor y panel de espacio)**. Lo de «Todavía no se pueden escuchar los audios desde la app» más abajo **ya no vale**: se escuchan desde la nota.
+> **Aviso:** tenés limitaciones técnicas para probar en el Motorola, así que las IA evitan pedirte pruebas que se puedan hacer en laboratorio.
 > **Lo que probaste hoy en el Motorola** está en [PRUEBA-CORTA-MOTOROLA.md](PRUEBA-CORTA-MOTOROLA.md), con el estado de cada paso. Esa es ahora la lista vigente de lo que falta; **esta prueba larga queda para otro día** (Whisper Small, MP3, huella, grabaciones largas).
 > **Tus pendientes hoy:**
 > 1. **Cerrar el PR #54** (lo reemplazó el #55, ya unido) y decidir qué hacer con los viejos: #49 (guía del propietario y feedback del Motorola), #37 (decisiones del motor), #52 (visión DictaVoz) y los borradores #22 y #1. Ninguna IA los cierra sin que lo pidas.
 > 2. **Proteger `main`** (sección 2): al 16/11 seguía sin protección; hoy no lo verifiqué.
-> 3. **Decidir el nombre.** Si ya existe otra app «Dictanota», hay que elegir otro (candidato: DictaVoz). Detalle y riesgos en la prueba corta, sección «Nombre de la aplicación». En `main` no hay todavía ningún documento que lo decida.
-> 4. **Ajustes**: tiene demasiado texto y opciones y no se entiende dónde está cada cosa. Anotado como pendiente de rediseño; antes de programar se te muestra una maqueta.
+> 3. **Nombre: decidido el 17/11 → DictaVoz.** Ya se cambió dentro de la app; el repositorio, las claves y la extensión `.dictanota` no cambian. Te queda verificar que el nombre no esté tomado. Detalle en la prueba corta.
+> 4. **Ajustes**: tiene demasiado texto y opciones. **Rediseño en marcha (17/11)**: primero se te muestra una maqueta y esperás a aprobarla.
 > 5. **Dos pedidos tuyos sin resolver** del uso en el Motorola: elegir cuaderno y nombre desde Dictar, y que «querés» no salga como «queréis». Y uno nuevo: **deshacer una edición ya guardada** (hoy no existe).
 > 6. **Próximo paso técnico: K2** (restaurar una copia cifrada). Es el que puede borrar datos: la IA te consulta antes de empezar.
 >

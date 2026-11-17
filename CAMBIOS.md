@@ -1,3 +1,12 @@
+## 17/11/2026 · Nombre visible: DictaVoz (decisión del usuario)
+
+- **Decisión de Ignacio (17/11, 9:27):** el nombre de la aplicación pasa a **DictaVoz** porque ya existe otra app «Dictanota». **Solo cambia lo que se ve dentro de la app**; el repositorio (`ignabidon/notas-voz`) y la dirección del sitio **no cambian**.
+- **Cambió:** título de la pestaña del navegador y encabezado, avisos y mensajes (otra pestaña, bloqueo, copia, huella), nombre de la llave de acceso nueva, nombre del archivo de copia (`DictaVoz-copia-AAAA-MM-DD.dictanota`), y los textos de `README.md`, `AGENTS.md` y `CLAUDE.md`. Pruebas ajustadas a los textos nuevos (`delta.test`, `copia-browser`, `e2-correcciones-browser`).
+- **No cambió, a propósito:** claves internas (`notasvoz.dictanota.v2`, `notasvoz-dictanota-audio`), candado `dictanota-una-pestana`, textos fijos del cifrado (`dictanota|v1`, etc.: cambiarlos dejaría ilegibles los datos ya guardados), la **extensión `.dictanota`** de las copias, las claves históricas «gamma» y los documentos históricos (siguen diciendo «DictaNota»).
+- **Llave de acceso:** una huella registrada antes del cambio sigue apareciendo como «DictaNota» en el administrador de contraseñas; funciona igual.
+- **Pruebas técnicas:** 166/166 Node y diez suites de Chrome en verde. **Motorola: sin probar** (se verá el nuevo nombre al abrir la página).
+- **Nota del usuario:** tiene limitaciones técnicas para probar en el Motorola; se evitan las pruebas que se puedan hacer en laboratorio (registrado en `docs/PRUEBA-CORTA-MOTOROLA.md`).
+
 ## 17/11/2026 · Reporte de la prueba en el Motorola y pendientes anotados (Claude, solo documentación)
 
 - **Qué probó Ignacio en el Motorola (Brave), con E3 ya unido:** grabar y guardar, reproducir desde la nota, editar y cancelar la edición, protección con contraseña, quitar el audio de una nota, y el panel «Espacio y audios guardados». Sin probar todavía: copia cifrada (pasos 5 y 6), adelantar/pausar (11), «Ver nota» (14) y el Sí/No de «almacenamiento persistente» (12). Estado paso por paso en `docs/PRUEBA-CORTA-MOTOROLA.md`. **Motorola: probado solo lo que ese archivo marca ✔; el resto sigue sin probar.**
