@@ -5836,7 +5836,12 @@ function draftAlreadyConfirmed(d){
   const same = e => e.text === d.text && (e.audioId || null) === audioId;
   if (typeof c.editing === 'string' && c.editing) {
     const saved = convStore.data.entries.find(e => e.id === c.editing);
-    return !!saved && same(saved);
+    if (!saved || !same(saved)) return false;
+    // Una edición puede agregar partes de audio sin cambiar texto ni audioId.
+    // Solo está confirmada si la nota reconoce MÁS partes que antes de la edición.
+    if (Number.isInteger(c.audioBase) && c.audioBase >= 1)
+      return Number.isInteger(saved.audioParts) && saved.audioParts > c.audioBase;
+    return true;
   }
   // La fecha de inicio del borrador también se registra como recordedAt en la nota.
   // No inferir un guardado a partir de un texto igual escrito en otro momento.
