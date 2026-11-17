@@ -130,8 +130,14 @@ test('diagnósticos v2: motivo de la placa de video, hilos y duración de pausas
 });
 
 test('Guardar agrega el mensaje a un cuaderno, sin descargar archivos ni usar las notas anteriores', () => {
-  const handler = html.match(/\$\('save'\)\.onclick = \(\) => \{([\s\S]*?)\n\};/);
+  // Segunda revisión de E2: el botón marca «guardando» y llama a convSave (que antes de confirmar lee cuántas partes tiene el audio).
+  assert.match(html, /\$\('save'\)\.onclick = async \(\) => \{\n  if \(convSaving\) return;\n  convSaving = true;\n  try \{ await convSave\(\); \} finally \{ convSaving = false; \}\n\};/);
+  const handler = html.match(/async function convSave\(\)\{([\s\S]*?)\n\}\nfunction convInit/);
   assert.ok(handler, 'falta acción de Guardar');
+  // E2 (correcciones): recién limpia el editor y avisa cuando el cifrado llegó al almacenamiento; si no, vuelve atrás.
+  const h = handler[1];
+  assert.ok(h.indexOf('await vault.flush(); ok = vault.saved(CONV_KEY);') > 0 && h.indexOf('await vault.flush()') < h.indexOf('convClearComposer()'), 'espera el guardado cifrado antes de limpiar');
+  assert.match(h, /if \(!ok\) \{\n\s*convStore\.revert\(before, prevRaw\); renderConv\(\);\n\s*return flash\('No se guardó: no hay espacio/);
   assert.match(handler[1], /convAddEntry\(/);
   assert.match(handler[1], /savedAt: now/);
   assert.match(handler[1], /const w = convStore\.save\(next\)/);
@@ -1144,14 +1150,17 @@ test('Audio: pestaña renombrada, aviso verde de grabación completa y puntos de
   assert.match(html, /attributeFilter: \['data-view'\]\}\);\nlet armTextBadge/);
 });
 
-test('Audio cargado: se transcribe sin guardarse y con límites claros', () => {
+test('Audio cargado: se transcribe y solo se guarda cifrado (E2), con límites claros', () => {
   assert.match(html, /async function transcribeBlob\(getBlob, ms, what, imported = false\)/);
   assert.match(html, /transcribeBlob\(\(\) => f, null, 'el audio cargado', true\)/);
   assert.match(html, /transcribeBlob\(\(\) => withDeadline\(audioGetBlob\(m\)/);
   const loader = html.match(/\$\('loadAudioFile'\)\.addEventListener\('change'[\s\S]*?\n\}\);/)[0];
-  assert.doesNotMatch(loader, /audioPut|audioClear|IndexedDB|localStorage/, 'el audio cargado no se guarda');
-  assert.match(html, /LOAD_MAX_SEC = 90 \* 60, LOAD_MAX_BYTES = 200 \* 1024 \* 1024/);
-  assert.match(html, /no se guarda<\/b>: solo se transcribe/);
+  assert.doesNotMatch(loader, /audioPut|audioClear|IndexedDB|localStorage|anPut|anSave/, 'el cargador no guarda nada por su cuenta');
+  assert.match(loader, /const guarda = anUsable\(\) && \$\('saveAudio'\)\.checked;/, 'el aviso dice si se guarda o no');
+  assert.match(html, /if \(imported\) anSaveFile\(blob, ms\);/, 'solo se guarda a través del bloque cifrado');
+  assert.match(html, /const LOAD_MAX_SEC = 90 \* 60;/);
+  assert.doesNotMatch(html, /LOAD_MAX_BYTES|200 MB/, 'el tope viejo de 200 MB ya no aparece');
+  assert.match(html, /si no, <b>no se guarda<\/b>/);
   assert.match(html, /accept="audio\/\*/);
 });
 
@@ -1169,9 +1178,9 @@ test('seguridad: importación valida bytes y duración antes de decodificar', ()
   const src = html.slice(html.indexOf('const IMPORT_MAX_BYTES'), html.indexOf('function inspectImport'));
   const validate = new Script(src + ';validateImport').runInNewContext();
   assert.doesNotThrow(() => validate(1024, 60));
-  assert.doesNotThrow(() => validate(200*1024*1024, 900));
+  assert.doesNotThrow(() => validate(30*1024*1024, 900));
   for (const sec of [0, -1, Infinity, NaN, 901]) assert.throws(() => validate(1024, sec));
-  assert.throws(() => validate(200*1024*1024+1, 1));
+  assert.throws(() => validate(30*1024*1024+1, 1), /30 MB/, 'D4: 30 MB + 1 byte se rechaza antes de decodificar');
   assert.match(html, /if \(imported\) await inspectImport\(blob\); pcm = await decodePcm/);
   const probe = html.slice(html.indexOf('function inspectImport'), html.indexOf('async function decodePcm'));
   assert.match(probe, /URL.revokeObjectURL/); assert.match(probe, /clearTimeout/);
@@ -1205,7 +1214,7 @@ test('ayudas accesibles: controles únicos, destino debajo y advertencias fuera'
   }
   assert.match(html, /#studioDockCapture:not\(\[hidden\]\):not\(.paused\) .capture-dot\{animation:capturePulse/);
   assert.match(html, /prefers-reduced-motion:reduce\)\{#studioDockCapture .capture-dot\{animation:none!important/);
-  assert.match(html, /id="loadAudioHint">[\s\S]*?200 MB y 15 minutos/);
+  assert.match(html, /id="loadAudioHint">[\s\S]*?30 MB y 15 minutos/);
   assert.match(html,/La anonimización es automática y puede fallar: revisá siempre/);
 });
 
@@ -1356,7 +1365,7 @@ test('cifrado: la app lee y escribe lo protegido solo a través del almacén cif
   const main = html.replace(/\/\*VAULT-CORE-START\*\/[\s\S]*?\/\*VAULT-CORE-END\*\//, '');
   assert.doesNotMatch(main, /localStorage\.(getItem|setItem|removeItem)\(\s*(KEY|DRAFT|UNDO|PKEY|DKEY)\b/);
   assert.match(html, /vaultWhenReady\(\(\) => \{ loadNotes\(\); loadDict\(\); loadPeople\(\);[^\n]*restoreDraft\(\);/);
-  assert.match(html, /vaultSetHooks\(\(\) => recording \|\| busy \|\| outstanding > 0 \|\| feeding, saveDraft\);/);
+  assert.match(html, /vaultSetHooks\(\(\) => recording \|\| busy \|\| outstanding > 0 \|\| feeding \|\| anBusyN > 0, saveDraft\);/, 'cifrar un archivo cuenta como uso');
   assert.match(html, /const VAULT_IDLE_MS = 15 \* 60 \* 1000;/);
   assert.match(html, /const VAULT_PBKDF2_IT = 600000;/);
   assert.ok(html.indexOf('const vault = createVault(localStorage)') < html.indexOf('function loadNotes()'), 'el almacén cifrado se crea antes que la app');
@@ -1379,7 +1388,7 @@ test('cifrado: un código de recuperación nuevo reemplaza al anterior (pide la 
 
 /* ---- Rediseño conversacional · modelo y guardado (fases 1 y 2, 16/11/2026). Datos ficticios. ---- */
 const convSrc = (html.match(/\/\*CONV-START\*\/([\s\S]*?)\/\*CONV-END\*\//) || [])[1];
-const conv = new Function(convSrc + ';return {convDeleteEntry, convDeleteConversation, convSummaries, CONV_KEY, convEmpty, convStamp, convValid, convEntriesOf, convAddEntry, convEditText, convRename, convMoveEntry, convMoveEntries, convMoveAll, convUndoMove, convIsEmpty, convCopyText, convCheckWrite, convFromLegacy, convToLegacyNotes, convMakeStore};')();
+const conv = new Function(convSrc + ';return {convDeleteEntry, convDeleteConversation, convSummaries, CONV_KEY, convEmpty, convStamp, convValid, convEntriesOf, convAddEntry, convEditText, convRename, convMoveEntry, convMoveEntries, convMoveAll, convUndoMove, convIsEmpty, convCopyText, convCheckWrite, convFromLegacy, convToLegacyNotes, convMakeStore, convSetAudio, convAudioInUse};')();
 const BA = 180; // getTimezoneOffset() de Buenos Aires
 const T1042 = Date.UTC(2026, 10, 16, 13, 42); // 16/11/2026 10:42 en Argentina
 const seqIds = () => { let n = 0; return () => 'id' + (++n); };
@@ -1405,10 +1414,11 @@ test('Notas: la captura global va a cuaderno nuevo y dentro de un cuaderno abier
 });
 
 test('Notas: descartar pide confirmación y la recuperación automática guarda el estado del mensaje', () => {
-  assert.match(html, /confirm\('¿Descartar esta nota sin guardar\?'\)/);
+  assert.match(html, /'¿Descartar esta nota sin guardar\?'\)\) return;/);
+  assert.match(html, /'¿Descartar esta nota sin guardar\? También se borra su audio\.'/);
   assert.match(html, /const snap = \(\) => JSON\.stringify\(\{[^}]*conv: \{open: convOpenId, target: convTargetId, targetSet: convTargetSet, editing: convEditingId/);
   assert.match(html, /Se recuperó un mensaje sin guardar\. Tocá Guardar o Descartar\./);
-  assert.match(html, /confirm\('¿Borrar esta nota\? No se puede deshacer\.'\)/);
+  assert.match(html, /'¿Borrar esta nota y su audio\? No se puede deshacer\.' : '¿Borrar esta nota\? No se puede deshacer\.'/);
 });
 
 test('conversaciones: la clave nueva queda protegida por el cifrado', () => {
@@ -1673,9 +1683,10 @@ test('audio por nota E1: ficha y estados', () => {
   assert.equal(a.anSetState(m, 'cerrado').state, 'cerrado');
   assert.equal(m.state, 'grabando', 'no modifica la ficha original');
   for (const from of ['grabando', 'escribiendo', 'importando']) assert.equal(a.anCanMove(from, 'cerrado'), true);
-  assert.equal(a.anCanMove('cerrado', 'grabando'), false);
+  assert.equal(a.anCanMove('cerrado', 'grabando'), true, 'E2: grabar de nuevo sobre la nota agrega una parte');
+  assert.equal(a.anCanMove('cerrado', 'escribiendo'), false);
   assert.equal(a.anCanMove('grabando', 'escribiendo'), false);
-  assert.throws(() => a.anSetState(a.anSetState(m, 'cerrado'), 'grabando'));
+  assert.throws(() => a.anSetState(a.anSetState(m, 'cerrado'), 'importando'));
   assert.throws(() => a.anSetState(m, 'inventado'));
   for (const mala of [null, {}, {...m, id: ''}, {...m, state: 'x'}, {...m, createdAt: NaN}, {...m, bytes: -1}, {...m, parts: 1.5}, {...m, key: 'texto'}]) assert.equal(a.anValidMeta(mala), false);
   assert.throws(() => a.anNewMeta('', 1));
@@ -1723,13 +1734,339 @@ test('audio por nota E1: candado de una sola pestaña', async () => {
   assert.equal(sin.ok, true); assert.equal(sin.soportado, false);
 });
 
-test('audio por nota E1: está apagado y no toca lo existente', () => {
+test('audio por nota E2: solo se usa con la protección abierta y nunca sin cifrar', () => {
   const fuera = html.replace(/\/\*AUDIONOTA-START\*\/[\s\S]*?\/\*AUDIONOTA-END\*\//, '');
-  assert.doesNotMatch(fuera, /\ban(NewId|NewMeta|ValidMeta|CanMove|SetState|ChunkKey|ChunkBounds|FilePlan|Review|TakeLock|Open|Tx|Start|PutMeta|GetMeta|ListMeta|PutChunk|GetChunk|CountChunks|Delete)\(/, 'nada de la app llama al bloque nuevo');
-  assert.doesNotMatch(fuera, /AN_(DB|LOCK_NAME|STATES|FILE_CHUNK)|notasvoz-dictanota-audio/, 'nada fuera del bloque lo nombra');
   assert.equal((html.match(/notasvoz-gamma-audio/g) || []).length, 1, 'la base histórica sigue igual');
+  assert.doesNotMatch(fuera, /notasvoz-dictanota-audio/, 'nada fuera del bloque nombra la base nueva');
   assert.doesNotMatch(anBlock, /localStorage|fetch\(|XMLHttpRequest|innerHTML|\beval\b|new Function|gamma|document\./);
   assert.equal((anBlock.match(/indexedDB/g) || []).length, 1, 'solo el argumento por defecto de anOpen');
-  assert.equal((anBlock.match(/\.put\(/g) || []).length, 4, 'solo se escribe en meta y chunks');
   assert.doesNotMatch(anBlock, /\.(clear|deleteObjectStore|deleteDatabase)\(/);
+  // Fuera del bloque, todo fragmento que se escribe viene de anSealChunk: ningún audio en claro.
+  const puts = [...fuera.matchAll(/^.*\banPut(Chunk|ChunkMeta)\(.*$/gm)].map(m => m[0]);
+  assert.equal(puts.length, 2, 'dos lugares escriben fragmentos (grabación y archivo)');
+  assert.match(puts.join('\n'), /anPutChunk\(db, id, part, c\.n, await anSealChunk\(/);
+  assert.match(fuera, /const n = r\.saved, blob = await anSealChunk\([^\n]*\n\s*await anPutChunkMeta\(r\.db, [^\n]*, blob\);/);
+  assert.doesNotMatch(fuera, /\banStart\(/, 'no se usa la escritura sin cifrar de E1');
+  // Solo con la protección abierta (D2) y «Conservar audio» encendido (2.8).
+  assert.match(fuera, /const anUsable = \(\) => vault\.state === 'open' && !!vault\.audioKey && !!vault\.header;/);
+  assert.match(fuera, /if \(!\$\('saveAudio'\)\.checked\) return;[\s\S]{0,900}if \(anUsable\(\)\) return startAudioNota\(mr\);/);
+  assert.match(fuera, /async function anSaveFile\(f, ms\)\{\n  if \(!anUsable\(\) \|\| !\$\('saveAudio'\)\.checked\) return null;/);
+  // Primero el audio, después el vínculo; guardar espera a que termine de cifrarse.
+  assert.match(fuera, /if \(anBusyN > 0\) return flash\('Esperá unos segundos: se está guardando el audio cifrado\.'\);/);
+  assert.match(fuera, /text, audioId: convAudioId, durationMs: convAudioMs, audioParts\}\)/);
+  assert.match(fuera, /audioId: convAudioId, audioMs: convAudioMs, audioBase: convAudioBase\}\}\);/, 'el borrador recuerda el audio pendiente y cuántas partes tenía');
+  assert.match(fuera, /\|\| \(d\.conv && typeof d\.conv\.audioId === 'string' && d\.conv\.audioId\)\)\) \{/, 'un audio pendiente sin texto también se recupera');
+  // La revisión al abrir no crea la base si no existe.
+  assert.match(fuera, /if \(indexedDB\.databases\) \{ const list = await indexedDB\.databases\(\); if \(!list\.some\(d => d\.name === AN_DB\)\) return; \}/);
+  assert.ok(html.indexOf("vaultWhenReady(() => { loadNotes();") < html.indexOf('vaultWhenReady(() => { if (anUsable()) anReviewOnOpen(); });'), 'la revisión corre después de cargar notas y borrador');
+  // El candado de una pestaña se toma antes de cargar nada (correcciones E2).
+  assert.match(html, /async function vaultAfterUnlock\(\)\{\n  await vaultTakeTabLock\(\);/);
+});
+
+/* ---------- Audio por nota, etapa E2 (cifrado; datos y audios inventados) ---------- */
+const vaultFns = () => {
+  const m = html.match(/\/\*VAULT-CORE-START\*\/([\s\S]*?)\/\*VAULT-CORE-END\*\//);
+  return new Function(m[1] + ';return {vaultDeriveAudioKey, createVault, vaultCreate};')();
+};
+const an2 = () => new Function(anBlock + ';return {anNewCek,anOpenCek,anSealChunk,anOpenChunk,anSealDetail,anOpenDetail,anValidDetail,anPickTarget,anCloseDetail,anTotalMs,AN_IV,AN_TAG};')();
+const randomBytes = n => crypto.getRandomValues(new Uint8Array(n));
+const hidFicticio = () => Buffer.from(randomBytes(16)).toString('base64');
+
+test('audio por nota E2: K_audio sale de la clave de datos y del id de la protección', async () => {
+  const {vaultDeriveAudioKey} = vaultFns(), a = an2();
+  const dek = randomBytes(32), hid = hidFicticio();
+  const k1 = await vaultDeriveAudioKey(dek, hid), k2 = await vaultDeriveAudioKey(dek, hid);
+  assert.equal(k1.extractable, false, 'la clave de audios no se puede exportar');
+  const {box} = await a.anNewCek(k1, hid, 'audio-1');
+  await a.anOpenCek(k2, hid, 'audio-1', box);   // misma DEK + mismo id → misma clave
+  await assert.rejects(a.anOpenCek(await vaultDeriveAudioKey(dek, hidFicticio()), hid, 'audio-1', box), 'otro id no abre');
+  await assert.rejects(a.anOpenCek(await vaultDeriveAudioKey(randomBytes(32), hid), hid, 'audio-1', box), 'otra DEK no abre');
+  await assert.rejects(a.anOpenCek(k1, hid, 'audio-2', box), 'la clave de un audio no sirve para otro');
+});
+
+test('audio por nota E2: fragmentos cifrados de ida y vuelta, atados a su lugar', async () => {
+  const {vaultDeriveAudioKey} = vaultFns(), a = an2();
+  const hid = hidFicticio(), k = await vaultDeriveAudioKey(randomBytes(32), hid);
+  const {cek} = await a.anNewCek(k, hid, 'audio-1');
+  assert.equal(cek.extractable, false);
+  // «Audio» inventado: cabecera WebM de mentira + bytes al azar.
+  const plain = new Uint8Array([0x1A, 0x45, 0xDF, 0xA3, ...randomBytes(4000)]);
+  const sealed = await a.anSealChunk(cek, hid, 'audio-1', 0, 3, new Blob([plain]));
+  const raw = new Uint8Array(await sealed.arrayBuffer());
+  assert.equal(raw.length, plain.length + a.AN_IV + a.AN_TAG, 'solo 28 bytes de más por fragmento');
+  assert.ok(!Buffer.from(raw).includes(Buffer.from([0x1A, 0x45, 0xDF, 0xA3])), 'no queda la cabecera en claro');
+  assert.deepEqual(await a.anOpenChunk(cek, hid, 'audio-1', 0, 3, sealed), plain);
+  await assert.rejects(a.anOpenChunk(cek, hid, 'audio-1', 0, 4, sealed), 'otro índice');
+  await assert.rejects(a.anOpenChunk(cek, hid, 'audio-1', 1, 3, sealed), 'otra parte');
+  await assert.rejects(a.anOpenChunk(cek, hid, 'audio-2', 0, 3, sealed), 'otro audio');
+  const roto = raw.slice(); roto[40] ^= 1;
+  await assert.rejects(a.anOpenChunk(cek, hid, 'audio-1', 0, 3, new Blob([roto])), 'un byte cambiado');
+  await assert.rejects(a.anOpenChunk(cek, hid, 'audio-1', 0, 3, new Blob([raw.slice(0, 20)])), 'cortado');
+  const datos = new Uint8Array([1, 2, 3]);
+  await a.anSealChunk(cek, hid, 'audio-1', 0, 0, datos);
+  assert.deepEqual([...datos], [1, 2, 3], 'no toca los datos que recibe si no son un Blob propio');
+});
+
+test('audio por nota E2: el detalle va cifrado (nombre del archivo incluido) y detecta lo que falta', async () => {
+  const {vaultDeriveAudioKey} = vaultFns(), a = an2();
+  const hid = hidFicticio(), k = await vaultDeriveAudioKey(randomBytes(32), hid);
+  const detail = {parts: [{mime: 'audio/mpeg', chunks: 3, bytes: 2500000, ms: 90000, origin: 'cargado', name: 'Persona Inventada Uno.mp3', complete: true}]};
+  const box = await a.anSealDetail(k, hid, 'audio-1', detail);
+  assert.doesNotMatch(JSON.stringify(box), /Persona|Inventada|mpeg/, 'nada del detalle queda en claro');
+  assert.deepEqual(await a.anOpenDetail(k, hid, 'audio-1', box), detail);
+  await assert.rejects(a.anOpenDetail(k, hid, 'audio-9', box), 'atado a su audio');
+  for (const malo of [{}, {parts: [{}]}, {parts: [{...detail.parts[0], chunks: -1}]}, {parts: [{...detail.parts[0], origin: 'otro'}]}]) {
+    assert.equal(a.anValidDetail(malo), false);
+    await assert.rejects(a.anSealDetail(k, hid, 'audio-1', malo));
+  }
+  // Una parte sin duración conocida o incompleta: la duración total no se informa (nunca una duración engañosa).
+  assert.equal(a.anTotalMs({parts: [{ms: 1000}, {ms: null}, {ms: 500}]}), null);
+  assert.equal(a.anTotalMs({parts: [{ms: 1000}, {ms: 500, incompleta: true}]}), null);
+  assert.equal(a.anTotalMs({parts: [{ms: 1000}, {ms: 500}]}), 1500);
+  assert.equal(a.anValidDetail({parts: [{...detail.parts[0], incompleta: true, interrumpida: true}]}), true);
+  assert.equal(a.anValidDetail({parts: [{...detail.parts[0], incompleta: 'sí'}]}), false);
+});
+
+test('audio por nota E2: a qué audio va cada grabación y cómo se cierra una cortada', () => {
+  const a = an2();
+  assert.deepEqual(a.anPickTarget({editing: true, editingAudioId: 'x', pendingAudioId: 'y', replace: true}), {mode: 'parte', id: 'x', obligatorio: true});
+  // Editando una nota sin audio: la segunda grabación de la misma edición se suma al audio nuevo (no deja otro suelto).
+  assert.deepEqual(a.anPickTarget({editing: true, editingAudioId: null, pendingAudioId: 'y', replace: false}), {mode: 'parte', id: 'y'});
+  assert.deepEqual(a.anPickTarget({editing: true, editingAudioId: null, pendingAudioId: null, replace: false}), {mode: 'nuevo'});
+  assert.deepEqual(a.anPickTarget({editing: false, pendingAudioId: 'y', replace: false}), {mode: 'parte', id: 'y'});
+  assert.deepEqual(a.anPickTarget({editing: false, pendingAudioId: 'y', replace: true}), {mode: 'nuevo'}, 'empezar de cero: audio nuevo; el anterior queda sin nota');
+  assert.deepEqual(a.anPickTarget({editing: false, pendingAudioId: null, replace: false}), {mode: 'nuevo'});
+  const p = (complete, chunks) => ({mime: 'audio/webm', chunks, bytes: chunks * 10, ms: complete ? 1000 : null, origin: 'grabado', complete});
+  const c1 = a.anCloseDetail({parts: [p(true, 2), p(false, 0)]}, 2, 3, 120);
+  assert.deepEqual(c1.parts[1], {...p(false, 0), chunks: 3, bytes: 120, interrumpida: true, complete: true});
+  assert.equal(c1.parts[0].chunks, 2, 'la parte anterior no cambia');
+  assert.equal(a.anCloseDetail({parts: [p(true, 2), p(false, 0)]}, 2, 0, 0).parts.length, 1, 'parte sin nada: se quita, el resto queda');
+  assert.equal(a.anCloseDetail({parts: [p(false, 0)]}, 1, 0, 0).parts.length, 0);
+});
+
+test('audio por nota E2: la protección deriva K_audio al abrir, la borra al quitarla y pone en cero la DEK', async () => {
+  const {createVault} = vaultFns();
+  assert.match(html, /async function openWith\(dek\)\{\n    try \{ const ok = await v\.acquire\(\); await openWithRaw\(dek, !ok\); \} finally \{ dek\.fill\(0\); \}/);   // la clave en bruto se pone en cero salga como salga
+  const st = memStorage(datosFicticios()), v1 = createVault(st);
+  const {dek} = await v1.enable('frase de prueba larga');
+  assert.ok(v1.audioKey && v1.audioKey.extractable === false, 'al activar ya hay clave de audios');
+  const v = createVault(st);
+  assert.equal(v.audioKey, null, 'bloqueada: sin clave de audios');
+  await v.unlockPassword('frase de prueba larga');
+  assert.ok(v.audioKey);
+  // Las dos sesiones derivan la misma clave: lo cifrado en una se abre en la otra.
+  const a = an2(), {box} = await a.anNewCek(v1.audioKey, v.header.id, 'audio-1');
+  await a.anOpenCek(v.audioKey, v.header.id, 'audio-1', box);
+  dek.fill(0);
+  await v.disable('frase de prueba larga');
+  assert.equal(v.audioKey, null, 'sin protección no queda clave de audios');
+  assert.equal(st.getItem('notasvoz.boveda.v1'), null);
+});
+
+/* ---------- Correcciones de E2 tras la revisión de ChatGPT (datos inventados) ---------- */
+test('correcciones E2: una nota nunca toma el audio de otra', () => {
+  const c = conv;
+  let d = c.convEmpty();
+  d = c.convAddEntry(d, {conversationId: null, kind: 'audio', savedAt: 1, text: 'Persona Inventada Uno', audioId: 'audio-A'}).data;
+  const a = d.entries[0];
+  d = c.convAddEntry(d, {conversationId: a.conversationId, kind: 'texto', savedAt: 2, text: 'X-901 sin audio'}).data;
+  const b = d.entries[1];
+  assert.equal(c.convAudioInUse(d, 'audio-A'), true);
+  assert.equal(c.convAudioInUse(d, 'audio-A', a.id), false, 'la propia nota no cuenta');
+  assert.equal(c.convAudioInUse(d, 'audio-B'), false);
+  assert.equal(c.convAudioInUse(d, null), false);
+  // Un dato viejo con el mismo audio en dos notas: borrar una no debe llevarse el audio de la otra.
+  const doble = c.convSetAudio(d, b.id, 'audio-A', null);
+  assert.equal(c.convAudioInUse(c.convDeleteEntry(doble, b.id), 'audio-A'), true);
+  // En la interfaz: cambiar de nota en edición reinicia el audio pendiente, y Guardar se niega a cruzar audios.
+  const ui = html.slice(html.indexOf('function convEdit(id){'), html.indexOf('function convAskMove('));
+  assert.match(ui, /if \(convEditingId && \(convAudioId \|\| \$\('text'\)\.value !== baseline\)\) return flash\(/);
+  assert.match(ui, /convCtx\+\+; convAudioId = null; convAudioMs = null; convAudioBase = null;\n  convEditingId = id;/);
+  assert.match(ui, /const shared = !!audioId && \(convAudioInUse\(convStore\.data, audioId, id\) \|\| \(convAudioId === audioId && convEditingId !== id\)\);/);
+  assert.match(html, /if \(convAudioId && \(convAudioInUse\(convStore\.data, convAudioId, editing \? editing\.id : null\) \|\| \(editing && editing\.audioId && editing\.audioId !== convAudioId\)\)\)/);
+  // Un audio que termina tarde solo se une si el editor sigue en la misma nota.
+  assert.match(html, /function anLinkPending\(job, id, ms\)\{\n  if \(job\.ctx !== convCtx\) \{/);
+});
+
+test('correcciones E2: guardar vuelve atrás si el cifrado no llegó al almacenamiento', () => {
+  const c = conv, mem = new Map(), store = {getItem: k => mem.has(k) ? mem.get(k) : null, setItem: (k, v) => mem.set(k, String(v)), removeItem: k => mem.delete(k)};
+  const s = c.convMakeStore(store, () => true); s.load();
+  const before = s.data, prev = store.getItem(c.CONV_KEY);
+  const r = c.convAddEntry(before, {conversationId: null, kind: 'texto', savedAt: 5, text: 'Texto inventado X-901', audioId: 'audio-Z'});
+  assert.equal(s.save(r.data).ok, true);
+  s.revert(before, prev);
+  assert.equal(s.data, before, 'vuelve a los datos anteriores');
+  assert.equal(store.getItem(c.CONV_KEY), null, 'y a lo que había en el almacén');
+  // Otra pestaña: el error se explica tal cual.
+  const ro = c.convMakeStore({getItem: () => null, setItem(){ const e = new Error('abierta en otra pestaña'); e.name = 'OtraPestana'; throw e; }, removeItem(){}}, () => true); ro.load();
+  assert.equal(ro.save(c.convAddEntry(ro.data, {conversationId: null, kind: 'texto', savedAt: 1, text: 'y'}).data).error, 'abierta en otra pestaña');
+});
+
+test('correcciones E2: la segunda pestaña no escribe nada protegido (notas, borrador, cabecera)', async () => {
+  const {createVault} = vaultFns();
+  const st = memStorage(datosFicticios());
+  const a = createVault(st); await a.enable('frase de prueba larga');
+  const b = createVault(st); await b.unlockPassword('frase de prueba larga');
+  b.readOnly = true;   // lo decide el candado de la app
+  const foto = JSON.stringify([...st.map.entries()].sort());
+  assert.throws(() => b.store.setItem('notasvoz.gamma.draft.v1', 'borrador de otra pestaña'), e => e.name === 'OtraPestana');
+  assert.throws(() => b.store.removeItem('notasvoz.dictanota.v2'), e => e.name === 'OtraPestana');
+  await assert.rejects(b.changePassword('frase de prueba larga', 'otra frase larga'), e => e.name === 'OtraPestana');
+  await assert.rejects(b.newRecovery('frase de prueba larga'), e => e.name === 'OtraPestana');
+  await assert.rejects(b.disable('frase de prueba larga'), e => e.name === 'OtraPestana');
+  assert.throws(() => b.removeBio(), e => e.name === 'OtraPestana');
+  await b.flush();
+  assert.equal(JSON.stringify([...st.map.entries()].sort()), foto, 'el almacenamiento quedó idéntico');
+  assert.equal(b.store.getItem('notasvoz.gamma.v1'), a.store.getItem('notasvoz.gamma.v1'), 'leer sí puede');
+  // La primera pestaña sigue guardando.
+  a.store.setItem('notasvoz.gamma.draft.v1', 'borrador nuevo'); await tick(); await a.flush();
+  assert.equal(a.saved('notasvoz.gamma.draft.v1'), true);
+});
+
+test('correcciones E2: activar en una pestaña vieja no reemplaza la protección que activó otra', async () => {
+  const {createVault} = vaultFns();
+  const st = memStorage(datosFicticios());
+  const vieja = createVault(st), nueva = createVault(st);   // las dos abiertas sin protección
+  await nueva.enable('frase de prueba larga');
+  const cabecera = st.getItem('notasvoz.boveda.v1');
+  await assert.rejects(vieja.enable('otra frase larga'), /otra pestaña/);
+  assert.equal(st.getItem('notasvoz.boveda.v1'), cabecera);
+});
+
+test('correcciones E2: quitar la protección se impide si hay audios que quedarían irrecuperables', async () => {
+  const {createVault} = vaultFns();
+  const st = memStorage(datosFicticios()), v = createVault(st);
+  await v.enable('frase de prueba larga');
+  let audios = 2; v.disableGuard = async () => audios ? 'hay ' + audios + ' audios' : '';
+  await assert.rejects(v.disable('frase de prueba larga'), /hay 2 audios/);
+  assert.equal(v.state, 'open'); assert.ok(st.getItem('notasvoz.boveda.v1'), 'la cabecera sigue');
+  audios = 0; await v.disable('frase de prueba larga');
+  assert.equal(v.state, 'off');
+  // En la app: la guarda cuenta los audios sin crear la base y el botón la consulta antes de pedir la contraseña.
+  assert.match(html, /vault\.disableGuard = async \(\) => \{\n  const n = await anStoredCount\(\);/);
+  const btn = html.slice(html.indexOf("vaultEl('vaultDisable').addEventListener"), html.indexOf("// Bloqueo automático tras 15 minutos"));
+  assert.ok(btn.indexOf('vault.disableGuard()') < btn.indexOf('vaultAskPassword('));
+});
+
+test('correcciones E2: cancelar una edición quita solo las partes agregadas', () => {
+  const a = new Function(anBlock + ';return {anTruncateDetail};')();
+  const p = n => ({mime: 'audio/webm', chunks: n, bytes: n * 10, ms: 1000, origin: 'grabado', complete: true});
+  const d = {parts: [p(2), p(3), p(1)]};
+  assert.deepEqual(a.anTruncateDetail(d, 1), {parts: [p(2)]});
+  assert.equal(d.parts.length, 3, 'no modifica el original');
+  for (const k of [0, 4, 1.5, -1]) assert.throws(() => a.anTruncateDetail(d, k));
+  assert.match(anBlock, /function anTruncate\(db, meta, keep\)\{[\s\S]*?anTx\(db, \['meta', 'chunks'\], 'readwrite'/, 'ficha y fragmentos juntos');
+});
+
+/* ---------- Segunda revisión de E2: el candado se pide ANTES de cualquier escritura (datos ficticios) ---------- */
+const PASS_REV = 'frase de prueba inventada 333';
+const instantanea = st => JSON.stringify([...st.map.entries()].sort());
+const sinCandado = () => ({takeLock: async () => false});
+const conCandado = () => ({takeLock: async () => true});
+
+test('revisión 2: sin candado no se activa la protección y no se escribe nada', async () => {
+  const {createVault} = vaultFns();
+  const st = memStorage(datosFicticios()), antes = instantanea(st);
+  const v = createVault(st, sinCandado());
+  await assert.rejects(v.enable(PASS_REV), e => e.name === 'OtraPestana');
+  assert.equal(instantanea(st), antes, 'ni cabecera ni registros: todo igual');
+  assert.equal(v.state, 'off'); assert.equal(v.readOnly, true);
+});
+
+test('revisión 2: dos activaciones con el mismo almacenamiento: gana una sola, la otra no pisa la cabecera', async () => {
+  const {createVault} = vaultFns();
+  const st = memStorage(datosFicticios());
+  let tomado = false;   // un candado exclusivo: el primero que lo pide lo tiene
+  const unico = () => ({takeLock: async () => { if (tomado) return false; tomado = true; return true; }});
+  const a = createVault(st, unico()), b = createVault(st, unico());
+  const r = await Promise.allSettled([a.enable(PASS_REV), b.enable('otra frase inventada 444')]);
+  assert.equal(r.filter(x => x.status === 'fulfilled').length, 1);
+  const ganadora = r[0].status === 'fulfilled' ? a : b;
+  assert.equal(JSON.parse(st.getItem('notasvoz.boveda.v1')).id, ganadora.header.id, 'la cabecera es la de la ganadora');
+  const perdedora = ganadora === a ? b : a;
+  assert.equal(perdedora.state, 'off');
+});
+
+test('revisión 2: recuperar el acceso sin candado no cambia la cabecera', async () => {
+  const {createVault} = vaultFns();
+  const st = memStorage(datosFicticios());
+  const v1 = createVault(st, conCandado()); const {recovery, dek} = await v1.enable(PASS_REV); dek.fill(0);
+  const antes = instantanea(st);
+  const v2 = createVault(st, sinCandado());
+  await assert.rejects(v2.unlockRecovery(recovery, 'clave nueva inventada 555'), e => e.name === 'OtraPestana');
+  assert.equal(instantanea(st), antes, 'la cabecera y los registros no cambiaron');
+  assert.equal(v2.state, 'locked');
+  // Con un código que no sirve ni se pide el candado.
+  let pedido = 0; const v3 = createVault(st, {takeLock: async () => { pedido++; return true; }});
+  await assert.rejects(v3.unlockRecovery('AAAA-AAAA-AAAA-AAAA-AAAA-AAAA', 'clave nueva inventada 555'));
+  assert.equal(pedido, 0, 'un código incorrecto no toma el candado');
+  assert.equal(instantanea(st), antes);
+});
+
+test('revisión 2: desbloquear sin candado abre en solo lectura y no cifra, aparta ni borra nada', async () => {
+  const {createVault} = vaultFns();
+  const st = memStorage(datosFicticios());
+  const v1 = createVault(st, conCandado()); const {dek} = await v1.enable(PASS_REV); dek.fill(0);
+  // Una copia en claro que quedó de otra pestaña vieja, y un registro dañado.
+  st.setItem('notasvoz.gamma.dict.v1', 'copia en claro inventada => x');
+  st.setItem('notasvoz.boveda.v1.r.personas', '{dañado inventado');
+  const antes = instantanea(st);
+  const v = createVault(st, sinCandado());
+  await v.unlockPassword(PASS_REV);
+  assert.equal(v.state, 'open'); assert.equal(v.readOnly, true);
+  assert.deepEqual(v.damaged, ['personas']);
+  assert.equal(instantanea(st), antes, 'no se escribió, apartó ni borró nada');
+  assert.throws(() => v.store.setItem('notasvoz.gamma.dict.v1', 'x'), e => e.name === 'OtraPestana');
+  await v.flush();
+  assert.equal(instantanea(st), antes, 'tampoco al vaciar la cola');
+  // Con el candado, el mismo desbloqueo sí cifra la copia en claro y aparta el registro dañado.
+  const w = createVault(st, conCandado()); await w.unlockPassword(PASS_REV);
+  assert.equal(w.readOnly, false); assert.notEqual(instantanea(st), antes);
+  assert.ok([...st.map.keys()].some(k => k.includes('.danado.')), 'con candado sí se aparta lo dañado');
+});
+
+test('revisión 2: si el candado falla (excepción) también falla cerrada', async () => {
+  const {createVault} = vaultFns();
+  const st = memStorage(datosFicticios()), antes = instantanea(st);
+  const v = createVault(st, {takeLock: async () => { throw new Error('prueba'); }});
+  await assert.rejects(v.enable(PASS_REV), e => e.name === 'OtraPestana');
+  assert.equal(instantanea(st), antes); assert.equal(v.readOnly, true);
+});
+
+test('revisión 2: la aplicación falla cerrada sin Web Locks y el candado se pide antes de escribir', () => {
+  assert.match(html, /vault\.takeLock = \(\) => vaultTakeTabLock\(\);/);
+  assert.match(html, /const ok = !!l\.ok && l\.soportado !== false;/, 'sin Web Locks queda en solo lectura');
+  assert.match(html, /anTakeLock\(\)\.catch\(\(\) => \(\{ok: false, soportado: true, fallo: true/, 'un error del candado también');
+  const core = html.match(/\/\*VAULT-CORE-START\*\/([\s\S]*?)\/\*VAULT-CORE-END\*\//)[1];
+  const enable = core.slice(core.indexOf('v.enable = async'), core.indexOf('v.checkPassword'));
+  assert.ok(enable.indexOf('await v.acquire()') > 0 && enable.indexOf('await v.acquire()') < enable.indexOf('storage.getItem(VAULT_HEADER)'), 'enable pide el candado antes de mirar la cabecera');
+  const rec = core.slice(core.indexOf('v.unlockRecovery = async'), core.indexOf('v.unlockBio'));
+  assert.ok(rec.indexOf('await v.acquire()') > 0 && rec.indexOf('await v.acquire()') < rec.indexOf('storage.setItem(VAULT_HEADER'), 'la recuperación pide el candado antes de escribir la cabecera');
+});
+
+test('revisión 2: cada nota recuerda las partes de audio confirmadas y cancelar nunca recorta por debajo', () => {
+  const m = html.match(/function convCleanEntry\(e\)\{[\s\S]*?\n\}/)[0];
+  assert.match(m, /audioParts: aid && Number\.isInteger\(e\.audioParts\)/);
+  assert.match(html, /Math\.max\(convAudioBase, Number\.isInteger\(e\.audioParts\) \? e\.audioParts : 0\)/, 'cancelar usa el máximo entre el borrador y lo confirmado');
+  assert.match(html, /enNota\.audioParts > convAudioBase\) convAudioBase = null;/, 'un borrador viejo de una edición ya guardada no deja nada por recortar');
+  // El audio sin ficha cerrada no se toca nunca: la revisión previa devuelve 'danado' y nada se escribe.
+  assert.match(html, /return 'danado';/);
+});
+
+test('revisión 2: todo audio que se amplía o recorta pasa antes por la revisión completa', () => {
+  const an = html.match(/async function anAudioHealth[\s\S]*?\n\}\n/)[0];
+  assert.doesNotMatch(an, /\.put\(|\.delete\(|anPutMeta|anPutChunk|anDelete|setItem/, 'la revisión nunca escribe');
+  assert.match(an, /getAllKeys/, 'comprueba las posiciones sin leer los datos');
+  assert.match(an, /anOpenChunk\(cek, hid, id, i, n/, 'descifra cada fragmento: etiqueta y lugar');
+  const part = html.match(/async function anOpenForPart[\s\S]*?\n\}\n/)[0];
+  assert.match(part, /anAudioHealth\(/); assert.match(part, /anDamaged\.has\(target\.id\)/);
+  const trunc = html.match(/async function anTruncateAudio[\s\S]*?\n\}\n/)[0];
+  assert.ok(trunc.indexOf('anAudioHealth(') > 0 && trunc.indexOf('anAudioHealth(') < trunc.indexOf('anTruncate(db'), 'se revisa antes de recortar');
+});
+
+test('revisión 2: la ficha final sin espacio y el borrado fallido no dan avisos falsos', () => {
+  assert.match(html, /\.catch\(e => anRecFinishErr\(r, e\)\)\.finally/);
+  assert.match(html, /no se pudo cerrar su ficha/);
+  assert.match(html, /quitado = await anDeleteAudio\(audio\)/);
+  assert.match(html, /anDeleteAudio\(pendingAudio\)\.then\(ok => flash\(ok \?/, 'descartar espera el borrado antes de decir que se hizo');
 });

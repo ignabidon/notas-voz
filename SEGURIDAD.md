@@ -30,6 +30,27 @@ Cambio de presentación y ayudas; sin datos persistentes nuevos, claves nuevas, 
 - **Alcance:** solo la propia aplicación del usuario (`index.html` en `main`, su sitio de GitHub Pages y la configuración del repositorio). No se probó ningún sitio ajeno.
 - **Regla de datos:** todas las pruebas usan información ficticia. Nunca datos reales de pacientes, ni en pruebas, ni en capturas, ni en diagnósticos.
 
+## 16/11/2026 · Segunda revisión de E2: candado antes de escribir, borrador viejo y audio dañado (hallazgos 1 y 7)
+
+**[código + prueba técnica]** Rama `e2-cifrado-audios-por-nota`, sobre `745f36b`. Detalle en `CAMBIOS.md`.
+- **Candado:** se pide **antes** de cualquier escritura de datos protegidos o de la cabecera (activar, desbloquear con contraseña o huella, recuperar con código). Sin candado: solo lectura, y la recuperación y la activación se rechazan sin escribir. **Si el navegador no ofrece Web Locks o da un error, falla cerrada** (solo lectura). Límite: no protege frente a una pestaña abierta con una versión anterior del código. No se declara inofensiva ninguna escritura fuera del candado.
+- **Borrador viejo:** la nota guarda `audioParts` (partes de audio confirmadas, dentro del registro cifrado de cuadernos); cancelar nunca recorta por debajo de ese número.
+- **Audio dañado:** antes de ampliarlo o recortarlo se revisan clave, detalle, posiciones y la etiqueta de cada fragmento; si algo falla no se toca y se avisa. Sin datos nuevos ni claves nuevas: `audioParts` es un campo más del registro cifrado de cuadernos.
+**No probado en el Motorola ni en Brave; los «cortes» de las pruebas son simulados.**
+
+## 16/11/2026 · Correcciones de E2 tras la revisión de ChatGPT (hallazgos 1 y 7)
+
+**[código + prueba técnica]** Misma rama `e2-cifrado-audios-por-nota`. Riesgos verificados en `2c88ce1` y corregidos:
+- **Pérdida de audios al quitar la protección:** la clave de los audios sale de la cabecera, que se borra al quitarla. Ahora **se impide quitarla si hay audios guardados** (también desde la segunda pestaña). Activar la protección en una pestaña vieja ya no reemplaza la cabecera que creó otra.
+- **Dos pestañas:** el candado (`navigator.locks`) vale para **todo lo protegido** y la cabecera, no solo para los audios: la segunda pestaña lee, pero no escribe nada. Sin probar en Brave/Android; con la protección apagada, dos pestañas siguen pudiendo pisarse.
+- **Audios cruzados entre notas** y **borrado de un audio que usa otra nota:** corregido; Guardar recién avisa cuando el cifrado llegó al almacenamiento.
+- Un audio dañado se conserva sin tocar; uno incompleto queda marcado y sin duración.
+**No probado en el Motorola.**
+
+## 16/11/2026 · Audios cifrados por nota (paso E2, hallazgo 1)
+
+**[código + prueba técnica]** Rama `e2-cifrado-audios-por-nota`. Con la protección abierta y «Conservar audio» encendido, lo grabado y los archivos cargados se guardan **cifrados** en `notasvoz-dictanota-audio`, unidos a su nota: clave propia por audio, envuelta con una clave derivada de la clave de datos (HKDF); AES-GCM por fragmento con AAD que lo ata a su audio, parte y posición. El nombre de un archivo cargado va cifrado. Sin protección, «Conservar audio» sigue guardando sin cifrar en la base vieja, como antes. **Queda visible sin la clave:** cantidad de audios, tamaños y fechas. **No probado en el Motorola.**
+
 ## 16/11/2026 · Protección cifrada (hallazgo 1)
 
 **[código + prueba técnica]** Rama `seguridad-02-cifrado-2026-11-16`. El detalle está en `DISENO-CIFRADO.md`.
@@ -49,7 +70,9 @@ Cambio de presentación y ayudas; sin datos persistentes nuevos, claves nuevas, 
 7. **No guardar datos nuevos** (ni en `localStorage`, ni en IndexedDB) sin documentar aquí qué datos son y si quedan sin cifrar.
    - *16/11/2026, protección cifrada:* toda lectura o escritura de notas (`KEY`), borrador (`DRAFT`), deshacer (`UNDO`), personas (`PKEY`) y diccionario (`DKEY`) pasa por **`vaultStore`**, nunca por `localStorage` directo (hay una prueba que lo exige). Datos nuevos de pacientes van a una clave nueva agregada a `VAULT_KEYS`. Claves nuevas: `notasvoz.boveda.v1` (cabecera: parámetros y clave de datos envuelta, nunca en claro) y `notasvoz.boveda.v1.r.*` (registros cifrados). No bajar las iteraciones de PBKDF2 por velocidad, no guardar la contraseña ni la clave en ningún almacenamiento y no mostrar texto en claro si la cabecera está dañada.
    - *16/11/2026, rediseño conversacional (fase 2):* clave nueva `notasvoz.dictanota.v2` con hojas y mensajes (títulos, textos, fechas de guardado). Está en `VAULT_KEYS` («conversaciones»): **cifrada si la protección está activa**, en claro si no. Desde la fase 3 la pantalla Notas la lee y escribe (solo a través del almacén cifrado). Los audios siguen sin cifrar. Copiar todo y Descargar .txt de una hoja salen sin cifrar.
-   - *16/11/2026, audio por nota (paso E1):* base IndexedDB nueva `notasvoz-dictanota-audio` (`meta`, `chunks`). **Está escrita pero apagada: no se crea ni guarda nada**; nada de la app la llama. Cuando se active (E2) los fragmentos irán cifrados con una clave por audio; en E1 no hay cifrado, así que ningún dato real puede entrar. `notasvoz-gamma-audio` no cambia. Detalle en `docs/DISENO-ALMACENAMIENTO-CIFRADO-2026-11-16.md`.
+   - *16/11/2026, audio por nota (paso E1):* base IndexedDB nueva `notasvoz-dictanota-audio` (`meta`, `chunks`), escrita pero apagada en E1. `notasvoz-gamma-audio` no cambia. Detalle en `docs/DISENO-ALMACENAMIENTO-CIFRADO-2026-11-16.md`.
+   - *16/11/2026, correcciones de E2:* sin claves nuevas. El borrador (cifrado) suma el campo `audioBase` (cuántas partes tenía el audio de la nota en edición). El detalle cifrado de cada parte puede llevar `incompleta: true` (falta de espacio) o `interrumpida: true`. La segunda pestaña no escribe nada protegido (`vault.readOnly`).
+   - *16/11/2026, audio por nota (paso E2):* la base `notasvoz-dictanota-audio` **se usa** solo con la protección abierta y «Conservar audio» encendido. `chunks`: fragmentos **cifrados** (`IV ‖ AES-GCM`). `meta`: id aleatorio, estado, fecha, tamaño total y cantidad de partes **en claro**; clave del audio **envuelta** y detalle de las partes (formato, tamaños, duración, origen y nombre del archivo cargado) **cifrado**. El vínculo nota → audio (`audioId`) vive dentro del registro cifrado de cuadernos, y el borrador recuerda el audio pendiente (también cifrado). Ningún fragmento se escribe sin pasar por `anSealChunk` (hay una prueba que lo exige). La clave de audios no se guarda: se deriva al desbloquear y la clave de datos en bruto se pone en cero. Sin protección no se escribe nada ahí.
    - *16/11/2026:* el aprendizaje automático de correcciones agrega líneas `a => b` al diccionario existente (`notasvoz.gamma.dict.v1`, **sin cifrar**) y el campo booleano `learnAuto` a la configuración existente (`notasvoz.gamma.cfg.v1`). No hay claves nuevas. Solo se aprenden palabras en minúscula y sin cifras (no nombres propios), pero provienen de lo dictado: no usar datos reales. El aviso de lo aprendido usa `textContent`.
 
 ## Qué está confirmado
@@ -76,7 +99,7 @@ Marcar siempre el nivel: **[código]** guardado en GitHub · **[prueba técnica]
 
 | # | Riesgo | Gravedad | Estado |
 |---|--------|----------|--------|
-| 1 | Notas, tabla de personas, borrador, deshacer y audio se guardan **sin cifrar** en el navegador; los TXT descargados tampoco están protegidos. Quien use el celular desbloqueado puede leerlos. | Alta si se usan datos reales | **MITIGADO EN PARTE (16/11/2026, sin validar en el Motorola).** Protección cifrada opcional para todo el texto (ver `DISENO-CIFRADO.md`). Siguen abiertos: **audios sin cifrar**, archivos descargados, y la prueba física de la huella. Hasta validarla en el teléfono: no usar datos reales. |
+| 1 | Notas, tabla de personas, borrador, deshacer y audio se guardan **sin cifrar** en el navegador; los TXT descargados tampoco están protegidos. Quien use el celular desbloqueado puede leerlos. | Alta si se usan datos reales | **MITIGADO EN PARTE (16/11/2026, sin validar en el Motorola).** Protección cifrada opcional para todo el texto (ver `DISENO-CIFRADO.md`) y, desde E2, para los audios nuevos guardados con su nota. Siguen abiertos: audios guardados **sin la protección** o antes de E2 (base vieja, sin cifrar), archivos descargados, y la prueba física de la huella. Hasta validarla en el teléfono: no usar datos reales. |
 | 2 | Librerías de internet sin verificación: motor Whisper (jsDelivr) y librería MP3. Si jsDelivr fuera vulnerado, ese código podría leer las notas. | Media | **MITIGADO EN PARTE.** MP3 con huella. Whisper: versión fija y la CSP limita orígenes, pero no hay huella posible con `import()`. Riesgo residual: aceptado hasta decidir si se aloja una copia propia (más pesada y con mantenimiento). |
 | 3 | Sin política de seguridad del navegador. | Media | **HECHO** (CSP en `<meta>`), pendiente de prueba en el Motorola. Limitación: permite scripts en línea (`'unsafe-inline'`) porque la aplicación tiene tres scripts embebidos; mejora futura: huellas o nonce. Un `<meta>` no puede impedir que otro sitio incruste la página (`frame-ancestors`); GitHub Pages no permite cabeceras propias. |
 | 4 | La rama `main` no está protegida: se puede publicar aunque las pruebas fallen. | Baja/Media | **ABIERTO. Decisión del usuario** (configuración de GitHub: exigir que pasen las pruebas antes de unir). Ninguna IA debe cambiarla sin pedido. |
@@ -120,7 +143,7 @@ Todo lo demás está en `default-src 'none'` (sin objetos, sin marcos, sin formu
 - [ ] Decisión del usuario sobre proteger `main` (punto 4) y sobre alojar copia propia del motor (punto 2).
 - [x] Decisión del usuario sobre el cifrado (punto 1): **toda la app**, huella + contraseña + código de recuperación, autobloqueo de 15 minutos y audios en una segunda etapa (16/11/2026). Implementado en `seguridad-02-cifrado-2026-11-16`.
 - [ ] Probar la protección cifrada en Brave del Motorola con datos ficticios: activar, anotar el código, registrar la huella, recargar, desbloquear con huella y con contraseña, autobloqueo con la pantalla apagada y tiempo de desbloqueo. **Confirmación del usuario necesaria.**
-- [ ] Cifrar los audios guardados (segunda etapa).
+- [x] Cifrar los audios guardados (segunda etapa): **hecho en E2 para los audios nuevos por nota** (16/11/2026, sin probar en el Motorola). El audio suelto viejo no se migra (D7).
 - [ ] Copia cifrada exportable (respaldo y paso a una futura app de Android; ver `DISENO-CIFRADO.md`).
 - [ ] Evaluar CSP más estricta (huellas/nonce en lugar de `'unsafe-inline'`) cuando el código se estabilice.
 - [ ] Agregar fecha y resultado a este archivo cuando se complete cada punto.

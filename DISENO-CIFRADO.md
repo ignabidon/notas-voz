@@ -23,6 +23,7 @@ Fecha: 16/11/2026. Rama: `seguridad-02-cifrado-2026-11-16`. Reemplaza la propues
    - `notasvoz.boveda.v1`: la cabecera, con versión, id, parámetros y las tres envolturas.
    - `notasvoz.boveda.v1.r.<nombre>`: los registros cifrados.
    - Las claves históricas `notasvoz.gamma.*` protegidas quedan **vacías** mientras la protección está activa. La configuración (`cfg`) y el generador de códigos no son sensibles y siguen sin cifrar.
+   - **Audios por nota (E2), en IndexedDB `notasvoz-dictanota-audio`:** fragmentos cifrados con una clave propia por audio; esa clave va envuelta con `K_audio` = HKDF-SHA256(clave de datos, sal = id de la cabecera, `dictanota audio v1`). `K_audio` no se guarda: se deriva al desbloquear. La cabecera no cambia.
 4. **En la app:** `vaultStore` tiene la misma forma que `localStorage`. Sin protección pasa directo a `localStorage`, igual que antes. Con la protección abierta, lee y escribe sobre una copia en memoria y cifra en segundo plano. Bloqueada, no lee ni escribe nada protegido. Los datos se cargan recién al desbloquear (`vaultWhenReady`).
 5. **Bloquear** guarda el borrador, espera a que termine el cifrado pendiente y **recarga la página**, que es la forma más simple de sacar el texto de la memoria y de la pantalla.
 
@@ -42,7 +43,7 @@ Fecha: 16/11/2026. Rama: `seguridad-02-cifrado-2026-11-16`. Reemplaza la propues
 - Los **TXT o Word descargados**, lo que se copia y lo que se comparte salen **sin cifrar**.
 - No es un borrado forense: el navegador puede conservar restos de las copias en claro anteriores en su disco interno.
 - Si se cierra la app de golpe justo después de escribir, se puede perder lo último que no llegó a guardarse cifrado. El cifrado tarda milisegundos.
-- **Los audios todavía no se cifran.**
+- **Audios:** desde el paso E2 (16/11/2026), los audios nuevos guardados con «Conservar audio» y la protección abierta van cifrados y unidos a su nota (detalle en `docs/DISENO-ALMACENAMIENTO-CIFRADO-2026-11-16.md`, 2.4). Los guardados sin protección, o antes de E2, siguen sin cifrar en la base vieja. **Mientras haya audios por nota guardados, no se puede quitar la protección** (su clave sale de ella); el recorrido completo (copia + borrar audios, D3) llega con AO. Solo una pestaña escribe datos protegidos a la vez.
 - **Huella en Brave/Android:** depende de que la llave de acceso quede en el Administrador de contraseñas de Google, que admite PRF. Brave usa el mismo código WebAuthn que Chromium, pero **no está probado en el Motorola**. Si no funciona, la app lo dice y se sigue usando la contraseña.
 - Si se borran los «datos del sitio» en Brave, se pierden las notas, como pasa hoy. La protección no es una copia de seguridad.
 
