@@ -1,3 +1,14 @@
+## 16/11/2026 · Rediseño visual «Clínica editorial» (ChatGPT, PR independiente)
+
+- **Responsable:** ChatGPT. Rama: `visual-clinica-editorial-chatgpt-2026-11-16`. Base: `main` = `aab2b9035615e97389b2329b59a3f106b419ffa6`. **Alcance exclusivamente visual:** 38 líneas nuevas de CSS, añadidas al final del bloque de estilos de `index.html`, sin reordenar reglas existentes ni introducir dependencias.
+- **Dictar:** micrófono de mayor jerarquía con azul petróleo en reposo, coral `#B53D3B` durante la grabación y ámbar `#B78228` al pausar; cronómetro con cifras tabulares grandes; acciones secundarias y accesos a audio con menor peso visual. «Conservar audio» sigue arriba y funciona exactamente igual.
+- **Cuadernos:** sin modificar la conversación, se refinan superficies de la lista y burbujas, tipografía, metadatos y separación visual de botones. Ninguna vista previa, menú nuevo, reproductor u onda de audio; E3 y B3 siguen pendientes.
+- **Barra inferior:** las cuatro pestañas conservan orden, enlaces, tamaños táctiles y lógica; la activa destaca por relleno, borde interno, grosor del ícono y texto, no solo por color. Los controles fijos de grabación/edición y el tratamiento del teclado permanecen iguales.
+- **Fuera de alcance y sin cambios:** JS, audio, Whisper, Workers, captura, E2/K1/B3/E3, almacenamientos, cifrado, datos, claves históricas, políticas CSP, navegación, guardado, Anonimizar y Ajustes (salvo estilo compartido de pestaña activa). Nada unido a `main`.
+- **Revisión estática:** el cambio es aditivo dentro de `<style>`; el contenido previo de `index.html` queda idéntico al retirar ese bloque de CSS. Contraste de los pares esenciales calculado: blanco/azul petróleo 7,8:1; blanco/coral 5,68:1; tinta oscura/ámbar 4,66:1. Las etiquetas «Grabando»/«Pausar»/«Reanudar» existentes continúan diferenciando estados. No se agregaron transiciones ni animaciones.
+- **Pruebas pendientes antes de aprobar el PR:** verificar CI de Node y las suites Chrome de navegador; comparar capturas reales antes/después con datos ficticios a 320, 360 y 412 px; comprobar reposo, grabación, pausa, procesamiento, cuaderno abierto, edición y teclado emergente. **No afirmar ejecución de navegador ni capturas cuando no estén disponibles.** La validación en Motorola G56 5G sigue pendiente.
+- **Concurrencia:** al comenzar, PR #47 (E2) estaba abierto en `71bb17f`; E1 ya estaba en `main`, y K1/B3/E3 no tenían PR abierto. El PR visual no modifica el trabajo de almacenamiento y debe volver a cotejarse con `main` y las ramas activas antes de cualquier integración.
+
 ## 16/11/2026 · Paso E1: base nueva de audios por nota, SIN ACTIVAR
 
 - **Responsable:** Claude (Sonnet 5.5), con permiso explícito del usuario (plan mostrado y aprobado). Rama: `e1-base-audios-por-nota`. Base: `fc86681` (`main`). Alcance: solo el paso E1 del tablero [docs/PLAN-ALMACENAMIENTO-CIFRADO.md](docs/PLAN-ALMACENAMIENTO-CIFRADO.md).
