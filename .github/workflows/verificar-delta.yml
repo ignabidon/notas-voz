@@ -58,3 +58,7 @@ jobs:
       - name: Ensayar biblioteca unificada y respaldo formato 2 (no activados)
         run: node tests/p2-biblioteca-browser.mjs
         timeout-minutes: 5
+
+      - name: K2 - restaurar copia sintética en instalación vacía de Chrome (sin reemplazos)
+        run: node tests/k2-browser.mjs
+        timeout-minutes: 6
