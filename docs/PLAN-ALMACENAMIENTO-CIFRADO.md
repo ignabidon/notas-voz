@@ -2,7 +2,7 @@
 
 > **Este archivo no cambia de nombre.** Los pedidos que Ignacio copia y pega apuntan acá. Es el tablero: dice qué paso toca, qué hay que hacer en cada uno y en qué estado está.
 > **El diseño completo** (el porqué de cada cosa) está en [DISENO-ALMACENAMIENTO-CIFRADO-2026-11-16.md](DISENO-ALMACENAMIENTO-CIFRADO-2026-11-16.md). Si este tablero y el diseño no coinciden, vale el diseño; si el diseño y el código no coinciden, vale el código, y avisale a Ignacio.
-> Última actualización: 17/11/2026 (Claude). **E1, E2 y K1 unidos a `main`; la Etapa B quedó completa con B3; E3 programado por ChatGPT (PR #54) y cerrado por Claude: pruebas en verde, falta unir.** Próximo paso: **K2**. K2 y T: siempre con consulta previa a Ignacio.
+> Última actualización: 17/11/2026 (Claude). **E1, E2 y K1 unidos a `main`; la Etapa B quedó completa con B3; E3 programado por ChatGPT (PR #54) y cerrado por Claude: pruebas en verde, unido (PR #55).** Próximo paso: **K2**. K2 y T: siempre con consulta previa a Ignacio.
 
 ## Si sos la IA a la que le pidieron un paso, empezá acá
 
@@ -50,7 +50,7 @@ Orden decidido por Ignacio: **E1 → E2 → K1 → E3 → K2 → T → AO**.
 | **E1** | Base nueva de audios por nota, sin activar | — | Sonnet 5.5 | Modelo estándar, razonamiento medio | Unido a `main` (`aab2b90`, PR #45) |
 | **E2** | Cifrado de audios y guardado por nota | E1 | Opus 5.5 | El más capaz de tu plan, razonamiento alto | Unido a `main` (PR #50, que integra el #47; 17/11/2026). Sin probar en el Motorola |
 | **K1** | Copia cifrada: exportar y verificar | E2 | Opus 5.5 | El más capaz de tu plan, razonamiento alto | Unido a `main` (17/11/2026). Sin probar en el Motorola |
-| **E3** | Reproductor en la burbuja, espacio en Ajustes | E2, K1 y Etapa B3 | Sonnet 5.5 | Modelo estándar, razonamiento medio | PR abierto: #54 (código de ChatGPT) y su cierre de Claude (prueba arreglada y documentos). Sin probar en el Motorola |
+| **E3** | Reproductor en la burbuja, espacio en Ajustes | E2, K1 y Etapa B3 | Sonnet 5.5 | Modelo estándar, razonamiento medio | Unido a `main` (PR #55, que reemplaza al #54; 17/11/2026). Motorola: reproducir, quitar audio y panel de espacio probados por Ignacio; adelantar/pausar y «Ver nota» sin probar |
 | **K2** | Restaurar una copia cifrada | K1 | Opus 5.5 | El más capaz de tu plan, razonamiento alto | Pendiente |
 | **T** | Mudar el texto al depósito grande | K1 y K2 | Opus 5.5 | El más capaz de tu plan, razonamiento alto | Pendiente |
 | **AO** | Anonimización con original recuperable | T y Etapa C1 | Sonnet 5.5 u Opus 5.5 | Cualquiera de los dos niveles | Pendiente |
