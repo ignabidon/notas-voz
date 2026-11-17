@@ -1,3 +1,13 @@
+## 17/11/2026 · Orden de la documentación (Claude Sonnet 5.5, solo documentación)
+
+- **Qué:** se reorganizó la documentación para que cada documento tenga un solo rol y las dos IA trabajen sobre lo mismo. Rama `docs/ordenar-documentacion-2026-11-17`, base `main` = `7171650`. **No se tocó `index.html`, ni pruebas, ni datos, ni formatos.**
+- **Nuevo:** `docs/INDICE.md` (qué es cada documento y cuál manda), `docs/DECISIONES.md` (registro único de decisiones de Ignacio, con la fuente de cada una), `docs/PEDIDOS.md` (pedidos para copiar y pegar, iguales para cualquier IA) y `docs/historial/` (copia textual de los carteles de estado anteriores de `CONTINUAR-AQUI.md`, sin perder nada).
+- **Reescrito:** `CONTINUAR-AQUI.md` (una página de estado, con los PR abiertos y su dueño). **Ajustado:** el tablero `docs/PLAN-ALMACENAMIENTO-CIFRADO.md` (columna «Dueño», cruce con la Entrega 2 de los PR #58 a #61, pedidos y decisiones ahora enlazados en vez de copiados), `AGENTS.md` y `CLAUDE.md` (solo los carteles de estado: pasan a enlaces; ninguna regla técnica se quitó). **Marcados como históricos:** `INFORME-CONTINUIDAD`, `TRASPASO-A-CHATGPT` y los dos `PROMPT-*.txt`.
+- **Hallazgos que quedan como preguntas para Ignacio (no se resolvieron):** (1) el PR #61 implementa un ensayo de K2 y el tablero decía que K2 se consulta siempre; no hay permiso registrado (P3). (2) Las decisiones A1 a A3 (arquitectura B, audio sin bóveda, formato 2) solo constan en descripciones de PR sin unir. (3) `main` sigue sin protección (verificado por la API el 17/11).
+- **Conflictos esperables:** los PR #58 y #61 también tocan `AGENTS.md` y `CONTINUAR-AQUI.md`; #59, #60 y #61, `CAMBIOS.md`; #61, el tablero. Son líneas sueltas: se resuelven pasando sus dos líneas a las páginas nuevas.
+- **Pendiente a propósito:** separar en `AGENTS.md` las reglas permanentes de las secciones fechadas del 15/11, y actualizar textos viejos de `README.md`; mover documentos históricos (hoy solo marcados) para no chocar con el PR #52.
+- **Tres niveles:** código guardado: **ninguno** (solo documentos) · pruebas técnicas: enlaces entre documentos verificados y `node --test` sin cambios · Motorola: no aplica.
+
 ## 17/11/2026 · Nombre visible: DictaVoz (decisión del usuario)
 
 - **Decisión de Ignacio (17/11, 9:27):** el nombre de la aplicación pasa a **DictaVoz** porque ya existe otra app «Dictanota». **Solo cambia lo que se ve dentro de la app**; el repositorio (`ignabidon/notas-voz`) y la dirección del sitio **no cambian**.
