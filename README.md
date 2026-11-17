@@ -1,6 +1,8 @@
 # DictaNota — Prueba Delta
 
 > **¿Querés usar DictaNota sin leer documentación técnica?** Empezá por la [Guía del propietario](GUIA-DEL-PROPIETARIO.md): uso cotidiano, seguridad, copias de notas y cómo seguir las novedades del proyecto.
+>
+> **Feedback real del propietario (16/11/2026):** [registro de pruebas en Motorola y mejoras pedidas](docs/FEEDBACK-MOTOROLA-2026-11-16.md). Se confirmó guardar texto como nota y descargar un audio de 168 KB; se detectaron editor demasiado bajo y pérdida del voseo («si querés» → «si queréis»). Se pidió asignar nombre/cuaderno antes de grabar. **Pendiente implementación: no confundir con funciones publicadas.**
 
 > Antes de editar: leer [SEGURIDAD.md](SEGURIDAD.md) y [AGENTS.md](AGENTS.md).
 
