@@ -2752,7 +2752,7 @@ $('convBack').onclick = () => { convComposeNew = false; convOpenId = null; if (!
 /* Nueva nota global: nunca cambia silenciosamente el destino de un borrador o captura. */
 function convBeginNew(){
   if (convAudioWork()) { flash('Terminá la grabación o transcripción antes de crear otra nota.'); return false; }
-  if ($('text').value.trim() || convEditingId) {
+  if ($('text').value.trim() || convAudioId || convEditingId) {
     document.querySelector('[data-delta-view="transcripcion"]').click();
     renderConv(); flash('Primero guardá o descartá la nota pendiente. Su cuaderno de destino no cambió.'); return false;
   }
@@ -3998,6 +3998,7 @@ function fail(e){
   logDiag('Se detuvo la transcripción de esta grabación' + (e && e.stage ? ' (etapa: ' + e.stage + ')' : '') + '. El audio guardado se puede transcribir de nuevo.');
   setStatus('No se pudo transcribir: ' + (e.message || e) + '. Si es la primera vez, hace falta internet para descargar lo necesario.' +
     ($('saveAudio').checked ? ' Si el audio termina de guardarse, podés confirmarlo como una nota sin texto.' : ' Conservar audio estaba desactivado: esta grabación no quedará guardada. Podés escribir una nota manual.'));
+  void saveDraft();  // preservar texto parcial y audio pendiente aunque Whisper falle
   unlockWake();
   maybeDone();
 }
@@ -4581,7 +4582,7 @@ async function e3Recover(id){
   if (!anUsable() || convAudioWork() || copiaBusyN || !(await anLockOk())) return flash('No se puede recuperar el audio ahora. Terminá las tareas pendientes y usá la pestaña con permiso para guardar.');
   if (convAudioWork() || copiaBusyN || e3Used(id)) return;
   // Recuperar nunca descarta un mensaje que el usuario todavía no confirmó.
-  if ($('text').value.trim() || convAudioId || convEditingId || $('title').value.trim())
+  if ($('text').value.trim() || convAudioId || convEditingId || $('title').value.trim() || tags.length)
     return flash('Primero guardá o descartá el borrador actual. No se reemplazó nada.');
   convSaving = true;
   try {
