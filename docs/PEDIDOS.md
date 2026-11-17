@@ -22,7 +22,7 @@ Al terminar, en el mismo PR: entrada en CAMBIOS.md, fila del tablero, reescribí
 | Si querés… | `[PASO]` | Modelo sugerido (Claude / ChatGPT) | Notas |
 |---|---|---|---|
 | Que revise lo que hizo la otra IA | `Revisión cruzada del PR #__` (usar el pedido de la sección 3) | El más capaz / el más capaz, razonamiento alto | La revisión la hace **una IA distinta de la que programó** |
-| Seguir la cadena de la Entrega 2 | `Revisión de #59, después #60 y #61, en ese orden` | El más capaz | Están apilados: se unen en orden o no se unen |
+| Seguir la cadena de la Entrega 2 | `Revisión cruzada de #59, después #60 y #61, en ese orden` (pedidos en la sección 4) | El más capaz | Están apilados: se unen en orden o no se unen |
 | Resolver el bloqueante de K2 | `Candado universal de escritura sin bóveda (bloqueante del PR #61)` | El más capaz | Solo la IA dueña de #61, o la que Ignacio designe. Requiere P3 respondida |
 | K2 de reemplazo | `K2 (reemplazar datos existentes)` | El más capaz | **Con permiso explícito de Ignacio**. Puede borrar datos |
 | Mudar el texto | `T (mudar el texto al depósito grande)` | El más capaz | **Con permiso explícito.** Es la única migración del plan. Antes: P7 respondida y K2 terminado |
@@ -55,7 +55,31 @@ Antes de terminar: dejá el repo al día. Reescribí CONTINUAR-AQUI.md con el es
 Tu información puede estar vieja. Releé el último main, los PR abiertos, docs/DECISIONES.md y CONTINUAR-AQUI.md, y decime qué cambió desde la última vez que trabajaste. No sigas con tu plan anterior hasta que me lo cuentes.
 ```
 
-## 4. Reglas que valen para todos los pedidos
+## 4. Revisión cruzada de la Entrega 2 (#59 → #60 → #61)
+
+Los tres PR los programó ChatGPT, así que los revisa **otra IA** (sugerido: Claude Opus 5.5, o el modelo más capaz disponible, con razonamiento alto). **Se revisan en orden y en sesiones separadas**: no se revisa #60 hasta tener el informe de #59, ni #61 hasta el de #60. El revisor **no cambia código ni la rama**: entrega un informe. Quien programó corrige después, en su propio PR.
+
+**Revisión del PR #59** (P1: borradores confirmados · P4 parcial: nota de solo audio)
+
+```
+Trabajás en DictaVoz (repo github.com/ignabidon/notas-voz). Leé AGENTS.md, SEGURIDAD.md, docs/INDICE.md, CONTINUAR-AQUI.md, docs/DECISIONES.md y docs/PLAN-ALMACENAMIENTO-CIFRADO.md, y el documento docs/ENTREGA2-ARQUITECTURA-B-IMPLEMENTACION-2026-11-17.md de la rama del PR. Revisá el PR #59 (base: main). NO cambies código ni la rama; entregame un informe. Comprobá en el código, no en la descripción: (1) saveDraft solo marca «guardado» tras verificar la escritura (con bóveda, tras vault.flush y vault.saved), y un fallo de cuota o de otra pestaña no se disimula; (2) un borrador viejo nunca pisa a uno nuevo y no se pierde el editor si falla el guardado; (3) vaultLockNow y la activación de la protección no avanzan si el borrador no se pudo confirmar; (4) restoreDraft no duplica una nota ya confirmada y no descarta un borrador distinto; (5) «Guardar solo audio» exige un audio cerrado e íntegro (anAudioHealth), no inventa texto y no cruza el audio con otra nota; (6) «Preparar nota» desde un audio huérfano crea un borrador sin confirmar, nunca una nota definitiva; (7) no cambian AN_DB_VERSION, el cifrado, el AAD, el formato .dictanota ni claves guardadas; (8) las pruebas nuevas prueban lo que dicen (no pasan por casualidad). Corré node --test y las suites de Chrome que puedas, y decime cuáles no pudiste correr. Informe en lenguaje simple, separando lo grave de lo menor, con archivo y línea de cada hallazgo, y diciendo qué riesgo corren los datos guardados. Marcá primero cualquier cosa que mis decisiones (docs/DECISIONES.md) no autoricen: K2, T, AO, borrados o cambios de formato.
+```
+
+**Revisión del PR #60** (P2: biblioteca en claro y copia formato 2, sin activar). Solo después del informe de #59.
+
+```
+Trabajás en DictaVoz (repo github.com/ignabidon/notas-voz). Leé AGENTS.md, SEGURIDAD.md, docs/INDICE.md, CONTINUAR-AQUI.md, docs/DECISIONES.md, docs/PLAN-ALMACENAMIENTO-CIFRADO.md y docs/ENTREGA2-P2-RESPALDO-V2-PREPARACION.md de la rama del PR. Revisá el PR #60 (apilado sobre #59, no lo modifiques). NO cambies código; entregame un informe. Comprobá: (1) el modo «claro» queda explícito en la ficha del audio y nunca puede confundirse con un audio cifrado ni quedar «aparentemente protegido»; (2) SHA-256 por parte, y qué pasa si un fragmento se altera, falta o se reordena; (3) el formato 2 de copia cifra con AES-GCM el audio que estaba en claro, trae manifiesto e integridad, y el formato 1, K1 y tests/copia-formato-1.dictanota quedan intactos; (4) el lector de formato 1 sigue funcionando; (5) nada de esto está conectado a la interfaz del usuario ni cambia AN_DB_VERSION ni borra o migra bases históricas; (6) el fixture tests/copia-formato-2.dictanota.base64 y su prueba de contraseña incorrecta; (7) qué casos no cubre (audio heredado notasvoz-gamma-audio, cuotas, cortes, dos pestañas). Informe en lenguaje simple, grave vs. menor, con archivo y línea, y qué riesgo corren los datos. Marcá primero lo que docs/DECISIONES.md no autorice (A3 permite el ensayo del formato 2 solo en laboratorio; publicarlo pide permiso aparte).
+```
+
+**Revisión del PR #61** (K2: restaurar en instalación vacía, ensayo). Solo después del informe de #60, y **solo si Ignacio respondió la pregunta P3** de `docs/DECISIONES.md` (si no, el revisor lo avisa y se limita a informar).
+
+```
+Trabajás en DictaVoz (repo github.com/ignabidon/notas-voz). Leé AGENTS.md, SEGURIDAD.md, docs/INDICE.md, CONTINUAR-AQUI.md, docs/DECISIONES.md, docs/PLAN-ALMACENAMIENTO-CIFRADO.md y docs/K2-RESTAURACION-VACIA-2026-11-17.md de la rama del PR. Revisá el PR #61 (apilado sobre #60). NO cambies código; entregame un informe. Empezá por esto: K2 siempre exige mi permiso explícito (docs/DECISIONES.md, W1/W2 y pregunta P3) y el PR no cita ese permiso; decime si el PR respeta el alcance acotado (solo instalación vacía, sin reemplazar ni combinar datos). Después comprobá: (1) rechaza antes de escribir si hay notas, ajustes, borradores, audio de la biblioteca nueva o grabaciones antiguas, y lo vuelve a comprobar tras validar; (2) primer recorrido (validar todo: clave, cabecera, bloques, cifrado, integridad, bloque final) y segundo (offsets, sin volcar todo a memoria) antes de modificar nada; (3) la cabecera de la bóveda se escribe al final y es el punto de confirmación; (4) qué pasa si se corta en cada paso y si la limpieza del lote funciona al recargar; (5) rechaza el formato 2 con audio originalmente en claro; (6) no restaura la huella de otro dispositivo; (7) el bloqueante conocido: con la protección apagada otra pestaña puede escribir mientras se restaura. Decime si está realmente resuelto o solo advertido en pantalla, y si por sí solo impide unirlo; (8) cuota llena en localStorage e IndexedDB, dos pestañas, fichas corruptas, lotes parciales. Informe en lenguaje simple, grave vs. menor, con archivo y línea, y qué riesgo corren los datos. No recomiendes unir mientras el bloqueante siga abierto.
+```
+
+**Qué hacer con los informes:** pegarlos (o pasarlos) a la IA dueña de cada PR para que corrija en su rama; no se unen hasta que el informe no tenga hallazgos graves **y** Ignacio lo autorice (en K2, con su permiso explícito).
+
+## 5. Reglas que valen para todos los pedidos
 
 - **Un paso por pedido.** Si encontrás algo fuera de tu alcance, anotalo en el PR; no lo arregles «de paso».
 - **Una rama nueva por paso**, desde el `main` actualizado. Nunca sobre la rama de otra IA.
