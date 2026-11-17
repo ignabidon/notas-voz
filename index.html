@@ -5734,7 +5734,11 @@ copiaEl('copiaArchivo').addEventListener('change', () => {
 
 /* K2 interfaz: la contraseña se solicita después de elegir el archivo y se comprueba
    antes de mostrar la confirmación. Sin opción para reemplazar o combinar. */
-copiaEl('copiaRestaurar').onclick=()=>{if(!copiaBusyN)copiaEl('copiaRestArchivo').click();};
+copiaEl('copiaRestaurar').onclick=()=>{
+  if(copiaBusyN)return;
+  if(!confirm('Antes de restaurar: cerrá todas las otras pestañas de DictaVoz. Con la bóveda apagada, otras pestañas antiguas todavía pueden escribir y el candado no las bloquea. ¿Confirmás que solo queda abierta esta pestaña?'))return;
+  copiaEl('copiaRestArchivo').click();
+};
 copiaEl('copiaRestArchivo').addEventListener('change',async()=>{
   const el=copiaEl('copiaRestArchivo'),file=el.files&&el.files[0];el.value='';
   if(!file||copiaBusyN)return;
