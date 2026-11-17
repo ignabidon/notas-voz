@@ -1,3 +1,5 @@
+**Precaución grave K2 (no fusionar):** el candado del restaurador todavía no excluye a las pestañas que escriben con bóveda apagada. Se añadió un aviso para cerrar otras pestañas, pero la integración requiere el bloqueo universal de escritura sin bóveda y ensayo de simultaneidad. El PR sigue en borrador.
+
 ## 17/11/2026 · K2: ensayo de restauración solo en perfil vacío (ChatGPT, PR #61)
 
 - **Código en rama, no publicado:** PR #61 apilado sobre #60 → #59. Se agregó lector/restaurador de copias formato 1/2 con verificación íntegra previa, comprobación de instalación realmente vacía, exclusión de segunda pestaña, lote recuperable y cabecera de bóveda escrita al final. Interfaz rotulada «experimental». **No mezcla, reemplaza, migra ni borra datos existentes.**
