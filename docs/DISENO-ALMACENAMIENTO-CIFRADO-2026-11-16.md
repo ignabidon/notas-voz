@@ -196,7 +196,9 @@ huella ─PRF+HKDF───┘                    │
 | `importando` (restauración cortada) | Limpia ese lote (ver 2.6) |
 | Fragmento que no autentica | El audio se marca dañado; no se borra ni se sobrescribe (misma política que los registros `.danado.`) |
 
-**Una sola pestaña:** tomar un candado con `navigator.locks` al abrir la bóveda; si otra pestaña ya lo tiene, avisar «DictaNota está abierta en otra pestaña» y no escribir. Mitiga el punto 5 de 2.1. (Sin probar en Brave/Android.)
+**Una sola pestaña:** tomar un candado con `navigator.locks` al abrir la bóveda; si otra pestaña ya lo tiene, avisar «DictaNota está abierta en otra pestaña» y no escribir. Mitiga el punto 5 de 2.1. (Sin probar en Brave/Android.) *Implementado en E2 (correcciones del 16/11/2026): vale para todo lo protegido y la cabecera, no solo para los audios.*
+
+**Quitar la protección antes de AO** (implementado en las correcciones de E2): mientras no exista el recorrido de D3, si hay audios por nota guardados la app no deja quitarla y explica por qué (si no, quedarían ilegibles).
 
 ### 2.6 Copia cifrada exportable y versionada
 

@@ -76,13 +76,22 @@ Anotá cada paso como **✔ bien** o **✘ falló** (y, si falló, sacá una cap
 16. ☐ **Activar huella** y registrar la huella.
 17. ☐ Recargá la página: pide desbloqueo. Desbloqueá **con la huella** y, otra vez, **con la contraseña**.
 18. ☐ Bloqueá a mano (**Bloquear ahora** en Ajustes, o el candado de arriba) y comprobá que no se ven las notas. (El autobloqueo a los 15 minutos con la pantalla apagada también se puede mirar si tenés tiempo.)
-19. ☐ Al terminar, si querés, **Quitar la protección** con tu contraseña.
+19. ☐ Al terminar, si querés, **Quitar la protección** con tu contraseña. *(Desde E2: si hay audios guardados con notas, la app no te deja y explica por qué. Es lo esperado.)*
 
 ### 3.7 Lo nuevo de la Etapa A (solo si ya se unió el PR #41)
 20. ☐ «Procesamiento local» se ve debajo del logo, en el celular.
 21. ☐ En Ajustes: íconos distintos por módulo, el botón (i) está junto al título, el selector de modelo no corta el texto.
 22. ☐ En Audio: «Conservar audio» está en una fila propia y no se repite la frase «Activá “Conservar audio”…».
 23. ☐ No queda ningún mensaje que diga «Texto» como si fuera una pestaña.
+
+### 3.8 Audios cifrados por nota (solo si ya se unió el PR #47, paso E2)
+Con la protección activada y «Conservar audio» encendido; leé en voz alta un texto inventado.
+24. ☐ Grabá 1 minuto, guardá la nota. Grabá otra de **10 minutos** y, si podés, una de **60**: que no se corte (batería y temperatura razonables).
+25. ☐ Cargá un M4A o MP3 inventado de menos de 30 MB (se guarda) y uno de más de 30 MB (lo rechaza).
+26. ☐ Editá la nota A, grabale algo, tocá **Cancelar edición**: el aviso dice que se quitó el audio agregado. Intentá editar otra nota B con la edición de A abierta y algo grabado: tiene que pedirte que guardes o canceles.
+27. ☐ Abrí DictaNota en **dos pestañas** de Brave y desbloqueá las dos: la segunda muestra arriba «abierta en otra pestaña» y, si tocás Guardar ahí, dice que no se guardó.
+28. ☐ Ajustes → **Quitar la protección** con audios guardados: te explica que no se puede todavía y la protección sigue.
+(Todavía no se pueden escuchar los audios desde la app: llega con E3.)
 
 ## 4. Cómo contarme el resultado
 

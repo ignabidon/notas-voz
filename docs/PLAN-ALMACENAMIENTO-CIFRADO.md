@@ -2,15 +2,15 @@
 
 > **Este archivo no cambia de nombre.** Los pedidos que Ignacio copia y pega apuntan acá. Es el tablero: dice qué paso toca, qué hay que hacer en cada uno y en qué estado está.
 > **El diseño completo** (el porqué de cada cosa) está en [DISENO-ALMACENAMIENTO-CIFRADO-2026-11-16.md](DISENO-ALMACENAMIENTO-CIFRADO-2026-11-16.md). Si este tablero y el diseño no coinciden, vale el diseño; si el diseño y el código no coinciden, vale el código, y avisale a Ignacio.
-> Última actualización: 16/11/2026 (Claude Sonnet 5.5). **E1 hecho en el PR #45, a la espera de que Ignacio lo una.** Próximo paso: **E2**. La Etapa N ya está en `main`.
+> Última actualización: 17/11/2026 (Claude). **E1 y E2 unidos a `main`** (E2 por el PR #50, que integra el #47 sobre el `main` con Clínica editorial). Próximo paso: **K1**. La Etapa N y el PR #48 ya están en `main`.
 
 ## Si sos la IA a la que le pidieron un paso, empezá acá
 
 1. Leé, en este orden: `SEGURIDAD.md`, `AGENTS.md`, `DISENO-CIFRADO.md`, `CONTINUAR-AQUI.md`, **este archivo** y el diseño completo. Después, el código real que vas a tocar en `/index.html`.
 2. Buscá tu paso en la tabla de abajo. **Hacé solo ese paso.** Si su estado no es «Pendiente» o alguno de los pasos de los que depende no está «Unido a `main`», frená y avisale a Ignacio.
-3. **Antes de programar, mostrale a Ignacio un plan corto en lenguaje simple y esperá su permiso explícito.** Todos estos pasos tocan almacenamiento.
+3. **Antes de programar, contale a Ignacio el plan en lenguaje simple.** Desde el 17/11/2026 (ver «Forma de trabajo» más abajo) no hace falta esperar su aprobación, **salvo en K2 y T**, donde sí hay que esperar su permiso explícito. Todos estos pasos tocan almacenamiento. Si sos otra IA, confirmá con Ignacio que el acuerdo vale también para vos.
 4. Trabajá en una rama nueva desde el `main` actualizado. No uses la rama de otra IA. Revisá los PR abiertos antes de empezar.
-5. Al terminar: pruebas, registro en `CAMBIOS.md`, PR, y **actualizá la columna «Estado» de este archivo en el mismo PR**. No unas a `main`: lo autoriza Ignacio (merge normal, sin squash).
+5. Al terminar: pruebas, registro en `CAMBIOS.md`, PR, y **actualizá la columna «Estado» de este archivo en el mismo PR**. Unir a `main` (merge normal, sin squash) solo con el CI en verde y dentro del acuerdo del 17/11; **K2 y T no se unen sin el permiso explícito de Ignacio**.
 6. Informá siempre en tres niveles: código guardado · pruebas técnicas · probado en el Motorola.
 
 ### Reglas que valen para todos los pasos
@@ -31,15 +31,15 @@ El orden general del proyecto es **Etapa N → B → E → C → D**. Estos paso
 | **N** (pestañas «Dictar» y «Cuadernos») | **Unida a `main`** (PR #43 de ChatGPT, commit de merge `4d3cd01`), con permiso de Ignacio. Publicada. **Sin probar en el Motorola** |
 | Documentación de continuidad | **Unida a `main`** (PR #42 de ChatGPT, `8a7ecb8`) |
 | Este diseño y este tablero | **Unidos a `main`** (PR #44 de Claude), con permiso de Ignacio |
-| **B** (jerarquía y densidad: B1, B2, B3) | Sin empezar |
+| **B** (jerarquía y densidad: B1, B2, B3) | **B1 y B2 hechos dentro del PR #48** (compositor compacto y editor amplio; Grabar inferior según la vista), unido a `main` (`2153dee`). **B3 (menú de las burbujas): sin empezar**; E3 lo espera |
 
 - **Ignacio indicó (16/11/2026, 18:06) que la próxima IA retome desde E1.** E1, E2, K1 y K2 no tocan la burbuja y pueden ir antes de la Etapa B. **E3 espera a B3** (el reproductor vive en la burbuja ya limpia).
-- Eso no reemplaza la regla de cada paso: plan corto y permiso explícito de Ignacio antes de programar.
+- **Forma de trabajo (decisión de Ignacio, 17/11/2026, sesión con Claude):** el plan se le cuenta en simple al empezar, sin esperar aprobación; se une a `main` con el CI en verde; **K2 y T siempre con consulta previa**; las pruebas que no puede hacer en el celular no frenan el avance (laboratorio ampliado y lista corta para el Motorola); lo guardado hoy en su celular son datos de prueba. Detalle en `AGENTS.md`.
 - **Vocabulario:** desde la Etapa N, en la interfaz «hoja» se llama **«cuaderno»** y las pestañas son Dictar / Cuadernos / Anonimizar / Ajustes. Los ids internos, las claves y los nombres de funciones (`conv…`) no cambiaron. El diseño se escribió antes de esa unión y dice «hoja»: es lo mismo.
 - El diseño cita líneas de `index.html` de `3383584`. La Etapa N cambió textos en el lugar (59 líneas), así que las referencias siguen sirviendo de guía; confirmá siempre en el código actual.
 - Para resolver un cruce en `CAMBIOS.md` y `CONTINUAR-AQUI.md`, Claude unió `main` dentro de la rama del PR #43 (solo esos dos archivos, conservando ambos textos) antes de unirlo. `index.html` y las pruebas de ChatGPT no se tocaron; el CI volvió a pasar.
 - `main` sigue **sin protección** en GitHub (verificado el 16/11). Lo activa Ignacio.
-- Otros PR abiertos, ajenos a este plan: #37 (decisiones del mediodía, documentación), #22 y #1 (viejos).
+- Otros PR abiertos, ajenos a este plan: #49 (guía del propietario y feedback del Motorola, documentación), #37 (decisiones del mediodía, documentación), #22 y #1 (viejos).
 
 ## Tablero de pasos
 
@@ -47,8 +47,8 @@ Orden decidido por Ignacio: **E1 → E2 → K1 → E3 → K2 → T → AO**.
 
 | Paso | Qué es | Depende de | Claude | ChatGPT (Codex) | Estado |
 |---|---|---|---|---|---|
-| **E1** | Base nueva de audios por nota, sin activar | — | Sonnet 5.5 | Modelo estándar, razonamiento medio | PR abierto (#45) |
-| **E2** | Cifrado de audios y guardado por nota | E1 | Opus 5.5 | El más capaz de tu plan, razonamiento alto | Pendiente |
+| **E1** | Base nueva de audios por nota, sin activar | — | Sonnet 5.5 | Modelo estándar, razonamiento medio | Unido a `main` (`aab2b90`, PR #45) |
+| **E2** | Cifrado de audios y guardado por nota | E1 | Opus 5.5 | El más capaz de tu plan, razonamiento alto | Unido a `main` (PR #50, que integra el #47; 17/11/2026). Sin probar en el Motorola |
 | **K1** | Copia cifrada: exportar y verificar | E2 | Opus 5.5 | El más capaz de tu plan, razonamiento alto | Pendiente |
 | **E3** | Reproductor en la burbuja, espacio en Ajustes | E2, K1 y Etapa B3 | Sonnet 5.5 | Modelo estándar, razonamiento medio | Pendiente |
 | **K2** | Restaurar una copia cifrada | K1 | Opus 5.5 | El más capaz de tu plan, razonamiento alto | Pendiente |
@@ -181,4 +181,8 @@ Tomadas el 16/11/2026. Detalle y opciones descartadas, en el diseño completo.
 
 - 16/11/2026, 18:10 · Claude (Fable 5.2): creado junto con el diseño. Ningún paso empezado. Nada probado en el Motorola.
 - 16/11/2026, 18:40 · Claude (Fable 5.2): con permiso de Ignacio se unieron a `main` los PR #42, #43 (Etapa N) y #44. Próximo paso: **E1**.
-- 16/11/2026 · Claude (Sonnet 5.5): E1 programado con permiso de Ignacio (bloque apagado, sin cifrado, candado sin conectar). PR #45 abierto; sin unir. Motorola: sin probar.
+- 16/11/2026 · Claude (Sonnet 5.5): E1 programado con permiso de Ignacio (bloque apagado, sin cifrado, candado sin conectar). PR #45 unido a `main` (`aab2b90`) con permiso de Ignacio, merge normal. Motorola: sin probar.
+- 16/11/2026, 18:40 · Claude (Opus 5.5): E2 programado con permiso de Ignacio, PR #47 abierto; sin unir. Decisiones del plan: **1a** (con la protección abierta, el audio se guarda solo cifrado; hasta E3 no se escucha desde la app) y **2a** (candado de una pestaña conectado para los audios). PR #46 cerrado a pedido de Ignacio (su cambio va acá). Detalle, casos aceptados y lo que no incluye: `CAMBIOS.md`. Motorola: sin probar. Conviene revisión cruzada de ChatGPT antes de unir.
+- 16/11/2026, 19:20 · Claude (Opus 5.5): correcciones de E2 por la revisión de ChatGPT sobre `2c88ce1`, con permiso de Ignacio, en el mismo PR #47: no se puede quitar la protección con audios guardados (hasta AO); el audio no se cruza entre notas A y B ni se borra si lo usa otra; Guardar espera la confirmación del disco; una sola pestaña escribe todo lo protegido; audio incompleto marcado sin duración; cancelar quita lo agregado; audio dañado conservado. Prueba nueva `tests/e2-correcciones-browser.mjs` (dos pestañas reales, sin espacio, cortes). Detalle y límites: `CAMBIOS.md`. Motorola: sin probar. Pide una nueva revisión independiente antes de unir.
+- 16/11/2026, 21:00 · Claude (Sonnet 5.5): segunda revisión de E2 corregida en el PR #47 (candado antes de escribir y falla cerrada; `audioParts` contra el borrador viejo; revisión completa del audio antes de ampliar o recortar; avisos veraces de ficha final y borrado). Sin unir, sin K1. Cortes de las pruebas simulados; Brave/Motorola sin probar. Qué debe comprobar la próxima revisión: ver CAMBIOS.md.
+- 17/11/2026 · Claude: E2 integrado sobre el `main` con Clínica editorial (PR #50; el #47 tenía cruces en `index.html` y `CAMBIOS.md`). Revisión independiente del código combinado sin hallazgos graves; 159/159 Node y ocho suites de Chrome; prueba extra de laboratorio con el micrófono sintético de Chrome por la interfaz real. Registrada la forma de trabajo acordada con Ignacio el 17/11 y el avance real de la Etapa B (B1 y B2 en el #48). Motorola: sin probar. Próximo paso: **K1**.
