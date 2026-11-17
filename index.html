@@ -5049,10 +5049,13 @@ async function anReviewOnOpen(){
     if (indexedDB.databases) { const list = await indexedDB.databases(); if (!list.some(d => d.name === AN_DB)) return; }
     if (!(await anLockOk())) return;
     const db = await anDb(), metas = await anListMeta(db), counts = {};
-    for (const m of metas) if (m && typeof m.id === 'string') counts[m.id] = await anCountChunks(db, m.id);
+    // El recorrido E2 solo sabe abrir audios cifrados. Nunca borrar ni declarar dañada
+    // una ficha P2 expresamente marcada como audio en claro al activar la bóveda.
+    const cifrados = metas.filter(m => !m || m.mode !== AN_PLAIN_MODE);
+    for (const m of cifrados) if (m && typeof m.id === 'string') counts[m.id] = await anCountChunks(db, m.id);
     const notes = convStore.data ? convStore.data.entries.map(e => e.audioId).filter(Boolean) : [];
-    const r = anReview(metas, counts, notes, [convAudioId]);
-    const byId = new Map(metas.filter(m => m && typeof m.id === 'string').map(m => [m.id, m]));
+    const r = anReview(cifrados, counts, notes, [convAudioId]);
+    const byId = new Map(cifrados.filter(m => m && typeof m.id === 'string').map(m => [m.id, m]));
     const hid = vault.header.id, kAudio = vault.audioKey; let closed = 0;
     for (const a of r.audios) {
       const m = byId.get(a.id);

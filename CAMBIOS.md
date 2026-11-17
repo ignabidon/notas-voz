@@ -1,3 +1,9 @@
+## 17/11/2026 · Revisión cruzada del PR #60 — transición entre modalidades (ChatGPT)
+
+- Sincronizado el PR #60 con el #59 corregido mediante un **commit de fusión en la rama apilada**; sin squash, sin force-push y sin fusionar `main`.
+- La revisión E2 al abrir la bóveda excluye audios experimentales identificados como `mode: claro`: no los descarta ni los etiqueta falsamente como cifrado dañado. Prueba de Chrome con ficha completa e interrumpida tras activar la protección.
+- Continúan bloqueadas la activación de P2 para usuarios, la copia integral restaurable, la exclusión entre pestañas sin bóveda y toda migración o eliminación de datos.
+
 ## 17/11/2026 · Biblioteca P2 y respaldo formato 2 en laboratorio (ChatGPT, rama dependiente del PR #59)
 
 - Por aprobación del propietario, se prepara la modalidad de audio sin bóveda en la misma IndexedDB, distinguida explícitamente por `mode: claro`, con hash SHA-256 y verificación de fragmentos; **todavía sin conectarla a la grabación de uso real**.
