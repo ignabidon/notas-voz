@@ -1705,7 +1705,13 @@ async function vaultLockNow(){
   if (vault.state !== 'open') return false;
   if (vaultBusy()) { vaultPanelMsg('No se bloquea mientras grabás o transcribís.'); return false; }
   e3Stop();
-  try { await vaultBeforeLock(); } catch (e) {}
+  // No descartar el texto visible si el borrador todavía no llegó a disco.
+  let draftReady = false;
+  try { draftReady = await vaultBeforeLock(); } catch (e) {}
+  if (!draftReady) {
+    vaultPanelMsg('No se bloqueó: el borrador no pudo guardarse. Liberá espacio o cerrá la otra pestaña y volvé a intentar.');
+    return false;
+  }
   await vault.flush();
   if (vault.pending.size) { vaultPanelMsg('No se pudo guardar todo cifrado; no se bloqueó para no perder texto.'); return false; }
   vault.state = 'locked'; vault.cache = new Map(); vault.key = null; vault.audioKey = null;
@@ -1836,7 +1842,8 @@ function vaultInitUI(){
     if (problem) { vaultPanelMsg(problem); return; }
     vaultEl('vaultSetupGo').disabled = true; vaultPanelMsg('Cifrando… puede tardar unos segundos.');
     try {
-      try { await vaultBeforeLock(); } catch (e) {}
+      // Antes de habilitar protección, comprobar también el borrador de la modalidad anterior.
+      if (!(await vaultBeforeLock())) throw new Error('No se activó la protección: no se pudo guardar el borrador. Liberá espacio y reintentá.');
       const {recovery, dek} = await vault.enable(vaultEl('vaultNew').value);
       await vaultTakeTabLock();
       vaultEl('vaultNew').value = ''; vaultEl('vaultNew2').value = ''; vaultEl('vaultSetup').hidden = true;
@@ -5770,12 +5777,12 @@ $('listPreview').addEventListener('change', () => { saveCfg(); renderConv(); });
 document.querySelectorAll('input[name=eng]').forEach(r => r.addEventListener('change', () => { setStatus(''); saveCfg(); }));
 
 /* ---------- Borrador autoguardado: sobrevive a recargas y cierres ---------- */
-let lastDraft = '', draftWriteQueue = Promise.resolve(), draftErrorShown = false;
+let lastDraft = '', draftWriteQueue = Promise.resolve(), draftErrorShown = false, draftWriteVersion = 0;
 const snap = () => JSON.stringify({title: $('title').value, text: $('text').value, tags, cur, baseline,
   conv: {open: convOpenId, target: convTargetId, targetSet: convTargetSet, editing: convEditingId, fromAudio: convFromAudio, recordedAt: convRecordedAt,
     audioId: convAudioId, audioMs: convAudioMs, audioBase: convAudioBase}});
-/* El borrador se considera persistido únicamente tras confirmar la escritura. Una cola
-   evita que un snapshot anterior sobrescriba al borrador nuevo después de un Guardar. */
+/* Con bóveda, confirmar el volcado cifrado; sin bóveda, escribir sincrónicamente.
+   La escritura sincrónica es necesaria en pagehide: una promesa en cola podría no ejecutarse al cerrar. */
 async function draftWriteConfirmed(value, store, protection){
   store.setItem(DRAFT, value);
   if (protection.state === 'open') {
@@ -5784,31 +5791,65 @@ async function draftWriteConfirmed(value, store, protection){
   }
   return store.getItem(DRAFT) === value;
 }
+function draftWriteFailed(){
+  if (!draftErrorShown) {
+    draftErrorShown = true;
+    flash('El borrador sigue visible, pero no se pudo confirmar su guardado. No cierres DictaVoz: liberá espacio y volvé a intentar.');
+  }
+  return false;
+}
 function saveDraft(){
-  const value = snap();
-  const write = draftWriteQueue.then(async () => {
-    if (value === lastDraft) return true;
-    if (vault.readOnly || (vault.state !== 'off' && vault.state !== 'open')) return false;
+  const value = snap(), version = ++draftWriteVersion;
+  if (vault.state === 'off') {
+    // localStorage es sincrónico: no esperar a una microtarea para guardar la última edición.
     try {
+      if (vaultStore.getItem(DRAFT) !== value) vaultStore.setItem(DRAFT, value);
+      if (vaultStore.getItem(DRAFT) !== value) throw new Error('escritura no confirmada');
+      lastDraft = value; draftErrorShown = false;
+      return Promise.resolve(true);
+    } catch (e) { return Promise.resolve(draftWriteFailed()); }
+  }
+  const write = draftWriteQueue.then(async () => {
+    // Si llegó otra versión mientras esperábamos en la cola, nunca pisar la más reciente.
+    if (version !== draftWriteVersion) return false;
+    if (vault.readOnly || vault.state !== 'open') return false;
+    try {
+      if (value === lastDraft && vault.saved(DRAFT) && vaultStore.getItem(DRAFT) === value) return true;
       if (!await draftWriteConfirmed(value, vaultStore, vault)) throw new Error('escritura no confirmada');
       lastDraft = value; draftErrorShown = false;
       return true;
-    } catch (e) {
-      if (!draftErrorShown) {
-        draftErrorShown = true;
-        flash('El borrador sigue visible, pero no se pudo confirmar su guardado. No cierres DictaVoz: liberá espacio y volvé a intentar.');
-      }
-      return false;
-    }
+    } catch (e) { return draftWriteFailed(); }
   });
   draftWriteQueue = write.then(() => {}, () => {});
   return write;
 }
+/* La nota se escribe antes de limpiar el borrador. Si esa limpieza falla,
+   reconocer la misma nota ya confirmada evita crear un duplicado al recargar. */
+function draftAlreadyConfirmed(d){
+  if (!d || typeof d !== 'object' || !d.conv || typeof d.conv !== 'object' || !convStore.data || typeof d.text !== 'string') return false;
+  // El título y las etiquetas del editor pueden ser trabajo independiente pendiente.
+  if ((typeof d.title === 'string' && d.title.trim()) || (Array.isArray(d.tags) && d.tags.length)) return false;
+  const c = d.conv, audioId = typeof c.audioId === 'string' && c.audioId ? c.audioId : null;
+  const same = e => e.text === d.text && (e.audioId || null) === audioId;
+  if (typeof c.editing === 'string' && c.editing) {
+    const saved = convStore.data.entries.find(e => e.id === c.editing);
+    return !!saved && same(saved);
+  }
+  // La fecha de inicio del borrador también se registra como recordedAt en la nota.
+  // No inferir un guardado a partir de un texto igual escrito en otro momento.
+  if (!Number.isFinite(c.recordedAt) || c.recordedAt <= 0) return false;
+  return convStore.data.entries.some(e => e.recordedAt === c.recordedAt && same(e));
+}
 function restoreDraft(){
+  let staleConfirmed = false, storedDraft = null;
   try {
-    const d = JSON.parse(vaultStore.getItem(DRAFT) || 'null');
+    storedDraft = vaultStore.getItem(DRAFT);
+    const d = JSON.parse(storedDraft || 'null');
+    staleConfirmed = draftAlreadyConfirmed(d);
+    if (staleConfirmed) {
+      flash('Esta nota ya estaba guardada: no se restauró el borrador anterior ni se duplicó.');
     // E2: también si solo quedó un audio pendiente (grabación cortada antes de que hubiera texto).
-    if (d && ((d.text || '').trim() || (d.title || '').trim() || (d.conv && typeof d.conv.audioId === 'string' && d.conv.audioId))) {
+    } else if (d && ((d.text || '').trim() || (d.title || '').trim() || (d.conv && typeof d.conv.audioId === 'string' && d.conv.audioId))) {
       cur = d.cur || null; $('title').value = d.title || ''; $('text').value = d.text || ''; baseline = d.baseline || ''; tags = d.tags || [];
       renderChips();
       const c = d.conv && typeof d.conv === 'object' ? d.conv : {};
@@ -5828,11 +5869,15 @@ function restoreDraft(){
     const u = JSON.parse(vaultStore.getItem(UNDO) || 'null');
     if (u) { clearBackup = u; $('undoClear').style.display = ''; }
   } catch (e) {}
-  lastDraft = snap();
+  // Si quedó el borrador de una nota confirmada, intentar limpiarlo sin perder la nota.
+  lastDraft = staleConfirmed ? storedDraft : snap();
+  if (staleConfirmed) void saveDraft();
 }
 setInterval(saveDraft, 1500);
-document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') saveDraft(); });
-window.addEventListener('pagehide', saveDraft);
+// Sin bóveda, cada tecla queda persistida antes de un cierre brusco de la página.
+['text', 'title'].forEach(id => $(id).addEventListener('input', () => { if (vault.state === 'off') void saveDraft(); }));
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') void saveDraft(); });
+window.addEventListener('pagehide', () => { void saveDraft(); });
 
 /* Borrado optativo y limitado a copias de texto; no se eliminan audios ni diccionarios. */
 const TEXT_STORAGE_KEYS = [KEY, DRAFT, UNDO];
