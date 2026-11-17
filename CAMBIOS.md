@@ -1,3 +1,14 @@
+## 17/11/2026 · B3: menú de las notas y lista de cuadernos más clara (Claude)
+
+- **Autorización:** forma de trabajo acordada el 17/11. El usuario había aprobado el 16/11 el menú «⋯» y la vista previa, dejando el detalle a criterio. **Responsable:** Claude. Rama `claude/relaxed-lovelace-37wih1`, base `main` = `3a199b6` (K1 unido).
+- **Notas:** en cada nota quedan a la vista **Copiar** y **Editar**; **Mover a otro cuaderno** y **Borrar esta nota** pasan al menú **«⋯»**. Antes eran cuatro botones en dos filas. El menú se abre dentro de la nota, uno solo a la vez, y se cierra al elegir, al tocar afuera o con Escape. Botones de 48 px o más, con nombre accesible.
+- **Lista de cuadernos:** la segunda línea dice la cantidad de notas y una fecha corta («Hoy 12:44», «Ayer 09:10» o el día), sin repetir la fecha del título. Arriba, una línea con el comienzo de la última nota para distinguir cuadernos del mismo día.
+- **Ajuste nuevo:** «Mostrar vista previa en la lista» (Ajustes → Lectura y comodidad), activado por defecto, con el aviso de que puede dejar a la vista nombres reales. Es un campo opcional (`listPreview`) de la configuración existente.
+- **No cambia:** datos guardados, sellos de fecha, claves, cifrado, audio, Whisper ni CSP. Todo se muestra con `textContent`. Las funciones de mover, borrar, copiar y editar son las mismas.
+- **Pruebas técnicas:** 166/166 Node (2 nuevas: fecha corta y vista previa; estructura de la burbuja y del ajuste). `notas-browser` amplía el recorrido: menú abierto y cerrado, foco, Escape, tocar afuera, un solo menú a la vez, mover desde el menú, lista con fecha corta, vista previa de una línea sin desborde, texto hostil mostrado como texto, y el ajuste apagado que se conserva al recargar. `editor-browser` actualizada (Borrar conserva el rojo, ahora en el menú). Capturas revisadas a 320 y 360 px.
+- **Arreglo de la prueba, no de la app:** `notas-browser` podía terminar con error después de pasar todas sus comprobaciones, al borrar la carpeta temporal de Chrome mientras el navegador todavía la soltaba. Ahora ese borrado final tolera la falla, como ya hacían las otras suites. Ninguna comprobación se quitó ni se saltea.
+- **Tres niveles:** código guardado en la rama y en su PR · pruebas técnicas aprobadas en local (CI en el PR) · **Motorola: sin probar**. Con esto la Etapa B queda completa y **E3 ya no espera nada**.
+
 ## 17/11/2026 · Paso K1: copia cifrada, crear y verificar (Claude)
 
 - **Autorización:** forma de trabajo acordada con el usuario el 17/11 (plan contado al empezar; unión con el CI en verde). **Responsable:** Claude. Rama `claude/relaxed-lovelace-37wih1`, base `main` = `b5f611b` (E2 unido). Alcance: solo el paso K1 del tablero.

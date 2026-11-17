@@ -1388,7 +1388,7 @@ test('cifrado: un código de recuperación nuevo reemplaza al anterior (pide la 
 
 /* ---- Rediseño conversacional · modelo y guardado (fases 1 y 2, 16/11/2026). Datos ficticios. ---- */
 const convSrc = (html.match(/\/\*CONV-START\*\/([\s\S]*?)\/\*CONV-END\*\//) || [])[1];
-const conv = new Function(convSrc + ';return {convDeleteEntry, convDeleteConversation, convSummaries, CONV_KEY, convEmpty, convStamp, convValid, convEntriesOf, convAddEntry, convEditText, convRename, convMoveEntry, convMoveEntries, convMoveAll, convUndoMove, convIsEmpty, convCopyText, convCheckWrite, convFromLegacy, convToLegacyNotes, convMakeStore, convSetAudio, convAudioInUse};')();
+const conv = new Function(convSrc + ';return {convDeleteEntry, convDeleteConversation, convSummaries, CONV_KEY, convEmpty, convStamp, convValid, convEntriesOf, convAddEntry, convEditText, convRename, convMoveEntry, convMoveEntries, convMoveAll, convUndoMove, convIsEmpty, convCopyText, convCheckWrite, convFromLegacy, convToLegacyNotes, convMakeStore, convSetAudio, convAudioInUse, convRelative, convPreview};')();
 const BA = 180; // getTimezoneOffset() de Buenos Aires
 const T1042 = Date.UTC(2026, 10, 16, 13, 42); // 16/11/2026 10:42 en Argentina
 const seqIds = () => { let n = 0; return () => 'id' + (++n); };
@@ -2200,5 +2200,43 @@ test('copia K1: solo lee; no escribe, no borra y no sale a la red', () => {
   // La interfaz no promete lo que todavía no existe ni usa palabras prohibidas.
   const panel = html.match(/<section class="vault-panel" id="copiaPanel"[\s\S]*?<\/section>/)[0];
   assert.match(panel, /crear y comprobar/); assert.doesNotMatch(panel + copiaUso, /cifrado seguro|sin nube|restaurad[ao] correctamente/i);
+});
+
+/* ---------- B3: lista de cuadernos y menú de la nota (solo presentación; datos inventados) ---------- */
+test('B3: fecha corta y vista previa de la lista, sin tocar los sellos guardados', () => {
+  const c = conv, ahora = new Date(2026, 10, 17, 15, 30).getTime();
+  assert.equal(c.convRelative(new Date(2026, 10, 17, 9, 5).getTime(), ahora), 'Hoy 09:05');
+  assert.equal(c.convRelative(new Date(2026, 10, 16, 23, 59).getTime(), ahora), 'Ayer 23:59');
+  assert.equal(c.convRelative(new Date(2026, 10, 17, 0, 0).getTime(), ahora), 'Hoy 00:00');
+  assert.equal(c.convRelative(new Date(2026, 10, 15, 12, 0).getTime(), ahora), '15/11/2026');
+  assert.equal(c.convRelative(new Date(2025, 11, 31, 12, 0).getTime(), new Date(2026, 0, 1, 8, 0).getTime()), 'Ayer 12:00', 'cambio de año');
+  assert.equal(c.convRelative(null, ahora), ''); assert.equal(c.convRelative(NaN, ahora), '');
+  assert.equal(c.convPreview('  Persona Inventada Uno\n\n  dijo   algo  '), 'Persona Inventada Uno dijo algo');
+  const largo = c.convPreview('X-901 '.repeat(40));
+  assert.equal(largo.length, 60); assert.ok(largo.endsWith('…'));
+  assert.equal(c.convPreview(''), ''); assert.equal(c.convPreview(null), ''); assert.equal(c.convPreview(undefined), '');
+  // El resumen trae el texto de la nota más reciente con texto, y no cambia nada de los datos.
+  let d = c.convEmpty();
+  const r1 = c.convAddEntry(d, {conversationId: null, kind: 'texto', savedAt: 1000, text: 'Primera nota inventada'}); d = r1.data;
+  d = c.convAddEntry(d, {conversationId: r1.conversation.id, kind: 'texto', savedAt: 2000, text: 'Segunda nota, madre de X-901'}).data;
+  const antes = JSON.stringify(d), s = c.convSummaries(d);
+  assert.deepEqual([s[0].count, s[0].lastSavedAt, s[0].preview], [2, 2000, 'Segunda nota, madre de X-901']);
+  assert.equal(JSON.stringify(d), antes, 'armar el resumen no modifica los datos');
+});
+
+test('B3: la burbuja deja Copiar y Editar a la vista y lleva Mover y Borrar al menú', () => {
+  const render = html.match(/function renderConv\(\)\{[\s\S]*?\n\}/)[0];
+  assert.match(render, /acts\.append\(convButton\('Copiar'[^\n]*convButton\('Editar'[^\n]*, more\);/);
+  assert.match(render, /menu\.append\(item\('Mover a otro cuaderno'[^\n]*item\('Borrar esta nota'[^\n]*'ghost danger'\)\);/);
+  assert.match(render, /aria-haspopup', 'menu'/); assert.match(render, /aria-expanded', 'false'/); assert.match(render, /setAttribute\('role', 'menu'\)/);
+  // Todo con textContent (convButton y createElement); nada de innerHTML con datos.
+  assert.doesNotMatch(render, /innerHTML|insertAdjacentHTML|outerHTML/);
+  assert.match(html, /\.conv-menu\[hidden\]\{display:none\}/, 'el menú cerrado no ocupa lugar');
+  assert.match(html, /\.conv-actions \.conv-more\{flex:0 0 56px;min-width:56px/, 'el botón del menú mide al menos 48 px');
+  // El ajuste es un campo opcional de la configuración existente: sin claves nuevas.
+  assert.ok(ids.includes('listPreview'));
+  assert.match(html, /listPreview:\$\('listPreview'\)\.checked\}\)\);/);
+  assert.match(html, /if \(typeof c\.listPreview === 'boolean'\) \$\('listPreview'\)\.checked = c\.listPreview;/);
+  assert.match(html, /id="listPreview" checked>/, 'activada por defecto');
 });
 

@@ -82,7 +82,21 @@ try {
  assert.equal(await run('document.querySelector("#convBubbles .conv-text").textContent'),'Comprar yerba ficticia y fideos.');
  // 6) Mover un mensaje con Deshacer.
  const cuaderno=await run('convOpenId');
- await run('[...document.querySelectorAll("#convBubbles .conv-bubble")][1].querySelector(".conv-actions button:nth-child(3)").click()');
+ // B3: «Mover» y «Borrar» viven en el menú «⋯» de la nota. Copiar y Editar siguen a la vista.
+ assert.deepEqual(await run('[...document.querySelectorAll("#convBubbles .conv-bubble")][1].querySelectorAll(".conv-actions button").length'),3);
+ assert.equal(await run('(()=>{const b=[...document.querySelectorAll("#convBubbles .conv-bubble")][1],m=b.querySelector(".conv-more"),menu=b.querySelector(".conv-menu");return [...b.querySelectorAll(".conv-actions button")].map(x=>x.textContent).join("|")+"/"+m.getAttribute("aria-label")+"/"+m.getAttribute("aria-haspopup")+"/"+m.getAttribute("aria-expanded")+"/"+menu.hidden+"/"+[...menu.querySelectorAll("[role=menuitem]")].map(x=>x.textContent).join("|")})()'),'Copiar|Editar|⋯/Más acciones de esta nota/menu/false/true/Mover a otro cuaderno|Borrar esta nota');
+ await run('[...document.querySelectorAll("#convBubbles .conv-bubble")][1].querySelector(".conv-more").click()');
+ assert.equal(await run('(()=>{const b=[...document.querySelectorAll("#convBubbles .conv-bubble")][1],m=b.querySelector(".conv-more"),menu=b.querySelector(".conv-menu");return m.getAttribute("aria-expanded")+"/"+menu.hidden+"/"+(document.activeElement===menu.querySelector("button"))+"/"+[...menu.querySelectorAll("button")].every(x=>x.getBoundingClientRect().height>=48)+"/"+(m.getBoundingClientRect().width>=48&&m.getBoundingClientRect().height>=48)})()'),'true/false/true/true/true','el menú se abre, enfoca su primera acción y respeta 48 px');
+ // Abrir el menú de otra nota cierra este; Escape cierra y devuelve el foco; tocar afuera cierra.
+ await run('[...document.querySelectorAll("#convBubbles .conv-bubble")][0].querySelector(".conv-more").click()');
+ assert.equal(await run('[...document.querySelectorAll("#convBubbles .conv-menu")].map(m=>m.hidden).join(",")'),'false,true','un solo menú abierto a la vez');
+ await run('document.dispatchEvent(new KeyboardEvent("keydown",{key:"Escape",bubbles:true}))');
+ assert.equal(await run('[...document.querySelectorAll("#convBubbles .conv-menu")].every(m=>m.hidden)&&document.activeElement===[...document.querySelectorAll("#convBubbles .conv-bubble")][0].querySelector(".conv-more")'),true,'Escape cierra y devuelve el foco');
+ await run('[...document.querySelectorAll("#convBubbles .conv-bubble")][1].querySelector(".conv-more").click()');
+ await run('document.getElementById("convTitle").click()');
+ assert.equal(await run('[...document.querySelectorAll("#convBubbles .conv-menu")].every(m=>m.hidden)'),true,'tocar afuera cierra el menú');
+ await run('[...document.querySelectorAll("#convBubbles .conv-bubble")][1].querySelector(".conv-more").click()');
+ await run('[...document.querySelectorAll("#convBubbles .conv-bubble")][1].querySelector(".conv-menu [role=menuitem]").click()');
  assert.equal(await run('document.getElementById("convMoveDialog").open'),true);
  await run('document.getElementById("convMoveForm").requestSubmit()');
  assert.equal(await run('convEntriesOf(convStore.data,'+JSON.stringify(cuaderno)+').length'),1);
@@ -134,6 +148,25 @@ try {
   }
   await run('document.querySelector("#convList .conv-item").click()');
  }
+ // 13) B3 · Lista de cuadernos: fecha corta sin repetir «último», y vista previa de una línea que se puede apagar en Ajustes.
+ await run('document.getElementById("convBack").click()');
+ const item=()=>run('(()=>{const b=document.querySelector("#convList .conv-item"),p=b.querySelector(".conv-preview");return JSON.stringify({small:b.querySelector("small").textContent,preview:p?p.textContent:null,imgs:b.querySelectorAll("img").length,lineas:p?Math.round(p.getBoundingClientRect().height/parseFloat(getComputedStyle(p).lineHeight)):0,cabe:p?p.getBoundingClientRect().right<=b.getBoundingClientRect().right+1:true})})()').then(JSON.parse);
+ let it=await item();
+ assert.match(it.small,/^\d+ notas? · Hoy \d\d:\d\d$/,'cantidad y fecha corta: '+it.small);
+ assert.doesNotMatch(it.small,/último/);
+ assert.equal(it.preview,'<img src=x onerror="window.__xss=3">','la vista previa muestra el comienzo de la última nota, como texto');
+ assert.equal(it.imgs,0); assert.equal(await run('window.__xss'),undefined);
+ assert.ok(it.lineas<=1&&it.cabe,'la vista previa ocupa una sola línea y no desborda');
+ assert.equal(await run('document.getElementById("listPreview").checked'),true,'activada por defecto');
+ await run('document.getElementById("listPreview").click()');
+ it=await item();
+ assert.equal(it.preview,null,'apagada en Ajustes, la lista no muestra texto de las notas');
+ assert.equal(await run('JSON.parse(localStorage.getItem("notasvoz.gamma.cfg.v1")).listPreview'),false,'se guarda en la configuración existente');
+ await load(); await run(prep);
+ assert.equal(await run('document.getElementById("listPreview").checked'),false,'el ajuste se conserva al recargar');
+ assert.equal((await item()).preview,null);
+ await run('document.getElementById("listPreview").click()');
+ assert.equal(typeof (await item()).preview,'string');
  // Nueva nota global desdel cuaderno: conserva pendientes y separa destinos.
  await run('convClearComposer();document.getElementById("convNewFromSheet").click()');
  assert.equal(await run('convDest()'),null);
@@ -155,7 +188,7 @@ try {
  assert.ok(await run('document.getElementById("text").getBoundingClientRect().height>100'),'editor visible y amplio');
  // 13) Las notas viejas siguen intactas al final.
  assert.equal(await run('localStorage.getItem("notasvoz.gamma.v1")'),JSON.stringify(viejas));
- console.log('NOTAS OK: migración, cuaderno nuevo, agregar, captura global, editar sin cambiar la fecha, mover y deshacer, copiar y pasar todo, descartar, recuperación, textos hostiles y anchos 320/360/412.');
+ console.log('NOTAS OK: migración, cuaderno nuevo, agregar, captura global, editar sin cambiar la fecha, menú de la nota, mover y deshacer, copiar y pasar todo, descartar, recuperación, textos hostiles, anchos 320/360/412 y lista con fecha corta y vista previa.');
 } finally {
- try{ws?.close();}catch{} chrome.kill('SIGKILL'); server.close(); rmSync(profile,{recursive:true,force:true});
+ try{ws?.close();}catch{} chrome.kill('SIGKILL'); server.close(); try{rmSync(profile,{recursive:true,force:true});}catch{}   // la carpeta temporal de Chrome puede seguir ocupada un instante: no es parte de la prueba
 }

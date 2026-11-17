@@ -2,7 +2,7 @@
 
 > **Este archivo no cambia de nombre.** Los pedidos que Ignacio copia y pega apuntan acá. Es el tablero: dice qué paso toca, qué hay que hacer en cada uno y en qué estado está.
 > **El diseño completo** (el porqué de cada cosa) está en [DISENO-ALMACENAMIENTO-CIFRADO-2026-11-16.md](DISENO-ALMACENAMIENTO-CIFRADO-2026-11-16.md). Si este tablero y el diseño no coinciden, vale el diseño; si el diseño y el código no coinciden, vale el código, y avisale a Ignacio.
-> Última actualización: 17/11/2026 (Claude). **E1, E2 y K1 unidos a `main`.** Próximo paso: **B3** (Etapa B, menú de las burbujas) y después **E3**, que lo espera. K2 y T: siempre con consulta previa a Ignacio. La Etapa N y el PR #48 ya están en `main`.
+> Última actualización: 17/11/2026 (Claude). **E1, E2 y K1 unidos a `main`; la Etapa B quedó completa con B3.** Próximo paso: **E3** (ya no espera nada). K2 y T: siempre con consulta previa a Ignacio.
 
 ## Si sos la IA a la que le pidieron un paso, empezá acá
 
@@ -31,7 +31,7 @@ El orden general del proyecto es **Etapa N → B → E → C → D**. Estos paso
 | **N** (pestañas «Dictar» y «Cuadernos») | **Unida a `main`** (PR #43 de ChatGPT, commit de merge `4d3cd01`), con permiso de Ignacio. Publicada. **Sin probar en el Motorola** |
 | Documentación de continuidad | **Unida a `main`** (PR #42 de ChatGPT, `8a7ecb8`) |
 | Este diseño y este tablero | **Unidos a `main`** (PR #44 de Claude), con permiso de Ignacio |
-| **B** (jerarquía y densidad: B1, B2, B3) | **B1 y B2 hechos dentro del PR #48** (compositor compacto y editor amplio; Grabar inferior según la vista), unido a `main` (`2153dee`). **B3 (menú de las burbujas): sin empezar**; E3 lo espera |
+| **B** (jerarquía y densidad: B1, B2, B3) | **Completa.** B1 y B2 dentro del PR #48 (`2153dee`); **B3 el 17/11/2026** (menú «⋯» en las notas, lista con fecha corta y vista previa). Sin probar en el Motorola |
 
 - **Ignacio indicó (16/11/2026, 18:06) que la próxima IA retome desde E1.** E1, E2, K1 y K2 no tocan la burbuja y pueden ir antes de la Etapa B. **E3 espera a B3** (el reproductor vive en la burbuja ya limpia).
 - **Forma de trabajo (decisión de Ignacio, 17/11/2026, sesión con Claude):** el plan se le cuenta en simple al empezar, sin esperar aprobación; se une a `main` con el CI en verde; **K2 y T siempre con consulta previa**; las pruebas que no puede hacer en el celular no frenan el avance (laboratorio ampliado y lista corta para el Motorola); lo guardado hoy en su celular son datos de prueba. Detalle en `AGENTS.md`.
@@ -187,3 +187,4 @@ Tomadas el 16/11/2026. Detalle y opciones descartadas, en el diseño completo.
 - 16/11/2026, 21:00 · Claude (Sonnet 5.5): segunda revisión de E2 corregida en el PR #47 (candado antes de escribir y falla cerrada; `audioParts` contra el borrador viejo; revisión completa del audio antes de ampliar o recortar; avisos veraces de ficha final y borrado). Sin unir, sin K1. Cortes de las pruebas simulados; Brave/Motorola sin probar. Qué debe comprobar la próxima revisión: ver CAMBIOS.md.
 - 17/11/2026 · Claude: E2 integrado sobre el `main` con Clínica editorial (PR #50; el #47 tenía cruces en `index.html` y `CAMBIOS.md`). Revisión independiente del código combinado sin hallazgos graves; 159/159 Node y ocho suites de Chrome; prueba extra de laboratorio con el micrófono sintético de Chrome por la interfaz real. Registrada la forma de trabajo acordada con Ignacio el 17/11 y el avance real de la Etapa B (B1 y B2 en el #48). Motorola: sin probar. Próximo paso: **K1**.
 - 17/11/2026 · Claude: K1 programado (plan contado a Ignacio al empezar, según el acuerdo del 17/11): formato 1 del archivo `.dictanota`, «Crear copia cifrada» y «Verificar una copia» en Ajustes → Privacidad, archivo de ejemplo fijo en `tests/`. Solo lee: no restaura ni modifica nada. Se agregó al formato una huella encadenada (`cadena`) en el bloque final; detalle en el diseño, 2.6. Con la protección apagada la copia lleva una contraseña propia y solo texto. Motorola: sin probar (descarga y selección del archivo en Brave). Próximo paso: **B3**, después **E3**.
+- 17/11/2026 · Claude: **B3** hecho (no es un paso de este tablero, pero E3 lo esperaba): Copiar y Editar a la vista, Mover y Borrar en el menú «⋯»; lista de cuadernos con fecha corta y vista previa que se puede apagar. Solo presentación; un campo opcional nuevo (`listPreview`) en la configuración existente. Próximo paso: **E3**.

@@ -598,6 +598,13 @@ label,.hint,.warn,.sub,.section-hint,.selection-help,.mark-help,.record-caption-
 .conv-text{font-size:max(16px,calc(16px * var(--text-scale)));line-height:1.65}
 .conv-meta{border:0;padding:0;margin-top:12px;gap:6px}
 .conv-actions{gap:8px}.conv-actions button{background:var(--card);min-height:48px}
+.conv-actions .conv-more{flex:0 0 56px;min-width:56px;padding:0;font-size:24px;line-height:1;letter-spacing:1px}
+body[data-view="transcripcion"] .conv-actions .conv-more{font-size:26px;font-weight:800}
+.conv-menu{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;padding-top:10px;border-top:1px dashed var(--line-strong)}
+.conv-menu[hidden]{display:none}
+.conv-menu button{flex:1 1 150px;min-height:48px;background:#FFF;color:#31515B;border-color:var(--line-strong);font-weight:650;font-size:max(14px,calc(14px * var(--text-scale)));white-space:normal}
+.conv-menu button.danger{color:var(--error)}
+.conv-item .conv-preview{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:max(14px,calc(14px * var(--text-scale)));font-weight:400;color:var(--ink)}
 body.conv-open .text-screen-title{display:none}
 #convComposer{display:none}
 body[data-view="transcripcion"].conv-composing #convComposer{display:block}
@@ -868,6 +875,8 @@ body.delta-recording #transcriptionDockBar{height:3px;margin-top:3px}
         <div class="label-row"><label for="textSize">Tamaño del texto</label><button type="button" class="info-toggle" aria-label="Ayuda sobre tamaño del texto" aria-expanded="false" aria-controls="textSizeHelp"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7v1"/></svg></button></div>
         <select id="textSize" aria-describedby="textSizeHelp"><option value="compact">Compacto</option><option value="normal" selected>Normal</option><option value="large">Grande</option></select>
         <p class="hint help-content" id="textSizeHelp" hidden>Se conserva en este navegador. Los archivos exportados mantienen su formato.</p>
+        <label class="chk" style="margin-top:16px"><input type="checkbox" id="listPreview" checked>
+        <span><b>Mostrar vista previa en la lista</b><small>En Cuadernos, cada cuaderno muestra el comienzo de su última nota. Puede dejar a la vista nombres reales si la nota no está anonimizada: apagalo si alguien más mira tu pantalla.</small></span></label>
       </section>
       <section class="settings-module" id="settingsQuality"><div class="settings-module-top"><span class="module-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 3.5 12.8 9 18.5 11l-5.7 2L11 18.5 9.2 13 3.5 11 9.2 9z"/><path d="m19 15.5.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7z"/></svg></span><h3>Calidad de transcripción</h3></div>
         <label for="model" style="margin-top:16px">Modelo de Whisper</label>
@@ -2348,8 +2357,26 @@ function convSummaries(data){
   return data.conversations.map((c, i) => {
     const es = data.entries.filter(e => e.conversationId === c.id);
     const last = es.reduce((m, e) => convIsMs(e.savedAt) && e.savedAt > m ? e.savedAt : m, -Infinity);
-    return {id: c.id, title: c.title, count: es.length, lastSavedAt: last === -Infinity ? null : last, order: convIsMs(c.updatedAt) ? c.updatedAt : -Infinity, i};
+    // Vista previa (B3): el texto de la nota más reciente que tenga texto. Solo se muestra; no se guarda en ningún lado.
+    const withText = convEntriesOf(data, c.id).filter(e => typeof e.text === 'string' && e.text.trim());
+    return {id: c.id, title: c.title, count: es.length, lastSavedAt: last === -Infinity ? null : last, preview: withText.length ? withText[withText.length - 1].text : '',
+      order: convIsMs(c.updatedAt) ? c.updatedAt : -Infinity, i};
   }).sort((a, b) => (b.order - a.order) || (a.i - b.i)).map(({order, i, ...x}) => x);
+}
+/* Fecha corta para la lista de cuadernos (B3): «Hoy 12:44», «Ayer 09:10» o el día. Es solo presentación: ningún sello guardado cambia. */
+function convRelative(ms, now = Date.now()){
+  if (!convIsMs(ms)) return '';
+  const d = new Date(ms), n = new Date(now), p = x => String(x).padStart(2, '0');
+  const day = x => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  const diff = Math.round((day(n) - day(d)) / 86400000), hm = p(d.getHours()) + ':' + p(d.getMinutes());
+  if (diff === 0) return 'Hoy ' + hm;
+  if (diff === 1) return 'Ayer ' + hm;
+  return p(d.getDate()) + '/' + p(d.getMonth() + 1) + '/' + d.getFullYear();
+}
+/* Una línea de vista previa: sin saltos de línea y recortada. */
+function convPreview(text, max = 60){
+  const t = String(text == null ? '' : text).replace(/\s+/g, ' ').trim();
+  return t.length > max ? t.slice(0, max - 1).trimEnd() + '…' : t;
 }
 /* Texto de todo un cuaderno para copiar o llevar a otro lado: título y, por mensaje, su fecha en una línea aparte. */
 function convCopyText(data, conversationId){
@@ -2537,6 +2564,22 @@ function refreshConvTarget(){
   t.textContent = d ? 'Al guardar, esta nota se agrega a «' + convTitleOf(d) + '».' : 'Al guardar, se crea un cuaderno nuevo con la fecha y hora.';
 }
 function convShowMsg(t){ $('convMsg').textContent = t || ''; }
+/* Menú «⋯» de una nota (B3). Uno solo abierto a la vez; se cierra al elegir, al tocar afuera o con Escape. No guarda nada. */
+let convMenuOpen = null;
+function convCloseMenu(refocus){
+  const o = convMenuOpen; if (!o) return;
+  convMenuOpen = null; o.menu.hidden = true; o.btn.setAttribute('aria-expanded', 'false');
+  if (refocus) o.btn.focus();
+}
+function convToggleMenu(menu, btn){
+  const same = convMenuOpen && convMenuOpen.menu === menu;
+  convCloseMenu(false);
+  if (same) return;
+  menu.hidden = false; btn.setAttribute('aria-expanded', 'true'); convMenuOpen = {menu, btn};
+  const first = menu.querySelector('button'); if (first) first.focus();
+}
+document.addEventListener('click', ev => { const o = convMenuOpen; if (o && !o.menu.contains(ev.target) && !o.btn.contains(ev.target)) convCloseMenu(false); });
+document.addEventListener('keydown', ev => { if (ev.key === 'Escape' && convMenuOpen) { ev.stopPropagation(); convCloseMenu(true); } });
 function convButton(label, fn, cls){ const b = document.createElement('button'); b.type = 'button'; b.textContent = label; if (cls) b.className = cls; b.onclick = fn; return b; }
 /* Solo presentación: conserva el mismo editor, borrador, destino y acciones de guardado. */
 function refreshConvEditor(){
@@ -2566,14 +2609,20 @@ function renderConv(){
     sums.forEach(x => {
       const b = convButton('', () => convOpen(x.id), 'conv-item');
       const t = document.createElement('span'); t.textContent = x.title || 'Sin título';
-      const sm = document.createElement('small'); sm.textContent = x.count + (x.count === 1 ? ' nota' : ' notas') + (x.lastSavedAt !== null ? ' · último ' + convStamp(x.lastSavedAt) : '');
-      b.append(t, sm); list.append(b);
+      // B3: cantidad y fecha corta, sin repetir la fecha del título; y una línea con el comienzo de la última nota (se puede apagar en Ajustes).
+      const when = x.lastSavedAt !== null ? convRelative(x.lastSavedAt) : '';
+      const sm = document.createElement('small'); sm.textContent = x.count + (x.count === 1 ? ' nota' : ' notas') + (when ? ' · ' + when : '');
+      b.append(t);
+      const pv = $('listPreview').checked ? convPreview(x.preview) : '';
+      if (pv) { const q = document.createElement('span'); q.className = 'conv-preview'; q.textContent = pv; b.append(q); }
+      b.append(sm); list.append(b);
     });
     refreshConvTarget(); return;
   }
   $('convTitle').textContent = convTitleOf(convOpenId) || 'Sin título';
   $('convDeleteEmpty').hidden = !convIsEmpty(data, convOpenId);
   const box = $('convBubbles'); box.textContent = '';
+  convMenuOpen = null;   // las burbujas se vuelven a dibujar: ningún menú queda abierto
   const es = convEntriesOf(data, convOpenId);
   if (!es.length) { const p = document.createElement('p'); p.className = 'hint'; p.textContent = 'Este cuaderno está vacío.'; box.append(p); }
   es.forEach(e => {
@@ -2585,10 +2634,15 @@ function renderConv(){
     m.append(st);
     if (e.kind === 'heredado') { const h = document.createElement('span'); h.textContent = 'nota anterior'; m.append(h); }
     if (e.textEditedAt !== null) { const h = document.createElement('span'); h.textContent = 'editado ' + convStamp(e.textEditedAt); m.append(h); }
+    // B3: Copiar y Editar quedan a la vista; lo menos frecuente (Mover, Borrar) va en el menú «⋯» de la nota.
     const acts = document.createElement('div'); acts.className = 'conv-actions';
-    acts.append(convButton('Copiar', () => convCopy(e.text)), convButton('Editar', () => convEdit(e.id)),
-      convButton('Mover', () => convAskMove('one', e.id)), convButton('Borrar', () => convDelete(e.id), 'ghost danger'));
-    d.append(t, m, acts); box.append(d);
+    const menu = document.createElement('div'); menu.className = 'conv-menu'; menu.id = 'convMenu-' + e.id; menu.setAttribute('role', 'menu'); menu.hidden = true;
+    const more = convButton('⋯', () => convToggleMenu(menu, more), 'conv-more');
+    more.setAttribute('aria-label', 'Más acciones de esta nota'); more.setAttribute('aria-haspopup', 'menu'); more.setAttribute('aria-expanded', 'false'); more.setAttribute('aria-controls', menu.id);
+    const item = (label, fn, cls) => { const b = convButton(label, () => { convCloseMenu(false); fn(); }, cls); b.setAttribute('role', 'menuitem'); return b; };
+    menu.append(item('Mover a otro cuaderno', () => convAskMove('one', e.id)), item('Borrar esta nota', () => convDelete(e.id), 'ghost danger'));
+    acts.append(convButton('Copiar', () => convCopy(e.text)), convButton('Editar', () => convEdit(e.id)), more);
+    d.append(t, m, acts, menu); box.append(d);
   });
   refreshConvTarget();
 }
@@ -3690,7 +3744,7 @@ async function toMono16k(blocks, rate){
   return new Float32Array((await withDeadline(off.startRendering(), 15000, 'preparación del audio')).getChannelData(0));
 }
 
-const BUILD = 'Delta 11 · corrección Firefox · vigilancia de grabaciones largas · protección cifrada · audio cifrado por nota · copia cifrada';
+const BUILD = 'Delta 11 · corrección Firefox · vigilancia de grabaciones largas · protección cifrada · audio cifrado por nota · copia cifrada · menú de notas';
 let retryAudio = [], retryBytes = 0, retryUnavailable = false;
 function clearRetryAudio(){ retryAudio = []; retryBytes = 0; retryUnavailable = false; }
 function retainRetryAudio(blocks, rate, info){
@@ -5427,6 +5481,7 @@ function loadCfg(){
     applyTextSize(c.textSize);
     if (typeof c.pVolatile === 'boolean') $('pVolatile').checked = c.pVolatile;
     if (typeof c.learnAuto === 'boolean') $('learnAuto').checked = c.learnAuto;
+    if (typeof c.listPreview === 'boolean') $('listPreview').checked = c.listPreview;
     if (c.model && hasOpt($('model'), c.model)) $('model').value = c.model;
     else if (!c.model && matchMedia('(pointer:coarse)').matches) $('model').value = 'Xenova/whisper-base'; // en celulares, la opción rápida por defecto
     if (c.accel && hasOpt($('accel'), c.accel)) $('accel').value = c.accel;
@@ -5436,9 +5491,10 @@ function loadCfg(){
     if (typeof c.saveAudio === 'boolean') $('saveAudio').checked = c.saveAudio;
   } catch (e) {}
 }
-const saveCfg = () => { try { localStorage.setItem(CKEY, JSON.stringify({textSize:$('textSize').value, model:$('model').value, accel:$('accel').value, mic:$('mic').value, eng:eng(), replace:$('replace').checked, saveAudio:$('saveAudio').checked, pVolatile:$('pVolatile').checked, learnAuto:$('learnAuto').checked})); return true; } catch (e) { return false; } };
+const saveCfg = () => { try { localStorage.setItem(CKEY, JSON.stringify({textSize:$('textSize').value, model:$('model').value, accel:$('accel').value, mic:$('mic').value, eng:eng(), replace:$('replace').checked, saveAudio:$('saveAudio').checked, pVolatile:$('pVolatile').checked, learnAuto:$('learnAuto').checked, listPreview:$('listPreview').checked})); return true; } catch (e) { return false; } };
 $('textSize').addEventListener('change', () => { applyTextSize($('textSize').value); if (!saveCfg()) flash('El tamaño se aplicó, pero este navegador no permitió guardar el ajuste.'); });
 ['model', 'accel', 'mic', 'replace', 'saveAudio', 'pVolatile', 'learnAuto'].forEach(id => $(id).addEventListener('change', saveCfg));
+$('listPreview').addEventListener('change', () => { saveCfg(); renderConv(); });   // B3: campo opcional de la configuración existente; solo cambia lo que se muestra
 document.querySelectorAll('input[name=eng]').forEach(r => r.addEventListener('change', () => { setStatus(''); saveCfg(); }));
 
 /* ---------- Borrador autoguardado: sobrevive a recargas y cierres ---------- */
