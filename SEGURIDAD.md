@@ -1,3 +1,5 @@
+**Bloqueo grave del PR #61:** la toma de Web Locks por K2 no protege frente a otras pestañas de DictaVoz con bóveda apagada, que todavía pueden escribir sin ese candado. Debe implementarse primero el bloqueo universal de escritura sin bóveda y probarse con dos pestañas reales. Una confirmación de cierre de pestañas es provisional, no garantía de integridad. **No fusionar K2 mientras esto siga pendiente.**
+
 > **K2 en ensayo — 17/11/2026 (PR #61, no fusionado).** Se añadió un restaurador experimental que exige instalación vacía, valida íntegramente los archivos `.dictanota` antes de escribir **y rechaza expresamente copias con audios originalmente en claro** para no almacenarlos sin cifrar bajo una bóveda que aparenta estar protegida. No está autorizado para reemplazar datos. La copia formato 2 aún omite audios históricos de `notasvoz-gamma-audio`; no es un respaldo integral del dispositivo. Pendientes los ensayos de cuota, cortes, dos pestañas, formato 1 y revisión independiente. No usar todavía con información sensible real. Detalle: `docs/K2-RESTAURACION-VACIA-2026-11-17.md`.
 
 ## 16/11/2026 · Correcciones de lectura y edición del PR #48 (ChatGPT)
