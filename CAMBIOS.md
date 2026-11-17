@@ -1,3 +1,10 @@
+## 16/11/2026 · Guía del propietario (solo documentación)
+
+- **Responsable:** ChatGPT (GPT-6). Rama: `docs/guia-del-propietario-2026-11-16`. Base: `main` en `aab2b903`. Alcance: `GUIA-DEL-PROPIETARIO.md`, enlace en `README.md` y este registro. Sin cambios de aplicación, almacenamiento, cifrado o pruebas.
+- **Qué agrega:** instrucciones para grabar, escribir, guardar, corregir y anonimizar notas, organizar cuadernos, conservar audios, usar la protección, descargar copias parciales, hacer pruebas en el Motorola y supervisar el trabajo por PR.
+- **Estado que documenta:** E2 (PR #47) y Clínica editorial (PR #48) siguen abiertos; no se los presenta como publicados. Mantiene advertencias sobre audios sin cifrar, respaldos integrales pendientes y pruebas físicas no realizadas.
+- **Verificación:** lectura cruzada con `index.html`, `README.md`, `AGENTS.md`, `SEGURIDAD.md`, `DISENO-CIFRADO.md`, el tablero del almacenamiento y los PR abiertos. Solo documentación: **no se ejecutaron pruebas automáticas ni prueba en el Motorola**. No unir este PR sin permiso del propietario.
+
 ## 16/11/2026 · Paso E1: base nueva de audios por nota, SIN ACTIVAR
 
 - **Responsable:** Claude (Sonnet 5.5), con permiso explícito del usuario (plan mostrado y aprobado). Rama: `e1-base-audios-por-nota`. Base: `fc86681` (`main`). Alcance: solo el paso E1 del tablero [docs/PLAN-ALMACENAMIENTO-CIFRADO.md](docs/PLAN-ALMACENAMIENTO-CIFRADO.md).
