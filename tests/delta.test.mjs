@@ -1350,6 +1350,24 @@ test('cifrado: quitar la protección exige la contraseña y deja los datos como 
   assert.ok([...st.map.keys()].every(k => !k.startsWith(vaultCore.VAULT_HEADER)));
 });
 
+test('cifrado: si quitar la protección falla a mitad de camino, no queda texto en claro', async () => {
+  const datos = datosFicticios(), st = memStorage(datos), v = vaultCore.createVault(st);
+  await v.enable('frase de prueba larga');
+  const claves = Object.keys(vaultCore.VAULT_KEYS);
+  assert.ok(claves.every(k => st.getItem(k) === null), 'con la protección activa no hay claves en claro');
+  // Almacenamiento que se llena en la segunda escritura en claro
+  const setOriginal = st.setItem.bind(st); let escrituras = 0;
+  st.setItem = (k, val) => { if (claves.includes(k) && ++escrituras === 2) throw new Error('QuotaExceededError'); return setOriginal(k, val); };
+  await assert.rejects(v.disable('frase de prueba larga'), /QuotaExceededError/);
+  st.setItem = setOriginal;
+  assert.equal(v.state, 'open', 'la protección sigue activa');
+  assert.ok(claves.every(k => st.getItem(k) === null), 'no quedó ninguna clave en claro');
+  assert.ok(sinMarca(st), 'el texto ficticio no aparece legible en ningún lado');
+  assert.ok(st.getItem(vaultCore.VAULT_HEADER));
+  await v.disable('frase de prueba larga');
+  for (const [k, val] of Object.entries(datos)) assert.equal(st.getItem(k), val);
+});
+
 test('cifrado: cabecera dañada o con parámetros abusivos deja todo bloqueado, sin caer a texto en claro', () => {
   const st = memStorage({...datosFicticios()});
   st.setItem(vaultCore.VAULT_HEADER, JSON.stringify({v: 1, id: 'AAAAAAAAAAAAAAAAAAAAAA==', pw: {kdf: 'PBKDF2-SHA256', it: 999999999, salt: 'AA==', box: {iv: 'AA==', ct: 'AA=='}}, rec: {kdf: 'HKDF-SHA256', salt: 'AA==', box: {iv: 'AA==', ct: 'AA=='}}, bio: null}));
@@ -1735,7 +1753,10 @@ test('audio por nota E1: candado de una sola pestaña', async () => {
 });
 
 test('audio por nota E2: solo se usa con la protección abierta y nunca sin cifrar', () => {
-  const fuera = html.replace(/\/\*AUDIONOTA-START\*\/[\s\S]*?\/\*AUDIONOTA-END\*\//, '');
+  // La biblioteca P2 es un ensayo sin conexiones de producción: auditar E2 por separado.
+  const fuera = html.replace(/\/\*AUDIONOTA-START\*\/[\s\S]*?\/\*AUDIONOTA-END\*\//, '')
+    .replace(/\/\*P2-BIBLIOTECA-START\*\/[\s\S]*?\/\*P2-BIBLIOTECA-END\*\//, '')
+    .replace(/\/\*K2-START\*\/[\s\S]*?\/\*K2-END\*\//, '');
   assert.equal((html.match(/notasvoz-gamma-audio/g) || []).length, 1, 'la base histórica sigue igual');
   assert.doesNotMatch(fuera, /notasvoz-dictanota-audio/, 'nada fuera del bloque nombra la base nueva');
   assert.doesNotMatch(anBlock, /localStorage|fetch\(|XMLHttpRequest|innerHTML|\beval\b|new Function|gamma|document\./);
@@ -1753,7 +1774,8 @@ test('audio por nota E2: solo se usa con la protección abierta y nunca sin cifr
   assert.match(fuera, /async function anSaveFile\(f, ms\)\{\n  if \(!anUsable\(\) \|\| !\$\('saveAudio'\)\.checked\) return null;/);
   // Primero el audio, después el vínculo; guardar espera a que termine de cifrarse.
   assert.match(fuera, /if \(anBusyN > 0\) return flash\('Esperá unos segundos: se está guardando el audio cifrado\.'\);/);
-  assert.match(fuera, /text, audioId: convAudioId, durationMs: convAudioMs, audioParts\}\)/);
+  assert.match(fuera, /text, audioId: convAudioId, durationMs: convAudioMs, audioParts,/);
+  assert.match(fuera, /transcriptionStatus: convFromAudio \?/,'un audio sin texto retiene el estado de la transcripción');
   assert.match(fuera, /audioId: convAudioId, audioMs: convAudioMs, audioBase: convAudioBase\}\}\);/, 'el borrador recuerda el audio pendiente y cuántas partes tenía');
   assert.match(fuera, /\|\| \(d\.conv && typeof d\.conv\.audioId === 'string' && d\.conv\.audioId\)\)\) \{/, 'un audio pendiente sin texto también se recupera');
   // La revisión al abrir no crea la base si no existe.
@@ -1943,7 +1965,10 @@ test('correcciones E2: quitar la protección se impide si hay audios que quedar�
   audios = 0; await v.disable('frase de prueba larga');
   assert.equal(v.state, 'off');
   // En la app: la guarda cuenta los audios sin crear la base y el botón la consulta antes de pedir la contraseña.
-  assert.match(html, /vault\.disableGuard = async \(\) => \{\n  const n = await anStoredCount\(\);/);
+  // Desde la corrección del PR #60: solo cuentan los audios cifrados; uno guardado sin cifrar (ensayo P2) no la traba.
+  assert.match(html, /vault\.disableGuard = async \(\) => \{\n  const k = await anStoredKinds\(\);\n[^\n]*\n  const n = k\.cifrados;/);
+  // Lo «sin cifrar» exige la marca expresa y ninguna clave: una ficha ambigua o dañada cuenta como cifrada.
+  assert.match(html, /const anIsPlainMeta = m => !!m && typeof m === 'object' && m\.mode === AN_PLAIN_MODE && m\.key == null && m\.sealed == null;/);
   const btn = html.slice(html.indexOf("vaultEl('vaultDisable').addEventListener"), html.indexOf("// Bloqueo automático tras 15 minutos"));
   assert.ok(btn.indexOf('vault.disableGuard()') < btn.indexOf('vaultAskPassword('));
 });

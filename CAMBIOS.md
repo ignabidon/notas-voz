@@ -1,3 +1,89 @@
+## 17/11/2026 · Cadena #59 → #60 → #61 unida a `main` (Claude)
+
+Se unió `main` (con el #62) en la rama del #61; los conflictos eran solo de documentación (se tomó la versión ordenada del #62 y se actualizó). Condición A5 cumplida: segunda revisión externa sin hallazgos graves sobre `4e7758d` y `c4cb29f`, CI en verde y candado universal del #61. `CONTINUAR-AQUI.md` reescrita; `docs/DECISIONES.md` suma A10 (contraseña de 8) y A11 (cifrar al restaurar audios sin protección). Nada probado en el Motorola.
+
+## 17/11/2026 · PR #61 actualizado con las correcciones del #60 (Claude)
+
+Paso 3 del plan. Se unió la rama del #60 (incluido `4e7758d`, el arreglo de «Quitar la protección») en la del #61. Conflictos solo en `CAMBIOS.md` y el CI: se conservaron ambos lados.
+
+- **K2 rechaza copias formato 2 incompletas** (hallazgo de la revisión externa del 17/11): con las correcciones del #60, la verificación admite copias con exclusiones; K2 ahora las rechaza con el detalle de lo que falta, en el botón y en `k2RestoreLocked`. No se escribe nada.
+- **Rama peligrosa eliminada:** el fragmento de tipo B (audio que estaba en claro) ya no se descifra y escribe; lanza un error. Por decisión de Ignacio (M12), en el futuro esos audios se cifrarán al restaurar.
+- La prueba estática del #60 que prohibía usar el formato 2 fuera de su bloque ahora permite el uso de K2 (su bloque y su botón). Prueba nueva para lo anterior.
+- Pruebas: Node (`delta`, `entrega2`, `p2-correcciones`) y Chrome (K2, candado K2, correcciones #60, biblioteca P2, cifrado, copia K1) en verde en laboratorio. **No probado en el Motorola.** K2 sigue experimental, solo en instalación vacía; el reemplazo no está programado.
+
+## 17/11/2026 · Quitar la protección no deja texto en claro si falla a mitad de camino (Claude, rama del PR #60)
+
+Hallazgo grave de una revisión externa de seguridad (IA de un amigo de Ignacio, solo lectura), verificado contra `37e28a0`. Al quitar la protección, `v.disable` escribía en claro cada registro y, si una escritura o la relectura fallaba (por ejemplo, almacenamiento lleno), cortaba sin borrar lo ya escrito: la protección seguía activa pero quedaba texto legible hasta el próximo desbloqueo.
+
+- Ahora se guarda el valor previo de cada clave y, ante cualquier error, se deshace lo escrito antes de avisar. La protección sigue activa y no queda nada en claro.
+- Prueba nueva en `tests/delta.test.mjs`: almacenamiento que falla en la segunda escritura; comprueba que no queda ninguna clave en claro ni el texto ficticio, y que después se puede quitar la protección normalmente. Falla sin el arreglo y pasa con él.
+- No cambia nada más: ni formatos, ni claves, ni la interfaz. Probado en laboratorio (Node); **no probado en el Motorola**.
+
+## 17/11/2026 · Correcciones del PR #60 a pedido del propietario (Claude, misma rama; sin merge)
+
+Pedido de Ignacio con seis puntos. Base: `314843d` (cabeza del #60). No se tocaron #59, #61 ni `main`. Nada nuevo se conectó a la interfaz habitual ni se implementó K2.
+
+- **1 · Quitar la protección:** la guarda contaba **todas** las fichas de audio; una ficha sin cifrar (ensayo P2) trababa quitar la protección sin motivo. Ahora `anStoredKinds()` separa cifrados y sin cifrar y `vault.disableGuard` cuenta solo los cifrados. Para no abrir un hueco, «sin cifrar» exige la marca `mode: claro` **y** ninguna clave (`anIsPlainMeta`); una ficha ambigua o dañada cuenta como cifrada.
+- **2 · Panel de almacenamiento (Ajustes):** antes decía «N audio(s) cifrado(s)» incluyendo los sin cifrar y les ofrecía «Preparar nota» y «Borrar audio», que usan la clave de la protección. Ahora muestra las dos cantidades por separado («SIN CIFRAR (ensayo, no protegidos)»), lista los sin cifrar **sin botones** (también con la protección apagada) y marca los cortados como «a medio guardar». `anAudioHealth`, `e3Play`, `e3Recover` y `e3Remove` rechazan una ficha sin cifrar sin tocarla.
+- **3 · La copia no se presenta como completa si falta algo:**
+  - *Formato 1 (el que usa la app):* los audios sin cifrar no entran (el formato 1 solo lleva cifrados), pero antes se contaban como «dañados o a medio guardar». Ahora se cuentan aparte y el mensaje dice «Atención, la copia NO está completa: N audios guardados sin cifrar no entraron…». La copia de solo texto también lo avisa. **El formato 1, su lector y su archivo fijo no cambian.**
+  - *Formato 2 (ensayo):* el inventario cifrado ahora trae `exclusiones` (cada audio que no entró, con su motivo: `a-medio-guardar`, `danado`, `cifrado-sin-clave`, `solo-texto`) y `biblioteca` (cuántos audios había). El lector devuelve `exclusiones`, `motivos` y `todoIncluido`, y `copia2Describe` nunca dice «completa» si falta un audio.
+- **4 · Copias mezcladas:** se comprobó que el formato 2 verifica audios cifrados y sin cifrar en la misma copia, en ambos órdenes, con contraseña y con código de recuperación.
+- **5 · Cortes, archivos incompletos, memoria e inventario:**
+  - Cada audio entra **entero o nada** en la copia 2 (los bloques se arman aparte y se agregan juntos); antes un fallo a mitad podía dejar medio audio.
+  - El fragmento sin cifrar se vuelve a comprobar en el momento de cifrarlo: si cambió, el audio queda excluido como dañado.
+  - Los fragmentos ya cifrados para la copia se guardan como `Blob` y no como memoria de JavaScript (audios largos).
+  - El escritor no arma la copia si lo incluido más lo excluido no suma lo que había en la biblioteca; después de cerrarla no acepta nada más.
+  - Nuevo recorrido de laboratorio `copia2Audios` (bloque `COPIA2-USO`, solo lee, sin botón).
+- **Pruebas nuevas:** `tests/p2-correcciones.test.mjs` (Node, 9 pruebas: inventario, exclusiones, copia mezclada, corte en cada límite de bloque, byte cambiado en cada bloque, escritor todo-o-nada, formato 1 intacto) y `tests/p2-correcciones-browser.mjs` (Chrome: corte real de escritura simulado, guarda, panel, copia 1 con avisos, copia 2 mezclada, fragmento alterado, protección quitada con audios sin cifrar presentes). Ajustada una prueba de `delta.test.mjs` que fijaba el texto viejo de la guarda. Se comprobó que en el código anterior los tres problemas se reproducen.
+- **Resultados:** Node 166 + 10 + 9 en verde; las 13 suites de Chrome en verde. `e2-correcciones-browser` falló una vez en local sin mensaje y pasó en las tres corridas siguientes (también con el código anterior): se anota como posible inestabilidad, a mirar en el CI.
+- **Decisiones del propietario recibidas con este pedido:** los datos guardados hoy son de prueba y pueden descartarse (no hacen falta migraciones complejas); sin pruebas en el Motorola hasta una etapa más avanzada; las pruebas de Node y Chrome siguen siendo obligatorias; **no autoriza borrar datos automáticamente ni desproteger información futura**. Este cambio no borra ni migra nada.
+**K2 (PR #61, borrador):** el bloqueo universal sin bóveda ya está programado y probado en laboratorio (ver la entrada de correcciones). Falta revisión cruzada de esas correcciones y el CI de GitHub antes de unir.
+
+## 17/11/2026 · K2: correcciones de la revisión cruzada — candado universal (Claude, PR #61)
+
+- **Candado universal (bloqueante 1):** cada pestaña pide el candado al arrancar, **con o sin bóveda**, antes de cargar o escribir. La segunda pestaña queda en solo lectura: no guarda notas, borrador, ajustes, diccionario ni audios (el almacén lanza `OtraPestana`, `saveCfg`/`saveDraft` devuelven `false`) y muestra el aviso. Sin bóveda, un navegador **sin** Web Locks sigue guardando como antes (no puede saber de otras pestañas); ahí K2 ya se niega a restaurar.
+- **Limpieza tras el candado (bloqueante 2):** `k2RestoreEmpty` toma el candado **antes** de limpiar un lote viejo; `k2Rollback` y la limpieza de arranque se niegan a borrar sin candado. Durante la restauración, la propia pestaña tampoco escribe.
+- **Confirmación clara (riesgo 3):** si algo falla después de escribir la cabecera completa, la restauración se informa como hecha; una cabecera distinta se informa como «estado dudoso» sin borrar nada.
+- **Propiedad del lote (riesgo 4):** lote formato 2 con «firma» por audio (fecha de creación y tamaño); IDs repetidos, registros fuera de la lista conocida, versión vieja o firma distinta ⇒ **no se borra nada**.
+- **Arreglo adicional:** el borrador vacío que la app guarda sola al abrirse ya no hace que una instalación nueva cuente como «ocupada», y no queda en claro junto a la bóveda restaurada.
+- **Pruebas:** nueva `tests/k2-candado-browser.mjs` en el CI (dos pestañas reales escribiendo durante una restauración, limpieza solo con candado, cinco lotes alterados intactos, cuota simulada en 7 fases de IndexedDB/localStorage, relectura fallida de la cabecera y dos cortes reales por recarga). Actualizadas `k2-browser.mjs` (lote formato 2) y `audio-nota-browser.mjs` (la app ya tiene el candado al arrancar). Las 15 suites y los tests Node pasaron en laboratorio. **Motorola: sin probar.** Sigue en borrador, sin unir.
+
+## 17/11/2026 · K2: ensayo de restauración solo en perfil vacío (ChatGPT, PR #61)
+
+- **Código en rama, no publicado:** PR #61 apilado sobre #60 → #59. Se agregó lector/restaurador de copias formato 1/2 con verificación íntegra previa, comprobación de instalación realmente vacía, exclusión de segunda pestaña, lote recuperable y cabecera de bóveda escrita al final. Interfaz rotulada «experimental». **No mezcla, reemplaza, migra ni borra datos existentes.**
+- **Seguridad:** se bloqueó específicamente restaurar copias formato 2 con audio originalmente en claro, para impedir que una bóveda aparentemente protegida conserve ese audio sin cifrar. La copia formato 2 aún no cubre audios heredados en `notasvoz-gamma-audio`; el formato 1 tampoco equivale a respaldo total en todos los modos. El nuevo lector no altera K1 ni formatos de copia. Los audios de prueba son ficticios.
+- **Pruebas:** CI añade `tests/k2-browser.mjs` para copia sintética, contraseña incorrecta, copia truncada, perfil ocupado, limpieza de lote y recarga. **No marcar resultado verde hasta que GitHub Actions lo confirme**. Sin prueba física en Motorola.
+- **Pendiente:** revisión independiente, matriz de cuotas/cortes, compatibilidad formato 1, manejo de audios no incluidos y reemplazo seguro con doble confirmación y autorización aparte. Informe: `docs/K2-RESTAURACION-VACIA-2026-11-17.md`.
+
+## 17/11/2026 · Revisión cruzada del PR #60 — transición entre modalidades (ChatGPT)
+
+- Sincronizado el PR #60 con el #59 corregido mediante un **commit de fusión en la rama apilada**; sin squash, sin force-push y sin fusionar `main`.
+- La revisión E2 al abrir la bóveda excluye audios experimentales identificados como `mode: claro`: no los descarta ni los etiqueta falsamente como cifrado dañado. Prueba de Chrome con ficha completa e interrumpida tras activar la protección.
+- Continúan bloqueadas la activación de P2 para usuarios, la copia integral restaurable, la exclusión entre pestañas sin bóveda y toda migración o eliminación de datos.
+
+## 17/11/2026 · Biblioteca P2 y respaldo formato 2 en laboratorio (ChatGPT, rama dependiente del PR #59)
+
+- Por aprobación del propietario, se prepara la modalidad de audio sin bóveda en la misma IndexedDB, distinguida explícitamente por `mode: claro`, con hash SHA-256 y verificación de fragmentos; **todavía sin conectarla a la grabación de uso real**.
+- Se incorpora un escritor y lector de **ensayo** de copias `.dictanota` formato 2, con el audio inicialmente en claro cifrado durante la exportación; el formato 1 y su lector se mantienen intactos. No hay restauración todavía ni copia completa prometida en la interfaz.
+- Se agrega prueba de Chrome y CI para el escenario con audio sintético e integridad/tamper. Decisiones, pendientes y límites en `docs/ENTREGA2-P2-RESPALDO-V2-PREPARACION.md`.
+- **Motorola: no se probará a pedido del propietario**; los resultados de laboratorio no se atribuirán al teléfono. Sin K2/T/AO, cambios a bases históricas, migraciones, borrados ni fusión automática.
+
+## 17/11/2026 · Segunda revisión del PR #59 (ChatGPT; sin merge)
+
+- Ante falta de espacio, el autobloqueo ahora **oculta la interfaz y exige contraseña**, sin recargar ni perder el borrador. La bóveda permanece abierta **en RAM**: es un escudo de privacidad, no bloqueo criptográfico; queda registrado ese límite.
+- Guardar nota con **texto más audio** también verifica íntegramente los fragmentos. Si están dañados no confirma el vínculo ni pierde el texto.
+- Se aclara cuándo se puede reproducir un audio huérfano recuperado.
+- Nuevas pruebas Node/Chrome de escudo, contraseña correcta/errónea, conservación del editor y audio dañado con transcripción. CI y auditoría posterior deben comprobarse en el SHA final; Motorola pendiente.
+- Ninguna fusión, migración, K2, T, AO ni cambio de formato; los PR #60 y #61 siguen separados.
+
+## 17/11/2026 · Entrega 2, revisión independiente y correcciones de P1/P4 (ChatGPT, PR #59 sin fusionar)
+
+- **Autoguardado:** sin bóveda, el borrador se escribe sincrónicamente al editar y al ocultar/cerrar la página; con bóveda se mantiene la confirmación cifrada y se evita pisar versiones nuevas desde la cola. El navegador no garantiza completar un cifrado ante cierre forzado.
+- **Bloqueo:** si el borrador no se confirma, bloquear o activar protección no borra ni recarga el editor; informa el problema.
+- **Recuperación:** si un borrador viejo coincide con la nota ya confirmada por texto, audio y origen/identificador de edición, no se restaura como duplicado; se intenta limpiar, sin descartar borradores genuinamente distintos.
+- **Pruebas agregadas:** `tests/entrega2.test.mjs` cubre cierre sin bóveda, cola pendiente, fallo de bloqueo, conciliación y preservación de cambios diferentes. Registro de detalles y limitaciones en `docs/ENTREGA2-ARQUITECTURA-B-IMPLEMENTACION-2026-11-17.md`.
+- **Alcance:** sin cambios de formato de copia, K2/T/AO, migraciones ni borrados. Código guardado en la rama del PR #59; ver CI de esa rama. **Sin prueba física nueva en el Motorola ni merge a `main`**.
 ## 17/11/2026 · Orden de la documentación (Claude Sonnet 5.5, solo documentación)
 
 - **Qué:** se reorganizó la documentación para que cada documento tenga un solo rol y las dos IA trabajen sobre lo mismo. Rama `docs/ordenar-documentacion-2026-11-17`, base `main` = `7171650`. **No se tocó `index.html`, ni pruebas, ni datos, ni formatos.**

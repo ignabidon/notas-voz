@@ -1,7 +1,7 @@
 # CONTINUAR AQUÍ — DictaVoz
 
 > **Una sola página, un solo estado.** Quien termina un paso **reescribe esta página** (no agrega carteles arriba) y mueve lo viejo a `docs/historial/`. Si algo de acá contradice al código de `main`, vale el código; si contradice a `docs/DECISIONES.md`, vale ese registro.
-> **Última actualización: 17/11/2026, mediodía (Claude, solo documentación).** `main` = `7171650`.
+> **Última actualización: 17/11/2026, noche (Claude).** Unidos a `main`: #62 (documentación) y la cadena #59 → #60 → #61 (por el #61, que la contiene).
 
 ## Cómo está organizada la documentación
 
@@ -19,34 +19,31 @@ DictaVoz (antes DictaNota; solo cambió lo visible): transcribe voz a texto en e
 | Almacenamiento cifrado: base de audios, audios cifrados por nota, copia cifrada (crear y verificar), reproductor y panel de espacio | E1 #45, E2 #50, K1 #51, E3 #55 |
 | Menú «⋯» de las notas y lista con vista previa | B3 #53 |
 | Nombre DictaVoz (solo lo visible) | #57 |
+| Documentación ordenada (índice, decisiones únicas, pedidos) | #62 |
+| Entrega 2: borradores confirmados y notas de solo audio (P1, P4 parcial) | #59 |
+| Biblioteca en claro y copia formato 2 (**ensayo, sin activar**) | #60 |
+| K2: restaurar en instalación **vacía** (experimental; rechaza copias incompletas y con audio en claro) | #61 |
 
-## Qué está en curso (PR abiertos, todos en borrador, **ninguno unido**)
+**Revisiones del 17/11 a la noche.** Una revisión externa de seguridad (IA de un amigo de Ignacio, solo lectura) encontró un hallazgo grave en «Quitar la protección» (si fallaba a mitad de camino quedaba texto en claro) y un riesgo en K2 (copias incompletas). Se corrigieron en `4e7758d` y `c4cb29f`, con pruebas nuevas. Una segunda revisión externa de esos dos commits no encontró hallazgos graves: con eso se cumplió A5 y se unió K2.
 
-| PR | Qué es | Dueño (según su documento) | Depende de |
+## Qué está en curso (PR abiertos)
+
+| PR | Qué es | Dueño | Depende de |
 |---|---|---|---|
 | #58 | Auditoría y propuesta de almacenamiento definitivo (solo documentación) | ChatGPT | — |
-| #59 | Entrega 2 · P1 y P4 parcial: borradores confirmados y notas de solo audio | ChatGPT | `main` |
-| #60 | Entrega 2 · P2: biblioteca en claro y copia formato 2 (ensayo, sin activar) | ChatGPT | #59 |
-| #61 | K2: restaurar en instalación vacía (ensayo) | ChatGPT | #60 |
 | #52 | Visión de la experiencia y guía estética (solo documentación) | ChatGPT | — |
 | #49, #37 | Guía del propietario y feedback del Motorola; decisiones del 16/11 (solo documentación) | Claude | — |
 | #22, #1 | Borradores viejos de otras etapas | sin dueño vigente | — |
 
-**Cadena de PR:** #59 → #60 → #61 están apilados. **Se unen en ese orden o no se unen**; si #59 cambia, los otros dos se rehacen sobre él.
-
 ## Pasos a seguir (en este orden)
 
-Anotados con las respuestas de Ignacio del 17/11/2026 (detalle en `docs/DECISIONES.md`, grupo A).
-
-1. **Fusionar este PR de orden (#62)** cuando Ignacio lo revise. Mientras tanto, los documentos nuevos viven solo en la rama `docs/ordenar-documentacion-2026-11-17`.
-2. **Revisión cruzada de la Entrega 2, en orden y por una IA distinta de ChatGPT:** primero **#59**, después **#60**, después **#61**. Pedidos listos en `docs/PEDIDOS.md`, sección 4. El informe de cada uno vuelve a su dueña para corregir en su rama.
-3. **Resolver el bloqueante de #61:** con la protección apagada, otra pestaña todavía puede escribir mientras se restaura. Sin esto, K2 no se une (A5).
-4. **K2 está autorizado** (ensayo **y** reemplazo, con respaldo verificado previo y doble confirmación) y **se une sin consultar de nuevo** si tiene revisión cruzada sin hallazgos graves, el CI en verde y el bloqueante resuelto (A4, A5). **El reemplazo todavía no está programado:** hace falta un PR y un dueño aparte; el #61 es solo el ensayo en instalación vacía.
-5. **Después de las revisiones, mejoras de uso** (U16): primero **elegir cuaderno y nombre desde Dictar** (U12) y el **rediseño de Ajustes**. El rediseño empieza con una **maqueta** y no se programa hasta que Ignacio la apruebe.
-6. **«Conservar audio» activado de entrada** en instalaciones nuevas, con aviso de privacidad (A6), **cuando** la copia y la restauración cubran también el audio sin protección (A2).
-7. **Retirar la compatibilidad con el audio suelto viejo** y borrar sus datos de prueba (A7, A8). Es el único borrado autorizado y solo para datos de prueba; cualquier otro se consulta.
-8. **T** (mudar el texto a la misma base que los audios, A9): **con permiso explícito de Ignacio** antes de programar y de unir. Después, AO (reglas todavía sin decidir, Q2).
-9. **Pendiente de Ignacio:** proteger `main` en GitHub (sigue sin protección; pasos en `docs/PRUEBA-MOTOROLA-Y-PENDIENTES-USUARIO-2026-11-16.md`, sección 2).
+1. **Capa única de registros** (bóveda, copias y K2 leen y escriben los registros por un solo camino). Es requisito de T: sin ella, una copia posterior a T saldría sin notas. Puede hacerla un colaborador externo por PR desde un fork.
+2. **K2 de reemplazo, rediseñado** según la segunda revisión externa: respaldo verificado del estado actual → borrado guiado con diario → restauración en vacío; listar antes lo que se perderá; marca propia de «restauración en curso»; comprobar espacio; al restaurar, **cifrar los audios que estaban sin protección** (M12, decisión de Ignacio del 17/11).
+3. **Mejoras de uso** (U16): elegir cuaderno y nombre desde Dictar (U12) y la maqueta del rediseño de Ajustes.
+4. **«Conservar audio» activado de entrada** en instalaciones nuevas (A6), cuando la restauración cubra el audio sin protección (paso 2).
+5. **Retirar el audio suelto viejo** y borrar sus datos de prueba (A7, A8).
+6. **T**, con permiso explícito de Ignacio (cabecera v:2, durabilidad estricta, borrar `localStorage` recién en el desbloqueo siguiente). Después, AO.
+7. **Pendiente de Ignacio:** proteger `main` en GitHub (sigue sin protección), sobre todo antes de dar permisos de escritura a otra persona.
 
 **Todavía sin decidir:** cuándo se publica el formato 2 de copia (Q1), las reglas de AO (Q2) y el orden de los pendientes menores (Q3: deshacer una edición guardada, reintentar Whisper, mensaje de «otra pestaña», voseo).
 

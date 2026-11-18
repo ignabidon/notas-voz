@@ -75,6 +75,8 @@ Una línea con ID nuevo, fecha, la frase de Ignacio lo más literal posible y la
 | A7 | Se puede **retirar la compatibilidad** con el audio suelto viejo («última / anterior») y con estructuras de prueba históricas. No borra nada por sí solo | 17/11 | chat | Pendiente (fase P6) |
 | A8 | Se pueden **borrar los datos de prueba** de las bases viejas al retirar esa compatibilidad, sin preguntar de nuevo. Se entiende: solo lo que W4 declara de prueba (lo guardado hasta hoy). **Cualquier otro borrado se consulta**, y si Ignacio empieza a usar datos reales, esta autorización deja de valer | 17/11 | chat | Vigente |
 | A9 | **T (mudar el texto): en la misma base que los audios.** T sigue exigiendo su permiso explícito antes de programar y antes de unir. Reemplaza lo «a reconsiderar» de D13 | 17/11 | chat | Vigente; T pendiente |
+| A10 | **Contraseña mínima: se mantiene en 8 caracteres.** La revisión externa sugirió subirla a 12 porque protege las copias que salen del teléfono; Ignacio decidió no subirla | 17/11 | chat | Vigente |
+| A11 | **Audios sin protección al restaurar (M12): se cifran** y quedan protegidos dentro de la bóveda. Con esto la restauración cubrirá el audio sin protección (condición de A2 y A6) | 17/11 | chat | Pendiente (K2 de reemplazo) |
 
 ## Q · Todavía sin decidir
 

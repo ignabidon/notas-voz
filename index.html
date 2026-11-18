@@ -951,7 +951,7 @@ body.delta-recording #transcriptionDockBar{height:3px;margin-top:3px}
         </section>
         <section class="vault-panel" id="copiaPanel" aria-labelledby="copiaTitle">
           <h4 id="copiaTitle">Copia cifrada</h4>
-          <p class="hint">Descarga un archivo con tus cuadernos, notas, personas, diccionario y ajustes, cifrado. Sirve de respaldo. Por ahora la copia se puede <b>crear y comprobar</b>; volver a cargarla en la app llega en una versión próxima. No cambia nada de lo que ya está guardado.</p>
+          <p class="hint">Podés crear y comprobar una copia cifrada. La restauración experimental solo funciona en una instalación completamente vacía, nunca mezcla ni reemplaza datos existentes. Se conserva la contraseña de la copia y deberás registrar de nuevo la huella. Los audios antiguos de «Mis grabaciones» no están incluidos; por ahora tampoco se pueden restaurar copias que tengan audios originalmente sin cifrar.</p>
           <p class="hint" id="copiaOffHint">La protección está apagada: la copia igual sale cifrada, con una contraseña que elegís solo para ese archivo. Lleva el texto, no los audios de «Mis grabaciones».</p>
           <fieldset id="copiaContenido" class="copia-opciones" hidden>
             <legend>Qué lleva la copia</legend>
@@ -960,6 +960,8 @@ body.delta-recording #transcriptionDockBar{height:3px;margin-top:3px}
           </fieldset>
           <div class="row"><button type="button" id="copiaCrear" class="p">Crear copia cifrada</button><button type="button" id="copiaVerificar">Verificar una copia</button></div>
           <input type="file" id="copiaArchivo" hidden>
+           <div class="row"><button type="button" id="copiaRestaurar">Restaurar en instalación vacía (experimental)</button></div>
+           <input type="file" id="copiaRestArchivo" accept=".dictanota" hidden>
           <form id="copiaPwForm" class="vault-box" hidden>
             <p class="hint">Elegí una contraseña para este archivo. Si la olvidás, <b>la copia no se puede abrir</b>.</p>
             <label for="copiaPw1">Contraseña de la copia (al menos 8 caracteres; mejor una frase)</label>
@@ -1485,6 +1487,8 @@ function createVault(storage, opts){
   const v = {state: 'off', header: null, key: null, audioKey: null, cache: new Map(), pending: new Set(), queue: Promise.resolve(), scheduled: false,
     error: '', leftovers: [], damaged: [], frozen: new Set(), onError: () => {},
     readOnly: false, disableGuard: null,
+    // Candado universal (K2, 17/11/2026): true mientras otra pestaña tenga el candado (o no se haya confirmado). Bloquea TODA escritura, con o sin bóveda.
+    otherTab: false,
     // Candado de una sola pestaña (segunda revisión de E2): se toma ANTES de cualquier escritura de datos protegidos o de la cabecera.
     // Devuelve true si esta pestaña es la única que escribe. La aplicación lo reemplaza por el candado real (vaultTakeTabLock).
     takeLock: (opts && opts.takeLock) || (async () => true)};
@@ -1527,8 +1531,8 @@ function createVault(storage, opts){
   const schedule = k => { v.pending.add(k); if (!v.scheduled) { v.scheduled = true; setTimeout(() => { v.scheduled = false; v.flush(); }, 0); } };
   v.store = {
     getItem(k){ if (!isProtected(k) || v.state === 'off') return storage.getItem(k); if (v.state !== 'open') return null; return v.cache.has(k) ? v.cache.get(k) : null; },
-    setItem(k, value){ if (!isProtected(k) || v.state === 'off') return storage.setItem(k, value); if (v.state !== 'open') return; assertWritable(); v.cache.set(k, String(value)); schedule(k); },
-    removeItem(k){ if (!isProtected(k) || v.state === 'off') return storage.removeItem(k); if (v.state !== 'open') return; assertWritable(); v.cache.delete(k); schedule(k); }
+    setItem(k, value){ if (v.otherTab) throw readOnlyError(); if (!isProtected(k) || v.state === 'off') return storage.setItem(k, value); if (v.state !== 'open') return; assertWritable(); v.cache.set(k, String(value)); schedule(k); },
+    removeItem(k){ if (v.otherTab) throw readOnlyError(); if (!isProtected(k) || v.state === 'off') return storage.removeItem(k); if (v.state !== 'open') return; assertWritable(); v.cache.delete(k); schedule(k); }
   };
   // Recibe la clave de datos en bruto y la pone en cero al terminar, salga bien o mal (diseño 2.4).
   async function openWith(dek){
@@ -1640,8 +1644,16 @@ function createVault(storage, opts){
     (await vaultUnwrapPassword(v.header, password)).fill(0);
     await v.flush();
     if (v.pending.size) throw new Error('Hay cambios sin guardar; no se quitó la protección.');
-    for (const [k, value] of v.cache) storage.setItem(k, value);
-    for (const [k, value] of v.cache) if (storage.getItem(k) !== value) throw new Error('No se pudo escribir la copia sin cifrar; la protección sigue activa.');
+    // Si una escritura o la relectura falla (por ejemplo, almacenamiento lleno), se deshace lo ya escrito en claro
+    // antes de avisar: la protección sigue activa y no queda texto clínico legible (revisión externa, 17/11).
+    const previous = new Map();
+    try {
+      for (const [k, value] of v.cache) { previous.set(k, storage.getItem(k)); storage.setItem(k, value); }
+      for (const [k, value] of v.cache) if (storage.getItem(k) !== value) throw new Error('No se pudo escribir la copia sin cifrar; la protección sigue activa.');
+    } catch (e) {
+      for (const [k, old] of previous) { try { if (old === null) storage.removeItem(k); else storage.setItem(k, old); } catch (e2) {} }
+      throw e;
+    }
     for (const name of Object.values(VAULT_KEYS)) storage.removeItem(VAULT_REC_PREFIX + name);
     storage.removeItem(VAULT_HEADER);
     v.state = 'off'; v.header = null; v.key = null; v.audioKey = null; v.cache = new Map();
@@ -1653,9 +1665,16 @@ function createVault(storage, opts){
 const vault = createVault(localStorage);
 vault.takeLock = () => vaultTakeTabLock();   // el candado real (Web Locks); la función se declara más abajo y se usa recién al desbloquear o activar
 const vaultStore = vault.store;
+// Candado universal: sin bóveda, nada se escribe hasta confirmar que esta es la única pestaña que escribe (se toma al arrancar).
+if (vault.state === 'off') vault.otherTab = true;
 const VAULT_IDLE_MS = 15 * 60 * 1000;
 let vaultReadyFns = [], vaultBusy = () => false, vaultBeforeLock = () => {}, vaultLastActivity = Date.now();
-function vaultWhenReady(fn){ if (vault.state === 'off' || vault.state === 'open') fn(); else vaultReadyFns.push(fn); }
+let vaultPrivacyHold = false; // Cobertura visual ante falla del borrador en el autobloqueo: NO equivale a cerrar la bóveda.
+function vaultWhenReady(fn){
+  if (vault.state === 'open') fn();
+  else if (vault.state === 'off') vaultTakeTabLock().then(() => fn());   // candado universal: también sin bóveda, antes de cargar y escribir
+  else vaultReadyFns.push(fn);
+}
 function vaultSetHooks(busy, beforeLock){ vaultBusy = busy; vaultBeforeLock = beforeLock; }
 const vaultEl = id => document.getElementById(id);
 function vaultFriendly(e){
@@ -1668,11 +1687,12 @@ function vaultFriendly(e){
 function vaultSetInert(on){ document.querySelectorAll('body > *:not(#vaultLock):not(script)').forEach(el => { el.inert = on; }); }
 function vaultShowLock(){
   const box = vaultEl('vaultLock'); box.hidden = false; vaultSetInert(true);
+  vaultEl('vaultLockTitle').textContent = vaultPrivacyHold ? 'DictaVoz está oculta' : 'DictaVoz está bloqueada';
   const broken = vault.state === 'broken';
-  vaultEl('vaultLockForm').hidden = broken; vaultEl('vaultRecoverOpen').hidden = broken;
+  vaultEl('vaultLockForm').hidden = broken; vaultEl('vaultRecoverOpen').hidden = broken || vaultPrivacyHold;
   vaultEl('vaultLockMsg').textContent = broken ? 'Los datos de la protección están dañados. No se modificó nada: no borres los datos del sitio y pedí ayuda revisando SEGURIDAD.md.' : '';
-  vaultEl('vaultBioUnlock').hidden = broken || !(vault.header && vault.header.bio);
-  if (!broken && !(vault.header && vault.header.bio)) setTimeout(() => vaultEl('vaultLockPass').focus(), 50);
+  vaultEl('vaultBioUnlock').hidden = broken || vaultPrivacyHold || !(vault.header && vault.header.bio);
+  if (!broken && (vaultPrivacyHold || !(vault.header && vault.header.bio))) setTimeout(() => vaultEl('vaultLockPass').focus(), 50);
 }
 /* Candado de una sola pestaña (diseño 2.5): la primera pestaña que abre la protección es la única que escribe.
    Se toma ANTES de cargar notas y borrador; si otra pestaña lo tiene, esta queda en solo lectura (vault.readOnly). */
@@ -1682,12 +1702,15 @@ function vaultTakeTabLock(){
      escribiendo, así que esta queda en solo lectura. Antes se asumía «sin problema». */
   if (!vaultTabLockP) vaultTabLockP = anTakeLock().catch(() => ({ok: false, soportado: true, fallo: true, release(){}})).then(l => {
     const ok = !!l.ok && l.soportado !== false;
-    vault.readOnly = !ok;
+    /* Sin bóveda, un navegador que no ofrece el candado sigue guardando como antes (no puede saber de otras pestañas);
+       ahí K2 se niega a restaurar. Si otra pestaña tiene el candado o hubo un error, esta no escribe nada. */
+    const blocked = !ok && (vault.state !== 'off' || l.soportado !== false);
+    vault.readOnly = blocked; vault.otherTab = blocked;
     const w = vaultEl('tabLockWarn');
-    const why = ok ? '' : l.fallo ? 'No se pudo comprobar si DictaVoz está abierta en otra pestaña (el navegador dio un error).'
+    const why = !blocked ? '' : l.fallo ? 'No se pudo comprobar si DictaVoz está abierta en otra pestaña (el navegador dio un error).'
       : l.soportado === false ? 'Este navegador no permite comprobar si DictaVoz está abierta en otra pestaña.'
       : 'DictaVoz está abierta en otra pestaña.';
-    if (w) { w.hidden = ok; w.textContent = ok ? '' : why + ' En esta podés leer, pero por seguridad no se guarda nada (ni notas, ni borrador, ni audios). Cerrá las demás pestañas y recargá esta.'; }
+    if (w) { w.hidden = !blocked; w.textContent = !blocked ? '' : why + ' En esta podés leer, pero por seguridad no se guarda nada (ni notas, ni borrador, ni ajustes, ni audios). Cerrá las demás pestañas y recargá esta.'; }
     return ok;
   });
   return vaultTabLockP;
@@ -1701,13 +1724,38 @@ async function vaultAfterUnlock(){
   fns.forEach(fn => { try { fn(); } catch (e) { console.error(e); } });
   vaultRefreshPanel();
 }
-async function vaultLockNow(){
+/* Si falla el guardado automático, ocultar de inmediato el contenido y exigir autenticación.
+   La clave y el texto continúan en memoria para evitar perder el borrador; NO es un bloqueo criptográfico.
+   Sin cuota libre el usuario debe recuperar espacio y confirmar el borrador antes de salir. */
+function vaultHoldPrivate(){
+  if (vaultPrivacyHold) return;
+  vaultPrivacyHold = true;
+  vaultShowLock();
+  vaultEl('vaultLockMsg').textContent = 'No se pudo guardar el borrador. Se ocultó la pantalla por privacidad, pero la bóveda sigue abierta en memoria para no perderlo. Ingresá la contraseña para recuperarlo, liberá espacio y guardá antes de cerrar.';
+}
+async function vaultLockNow(auto = false){
   if (vault.state !== 'open') return false;
   if (vaultBusy()) { vaultPanelMsg('No se bloquea mientras grabás o transcribís.'); return false; }
   e3Stop();
-  try { vaultBeforeLock(); } catch (e) {}
-  await vault.flush();
-  if (vault.pending.size) { vaultPanelMsg('No se pudo guardar todo cifrado; no se bloqueó para no perder texto.'); return false; }
+  // No descartar el texto visible si el borrador todavía no llegó a disco.
+  let draftReady = false;
+  try { draftReady = await vaultBeforeLock(); } catch (e) {}
+  if (!draftReady) {
+    if (auto) vaultHoldPrivate();
+    else vaultPanelMsg('No se bloqueó: el borrador no pudo guardarse. Liberá espacio o cerrá la otra pestaña y volvé a intentar.');
+    return false;
+  }
+  try { await vault.flush(); }
+  catch (e) {
+    if (auto) vaultHoldPrivate();
+    else vaultPanelMsg('No se pudo completar el guardado cifrado. No se bloqueó para no perder el borrador.');
+    return false;
+  }
+  if (vault.pending.size) {
+    if (auto) vaultHoldPrivate();
+    else vaultPanelMsg('No se pudo guardar todo cifrado; no se bloqueó para no perder texto.');
+    return false;
+  }
   vault.state = 'locked'; vault.cache = new Map(); vault.key = null; vault.audioKey = null;
   location.reload();   // descarta de la memoria y de la pantalla todo el texto descifrado
   return true;
@@ -1809,7 +1857,15 @@ function vaultInitUI(){
   vaultEl('vaultLockForm').addEventListener('submit', async ev => {
     ev.preventDefault();
     const btn = vaultEl('vaultLockGo'); btn.disabled = true; vaultEl('vaultLockMsg').textContent = 'Comprobando…';
-    try { await vault.unlockPassword(vaultEl('vaultLockPass').value); await vaultAfterUnlock(); }
+    try {
+      if (vaultPrivacyHold) {
+        // No recargar ni abrir de nuevo la bóveda: su caché contiene el borrador aún no confirmado.
+        const dek = await vault.checkPassword(vaultEl('vaultLockPass').value); dek.fill(0);
+        vaultPrivacyHold = false; vaultEl('vaultLock').hidden = true; vaultSetInert(false);
+        vaultEl('vaultLockPass').value = ''; vaultLastActivity = Date.now();
+        vaultPanelMsg('La pantalla estaba oculta porque el borrador no pudo guardarse. Liberá espacio y volvé a intentar antes de salir.');
+      } else { await vault.unlockPassword(vaultEl('vaultLockPass').value); await vaultAfterUnlock(); }
+    }
     catch (e) { vaultEl('vaultLockMsg').textContent = vaultFriendly(e); vaultEl('vaultLockPass').select(); }
     finally { btn.disabled = false; }
   });
@@ -1836,7 +1892,8 @@ function vaultInitUI(){
     if (problem) { vaultPanelMsg(problem); return; }
     vaultEl('vaultSetupGo').disabled = true; vaultPanelMsg('Cifrando… puede tardar unos segundos.');
     try {
-      try { vaultBeforeLock(); } catch (e) {}
+      // Antes de habilitar protección, comprobar también el borrador de la modalidad anterior.
+      if (!(await vaultBeforeLock())) throw new Error('No se activó la protección: no se pudo guardar el borrador. Liberá espacio y reintentá.');
       const {recovery, dek} = await vault.enable(vaultEl('vaultNew').value);
       await vaultTakeTabLock();
       vaultEl('vaultNew').value = ''; vaultEl('vaultNew2').value = ''; vaultEl('vaultSetup').hidden = true;
@@ -1857,8 +1914,8 @@ function vaultInitUI(){
     } catch (e) { vaultPanelMsg(vaultFriendly(e)); }
     finally { vaultEl('vaultSetupGo').disabled = false; }
   });
-  vaultEl('vaultLockBtn').addEventListener('click', vaultLockNow);
-  vaultEl('topLock').addEventListener('click', vaultLockNow);
+  vaultEl('vaultLockBtn').addEventListener('click', () => void vaultLockNow(false));
+  vaultEl('topLock').addEventListener('click', () => void vaultLockNow(false));
   vaultEl('vaultBioAdd').addEventListener('click', async () => {
     const pw = await vaultAskPassword('Confirmá tu contraseña para activar la huella'); if (pw === null) return;
     try { const dek = await vault.checkPassword(pw); await vaultOfferBio(dek); } catch (e) { vaultPanelMsg(vaultFriendly(e)); }
@@ -1887,9 +1944,9 @@ function vaultInitUI(){
   const touch = () => { vaultLastActivity = Date.now(); };
   ['pointerdown', 'keydown', 'input', 'wheel', 'touchstart'].forEach(t => document.addEventListener(t, touch, {capture: true, passive: true}));
   const check = () => {
-    if (vault.state !== 'open') return;
+    if (vault.state !== 'open' || vaultPrivacyHold) return;
     if (vaultBusy()) { touch(); return; }
-    if (Date.now() - vaultLastActivity >= VAULT_IDLE_MS) vaultLockNow();
+    if (Date.now() - vaultLastActivity >= VAULT_IDLE_MS) void vaultLockNow(true);
   };
   setInterval(check, 30000);
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') check(); });
@@ -2607,12 +2664,14 @@ document.addEventListener('keydown', ev => { if (ev.key === 'Escape' && convMenu
 function convButton(label, fn, cls){ const b = document.createElement('button'); b.type = 'button'; b.textContent = label; if (cls) b.className = cls; b.onclick = fn; return b; }
 /* Solo presentación: conserva el mismo editor, borrador, destino y acciones de guardado. */
 function refreshConvEditor(){
-  const hasText = !!$('text').value.trim();
-  const expanded = !convEditorCollapsed && !!(convComposeNew || convEditingId || hasText);
+  const hasText = !!$('text').value.trim(), hasAudio = !!convAudioId;
+  const expanded = !convEditorCollapsed && !!(convComposeNew || convEditingId || hasText || hasAudio);
   document.body.classList.toggle('conv-editor-expanded', expanded);
-  $('convExpandEditor').textContent = hasText || convEditingId ? 'Seguir editando · sin guardar' : 'Escribí una nota…';
+  $('convExpandEditor').textContent = hasText || hasAudio || convEditingId ? 'Seguir editando · sin guardar' : 'Escribí una nota…';
   $('convExpandEditor').setAttribute('aria-expanded', String(expanded));
-  $('save').hidden = !hasText;
+  $('save').hidden = !(hasText || hasAudio);
+  const saveLabel = $('save').querySelector('span');
+  if (saveLabel) saveLabel.textContent = hasAudio && !hasText ? 'Guardar solo audio' : 'Guardar';
 }
 $('convExpandEditor').onclick = () => { convEditorCollapsed = false; convComposeNew = true; refreshConvEditor(); $('text').focus(); };
 $('convMinimizeEditor').onclick = () => { convEditorCollapsed = true; $('text').blur(); refreshConvEditor(); $('convExpandEditor').focus(); };
@@ -2622,7 +2681,7 @@ function renderConv(){
   e3Stop();
   const data = convStore.data;
   if (convOpenId && !convHas(convOpenId)) convOpenId = null;
-  const composing = !!(convOpenId || convComposeNew || $('text').value.trim() || convTargetSet || convEditingId);
+  const composing = !!(convOpenId || convComposeNew || $('text').value.trim() || convAudioId || convTargetSet || convEditingId);
   document.body.classList.toggle('conv-open', !!convOpenId);
   document.body.classList.toggle('conv-composing', composing);
   refreshConvEditor();
@@ -2750,7 +2809,7 @@ $('convBack').onclick = () => { convComposeNew = false; convOpenId = null; if (!
 /* Nueva nota global: nunca cambia silenciosamente el destino de un borrador o captura. */
 function convBeginNew(){
   if (convAudioWork()) { flash('Terminá la grabación o transcripción antes de crear otra nota.'); return false; }
-  if ($('text').value.trim() || convEditingId) {
+  if ($('text').value.trim() || convAudioId || convEditingId) {
     document.querySelector('[data-delta-view="transcripcion"]').click();
     renderConv(); flash('Primero guardá o descartá la nota pendiente. Su cuaderno de destino no cambió.'); return false;
   }
@@ -2845,7 +2904,7 @@ $('save').onclick = async () => {
   try { await convSave(); } finally { convSaving = false; }
 };
 async function convSave(){
-  const text = $('text').value; if (!text.trim()) return flash('No hay texto para guardar.');
+  const text = $('text').value; if (!text.trim() && !convAudioId) return flash('No hay texto ni audio para guardar.');
   if (anBusyN > 0) return flash('Esperá unos segundos: se está guardando el audio cifrado.');
   if (!pendingOk()) return;
   if (!convStore.data) return flash('No se guardó: los cuadernos no están disponibles. ' + ($('convMsg').textContent || 'Desbloqueá la app y volvé a intentar.'));
@@ -2858,6 +2917,14 @@ async function convSave(){
     try { const m = await anGetMeta(await anDb(), convAudioId); audioParts = m && anValidMeta(m) && m.state === 'cerrado' && m.parts >= 1 ? m.parts : null; }
     catch (e) { return flash('No se guardó: no se pudo comprobar el audio guardado (' + anErrName(e) + '). El texto y su audio siguen en el editor.'); }
   }
+  // Toda nota con audio (con texto o sin texto) exige integridad completa antes de confirmar el vínculo.
+  if (convAudioId) {
+    if (!anUsable() || !audioParts) return flash('No se guardó: todavía no hay un audio por nota confirmado. El texto y el borrador siguen disponibles.');
+    try {
+      const health = await anAudioHealth(await anDb(), vault.audioKey, vault.header.id, convAudioId);
+      if (!health.ok) return flash('No se guardó: el audio está incompleto o dañado (' + health.why + '). Se conserva sin modificar para recuperarlo.');
+    } catch (e) { return flash('No se guardó: no se pudo verificar el audio (' + anErrName(e) + '). Se conserva sin modificar.'); }
+  }
   // Un audio pendiente solo se une a SU nota: nunca a otra que ya tiene audio ni a uno que use otra nota.
   if (convAudioId && (convAudioInUse(convStore.data, convAudioId, editing ? editing.id : null) || (editing && editing.audioId && editing.audioId !== convAudioId)))
     return flash('No se guardó: el audio pendiente pertenece a otra nota. El texto sigue en el editor; copialo y cancelá o descartá.');
@@ -2868,7 +2935,8 @@ async function convSave(){
       if (convAudioId) next = convSetAudio(next, editing.id, convAudioId, convAudioMs, audioParts);
     } else {
       const r = convAddEntry(convStore.data, {conversationId: convDest(), kind: convFromAudio ? 'audio' : 'texto', savedAt: now,
-        tzOffsetMin: new Date(now).getTimezoneOffset(), recordedAt: convRecordedAt, text, audioId: convAudioId, durationMs: convAudioMs, audioParts});
+        tzOffsetMin: new Date(now).getTimezoneOffset(), recordedAt: convRecordedAt, text, audioId: convAudioId, durationMs: convAudioMs, audioParts,
+        transcriptionStatus: convFromAudio ? ((dead || failedParts) ? 'error' : text.trim() ? 'listo' : 'pendiente') : 'listo'});
       next = r.data; dest = r.conversation.id; savedAt = now;
     }
   } catch (e) { return flash('No se guardó: ' + e.message); }
@@ -2889,8 +2957,10 @@ async function convSave(){
   if ($('learnAuto').checked) learnFromEdits();
   else { showSuggestions(suggest(baseline, text, D.rules.map(r => r.a.toLowerCase()))); baseline = text; }
   convComposeNew = false; convOpenId = dest; convClearComposer();
+  const draftCleared = await saveDraft();
   const when = convStamp(savedAt), where = convTitleOf(dest);
-  flash(editing ? 'Cambios guardados. La fecha no cambió.' : (where === when ? 'Guardado como cuaderno nuevo · ' + when : 'Guardado en «' + where + '» · ' + when));
+  const msg = editing ? 'Cambios guardados. La fecha no cambió.' : (where === when ? 'Guardado como cuaderno nuevo · ' + when : 'Guardado en «' + where + '» · ' + when);
+  flash(msg + (draftCleared ? '' : ' Atención: no se pudo confirmar la limpieza del borrador; podría reaparecer al abrir. La nota sí quedó guardada.'));
 }
 function convInit(){
   const r = convStore.load();
@@ -3098,7 +3168,7 @@ function readGenerator(){
   return {prefix, next, digits, mode:$('pMode').value};
 }
 function saveGenerator(){
-  try { localStorage.setItem(GKEY, JSON.stringify(readGenerator())); } catch (e) {}
+  if (!vault.otherTab) try { localStorage.setItem(GKEY, JSON.stringify(readGenerator())); } catch (e) {}
 }
 function loadGenerator(){
   try {
@@ -3983,7 +4053,9 @@ function maybeDone(){
 function fail(e){
   dead = true; jobs.length = 0; outstanding = 0; busy = false; feeding = false;
   logDiag('Se detuvo la transcripción de esta grabación' + (e && e.stage ? ' (etapa: ' + e.stage + ')' : '') + '. El audio guardado se puede transcribir de nuevo.');
-  setStatus('No se pudo transcribir: ' + (e.message || e) + '. Si es la primera vez, hace falta internet para descargar lo necesario.');
+  setStatus('No se pudo transcribir: ' + (e.message || e) + '. Si es la primera vez, hace falta internet para descargar lo necesario.' +
+    ($('saveAudio').checked ? ' Si el audio termina de guardarse, podés confirmarlo como una nota sin texto.' : ' Conservar audio estaba desactivado: esta grabación no quedará guardada. Podés escribir una nota manual.'));
+  void saveDraft();  // preservar texto parcial y audio pendiente aunque Whisper falle
   unlockWake();
   maybeDone();
 }
@@ -4420,6 +4492,89 @@ async function anReadAudio(db, kAudio, hid, id){
   return out;
 }
 /*AUDIONOTA-END*/
+/* ---------- P2 · Biblioteca unificada: modalidad SIN bóveda (ensayo, NO conectada a la captura) ----------
+   Misma base AN_DB/meta/chunks e IDs que E2; los fragmentos NO se cifran.
+   Una ficha «claro» se distingue de una ficha AES-GCM; nunca inferir la modalidad por falta de key.
+   La integridad SHA-256 detecta deterioros accidentales, NO autentica contra alguien que modifica
+   el audio y las huellas a la vez. Antes de activar este recorrido en la interfaz faltan copia
+   versión 2 y restauración probada. Esta capa no migra ni borra el audio de la base anterior. */
+/*P2-BIBLIOTECA-START*/
+const AN_PLAIN_MODE = 'claro', AN_PLAIN_MAX_BYTES = 30 * 1024 * 1024;
+/* ¿La ficha es de un audio guardado SIN cifrar? Solo si lo dice expresamente y no trae clave ni detalle cifrado.
+   Cualquier otra ficha (también una dañada o ambigua) se trata como cifrada: así nunca se la da por «libre» de la protección. */
+const anIsPlainMeta = m => !!m && typeof m === 'object' && m.mode === AN_PLAIN_MODE && m.key == null && m.sealed == null;
+function anPlainValidMeta(m){
+  return anValidMeta(m) && m.mode === AN_PLAIN_MODE && m.key == null && m.sealed == null &&
+    m.plain && typeof m.plain === 'object' && Array.isArray(m.plain.parts) &&
+    m.plain.parts.length === m.parts && m.parts >= 1 && m.parts <= 100000 &&
+    m.plain.parts.every(p => p && (p.origin === 'grabado' || p.origin === 'cargado') &&
+      typeof p.mime === 'string' && p.mime.length < 100 &&
+      (p.name == null || (typeof p.name === 'string' && p.name.length <= 255)) &&
+      anIsInt(p.chunks) && p.chunks > 0 && anIsInt(p.bytes) &&
+      (p.ms === null || anIsInt(p.ms)) && p.complete === true &&
+      Array.isArray(p.hashes) && p.hashes.length === p.chunks &&
+      p.hashes.every(h => typeof h === 'string' && /^[A-Za-z0-9+/]{43}=$/.test(h))) &&
+    m.plain.parts.reduce((n,p) => n + p.bytes, 0) === m.bytes;
+}
+const anPlainHash = async blob => anB64(new Uint8Array(await crypto.subtle.digest('SHA-256', await blob.arrayBuffer())));
+async function anPlainHealth(db, id){
+  const m = await anGetMeta(db, id);
+  if (!m || !anPlainValidMeta(m) || m.state !== 'cerrado') return {ok:false, m, why:'ficha o escritura pendiente'};
+  const b = anChunkBounds(id);
+  const keys = await anTx(db, ['chunks'], 'readonly', t => t.objectStore('chunks').getAllKeys(IDBKeyRange.bound(b.lower,b.upper)));
+  const expected = [];
+  m.plain.parts.forEach((p,part) => { for(let n=0;n<p.chunks;n++) expected.push([id,part,n]); });
+  if (keys.length !== expected.length || keys.some((k,i) => !Array.isArray(k) || k[0] !== expected[i][0] || k[1] !== expected[i][1] || k[2] !== expected[i][2]))
+    return {ok:false,m,why:'fragmentos faltantes o sobrantes'};
+  let total = 0;
+  for (let part=0;part<m.plain.parts.length;part++){
+    const p = m.plain.parts[part]; let bytes = 0;
+    for (let n=0;n<p.chunks;n++){
+      const blob = await anGetChunk(db,id,part,n);
+      if (!(blob instanceof Blob)) return {ok:false,m,why:'fragmento faltante'};
+      bytes += blob.size;
+      if (await anPlainHash(blob) !== p.hashes[n]) return {ok:false,m,why:'fragmento alterado'};
+    }
+    if (bytes !== p.bytes) return {ok:false,m,why:'tamaño'};
+    total += bytes;
+  }
+  return {ok:total === m.bytes,m,why:total === m.bytes ? '' : 'tamaño'};
+}
+/* Se usa solo desde pruebas P2. No hay botón ni llamada en el flujo de grabación todavía.
+   El orden ficha-escribiendo → chunks → ficha-cerrado permite detectar cortes sin perder datos. */
+async function anPlainStageFile(db, file, ms){
+  if (vault.state !== 'off') throw new Error('El audio en claro no se puede escribir con la bóveda abierta.');
+  if (!(file instanceof Blob) || !anIsInt(file.size) || file.size < 1 || file.size > AN_PLAIN_MAX_BYTES) throw new Error('archivo fuera de límite');
+  const id = anNewId(), plan = anFilePlan(file.size);
+  if (!plan.length || !anIsInt(ms)) throw new Error('duración o archivo inválidos');
+  const part = {mime:String(file.type || 'application/octet-stream').slice(0,99), origin:'cargado',
+    name:String(file.name || '').slice(0,255), chunks:plan.length, bytes:file.size, ms, complete:true, hashes:[]};
+  const writing = {...anNewMeta(id,Date.now(),'escribiendo'),mode:AN_PLAIN_MODE,parts:1,bytes:file.size,plain:{parts:[part]}};
+  await anPutMeta(db,writing);
+  for(const c of plan){
+    const blob = file.slice(c.start,c.end);
+    part.hashes.push(await anPlainHash(blob));
+    await anPutChunk(db,id,0,c.n,blob);
+  }
+  const closed = {...writing,state:'cerrado',plain:{parts:[{...part,hashes:part.hashes.slice()}]}};
+  await anPutMeta(db,closed);
+  const health = await anPlainHealth(db,id);
+  if (!health.ok) throw new Error('audio incompleto o alterado; se conserva sin confirmar');
+  return id;
+}
+async function anPlainRead(db,id){
+  const h=await anPlainHealth(db,id);
+  if (!h.ok) throw new Error('audio no disponible o alterado (' + h.why + ')');
+  const out=[];
+  for(let part=0;part<h.m.plain.parts.length;part++){
+    const p=h.m.plain.parts[part], pieces=[];
+    for(let n=0;n<p.chunks;n++) pieces.push(await anGetChunk(db,id,part,n));
+    out.push({mime:p.mime,origin:p.origin,ms:p.ms,blob:new Blob(pieces,{type:p.mime})});
+  }
+  return out;
+}
+/*P2-BIBLIOTECA-END*/
+
 
 /* ---------- E3: reproducción a pedido y espacio ---------- */
 let e3Current = null, e3Epoch = 0, e3PanelEpoch = 0, e3PersistAsked = false;
@@ -4497,6 +4652,7 @@ async function e3Play(root, entry, button, range, status, clock){
     const meta = await anGetMeta(s.db, s.id);
     if (!e3Alive(s)) return;
     if (!meta) { e3Failure(s, 'Audio no disponible. El texto se conserva. Podés quitar la referencia desde ⋯.'); return; }
+    if (anIsPlainMeta(meta)) { e3Failure(s, 'Este audio está guardado sin cifrar (ensayo) y todavía no se reproduce desde la nota. Se conserva sin cambios.'); return; }
     if (!anValidMeta(meta) || meta.state !== 'cerrado') throw new Error('ficha');
     s.detail = await anOpenDetail(vault.audioKey, s.hid, s.id, meta.sealed);
     if (!e3Alive(s)) return;
@@ -4554,6 +4710,8 @@ async function e3Remove(entryId, audioId){
   if (convAudioId === audioId || (entryId && convEditingId === entryId)) return flash('Primero guardá o cancelá la edición de esta nota.');
   if (!entryId && e3Used(audioId)) return flash('El audio ya está unido a una nota o borrador; se conserva.');
   if (entryId && (!convEntry(entryId) || convEntry(entryId).audioId !== audioId)) return;
+  try { if (!entryId && anIsPlainMeta(await anGetMeta(await anDb(), audioId))) return flash('Ese audio está guardado sin cifrar (ensayo): no se borra desde acá. Se conserva sin cambios.'); }
+  catch (e) { return flash('No se pudo comprobar el audio. No se borró nada.'); }
   if (!confirm(entryId ? '¿Quitar el audio de esta nota? El texto queda guardado. Si ninguna otra nota lo usa, el audio se borra. No se puede deshacer.' : '¿Borrar este audio sin nota? No se puede deshacer.')) return;
   convSaving = true; e3Stop();
   try {
@@ -4564,22 +4722,28 @@ async function e3Remove(entryId, audioId){
   finally { convSaving = false; renderConv(); void e3RefreshSpace(); }
 }
 async function e3Recover(id){
-  if (!anUsable() || convAudioWork() || copiaBusyN || !(await anLockOk())) return flash('No se puede crear la nota ahora. Terminá las tareas pendientes y usá la pestaña con permiso para guardar.');
+  if (!anUsable() || convAudioWork() || copiaBusyN || !(await anLockOk())) return flash('No se puede recuperar el audio ahora. Terminá las tareas pendientes y usá la pestaña con permiso para guardar.');
   if (convAudioWork() || copiaBusyN || e3Used(id)) return;
+  // Recuperar nunca descarta un mensaje que el usuario todavía no confirmó.
+  if ($('text').value.trim() || convAudioId || convEditingId || $('title').value.trim() || tags.length)
+    return flash('Primero guardá o descartá el borrador actual. No se reemplazó nada.');
   convSaving = true;
   try {
     const db = await anDb(), h = await anAudioHealth(db, vault.audioKey, vault.header.id, id);
+    if (!h.ok && h.why === 'sin cifrar') throw new Error('Ese audio está guardado sin cifrar (ensayo): no se puede preparar una nota con él. Se conserva sin cambios.');
     if (!h.ok) throw new Error('El audio está dañado o todavía no terminó de guardarse. Se conserva sin cambios.');
     if (e3Used(id)) return;
-    const r = convAddEntry(convStore.data, {conversationId: null, kind: 'audio', savedAt: Date.now(),
-      tzOffsetMin: new Date().getTimezoneOffset(), recordedAt: h.m.createdAt, text: 'Audio recuperado (sin transcripción).',
-      audioId: id, durationMs: anTotalMs(h.detail), audioParts: h.detail.parts.length});
-    await e3Write(r.data);
-    convOpenId = r.conversation.id;
-    document.querySelector('[data-delta-view="transcripcion"]').click(); renderConv(); flash('Audio recuperado en un cuaderno nuevo. Podés escucharlo y editar el texto.');
+    convClearComposer(); convOpenId = null; convComposeNew = true; convStartPending(true);
+    convAudioId = id; convAudioMs = anTotalMs(h.detail); convRecordedAt = h.m.createdAt;
+    const saved = await saveDraft();
+    document.querySelector('[data-delta-view="transcripcion"]').click(); renderConv();
+    flash(saved
+      ? 'Audio recuperado como borrador. Agregá texto si querés y tocá Guardar solo audio para confirmar. Podrás reproducirlo desde la nota guardada.'
+      : 'El audio está disponible como borrador, pero no se pudo confirmar el guardado del borrador. No cierres la app sin resolverlo.');
   } catch (e) { flash(e.message); }
   finally { convSaving = false; void e3RefreshSpace(); }
 }
+
 async function e3RequestPersist(){
   if (!navigator.storage || !navigator.storage.persist) { $('e3Persistence').textContent = 'Este navegador no permite solicitar protección contra la limpieza automática.'; return; }
   try { const yes = await navigator.storage.persist(); $('e3Persistence').textContent = 'Protegido contra la limpieza automática: ' + (yes ? 'Sí.' : 'No. Creá una copia cifrada como respaldo.'); }
@@ -4593,23 +4757,26 @@ async function e3RefreshSpace(){
   if (!valid()) return;
   const list = $('e3AudioList'); list.textContent = ''; $('e3SpaceMsg').textContent = 'Consultando espacio…';
   try {
-    const count = await anStoredCount();
-    const metas = count ? await anListMeta(await anDb()) : [];
+    // Cifrados y sin cifrar se cuentan y se muestran por separado: nunca se presenta un audio sin cifrar como protegido.
+    const kinds = await anStoredKinds(), metas = kinds ? kinds.metas : [];
+    const cifrados = metas.filter(m => !anIsPlainMeta(m)), claros = metas.filter(anIsPlainMeta);
     const storage = navigator.storage;
     let estimate = null, persisted = null;
     try { estimate = storage && storage.estimate ? await storage.estimate() : null; } catch (e) {}
     try { persisted = storage && storage.persisted ? await storage.persisted() : null; } catch (e) {}
     if (!valid()) return;
-    const bytes = metas.reduce((t, m) => t + (Number.isFinite(m.bytes) ? m.bytes : 0), 0);
+    const sum = list => list.reduce((t, m) => t + (m && Number.isFinite(m.bytes) ? m.bytes : 0), 0);
     const free = estimate && Number.isFinite(estimate.quota) && Number.isFinite(estimate.usage) ? Math.max(0, estimate.quota - estimate.usage) : null;
-    $('e3SpaceMsg').textContent = (count === null ? 'No se pudieron consultar los audios.' : metas.length + ' audio(s) cifrado(s) · ' + mb(bytes)) +
+    $('e3SpaceMsg').textContent = (kinds === null ? 'No se pudieron consultar los audios.' : cifrados.length + ' audio(s) cifrado(s) · ' + mb(sum(cifrados)) +
+      (claros.length ? ' · ' + claros.length + ' audio(s) SIN CIFRAR (ensayo, no protegidos) · ' + mb(sum(claros)) : '')) +
       (free === null ? ' · Espacio libre no disponible.' : ' · Espacio libre estimado del sitio: ' + mb(free) + (free < 50 * 1024 * 1024 ? ' · Queda poco espacio. Creá una copia y revisá tus audios.' : ''));
     $('e3Persistence').textContent = 'Protegido contra la limpieza automática: ' + (persisted === null ? 'no disponible.' : persisted ? 'Sí.' : 'No. Creá una copia cifrada como respaldo.');
     let textBytes = 0; for (let i = 0; i < localStorage.length; i++) { const key = localStorage.key(i); if (key && key.startsWith('notasvoz.')) textBytes += 2 * (key.length + (localStorage.getItem(key) || '').length); }
     $('e3TextSpace').textContent = 'Texto, ajustes y registros: aproximadamente ' + mb(textBytes) + '. El cupo de texto depende del navegador; no se mide escribiendo datos de prueba.' +
       (textBytes >= 4 * 1024 * 1024 ? ' Uso alto: se acerca a la referencia habitual de 5 MB. Creá una copia.' : textBytes >= 2.5 * 1024 * 1024 ? ' Supera la mitad de la referencia habitual de 5 MB.' : '');
+    const order = (a, b) => $('e3Sort').value === 'size' ? (b.bytes || 0) - (a.bytes || 0) : (b.createdAt || 0) - (a.createdAt || 0);
     if (anUsable()) {
-      const sorted = metas.slice().sort((a, b) => $('e3Sort').value === 'size' ? b.bytes - a.bytes : b.createdAt - a.createdAt);
+      const sorted = cifrados.slice().sort(order);
       for (const m of sorted) {
         const row = document.createElement('div'); row.className = 'e3-audio-row';
         const entries = convStore.data ? convStore.data.entries.filter(e => e.audioId === m.id) : [];
@@ -4617,12 +4784,21 @@ async function e3RefreshSpace(){
         const info = document.createElement('p'); info.textContent = (orphan ? 'Audio sin nota' : pending ? 'Audio en edición' : 'Audio de ' + entries.length + ' nota(s)') + ' · ' + fmt(m.createdAt) + ' · ' + mb(m.bytes) + (anDamaged.has(m.id) ? ' · Dañado: conservado sin cambios' : '');
         row.append(info);
         const actions = document.createElement('div'); actions.className = 'row';
-        if (orphan) actions.append(convButton('Crear nota', () => void e3Recover(m.id)), convButton('Borrar audio', () => void e3Remove(null, m.id), 'ghost danger'));
+        if (orphan) actions.append(convButton('Preparar nota', () => void e3Recover(m.id)), convButton('Borrar audio', () => void e3Remove(null, m.id), 'ghost danger'));
         else if (entries.length) actions.append(convButton('Ver nota', () => { document.querySelector('[data-delta-view="transcripcion"]').click(); convOpen(entries[0].conversationId); }));
         row.append(actions); list.append(row);
       }
-      if (!sorted.length) list.textContent = 'Todavía no hay audios cifrados guardados.';
-    } else list.textContent = 'Los audios por nota se guardan con la protección activada.';
+      if (!sorted.length) list.append('Todavía no hay audios cifrados guardados.');
+    } else list.append(cifrados.length ? 'Hay audios cifrados: desbloqueá la protección para verlos.' : 'Los audios por nota se guardan con la protección activada.');
+    // Audios sin cifrar del ensayo P2: solo se informan. Sin reproducir, unir a notas, recuperar ni borrar desde acá,
+    // porque esas acciones usan la clave de la protección y no corresponden a un audio sin cifrar.
+    for (const m of claros.slice().sort(order)) {
+      const row = document.createElement('div'); row.className = 'e3-audio-row'; row.dataset.modo = 'claro';
+      const info = document.createElement('p');
+      info.textContent = 'Audio SIN CIFRAR (ensayo, no protegido)' + (m.state === 'cerrado' ? '' : ' · a medio guardar') + ' · ' + fmt(m.createdAt) + ' · ' + mb(m.bytes || 0) +
+        ' · No se reproduce ni entra en la copia cifrada actual.';
+      row.append(info); list.append(row);
+    }
     const old = await audioGetMeta(), previous = await audioGetPrevious();
     if (!valid()) return;
     $('e3Legacy').hidden = !old && !previous;
@@ -4674,7 +4850,7 @@ function anLinkPending(job, id, ms){
   }
   if (job.baseParts != null && convAudioBase === null && convEditingId) convAudioBase = job.baseParts;
   e3AfterAudioSaved();
-  convAudioId = id; convAudioMs = ms; saveDraft(); return true;
+  convAudioId = id; convAudioMs = ms; saveDraft(); refreshConvEditor(); return true;
 }
 /* Revisión completa de un audio ANTES de ampliarlo o recortarlo (segunda revisión de E2):
    1) la ficha, la clave y el detalle se abren; 2) las claves guardadas son exactamente (parte, n) sin huecos, sobrantes ni cambios de lugar
@@ -4686,6 +4862,7 @@ async function anAudioHealth(db, kAudio, hid, id){
   const t0 = (globalThis.performance || Date).now();
   const m = await anGetMeta(db, id);
   if (!m) return {ok: false, m: null, why: 'no existe'};
+  if (anIsPlainMeta(m)) return {ok: false, m, why: 'sin cifrar'};   // P2: no es un audio de la protección; no se amplía, recorta ni recupera por acá
   if (!anValidMeta(m) || m.state !== 'cerrado' || !m.key || !m.sealed) return {ok: false, m, why: 'ficha'};
   let cek, detail;
   try { cek = await anOpenCek(kAudio, hid, id, m.key); detail = await anOpenDetail(kAudio, hid, id, m.sealed); }
@@ -4895,10 +5072,32 @@ function anStoredCount(){
     r.onerror = () => res(creating ? 0 : null);
   });
 }
-/* Quitar la protección haría ilegibles los audios cifrados (su clave sale de la protección). Hasta AO, se impide. */
+/* Audios guardados, separados en cifrados y sin cifrar (ensayo P2). Sin crear la base. null: no se pudo saber.
+   Solo cuenta como «sin cifrar» lo que anIsPlainMeta reconoce; todo lo demás, aun dañado, cuenta como cifrado. */
+function anStoredKinds(){
+  if (!globalThis.indexedDB) return Promise.resolve({total: 0, cifrados: 0, claros: 0, metas: []});
+  return new Promise(res => {
+    let creating = false;
+    const r = indexedDB.open(AN_DB);
+    r.onupgradeneeded = () => { creating = true; try { r.transaction.abort(); } catch (e) {} };
+    r.onsuccess = () => {
+      const db = r.result;
+      if (!db.objectStoreNames.contains('meta')) { db.close(); return res({total: 0, cifrados: 0, claros: 0, metas: []}); }
+      anTx(db, ['meta'], 'readonly', t => t.objectStore('meta').getAll()).then(metas => {
+        db.close();
+        const claros = metas.filter(anIsPlainMeta).length;
+        res({total: metas.length, cifrados: metas.length - claros, claros, metas});
+      }, () => { db.close(); res(null); });
+    };
+    r.onerror = () => res(creating ? {total: 0, cifrados: 0, claros: 0, metas: []} : null);
+  });
+}
+/* Quitar la protección haría ilegibles los audios cifrados (su clave sale de la protección). Hasta AO, se impide.
+   Los audios sin cifrar (ensayo P2) no dependen de la protección: no la traban. */
 vault.disableGuard = async () => {
-  const n = await anStoredCount();
-  if (n === null) return 'No se pudo comprobar si hay audios guardados cifrados. Por seguridad, la protección sigue activa.';
+  const k = await anStoredKinds();
+  if (k === null) return 'No se pudo comprobar si hay audios guardados cifrados. Por seguridad, la protección sigue activa.';
+  const n = k.cifrados;
   if (n === 0) return '';
   return 'La protección no se puede quitar todavía: hay ' + (n === 1 ? 'un audio guardado' : n + ' audios guardados') + ' con tus notas, y solo se pueden abrir con ella. ' +
     'Si la quitaras ahora, esos audios no se podrían volver a escuchar nunca. Más adelante, la app va a ofrecer una copia y borrar esos audios antes de quitarla. Por ahora sigue activa.';
@@ -4913,10 +5112,13 @@ async function anReviewOnOpen(){
     if (indexedDB.databases) { const list = await indexedDB.databases(); if (!list.some(d => d.name === AN_DB)) return; }
     if (!(await anLockOk())) return;
     const db = await anDb(), metas = await anListMeta(db), counts = {};
-    for (const m of metas) if (m && typeof m.id === 'string') counts[m.id] = await anCountChunks(db, m.id);
+    // El recorrido E2 solo sabe abrir audios cifrados. Nunca borrar ni declarar dañada
+    // una ficha P2 expresamente marcada como audio en claro al activar la bóveda.
+    const cifrados = metas.filter(m => !m || m.mode !== AN_PLAIN_MODE);
+    for (const m of cifrados) if (m && typeof m.id === 'string') counts[m.id] = await anCountChunks(db, m.id);
     const notes = convStore.data ? convStore.data.entries.map(e => e.audioId).filter(Boolean) : [];
-    const r = anReview(metas, counts, notes, [convAudioId]);
-    const byId = new Map(metas.filter(m => m && typeof m.id === 'string').map(m => [m.id, m]));
+    const r = anReview(cifrados, counts, notes, [convAudioId]);
+    const byId = new Map(cifrados.filter(m => m && typeof m.id === 'string').map(m => [m.id, m]));
     const hid = vault.header.id, kAudio = vault.audioKey; let closed = 0;
     for (const a of r.audios) {
       const m = byId.get(a.id);
@@ -5116,6 +5318,526 @@ async function copiaVerify(file, abrir, onProgress){
   return {formato, creado: h.creado, contenido: h.contenido, id: h.id, bytes: file.size, registros, audios, fragmentos, bytesAudio, cuadernos: stats.cuadernos, notas: stats.notas};
 }
 /*COPIA-END*/
+/* ---------- Respaldo formato 2: ensayo de compatibilidad, sin interfaz ni restauración ----------
+   El formato 1 permanece intacto. La copia 2 cifra también fragmentos guardados en claro.
+   AES-GCM de cada bloque y final + cadena SHA-256; autenticidad depende de la contraseña
+   o código de recuperación del ARCHIVO, no del modo de los audios de origen. */
+/*COPIA2-START*/
+const COPIA2_FORMATO = 2, COPIA2_TIPOS = 'RCMAPBIF';
+/* Motivos por los que un audio de la biblioteca NO entra en una copia 2. Toda ausencia queda declarada en el
+   inventario (cifrado y encadenado): la copia nunca omite un audio en silencio ni se presenta como completa si falta alguno. */
+const COPIA2_MOTIVOS = {
+  'a-medio-guardar': 'quedó a medio guardar',
+  'danado': 'está dañado o no pasó su comprobación',
+  'cifrado-sin-clave': 'está cifrado y la protección no está abierta',
+  'solo-texto': 'la copia es de solo texto'
+};
+/* Comprueba el inventario contra lo que se leyó. Pura: no toca almacenamiento. Lanza si algo no cierra. */
+function copia2CheckInventory(inv, audios, contenido){
+  const fail = () => { throw new Error('inventario inconsistente'); };
+  if (!inv || typeof inv !== 'object' || inv.formato !== COPIA2_FORMATO || inv.contenido !== contenido ||
+      !Array.isArray(inv.audios) || !Array.isArray(inv.exclusiones)) fail();
+  if (JSON.stringify(inv.audios) !== JSON.stringify(audios)) fail();
+  if (contenido !== 'completa' && audios.length) fail();
+  const ids = new Set(audios.map(x => x.id));
+  if (ids.size !== audios.length) fail();
+  for (const x of inv.exclusiones) {
+    if (!x || typeof x !== 'object' || Object.keys(x).sort().join() !== 'id,modo,motivo' || typeof x.id !== 'string' || !x.id || x.id.length > 64 ||
+        (x.modo !== 'claro' && x.modo !== 'cifrado') || !Object.prototype.hasOwnProperty.call(COPIA2_MOTIVOS, x.motivo) || ids.has(x.id)) fail();
+    if ((contenido === 'solo-texto') !== (x.motivo === 'solo-texto')) fail();
+    if (x.motivo === 'cifrado-sin-clave' && x.modo !== 'cifrado') fail();
+    ids.add(x.id);
+  }
+  // biblioteca: cuántos audios había al crearla. Lo que entró más lo excluido tiene que sumar exactamente eso.
+  if (inv.biblioteca !== undefined && (!Number.isSafeInteger(inv.biblioteca) || inv.biblioteca !== audios.length + inv.exclusiones.length)) fail();
+  return {exclusiones: inv.exclusiones.length, biblioteca: inv.biblioteca === undefined ? null : inv.biblioteca};
+}
+function copia2Head(tipo,nombre,largo){
+  const n=vaultEnc.encode(nombre);
+  if (!COPIA2_TIPOS.includes(tipo) || tipo.length !== 1 || n.length < 1 || n.length > COPIA_MAX_NOMBRE ||
+      !Number.isSafeInteger(largo) || largo < 0 || largo > COPIA_MAX_BLOQUE) throw new Error('bloque de copia 2 inválido');
+  return copiaJoin([new Uint8Array([tipo.charCodeAt(0)]),copiaU32(n.length),n,copiaU64(largo)]);
+}
+const copia2Seal = async (key,id,kind,bytes) => vaultEnc.encode(JSON.stringify(await vaultSeal(key,bytes,copiaAad(id,'v2-'+kind))));
+const copia2Open = async (key,id,kind,bytes) => vaultOpen(key,JSON.parse(vaultDec.decode(bytes)),copiaAad(id,'v2-'+kind));
+const copia2AudioIndex = m => ({id:m.id,mode:m.mode === AN_PLAIN_MODE ? 'claro' : 'cifrado',
+  parts:m.parts,chunks:m.mode === AN_PLAIN_MODE ? m.plain.parts.reduce((t,p)=>t+p.chunks,0) : null,
+  bytes:m.bytes});
+function copia2Writer(header,key,contenido,creado){
+  if (contenido !== 'completa' && contenido !== 'solo-texto') throw new Error('contenido inválido');
+  const blocks=[], audios=[], exclusiones=[], seen=new Set(); let registros=0,fragmentos=0,config=false,phase=0,closed=false;
+  // Los bloques se arman en «out» y se agregan juntos: si un audio falla a mitad, no queda medio audio en la copia.
+  // Los fragmentos ya cifrados para la copia se guardan como Blob, no como memoria de JavaScript (audios largos).
+  const make=async (tipo,nombre,datos,out) => {
+    const b=datos instanceof Uint8Array ? datos : new Uint8Array(await datos.arrayBuffer());
+    const block={head:copia2Head(tipo,nombre,b.length),hash:await copiaSha(b),data:tipo==='B' ? new Blob([b]) : datos,size:b.length};
+    if (out) out.push(block); else blocks.push(block);
+  };
+  const add=(tipo,nombre,datos) => make(tipo,nombre,datos,null);
+  const open1=() => { if (closed) throw new Error('la copia ya se cerró'); };
+  return {
+    async registro(nombre,raw){
+      open1();
+      if (phase>0 || !/^[a-z0-9.-]{1,60}$/.test(nombre)) throw new Error('orden de registros inválido');
+      await add('R',nombre,vaultEnc.encode(raw)); registros++;
+    },
+    async config(obj){
+      open1();
+      if (phase>0 || config) throw new Error('orden de configuración inválido');
+      await add('C','config',await vaultEnc.encode(JSON.stringify(await vaultSeal(key,vaultEnc.encode(JSON.stringify(obj)),copiaAad(header.id,'config')))));
+      config=true;phase=1;
+    },
+    async audioCifrado(meta,chunks){
+      open1();
+      if (contenido !== 'completa' || phase!==1 || !config || !anValidMeta(meta) || meta.mode === AN_PLAIN_MODE ||
+          meta.state!=='cerrado' || !meta.key || !meta.sealed || seen.has(meta.id) || !Array.isArray(chunks) ||
+          chunks.some(c => !c || !(c.blob instanceof Blob) || !anIsInt(c.part) || !anIsInt(c.n))) throw new Error('audio cifrado inválido');
+      const out=[];
+      await make('M',meta.id,vaultEnc.encode(JSON.stringify(meta)),out);
+      for (const c of chunks) await make('A',meta.id+'|'+c.part+'|'+c.n,c.blob,out);
+      const index=copia2AudioIndex(meta); index.chunks=chunks.length;
+      seen.add(meta.id); audios.push(index); blocks.push(...out); fragmentos+=chunks.length;
+    },
+    async audioClaro(meta,chunks){
+      open1();
+      if (contenido !== 'completa' || phase!==1 || !config || !anPlainValidMeta(meta) ||
+          meta.state!=='cerrado' || seen.has(meta.id)) throw new Error('audio en claro inválido');
+      const expected=[];
+      meta.plain.parts.forEach((p,i)=>{for(let n=0;n<p.chunks;n++)expected.push([i,n,p.hashes[n]]);});
+      if (chunks.length!==expected.length) throw new Error('audio incompleto');
+      for(let i=0;i<chunks.length;i++){
+        const c=chunks[i], x=expected[i];
+        if(c.part!==x[0] || c.n!==x[1] || !(c.blob instanceof Blob) || await anPlainHash(c.blob)!==x[2])
+          throw new Error('audio no coincide con su ficha');
+      }
+      const out=[];
+      await make('P',meta.id,await copia2Seal(key,header.id,'meta|'+meta.id,vaultEnc.encode(JSON.stringify(meta))),out);
+      for(let i=0;i<chunks.length;i++){
+        const c=chunks[i], plain=new Uint8Array(await c.blob.arrayBuffer());
+        // Se vuelve a comprobar lo que se cifra: si el fragmento cambió después de revisarlo, el audio no entra.
+        if (anB64(await copiaSha(plain))!==expected[i][2]) { plain.fill(0); throw new Error('audio cambió durante la copia'); }
+        try { await make('B',meta.id+'|'+c.part+'|'+c.n,await copia2Seal(key,header.id,'chunk|'+meta.id+'|'+c.part+'|'+c.n,plain),out); }
+        finally { plain.fill(0); }
+      }
+      seen.add(meta.id); audios.push(copia2AudioIndex(meta)); blocks.push(...out); fragmentos+=chunks.length;
+    },
+    /* Un audio de la biblioteca que no entra. Siempre con motivo: queda escrito en el inventario. */
+    exclusion(meta,modo,motivo){
+      open1();
+      const id=meta && typeof meta.id==='string' && meta.id ? meta.id.slice(0,64) : null;
+      if (phase!==1 || !config || !id || seen.has(id) || (modo!=='claro' && modo!=='cifrado') ||
+          !Object.prototype.hasOwnProperty.call(COPIA2_MOTIVOS,motivo) || (contenido==='solo-texto')!==(motivo==='solo-texto'))
+        throw new Error('exclusión inválida');
+      seen.add(id); exclusiones.push({id,modo,motivo});
+    },
+    resumen(){ return {audios:audios.length,exclusiones:exclusiones.map(x=>({...x}))}; },
+    /* biblioteca: cuántos audios había al empezar (lo cuenta quien recorre la base). Si no cierra, no se arma la copia. */
+    async finish(biblioteca){
+      open1();
+      if (!config) throw new Error('falta configuración');
+      const inventario={formato:COPIA2_FORMATO,contenido,audios,exclusiones,biblioteca:audios.length+exclusiones.length};
+      if (biblioteca !== undefined && biblioteca !== inventario.biblioteca) throw new Error('el inventario no coincide con la biblioteca');
+      copia2CheckInventory(inventario,audios,contenido);
+      closed=true;
+      await add('I','inventario',await copia2Seal(key,header.id,'inventario',vaultEnc.encode(JSON.stringify(inventario))));
+      const total=blocks.length+1;
+      const cab=vaultEnc.encode(JSON.stringify({formato:COPIA2_FORMATO,creado,app:'Delta 11',id:header.id,pw:header.pw,rec:header.rec,contenido,bloques:total}));
+      const prefijo=copiaJoin([vaultEnc.encode(COPIA_MAGIC),copiaU32(COPIA2_FORMATO),copiaU32(cab.length),cab]);
+      let cadena=await copiaSha(prefijo), bytes=prefijo.length;
+      for(const b of blocks){cadena=await copiaSha(copiaJoin([cadena,b.head,b.hash]));bytes+=b.head.length+b.size;}
+      const fin=vaultEnc.encode(JSON.stringify(await vaultSeal(key,vaultEnc.encode(JSON.stringify({
+        bloques:total,bytes,registros,audios:audios.length,fragmentos,cadena:vb64(cadena)
+      })),copiaAad(header.id,'fin'))));
+      const parts=[prefijo];for(const b of blocks)parts.push(b.head,b.data);
+      parts.push(copia2Head('F','fin',fin.length),fin);
+      return new Blob(parts,{type:'application/octet-stream'});
+    }
+  };
+}
+/* Verifica versiones 1 y 2; nunca restaura. La versión 1 usa su lector original sin cambios.
+   En la versión 2 se autentican fragmentos AES-GCM y fragmentos originalmente en claro,
+   cada uno por sus nombres/posiciones; el manifiesto debe coincidir exactamente. */
+async function copia2Verify(file,open,onProgress){
+  const magic=vaultEnc.encode(COPIA_MAGIC);
+  if(file.size<magic.length+8) throw copiaError('Cortada');
+  const prefix=new Uint8Array(await file.slice(0,magic.length+4).arrayBuffer());
+  if(prefix.subarray(0,magic.length).some((x,i)=>x!==magic[i]))throw copiaError('NoEsCopia');
+  const format=new DataView(prefix.buffer,prefix.byteOffset+magic.length,4).getUint32(0);
+  if(format===1)return copiaVerify(file,open,onProgress);
+  if(format>COPIA2_FORMATO)throw copiaError('FormatoNuevo');
+  if(format!==COPIA2_FORMATO)throw copiaError('Alterada');
+  let pos=0;
+  const bad=()=>copiaError('Alterada');
+  const take=async n=>{
+    if(!Number.isSafeInteger(n)||n<0 || pos+n>file.size)throw copiaError('Cortada');
+    const bytes=new Uint8Array(await file.slice(pos,pos+n).arrayBuffer());if(bytes.length!==n)throw copiaError('Cortada');
+    pos+=n;return bytes;
+  };
+  const num32=b=>new DataView(b.buffer,b.byteOffset,b.byteLength).getUint32(0);
+  const num64=b=>Number(new DataView(b.buffer,b.byteOffset,b.byteLength).getBigUint64(0));
+  await take(magic.length);
+  const fb=await take(4),lb=await take(4),length=num32(lb);
+  if(length<2||length>COPIA_MAX_CABECERA)throw bad();
+  const cab=await take(length);let h;
+  try{
+    h=JSON.parse(vaultDec.decode(cab));
+    vaultParseHeader(JSON.stringify({v:1,id:h.id,pw:h.pw,rec:h.rec,bio:null}));
+    if(h.formato!==2 || !Number.isSafeInteger(h.bloques) || h.bloques<3 ||
+       h.bloques>COPIA_MAX_BLOQUES || !Number.isFinite(h.creado) ||
+       !['completa','solo-texto'].includes(h.contenido))throw bad();
+  }catch(e){throw bad();}
+  const {key,audioKey}=await open(h);
+  if(!key)throw bad();
+  let cadena=await copiaSha(copiaJoin([magic,fb,lb,cab]));
+  let registros=0,fragmentos=0,config=false,inventory=null,footer=false,bytesAudio=0,stats={cuadernos:null,notas:null};
+  let phase=0,cur=null;const names=new Set(),audioIds=new Set(),audios=[];
+  const close=()=>{
+    if(cur && (cur.part<cur.detail.parts.length))throw bad();
+    cur=null;
+  };
+  const skip=()=>{
+    while(cur && cur.part<cur.detail.parts.length && cur.detail.parts[cur.part].chunks===0){
+      if(cur.detail.parts[cur.part].bytes!==0)throw bad();
+      cur.part++;
+    }
+  };
+  for(let i=0;i<h.bloques;i++){
+    const start=pos,tb=await take(1),nbLen=await take(4),nl=num32(nbLen);
+    const tipo=String.fromCharCode(tb[0]);
+    if(!COPIA2_TIPOS.includes(tipo)||nl<1||nl>COPIA_MAX_NOMBRE)throw bad();
+    const nameBytes=await take(nl),sizeBytes=await take(8),size=num64(sizeBytes);
+    if(!Number.isSafeInteger(size)||size>COPIA_MAX_BLOQUE)throw bad();
+    const data=await take(size),name=vaultDec.decode(nameBytes);
+    if((tipo==='F')!==(i===h.bloques-1))throw bad();
+    try{
+      if(tipo!=='F')cadena=await copiaSha(copiaJoin([cadena,tb,nbLen,nameBytes,sizeBytes,await copiaSha(data)]));
+      if(tipo==='R'){
+        if(phase!==0||names.has(name)||!/^[a-z0-9.-]{1,60}$/.test(name))throw bad();
+        names.add(name);const raw=await vaultOpenRecord(key,h.id,name,vaultDec.decode(data));
+        if(name==='conversaciones')stats=copiaCount(raw);registros++;
+      }else if(tipo==='C'){
+        if(phase!==0||config||name!=='config')throw bad();
+        JSON.parse(vaultDec.decode(await vaultOpen(key,JSON.parse(vaultDec.decode(data)),copiaAad(h.id,'config'))));
+        config=true;phase=1;
+      }else if(tipo==='M'||tipo==='P'){
+        if(phase!==1||h.contenido!=='completa')throw bad();
+        close();
+        const m=JSON.parse(vaultDec.decode(tipo==='P' ? await copia2Open(key,h.id,'meta|'+name,data) : data));
+        if(!anValidMeta(m)||m.id!==name||audioIds.has(m.id)||m.state!=='cerrado'||m.parts<1)throw bad();
+        if(tipo==='P'&&!anPlainValidMeta(m))throw bad();
+        if(tipo==='M'&&(m.mode===AN_PLAIN_MODE||!m.key||!m.sealed))throw bad();
+        audioIds.add(m.id);
+        const detail=tipo==='P' ? m.plain : await anOpenDetail(audioKey,h.id,m.id,m.sealed);
+        const cek=tipo==='P' ? null : await anOpenCek(audioKey,h.id,m.id,m.key);
+        if(detail.parts.length!==m.parts)throw bad();
+        cur={meta:m,id:m.id,detail,cek,mode:tipo==='P'?'claro':'cifrado',part:0,n:0,bytes:0,seen:0};
+        skip();audios.push(copia2AudioIndex(m));
+      }else if(tipo==='A'||tipo==='B'){
+        if(phase!==1||!cur||cur.part>=cur.detail.parts.length ||
+           tipo!==(cur.mode==='claro'?'B':'A')||name!==cur.id+'|'+cur.part+'|'+cur.n)throw bad();
+        const plain=tipo==='B' ? await copia2Open(key,h.id,'chunk|'+name,data) :
+          await anOpenChunk(cur.cek,h.id,cur.id,cur.part,cur.n,data);
+        if(tipo==='B' && anB64(new Uint8Array(await crypto.subtle.digest('SHA-256',plain)))!==cur.detail.parts[cur.part].hashes[cur.n])
+          throw bad();
+        cur.bytes+=plain.length;bytesAudio+=plain.length;plain.fill(0);fragmentos++;cur.seen++;cur.n++;
+        if(cur.n===cur.detail.parts[cur.part].chunks){
+          if(cur.bytes!==cur.detail.parts[cur.part].bytes)throw bad();
+          cur.part++;cur.n=0;cur.bytes=0;skip();
+        }
+        audios[audios.length-1].chunks=cur.seen;
+      }else if(tipo==='I'){
+        if(phase!==1||inventory||name!=='inventario')throw bad();
+        close();
+        inventory=JSON.parse(vaultDec.decode(await copia2Open(key,h.id,'inventario',data)));
+        copia2CheckInventory(inventory,audios,h.contenido);
+        phase=2;
+      }else{
+        if(phase!==2||!inventory||name!=='fin')throw bad();
+        const f=JSON.parse(vaultDec.decode(await vaultOpen(key,JSON.parse(vaultDec.decode(data)),copiaAad(h.id,'fin'))));
+        if(f.bloques!==h.bloques||f.bytes!==start||f.registros!==registros||
+           f.audios!==audios.length||f.fragmentos!==fragmentos||f.cadena!==vb64(cadena))throw bad();
+        footer=true;
+      }
+    }catch(e){throw e && e.copia?e:bad();}
+    if(onProgress){try{onProgress(pos,file.size)}catch(e){}}
+  }
+  if(!footer||!config||!inventory||pos!==file.size)throw bad();
+  const excl=inventory.exclusiones, motivos={};
+  for(const x of excl)motivos[x.motivo]=(motivos[x.motivo]||0)+1;
+  return {formato:2,creado:h.creado,contenido:h.contenido,id:h.id,bytes:file.size,
+    registros,audios:audios.length,fragmentos,bytesAudio,cuadernos:stats.cuadernos,notas:stats.notas,
+    claro:audios.filter(x=>x.mode==='claro').length,cifrado:audios.filter(x=>x.mode==='cifrado').length,
+    exclusiones:excl.length,motivos,biblioteca:inventory.biblioteca===undefined?null:inventory.biblioteca,
+    // Solo es «todo incluido» si es una copia con audios y no falta ninguno.
+    todoIncluido:h.contenido==='completa'&&excl.length===0};
+}
+/* Resumen en palabras de una copia 2 comprobada. Nunca dice «completa» si falta algún audio. */
+function copia2Describe(r){
+  const n=(k,uno,varios)=>k===1?uno:k+' '+varios;
+  const out=[r.contenido==='completa' ? n(r.audios,'1 audio','audios')+' ('+n(r.cifrado,'1 cifrado','cifrados')+', '+n(r.claro,'1 guardado sin cifrar y cifrado en la copia','guardados sin cifrar y cifrados en la copia')+')' : 'solo texto, sin audios'];
+  if(r.exclusiones){
+    const det=Object.keys(r.motivos).sort().map(m=>n(r.motivos[m],'1 audio','audios')+' '+COPIA2_MOTIVOS[m]);
+    out.push('INCOMPLETA: faltan '+n(r.exclusiones,'1 audio','audios')+' de la biblioteca ('+det.join('; ')+')');
+  }else if(r.contenido==='completa')out.push('incluye todos los audios de la biblioteca');
+  return out.join(' · ');
+}
+/*COPIA2-END*/
+/* ---------- Respaldo formato 2 · recorrido de la biblioteca (ensayo de laboratorio; ningún botón lo llama) ----------
+   Solo LEE. Cada audio de la biblioteca termina en uno de dos lugares: dentro de la copia, o en la lista de
+   exclusiones con su motivo. Al final se compara con la cantidad de audios que había: si no cierra, no hay copia. */
+/*COPIA2-USO-START*/
+async function copia2Audios(w, contenido, opts){
+  opts = opts || {};
+  const k = await anStoredKinds();
+  if (k === null) throw new Error('no se pudieron leer los audios guardados');
+  const kAudio = opts.kAudio || null, hid = opts.hid || null;
+  const db = k.total ? await anDb() : null;
+  for (let i = 0; i < k.metas.length; i++) {
+    const m0 = k.metas[i], claro = anIsPlainMeta(m0), modo = claro ? 'claro' : 'cifrado';
+    const ref = m0 && typeof m0.id === 'string' && m0.id ? m0 : {id: 'ficha-ilegible-' + (i + 1)};
+    if (contenido !== 'completa') { w.exclusion(ref, modo, 'solo-texto'); continue; }
+    // Se vuelve a leer la ficha: si cambió desde el recuento, se usa la actual.
+    const m = typeof ref.id === 'string' && m0 === ref ? await anGetMeta(db, ref.id) : null;
+    if (!m || !anValidMeta(m)) { w.exclusion(ref, modo, 'danado'); continue; }
+    if (m.state !== 'cerrado') { w.exclusion(m, modo, 'a-medio-guardar'); continue; }
+    try {
+      if (claro) {
+        const h = await anPlainHealth(db, m.id);
+        if (!h.ok) { w.exclusion(m, modo, 'danado'); continue; }
+        const chunks = [];
+        for (let part = 0; part < h.m.plain.parts.length; part++)
+          for (let n = 0; n < h.m.plain.parts[part].chunks; n++) chunks.push({part, n, blob: await anGetChunk(db, m.id, part, n)});
+        await w.audioClaro(h.m, chunks);
+      } else {
+        if (!kAudio || !hid) { w.exclusion(m, modo, 'cifrado-sin-clave'); continue; }
+        const h = await anAudioHealth(db, kAudio, hid, m.id);
+        if (!h.ok) { w.exclusion(m, modo, 'danado'); continue; }
+        const chunks = [];
+        for (let part = 0; part < h.detail.parts.length; part++)
+          for (let n = 0; n < h.detail.parts[part].chunks; n++) chunks.push({part, n, blob: await anGetChunk(db, m.id, part, n)});
+        await w.audioCifrado(h.m, chunks);
+      }
+    } catch (e) {
+      // El escritor agrega cada audio entero o nada: un fallo a mitad no deja medio audio en la copia.
+      logDiag('Copia 2: un audio no entró (' + anErrName(e) + ').');
+      w.exclusion(m, modo, 'danado');
+    }
+  }
+  return k.total;
+}
+/*COPIA2-USO-END*/
+
+/* K2: restauración experimental SOLO en una instalación vacía. No mezcla ni reemplaza.
+   Dos lecturas: la primera autentica la copia entera; la segunda prepara las escrituras.
+   El registro de recuperación contiene exclusivamente identificadores de datos NUEVOS. */
+/*K2-START*/
+const K2_JOURNAL = 'notasvoz.k2.restauracion.v1';
+/* El borrador vacío que la app guarda sola al abrirse (sin texto, título, etiquetas, nota ni audio) no cuenta como dato. */
+function k2DraftEmpty(raw){
+  try{const d=JSON.parse(raw);return !!d&&typeof d==='object'&&!String(d.text||'').trim()&&!String(d.title||'').trim()&&
+    !(Array.isArray(d.tags)&&d.tags.length)&&!d.cur&&!(d.conv&&d.conv.audioId)&&!(d.conv&&d.conv.editing);}catch(e){return false;}
+}
+function k2LocalEmpty(){
+  if (vault.state !== 'off') return false;
+  for (let i=0;i<localStorage.length;i++){
+    const name=localStorage.key(i);
+    if (name===DRAFT && k2DraftEmpty(localStorage.getItem(name))) continue;
+    if (name && name.startsWith('notasvoz.') && name !== K2_JOURNAL) return false;
+  }
+  return true;
+}
+async function k2StorageEmpty(){
+  if (!k2LocalEmpty() || localStorage.getItem(K2_JOURNAL)) return false;
+  const fresh=await anDb();
+  if ((await anTx(fresh,['meta'],'readonly',t=>t.objectStore('meta').count())) ||
+      (await anTx(fresh,['chunks'],'readonly',t=>t.objectStore('chunks').count()))) return false;
+  const old=await getDb();
+  if ((await anTx(old,['meta'],'readonly',t=>t.objectStore('meta').count())) ||
+      (await anTx(old,['chunks'],'readonly',t=>t.objectStore('chunks').count()))) return false;
+  return k2LocalEmpty();
+}
+async function k2ReadPlan(file,verified,key){
+  let pos=0;
+  const take=async n=>{
+    if (!Number.isSafeInteger(n) || n<0 || pos+n>file.size) throw copiaError('Cortada');
+    const bytes=new Uint8Array(await file.slice(pos,pos+n).arrayBuffer());
+    if(bytes.length!==n) throw copiaError('Cortada');
+    pos+=n;return bytes;
+  };
+  const u32=b=>new DataView(b.buffer,b.byteOffset,b.byteLength).getUint32(0);
+  const u64=b=>Number(new DataView(b.buffer,b.byteOffset,b.byteLength).getBigUint64(0));
+  const magic=await take(vaultEnc.encode(COPIA_MAGIC).length);
+  if (vaultDec.decode(magic)!==COPIA_MAGIC) throw copiaError('NoEsCopia');
+  const format=u32(await take(4)),n=u32(await take(4));
+  if(n<2||n>COPIA_MAX_CABECERA)throw copiaError('Alterada');
+  const h=JSON.parse(vaultDec.decode(await take(n)));
+  if(format!==verified.formato||h.formato!==format||h.id!==verified.id||
+     h.contenido!==verified.contenido||!Number.isSafeInteger(h.bloques)||
+     h.bloques> COPIA_MAX_BLOQUES)throw copiaError('Alterada');
+  const header=vaultParseHeader(JSON.stringify({v:1,id:h.id,pw:h.pw,rec:h.rec,bio:null}));
+  const plan={header,records:new Map(),cfg:null,audios:[],chunks:[]};
+  let current=null;
+  for(let i=0;i<h.bloques;i++){
+    const type=String.fromCharCode((await take(1))[0]),nameLen=u32(await take(4));
+    if(nameLen<1||nameLen>COPIA_MAX_NOMBRE)throw copiaError('Alterada');
+    const name=vaultDec.decode(await take(nameLen)),size=u64(await take(8)),start=pos;
+    if(!Number.isSafeInteger(size)||size>COPIA_MAX_BLOQUE||pos+size>file.size)throw copiaError('Alterada');
+    pos+=size;
+    if(type==='R'||type==='C'||type==='M'||type==='P'){
+      const bytes=new Uint8Array(await file.slice(start,pos).arrayBuffer());
+      if(type==='R'){
+        if(!/^[a-z0-9.-]{1,60}$/.test(name)||plan.records.has(name))throw copiaError('Alterada');
+        const raw=vaultDec.decode(bytes);
+        await vaultOpenRecord(key,h.id,name,raw);
+        plan.records.set(name,raw);
+      }else if(type==='C'){
+        if(name!=='config'||plan.cfg)throw copiaError('Alterada');
+        plan.cfg=JSON.parse(vaultDec.decode(await vaultOpen(key,JSON.parse(vaultDec.decode(bytes)),copiaAad(h.id,'config'))));
+        if(!plan.cfg||typeof plan.cfg!=='object'||(plan.cfg.cfg!==null&&typeof plan.cfg.cfg!=='string')||
+           (plan.cfg.generador!==null&&typeof plan.cfg.generador!=='string'))throw copiaError('Alterada');
+      }else{
+        const plain=type==='P' ? await copia2Open(key,h.id,'meta|'+name,bytes):bytes;
+        const meta=JSON.parse(vaultDec.decode(plain));
+        if(type==='P')throw new Error('Esta copia incluye audios originalmente sin cifrar. Su restauración todavía no está habilitada, para evitar dejarlos en claro con la bóveda activada. No se escribió nada.');
+        if(meta.id!==name||meta.state!=='cerrado'||!anValidMeta(meta)||
+           (type==='P'&&!anPlainValidMeta(meta))||
+           (type==='M'&&(!meta.key||!meta.sealed||meta.mode===AN_PLAIN_MODE)))throw copiaError('Alterada');
+        if(plan.audios.some(m=>m.id===meta.id))throw copiaError('Alterada');
+        current=meta;plan.audios.push(meta);
+      }
+    }else if(type==='A'||type==='B'){
+      if(!current||type===(current.mode===AN_PLAIN_MODE?'A':'B'))throw copiaError('Alterada');
+      const prefix=current.id+'|';
+      if(!name.startsWith(prefix))throw copiaError('Alterada');
+      const parts=name.slice(prefix.length).split('|');
+      if(parts.length!==2||!/^(0|[1-9][0-9]*)$/.test(parts[0])||!/^(0|[1-9][0-9]*)$/.test(parts[1]))throw copiaError('Alterada');
+      plan.chunks.push({type,name,id:current.id,part:Number(parts[0]),index:Number(parts[1]),start,size});
+    }else if(type!=='I'&&type!=='F')throw copiaError('Alterada');
+  }
+  if(!plan.cfg||pos!==file.size||plan.audios.length!==verified.audios||
+     plan.records.size!==verified.registros||plan.chunks.length!==verified.fragmentos)throw copiaError('Alterada');
+  return plan;
+}
+/* Limpieza de un lote interrumpido. Solo se llama con el candado tomado (nadie más escribe) y sin cabecera.
+   Lote formato 2: cada audio lleva su «firma» (fecha de creación y tamaño de la ficha restaurada); si la ficha que hay no coincide,
+   no se borra NADA y se avisa. Los registros solo pueden ser nombres conocidos de la bóveda. Un lote desconocido o alterado no se toca. */
+function k2ParseJournal(raw){
+  const j=JSON.parse(raw);
+  const bad=()=>{throw new Error('Lote de restauración desconocido o alterado; no se tocó.');};
+  if(!j||j.version!==2||!Array.isArray(j.audios)||!Array.isArray(j.names)||j.audios.length>5000)bad();
+  const known=new Set(Object.values(VAULT_KEYS)),ids=new Set(),names=new Set();
+  for(const a of j.audios){
+    if(!a||typeof a.id!=='string'||!a.id||a.id.length>64||ids.has(a.id)||!Number.isFinite(a.createdAt)||!anIsInt(a.bytes))bad();
+    ids.add(a.id);
+  }
+  for(const n of j.names){ if(typeof n!=='string'||!known.has(n)||names.has(n))bad(); names.add(n); }
+  return j;
+}
+async function k2Rollback(){
+  const raw=localStorage.getItem(K2_JOURNAL);
+  if(!raw||localStorage.getItem(VAULT_HEADER))return false; // cabecera escrita = confirmación
+  if(!(await vaultTakeTabLock())||vault.readOnly)throw new Error('Sin el candado de pestaña no se limpia nada.');
+  const j=k2ParseJournal(raw);
+  const db=await anDb();
+  // Primero comprobar TODO; recién después borrar.
+  for(const a of j.audios){
+    const m=await anGetMeta(db,a.id);
+    if(m&&(m.createdAt!==a.createdAt||m.bytes!==a.bytes))throw new Error('Un audio del lote no coincide con lo restaurado; no se tocó nada.');
+  }
+  for(const a of j.audios) await anDelete(db,a.id);
+  for(const name of j.names) localStorage.removeItem(VAULT_REC_PREFIX+name);
+  localStorage.removeItem(CKEY);localStorage.removeItem(GKEY);   // la instalación estaba vacía antes de restaurar
+  localStorage.removeItem(K2_JOURNAL);
+  return true;
+}
+async function k2RestoreEmpty(file,secret){
+  if(!(file instanceof Blob)||!secret)throw new Error('Seleccioná una copia y escribí su contraseña o código.');
+  if(vaultBusy()||convSaving||copiaBusyN)throw new Error('Primero terminá de grabar, transcribir o guardar.');
+  if(!globalThis.navigator?.locks?.request)throw new Error('Este navegador no permite impedir escrituras de otra pestaña.');
+  // Candado ANTES de cualquier limpieza o escritura: desde acá ninguna otra pestaña puede escribir (candado universal).
+  if(!(await vaultTakeTabLock())||vault.readOnly||vault.otherTab)throw new Error('Cerrá las otras pestañas antes de restaurar.');
+  // El borrador vacío de arranque (sin bóveda, pasa directo) no debe quedar en claro junto a la bóveda restaurada.
+  try{const d=vaultStore.getItem(DRAFT);if(d!==null&&k2DraftEmpty(d))vaultStore.removeItem(DRAFT);}catch(e){}
+  // Mientras se restaura, esta misma pestaña tampoco escribe (borrador, ajustes): solo escribe el restaurador.
+  vault.otherTab=true;
+  try{return await k2RestoreLocked(file,secret);}
+  catch(e){vault.otherTab=false;throw e;}   // si terminó bien, la pantalla se recarga y el candado se vuelve a tomar
+}
+async function k2RestoreLocked(file,secret){
+  if(localStorage.getItem(K2_JOURNAL))await k2Rollback();
+  if(!(await k2StorageEmpty()))throw new Error('Esta instalación ya contiene datos o ajustes. No se mezcló ni reemplazó nada.');
+  const open=h=>copiaOpenWithSecret(h,secret);
+  const verified=await copia2Verify(file,open);  // primera pasada: autenticar archivo COMPLETO
+  if(verified.claro>0)throw new Error('Este respaldo contiene audios que estaban en claro. Todavía no se pueden restaurar con seguridad; no se escribió nada.');
+  // Revisión externa 17/11: una copia formato 2 incompleta (con exclusiones) no se restaura como si estuviera entera.
+  if(verified.exclusiones>0)throw new Error('Esta copia está INCOMPLETA ('+copia2Describe(verified)+'). Por ahora no se restaura; no se escribió nada.');
+  if(!(await k2StorageEmpty()))throw new Error('Aparecieron datos mientras se verificaba la copia. No se escribió nada.');
+  const {key,audioKey}=await open((await k2Header(file)));
+  const plan=await k2ReadPlan(file,verified,key);
+  if(!(await k2StorageEmpty()))throw new Error('La instalación dejó de estar vacía. No se escribió nada.');
+  const db=await anDb();
+  const journal={version:2,audios:plan.audios.map(m=>({id:m.id,createdAt:m.createdAt,bytes:m.bytes})),names:[...plan.records.keys()]};
+  k2ParseJournal(JSON.stringify(journal));   // IDs repetidos o registros desconocidos: la copia está alterada, no se escribe nada
+  localStorage.setItem(K2_JOURNAL,JSON.stringify(journal));
+  if(localStorage.getItem(K2_JOURNAL)!==JSON.stringify(journal))throw new Error('No pudo confirmarse el lote de restauración.');
+  let committed=false;
+  try{
+    for(const meta of plan.audios) await anPutMeta(db,{...meta,state:'importando'});
+    for(const c of plan.chunks){
+      const bytes=new Uint8Array(await file.slice(c.start,c.start+c.size).arrayBuffer());
+      // Un fragmento de audio que estaba en claro (B) nunca se escribe descifrado con la bóveda activa.
+      // Decisión de Ignacio (M12, 17/11): en el futuro se cifrará al restaurar; hasta entonces, se corta acá.
+      if(c.type==='B')throw new Error('La copia trae audio guardado sin cifrar; todavía no se restaura.');
+      await anPutChunk(db,c.id,c.part,c.index,new Blob([bytes],{type:'application/octet-stream'}));
+    }
+    for(const meta of plan.audios){
+      await anPutMeta(db,meta);
+      const health=meta.mode===AN_PLAIN_MODE ? await anPlainHealth(db,meta.id) :
+        await anAudioHealth(db,audioKey,plan.header.id,meta.id);
+      if(!health.ok)throw new Error('El audio '+meta.id+' no se guardó íntegro.');
+    }
+    for(const [name,raw] of plan.records){
+      localStorage.setItem(VAULT_REC_PREFIX+name,raw);
+      if(localStorage.getItem(VAULT_REC_PREFIX+name)!==raw)throw new Error('Registro sin confirmar.');
+    }
+    if(plan.cfg.cfg!==null)localStorage.setItem(CKEY,plan.cfg.cfg);
+    if(plan.cfg.generador!==null)localStorage.setItem(GKEY,plan.cfg.generador);
+    // Punto de confirmación: todos los registros y audios ya fueron escritos y verificados.
+    const serialized=JSON.stringify(plan.header);
+    localStorage.setItem(VAULT_HEADER,serialized);
+    if(localStorage.getItem(VAULT_HEADER)!==serialized)throw new Error('Cabecera sin confirmar.');
+    committed=true;
+    try{localStorage.removeItem(K2_JOURNAL)}catch(e){}
+    return verified;
+  }catch(e){
+    // Confirmación clara: si la cabecera quedó escrita completa, la restauración SÍ terminó (aunque fallara algo después).
+    let header=null;try{header=localStorage.getItem(VAULT_HEADER)}catch(e2){}
+    if(!committed&&header===JSON.stringify(plan.header)){try{localStorage.removeItem(K2_JOURNAL)}catch(e3){}return verified;}
+    if(!committed&&header!==null)throw new Error('Restauración en estado dudoso: no borres los datos del sitio y recargá DictaVoz. '+((e&&e.message)||''));
+    if(!committed)try{await k2Rollback()}catch(cleanup){throw new Error('Restauración no confirmada; no borres los datos del sitio. Reintentá desde esta pestaña. '+cleanup.message);}
+    throw e;
+  }
+}
+async function k2Header(file){
+  const magic=vaultEnc.encode(COPIA_MAGIC).length;
+  const first=new Uint8Array(await file.slice(magic+4,magic+8).arrayBuffer());
+  if(first.length!==4)throw copiaError('Cortada');
+  const length=new DataView(first.buffer).getUint32(0);
+  if(length<2||length>COPIA_MAX_CABECERA)throw copiaError('Alterada');
+  return JSON.parse(vaultDec.decode(new Uint8Array(await file.slice(magic+8,magic+8+length).arrayBuffer())));
+}
+async function k2ResumeCleanup(){
+  try{
+    if(!localStorage.getItem(K2_JOURNAL))return;
+    if(!(await vaultTakeTabLock())||vault.otherTab)return;   // solo la pestaña con el candado limpia
+    if(localStorage.getItem(VAULT_HEADER)){localStorage.removeItem(K2_JOURNAL);return;}
+    await k2Rollback();
+  }catch(e){console.warn('K2: el lote interrumpido se conserva para recuperación, sin publicar datos.',e&&e.name);}
+}
+void k2ResumeCleanup();
+/*K2-END*/
+
+
 
 /* ---------- Copia cifrada en uso (K1): solo lee lo guardado; nunca escribe ni borra ---------- */
 /*COPIA-USO-START*/
@@ -5141,14 +5863,17 @@ function copiaAsk(title){
   });
 }
 /* Audios por nota para una copia completa. Cada audio se comprueba entero antes de entrar: uno dañado o a medio
-   guardar no entra (se cuenta y se avisa), así la copia siempre pasa su propia comprobación. */
+   guardar no entra (se cuenta y se avisa), así la copia siempre pasa su propia comprobación.
+   El formato 1 solo lleva audios cifrados: los audios sin cifrar del ensayo P2 no entran y se cuentan aparte
+   (sinCifrar), para no confundirlos con audios dañados ni presentar la copia como completa. */
 async function copiaAudios(w){
-  if (!anUsable()) return 0;
+  if (!anUsable()) return {omitidos: 0, sinCifrar: 0};
   const n = await anStoredCount();
   if (n === null) throw new Error('no se pudieron leer los audios guardados');
-  if (n === 0) return 0;
-  const db = await anDb(), hid = vault.header.id, kAudio = vault.audioKey; let omitidos = 0;
+  if (n === 0) return {omitidos: 0, sinCifrar: 0};
+  const db = await anDb(), hid = vault.header.id, kAudio = vault.audioKey; let omitidos = 0, sinCifrar = 0;
   for (const m of await anListMeta(db)) {
+    if (anIsPlainMeta(m)) { sinCifrar++; continue; }
     try {
       if (!anValidMeta(m) || m.state !== 'cerrado' || !m.key || !m.sealed || m.parts < 1) throw new Error('ficha');
       const cek = await anOpenCek(kAudio, hid, m.id, m.key), detail = await anOpenDetail(kAudio, hid, m.id, m.sealed), chunks = [];
@@ -5162,7 +5887,16 @@ async function copiaAudios(w){
       await w.audio(m, chunks);
     } catch (e) { omitidos++; logDiag('Copia cifrada: un audio no entró en la copia (' + anErrName(e) + ').'); }
   }
-  return omitidos;
+  if (sinCifrar) logDiag('Copia cifrada: ' + sinCifrar + ' audio(s) sin cifrar no entran en el formato 1.');
+  return {omitidos, sinCifrar};
+}
+/* Texto de lo que la copia NO lleva. Vacío solo si no falta nada. */
+function copiaFaltantes(omitidos, sinCifrar, completa){
+  const out = [];
+  if (omitidos) out.push(omitidos === 1 ? 'un audio dañado o a medio guardar no entró en la copia' : omitidos + ' audios dañados o a medio guardar no entraron en la copia');
+  if (sinCifrar) out.push((sinCifrar === 1 ? 'un audio guardado sin cifrar no entró' : sinCifrar + ' audios guardados sin cifrar no entraron') +
+    (completa ? ' (este tipo de copia solo lleva audios cifrados)' : ''));
+  return out.length ? 'Atención, la copia NO está completa: ' + out.join('; ') + '.\n' : '';
 }
 /* Crea la copia. filePassword: solo con la protección apagada (contraseña elegida para el archivo). */
 async function copiaCreate(filePassword){
@@ -5188,15 +5922,17 @@ async function copiaCreate(filePassword){
     if (abierta) { for (const [name, raw] of vault.rawRecords()) await w.registro(name, raw); }
     else for (const [k, name] of Object.entries(VAULT_KEYS)) { const plain = vaultStore.getItem(k); if (plain !== null) await w.registro(name, await vaultSealRecord(key, header.id, name, plain)); }
     await w.config({cfg: localStorage.getItem(CKEY), generador: localStorage.getItem(GKEY)});
-    const omitidos = completa ? await copiaAudios(w) : 0;
+    const faltan = completa ? await copiaAudios(w) : {omitidos: 0, sinCifrar: 0}, omitidos = faltan.omitidos;
+    // Una copia de solo texto tampoco lleva los audios sin cifrar: se avisa igual, para que nadie la crea completa.
+    if (!completa) { const k = await anStoredKinds(); if (k === null) throw new Error('no se pudieron leer los audios guardados'); faltan.sinCifrar = k.claros; }
     const file = new File([await w.finish()], copiaName(now), {type: 'application/octet-stream'});
     // Antes de entregarla se comprueba entera, con las claves ya abiertas.
     copiaSay('Comprobando la copia…');
     const r = await copiaVerify(file, async () => ({key, audioKey: abierta ? vault.audioKey : null}));
     download(file);
-    logDiag('Copia cifrada: creada · ' + r.contenido + ' · ' + r.registros + ' registros · ' + r.audios + ' audios · ' + r.bytes + ' bytes' + (omitidos ? ' · ' + omitidos + ' audios omitidos' : ''));
+    logDiag('Copia cifrada: creada · ' + r.contenido + ' · ' + r.registros + ' registros · ' + r.audios + ' audios · ' + r.bytes + ' bytes' + (omitidos ? ' · ' + omitidos + ' audios omitidos' : '') + (faltan.sinCifrar ? ' · ' + faltan.sinCifrar + ' sin cifrar no incluidos' : ''));
     copiaSay('Copia creada y comprobada: ' + copiaSummary(r) + '.\n' +
-      (omitidos ? (omitidos === 1 ? 'Atención: un audio dañado o a medio guardar no entró en la copia.' : 'Atención: ' + omitidos + ' audios dañados o a medio guardar no entraron en la copia.') + '\n' : '') +
+      copiaFaltantes(omitidos, faltan.sinCifrar, completa) +
       (vault.frozen.size ? 'Atención: hay datos dañados en este navegador que la copia no pudo incluir.\n' : '') +
       'Se descargó como «' + file.name + '». ' + (abierta ? 'Se abre con tu contraseña actual o con tu código de recuperación (aunque después cambies la contraseña).' : 'Se abre solo con la contraseña que acabás de elegir.') +
       '\nPara confirmar que la descarga terminó bien, tocá «Verificar una copia» y elegí ese archivo. Guardalo fuera del celular.');
@@ -5258,6 +5994,37 @@ copiaEl('copiaArchivo').addEventListener('change', () => {
   copiaEl('copiaArchivo').value = '';
   if (f) copiaCheck(f);
 });
+
+/* K2 interfaz: la contraseña se solicita después de elegir el archivo y se comprueba
+   antes de mostrar la confirmación. Sin opción para reemplazar o combinar. */
+copiaEl('copiaRestaurar').onclick=()=>{
+  if(copiaBusyN)return;
+  if(!confirm('Antes de restaurar: cerrá todas las otras pestañas de DictaVoz. Con la bóveda apagada, otras pestañas antiguas todavía pueden escribir y el candado no las bloquea. ¿Confirmás que solo queda abierta esta pestaña?'))return;
+  copiaEl('copiaRestArchivo').click();
+};
+copiaEl('copiaRestArchivo').addEventListener('change',async()=>{
+  const el=copiaEl('copiaRestArchivo'),file=el.files&&el.files[0];el.value='';
+  if(!file||copiaBusyN)return;
+  if(vaultBusy()||convSaving)return copiaSay('Terminá primero la grabación, transcripción o guardado.');
+  copiaBusyN++;
+  try{
+    if(!(await k2StorageEmpty()))throw new Error('Esta instalación ya contiene datos o ajustes. No se reemplazó nada.');
+    const secret=await copiaAsk('Contraseña o código de recuperación de la copia que vas a restaurar');
+    if(secret===null)return;
+    copiaSay('Comprobando la integridad antes de escribir…');
+    const summary=await copia2Verify(file,h=>copiaOpenWithSecret(h,secret));
+    if(summary.claro>0)throw new Error('El archivo contiene audio originalmente sin cifrar. Por ahora no puede restaurarse sin comprometer la protección; no se cambió nada.');
+    if(summary.exclusiones>0)throw new Error('La copia está INCOMPLETA ('+copia2Describe(summary)+'). Por ahora no se restaura; no se cambió nada.');
+    if(!confirm('Se restaurarán '+(summary.notas??'las')+' notas y '+summary.audios+' audios en esta instalación VACÍA. '+(summary.contenido==='solo-texto'?'Esta copia NO contiene audios. ':'')+'No se pueden mezclar ni reemplazar datos. ¿Continuar?'))return;
+    copiaBusyN--;
+    const result=await k2RestoreEmpty(file,secret);
+    copiaBusyN++;
+    copiaSay('Restauración confirmada: '+copiaSummary(result)+'. Recargando para abrir la bóveda…');
+    location.reload();
+  }catch(e){copiaSay('No se restauró: '+((e&&e.message)||'error')+'. No borres manualmente datos del navegador.');}
+  finally{copiaBusyN=Math.max(0,copiaBusyN-1);}
+});
+
 /*COPIA-USO-END*/
 
 /* ---------- Audio guardado (solo en este dispositivo) ---------- */
@@ -5743,23 +6510,95 @@ function loadCfg(){
     if (typeof c.saveAudio === 'boolean') $('saveAudio').checked = c.saveAudio;
   } catch (e) {}
 }
-const saveCfg = () => { try { localStorage.setItem(CKEY, JSON.stringify({textSize:$('textSize').value, model:$('model').value, accel:$('accel').value, mic:$('mic').value, eng:eng(), replace:$('replace').checked, saveAudio:$('saveAudio').checked, pVolatile:$('pVolatile').checked, learnAuto:$('learnAuto').checked, listPreview:$('listPreview').checked})); return true; } catch (e) { return false; } };
+const saveCfg = () => { if (typeof vault !== 'undefined' && vault.otherTab) return false; try { localStorage.setItem(CKEY, JSON.stringify({textSize:$('textSize').value, model:$('model').value, accel:$('accel').value, mic:$('mic').value, eng:eng(), replace:$('replace').checked, saveAudio:$('saveAudio').checked, pVolatile:$('pVolatile').checked, learnAuto:$('learnAuto').checked, listPreview:$('listPreview').checked})); return true; } catch (e) { return false; } };
 $('textSize').addEventListener('change', () => { applyTextSize($('textSize').value); if (!saveCfg()) flash('El tamaño se aplicó, pero este navegador no permitió guardar el ajuste.'); });
 ['model', 'accel', 'mic', 'replace', 'saveAudio', 'pVolatile', 'learnAuto'].forEach(id => $(id).addEventListener('change', saveCfg));
 $('listPreview').addEventListener('change', () => { saveCfg(); renderConv(); });   // B3: campo opcional de la configuración existente; solo cambia lo que se muestra
 document.querySelectorAll('input[name=eng]').forEach(r => r.addEventListener('change', () => { setStatus(''); saveCfg(); }));
 
 /* ---------- Borrador autoguardado: sobrevive a recargas y cierres ---------- */
-let lastDraft = '';
+let lastDraft = '', draftWriteQueue = Promise.resolve(), draftErrorShown = false, draftWriteVersion = 0;
 const snap = () => JSON.stringify({title: $('title').value, text: $('text').value, tags, cur, baseline,
   conv: {open: convOpenId, target: convTargetId, targetSet: convTargetSet, editing: convEditingId, fromAudio: convFromAudio, recordedAt: convRecordedAt,
     audioId: convAudioId, audioMs: convAudioMs, audioBase: convAudioBase}});
-function saveDraft(){ const x = snap(); if (x === lastDraft) return; lastDraft = x; try { vaultStore.setItem(DRAFT, x); } catch (e) {} }
+/* Con bóveda, confirmar el volcado cifrado; sin bóveda, escribir sincrónicamente.
+   La escritura sincrónica es necesaria en pagehide: una promesa en cola podría no ejecutarse al cerrar. */
+async function draftWriteConfirmed(value, store, protection){
+  store.setItem(DRAFT, value);
+  if (protection.state === 'open') {
+    await protection.flush();
+    if (!protection.saved(DRAFT)) return false;
+  }
+  return store.getItem(DRAFT) === value;
+}
+function draftWriteFailed(){
+  if (!draftErrorShown) {
+    draftErrorShown = true;
+    flash('El borrador sigue visible, pero no se pudo confirmar su guardado. No cierres DictaVoz: liberá espacio y volvé a intentar.');
+  }
+  return false;
+}
+function saveDraft(){
+  const value = snap(), version = ++draftWriteVersion;
+  if (vault.state === 'off') {
+    if (vault.otherTab) return Promise.resolve(false);   // otra pestaña escribe (el aviso ya está a la vista)
+    // localStorage es sincrónico: no esperar a una microtarea para guardar la última edición.
+    try {
+      if (vaultStore.getItem(DRAFT) !== value) vaultStore.setItem(DRAFT, value);
+      if (vaultStore.getItem(DRAFT) !== value) throw new Error('escritura no confirmada');
+      lastDraft = value; draftErrorShown = false;
+      return Promise.resolve(true);
+    } catch (e) { return Promise.resolve(draftWriteFailed()); }
+  }
+  const write = draftWriteQueue.then(async () => {
+    // Si llegó otra versión mientras esperábamos en la cola, nunca pisar la más reciente.
+    if (version !== draftWriteVersion) return false;
+    if (vault.readOnly || vault.state !== 'open') return false;
+    try {
+      if (value === lastDraft && vault.saved(DRAFT) && vaultStore.getItem(DRAFT) === value) return true;
+      const confirmed = await draftWriteConfirmed(value, vaultStore, vault);
+      // Una escritura en curso puede haber sido superada por otra más reciente.
+      if (version !== draftWriteVersion) return false;
+      if (!confirmed) throw new Error('escritura no confirmada');
+      lastDraft = value; draftErrorShown = false;
+      return true;
+    } catch (e) { return version === draftWriteVersion ? draftWriteFailed() : false; }
+  });
+  draftWriteQueue = write.then(() => {}, () => {});
+  return write;
+}
+/* La nota se escribe antes de limpiar el borrador. Si esa limpieza falla,
+   reconocer la misma nota ya confirmada evita crear un duplicado al recargar. */
+function draftAlreadyConfirmed(d){
+  if (!d || typeof d !== 'object' || !d.conv || typeof d.conv !== 'object' || !convStore.data || typeof d.text !== 'string') return false;
+  // El título y las etiquetas del editor pueden ser trabajo independiente pendiente.
+  if ((typeof d.title === 'string' && d.title.trim()) || (Array.isArray(d.tags) && d.tags.length)) return false;
+  const c = d.conv, audioId = typeof c.audioId === 'string' && c.audioId ? c.audioId : null;
+  const same = e => e.text === d.text && (e.audioId || null) === audioId;
+  if (typeof c.editing === 'string' && c.editing) {
+    const saved = convStore.data.entries.find(e => e.id === c.editing);
+    if (!saved || !same(saved)) return false;
+    // Una edición puede agregar partes de audio sin cambiar texto ni audioId.
+    // Solo está confirmada si la nota reconoce MÁS partes que antes de la edición.
+    if (Number.isInteger(c.audioBase) && c.audioBase >= 1)
+      return Number.isInteger(saved.audioParts) && saved.audioParts > c.audioBase;
+    return true;
+  }
+  // La fecha de inicio del borrador también se registra como recordedAt en la nota.
+  // No inferir un guardado a partir de un texto igual escrito en otro momento.
+  if (!Number.isFinite(c.recordedAt) || c.recordedAt <= 0) return false;
+  return convStore.data.entries.some(e => e.recordedAt === c.recordedAt && same(e));
+}
 function restoreDraft(){
+  let staleConfirmed = false, storedDraft = null;
   try {
-    const d = JSON.parse(vaultStore.getItem(DRAFT) || 'null');
+    storedDraft = vaultStore.getItem(DRAFT);
+    const d = JSON.parse(storedDraft || 'null');
+    staleConfirmed = draftAlreadyConfirmed(d);
+    if (staleConfirmed) {
+      flash('Esta nota ya estaba guardada: no se restauró el borrador anterior ni se duplicó.');
     // E2: también si solo quedó un audio pendiente (grabación cortada antes de que hubiera texto).
-    if (d && ((d.text || '').trim() || (d.title || '').trim() || (d.conv && typeof d.conv.audioId === 'string' && d.conv.audioId))) {
+    } else if (d && ((d.text || '').trim() || (d.title || '').trim() || (d.conv && typeof d.conv.audioId === 'string' && d.conv.audioId))) {
       cur = d.cur || null; $('title').value = d.title || ''; $('text').value = d.text || ''; baseline = d.baseline || ''; tags = d.tags || [];
       renderChips();
       const c = d.conv && typeof d.conv === 'object' ? d.conv : {};
@@ -5779,11 +6618,15 @@ function restoreDraft(){
     const u = JSON.parse(vaultStore.getItem(UNDO) || 'null');
     if (u) { clearBackup = u; $('undoClear').style.display = ''; }
   } catch (e) {}
-  lastDraft = snap();
+  // Si quedó el borrador de una nota confirmada, intentar limpiarlo sin perder la nota.
+  lastDraft = staleConfirmed ? storedDraft : snap();
+  if (staleConfirmed) void saveDraft();
 }
 setInterval(saveDraft, 1500);
-document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') saveDraft(); });
-window.addEventListener('pagehide', saveDraft);
+// Sin bóveda, cada tecla queda persistida antes de un cierre brusco de la página.
+['text', 'title'].forEach(id => $(id).addEventListener('input', () => { if (vault.state === 'off') void saveDraft(); }));
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') void saveDraft(); });
+window.addEventListener('pagehide', () => { void saveDraft(); });
 
 /* Borrado optativo y limitado a copias de texto; no se eliminan audios ni diccionarios. */
 const TEXT_STORAGE_KEYS = [KEY, DRAFT, UNDO];
