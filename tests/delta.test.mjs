@@ -1383,7 +1383,7 @@ test('cifrado: la app lee y escribe lo protegido solo a través del almacén cif
   const main = html.replace(/\/\*VAULT-CORE-START\*\/[\s\S]*?\/\*VAULT-CORE-END\*\//, '');
   assert.doesNotMatch(main, /localStorage\.(getItem|setItem|removeItem)\(\s*(KEY|DRAFT|UNDO|PKEY|DKEY)\b/);
   assert.match(html, /vaultWhenReady\(\(\) => \{ loadNotes\(\); loadDict\(\); loadPeople\(\);[^\n]*restoreDraft\(\);/);
-  assert.match(html, /vaultSetHooks\(\(\) => recording \|\| busy \|\| outstanding > 0 \|\| feeding \|\| anBusyN > 0 \|\| copiaBusyN > 0, saveDraft\);/, 'cifrar un archivo y crear o comprobar una copia cuentan como uso');
+  assert.match(html, /vaultSetHooks\(\(\) => recording \|\| busy \|\| outstanding > 0 \|\| feeding \|\| anBusyN > 0 \|\| copiaBusyN > 0 \|\| k2ReplaceActive, saveDraft\);/, 'cifrar un archivo y crear o comprobar una copia cuentan como uso');
   assert.match(html, /const VAULT_IDLE_MS = 15 \* 60 \* 1000;/);
   assert.match(html, /const VAULT_PBKDF2_IT = 600000;/);
   assert.ok(html.indexOf('const vault = createVault(localStorage)') < html.indexOf('function loadNotes()'), 'el almacén cifrado se crea antes que la app');

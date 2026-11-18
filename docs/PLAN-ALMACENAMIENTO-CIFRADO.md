@@ -52,7 +52,7 @@ Orden decidido por Ignacio: **E1 → E2 → K1 → E3 → K2 → T → AO**. **D
 | **E2** | Cifrado de audios y guardado por nota | E1 | Claude (Opus 5.5); revisó ChatGPT | Opus 5.5 / el más capaz | Unido a `main` (PR #50, que integra el #47; 17/11). Sin probar en el Motorola |
 | **K1** | Copia cifrada: exportar y verificar | E2 | Claude | Opus 5.5 / el más capaz | Unido a `main` (PR #51; 17/11). Sin probar en el Motorola |
 | **E3** | Reproductor en la burbuja, espacio en Ajustes | E2, K1, B3 | ChatGPT (código, #54); Claude (cierre, #55) | Sonnet 5.5 / estándar | Unido a `main` (PR #55; 17/11). Motorola: reproducir, quitar audio y panel de espacio probados por Ignacio; adelantar/pausar y «Ver nota» sin probar |
-| **K2** | Restaurar una copia cifrada | K1 | **ChatGPT, solo el ensayo en borrador (PR #61)**. El reemplazo de datos: sin dueño ni PR todavía | Opus 5.5 / el más capaz | **Autorizado por Ignacio el 17/11 (ensayo y reemplazo).** Hoy solo existe el ensayo en el PR #61 (borrador, bloqueado por el candado universal sin bóveda). Se une con revisión cruzada sin hallazgos graves y CI en verde (A5) |
+| **K2** | Restaurar una copia cifrada | K1 | **ChatGPT: ensayo en instalación vacía (#61, unido). Claude: reemplazo, programado el 18/11 y entregado como parche (sin PR todavía)** | Opus 5.5 / el más capaz | **Autorizado por Ignacio el 17/11 (ensayo y reemplazo).** Hoy solo existe el ensayo en el PR #61 (borrador, bloqueado por el candado universal sin bóveda). Se une con revisión cruzada sin hallazgos graves y CI en verde (A5) |
 | **Capa** | Capa única de lectura y escritura de los registros cifrados (`vault.records`). Refactor sin cambio de comportamiento; el almacenamiento sigue en `localStorage` | K1 y K2 | Claude (Sonnet 5.5), desde un fork propio | Opus 5.5 / el más capaz | PR #64 contra `main` (base `9d47b99`). Sin probar en el Motorola: no cambia nada visible. Sin ella, una copia posterior a T saldría sin notas |
 | **T** | Mudar el texto al depósito grande | K1, K2 y Capa | Sin dueño | Opus 5.5 / el más capaz | Pendiente. **Permiso explícito de Ignacio antes de programar.** Texto en la misma base que los audios (A9). Antes: K2 terminado |
 | **AO** | Anonimización con original recuperable | T y Etapa C1 | Sin dueño | Sonnet 5.5 u Opus 5.5 / cualquiera | Pendiente. Antes: T y reglas de AO (Q2) |
@@ -116,6 +116,7 @@ Las secciones entre paréntesis son del diseño completo.
 - **Vuelta atrás:** total (interfaz).
 
 ### K2 · Restaurar una copia cifrada
+- **Estado (18/11/2026):** instalación vacía: unido (#61). **Reemplazo: programado** (respaldo previo comprobado, comparación, doble confirmación, marca propia, diario reanudable, espacio, audios sin cifrar cifrados al restaurar); entregado como parche, falta revisión cruzada y prueba en el Motorola.
 - **Hacer:** restaurar en una app vacía o reemplazando todo, con doble confirmación (D6). Dos recorridos: validar todo, después escribir; la cabecera se escribe al final (2.6).
 - **No hacer:** mezclar con lo existente.
 - **Listo cuando:** exportar → borrar → restaurar devuelve lo mismo, y una restauración cortada a propósito no deja la app a medias.
