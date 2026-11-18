@@ -962,6 +962,9 @@ body.delta-recording #transcriptionDockBar{height:3px;margin-top:3px}
           <input type="file" id="copiaArchivo" hidden>
            <div class="row"><button type="button" id="copiaRestaurar">Restaurar en instalación vacía (experimental)</button></div>
            <input type="file" id="copiaRestArchivo" accept=".dictanota" hidden>
+           <div class="row"><button type="button" id="copiaReemplazar">Reemplazar lo que hay con una copia (experimental)</button></div>
+           <p class="hint">Borra TODO lo guardado en este navegador y lo cambia por una copia. Antes crea y comprueba un respaldo completo de lo actual, y te muestra qué se perdería.</p>
+           <input type="file" id="copiaReempArchivo" accept=".dictanota" hidden>
           <form id="copiaPwForm" class="vault-box" hidden>
             <p class="hint">Elegí una contraseña para este archivo. Si la olvidás, <b>la copia no se puede abrir</b>.</p>
             <label for="copiaPw1">Contraseña de la copia (al menos 8 caracteres; mejor una frase)</label>
@@ -1415,6 +1418,8 @@ function createRecordStore(backend){
     any: () => keys().length > 0,
     // ¿Esta clave de almacenamiento es de un registro? Para que quien recorre todas las claves no las trate como suyas.
     owns: k => typeof k === 'string' && k.startsWith(VAULT_REC_PREFIX),
+    // Cuántos registros quedaron apartados por dañados (los conserva clear). Solo lectura.
+    quarantined: () => keys().filter(k => k.includes('.danado.')).length,
     // Tamaño aproximado de todos los registros, con la misma cuenta que el panel de espacio (2 por carácter, clave y valor).
     bytes: () => keys().reduce((t, k) => t + 2 * (k.length + (store.getItem(k) || '').length), 0),
     // Aparta intacto un registro que no se pudo leer (queda como «.danado.<fecha>») y libera su lugar. Si falla, lanza.
@@ -5673,6 +5678,11 @@ async function copia2Audios(w, contenido, opts){
    El registro de recuperación contiene exclusivamente identificadores de datos NUEVOS. */
 /*K2-START*/
 const K2_JOURNAL = 'notasvoz.k2.restauracion.v1';
+/* K2 de reemplazo: diario propio del reemplazo («respaldo» → «borrando» → «borrado») y marca «restauración en curso».
+   La marca NO es copiaBusyN: bloquea el autobloqueo, las copias y cualquier otro reemplazo hasta que termina. */
+const K2R_JOURNAL = 'notasvoz.k2.reemplazo.v1';
+let k2ReplaceActive = false;
+const k2ReplaceMark = () => k2ReplaceActive || localStorage.getItem(K2R_JOURNAL) !== null;
 /* El borrador vacío que la app guarda sola al abrirse (sin texto, título, etiquetas, nota ni audio) no cuenta como dato. */
 function k2DraftEmpty(raw){
   try{const d=JSON.parse(raw);return !!d&&typeof d==='object'&&!String(d.text||'').trim()&&!String(d.title||'').trim()&&
@@ -5684,7 +5694,7 @@ function k2LocalEmpty(){
   for (let i=0;i<localStorage.length;i++){
     const name=localStorage.key(i);
     if (name===DRAFT && k2DraftEmpty(localStorage.getItem(name))) continue;
-    if (name && name.startsWith('notasvoz.') && name !== K2_JOURNAL) return false;
+    if (name && name.startsWith('notasvoz.') && name !== K2_JOURNAL && name !== K2R_JOURNAL) return false;
   }
   return true;
 }
@@ -5740,7 +5750,6 @@ async function k2ReadPlan(file,verified,key){
       }else{
         const plain=type==='P' ? await copia2Open(key,h.id,'meta|'+name,bytes):bytes;
         const meta=JSON.parse(vaultDec.decode(plain));
-        if(type==='P')throw new Error('Esta copia incluye audios originalmente sin cifrar. Su restauración todavía no está habilitada, para evitar dejarlos en claro con la bóveda activada. No se escribió nada.');
         if(meta.id!==name||meta.state!=='cerrado'||!anValidMeta(meta)||
            (type==='P'&&!anPlainValidMeta(meta))||
            (type==='M'&&(!meta.key||!meta.sealed||meta.mode===AN_PLAIN_MODE)))throw copiaError('Alterada');
@@ -5766,7 +5775,8 @@ async function k2ReadPlan(file,verified,key){
 function k2ParseJournal(raw){
   const j=JSON.parse(raw);
   const bad=()=>{throw new Error('Lote de restauración desconocido o alterado; no se tocó.');};
-  if(!j||j.version!==2||!Array.isArray(j.audios)||!Array.isArray(j.names)||j.audios.length>5000)bad();
+  if(!j||(j.version!==2&&j.version!==3)||!Array.isArray(j.audios)||!Array.isArray(j.names)||j.audios.length>5000)bad();
+  if(j.version===3&&(!Array.isArray(j.preexisting)||j.preexisting.length>5000||j.preexisting.some(x=>typeof x!=='string')))bad();
   const known=new Set(Object.values(VAULT_KEYS)),ids=new Set(),names=new Set();
   for(const a of j.audios){
     if(!a||typeof a.id!=='string'||!a.id||a.id.length>64||ids.has(a.id)||!Number.isFinite(a.createdAt)||!anIsInt(a.bytes))bad();
@@ -5782,11 +5792,14 @@ async function k2Rollback(){
   const j=k2ParseJournal(raw);
   const db=await anDb();
   // Primero comprobar TODO; recién después borrar.
-  for(const a of j.audios){
+  // Deshacer distingue lo que creó el lote de lo que YA existía (diario v3): un id que ya existía nunca se borra.
+  const before=new Set(j.version===3?j.preexisting:[]);
+  const mine=j.audios.filter(a=>!before.has(a.id));
+  for(const a of mine){
     const m=await anGetMeta(db,a.id);
     if(m&&(m.createdAt!==a.createdAt||m.bytes!==a.bytes))throw new Error('Un audio del lote no coincide con lo restaurado; no se tocó nada.');
   }
-  for(const a of j.audios) await anDelete(db,a.id);
+  for(const a of mine) await anDelete(db,a.id);
   for(const name of j.names) vault.records.remove(name);
   localStorage.removeItem(CKEY);localStorage.removeItem(GKEY);   // la instalación estaba vacía antes de restaurar
   localStorage.removeItem(K2_JOURNAL);
@@ -5794,7 +5807,7 @@ async function k2Rollback(){
 }
 async function k2RestoreEmpty(file,secret){
   if(!(file instanceof Blob)||!secret)throw new Error('Seleccioná una copia y escribí su contraseña o código.');
-  if(vaultBusy()||convSaving||copiaBusyN)throw new Error('Primero terminá de grabar, transcribir o guardar.');
+  if(vaultBusy()||convSaving||copiaBusyN||k2ReplaceActive)throw new Error('Primero terminá de grabar, transcribir o guardar.');
   if(!globalThis.navigator?.locks?.request)throw new Error('Este navegador no permite impedir escrituras de otra pestaña.');
   // Candado ANTES de cualquier limpieza o escritura: desde acá ninguna otra pestaña puede escribir (candado universal).
   if(!(await vaultTakeTabLock())||vault.readOnly||vault.otherTab)throw new Error('Cerrá las otras pestañas antes de restaurar.');
@@ -5810,7 +5823,6 @@ async function k2RestoreLocked(file,secret){
   if(!(await k2StorageEmpty()))throw new Error('Esta instalación ya contiene datos o ajustes. No se mezcló ni reemplazó nada.');
   const open=h=>copiaOpenWithSecret(h,secret);
   const verified=await copia2Verify(file,open);  // primera pasada: autenticar archivo COMPLETO
-  if(verified.claro>0)throw new Error('Este respaldo contiene audios que estaban en claro. Todavía no se pueden restaurar con seguridad; no se escribió nada.');
   // Revisión externa 17/11: una copia formato 2 incompleta (con exclusiones) no se restaura como si estuviera entera.
   if(verified.exclusiones>0)throw new Error('Esta copia está INCOMPLETA ('+copia2Describe(verified)+'). Por ahora no se restaura; no se escribió nada.');
   if(!(await k2StorageEmpty()))throw new Error('Aparecieron datos mientras se verificaba la copia. No se escribió nada.');
@@ -5818,24 +5830,45 @@ async function k2RestoreLocked(file,secret){
   const plan=await k2ReadPlan(file,verified,key);
   if(!(await k2StorageEmpty()))throw new Error('La instalación dejó de estar vacía. No se escribió nada.');
   const db=await anDb();
-  const journal={version:2,audios:plan.audios.map(m=>({id:m.id,createdAt:m.createdAt,bytes:m.bytes})),names:[...plan.records.keys()]};
+  // Un id de la copia que ya está guardado se rechaza ANTES de escribir: nunca se pisa un audio que ya existía.
+  const preexisting=[];
+  for(const m of plan.audios) if(await anGetMeta(db,m.id)) preexisting.push(m.id);
+  if(preexisting.length)throw new Error('Un audio de la copia repite el identificador de uno que ya está guardado. No se escribió nada.');
+  // A11: un audio que estaba sin cifrar en la copia se cifra al restaurar con la clave de la copia; nunca se escribe descifrado.
+  const sealedOf=new Map();
+  for(const m of plan.audios) if(anIsPlainMeta(m)) sealedOf.set(m.id,await anNewCek(audioKey,plan.header.id,m.id));
+  const asSealed=async(m,state)=>{
+    const k=sealedOf.get(m.id);
+    if(!k)return {...m,state};
+    const parts=m.plain.parts.map(p=>({mime:p.mime,chunks:p.chunks,bytes:p.bytes,ms:p.ms,origin:p.origin,complete:true,...(p.name!=null?{name:p.name}:{})}));
+    return {id:m.id,state,createdAt:m.createdAt,bytes:m.bytes,parts:m.parts,key:k.box,sealed:await anSealDetail(audioKey,plan.header.id,m.id,{parts})};
+  };
+  const journal={version:3,audios:plan.audios.map(m=>({id:m.id,createdAt:m.createdAt,bytes:m.bytes})),names:[...plan.records.keys()],preexisting};
   k2ParseJournal(JSON.stringify(journal));   // IDs repetidos o registros desconocidos: la copia está alterada, no se escribe nada
   localStorage.setItem(K2_JOURNAL,JSON.stringify(journal));
   if(localStorage.getItem(K2_JOURNAL)!==JSON.stringify(journal))throw new Error('No pudo confirmarse el lote de restauración.');
   let committed=false;
   try{
-    for(const meta of plan.audios) await anPutMeta(db,{...meta,state:'importando'});
+    for(const meta of plan.audios) await anPutMeta(db,await asSealed(meta,'importando'));
     for(const c of plan.chunks){
       const bytes=new Uint8Array(await file.slice(c.start,c.start+c.size).arrayBuffer());
-      // Un fragmento de audio que estaba en claro (B) nunca se escribe descifrado con la bóveda activa.
-      // Decisión de Ignacio (M12, 17/11): en el futuro se cifrará al restaurar; hasta entonces, se corta acá.
-      if(c.type==='B')throw new Error('La copia trae audio guardado sin cifrar; todavía no se restaura.');
+      if(c.type==='B'){
+        // Decisión de Ignacio (A11): lo que estaba sin cifrar se cifra al restaurar. El fragmento se abre, se comprueba contra su huella
+        // y se vuelve a cifrar con la clave del audio antes de tocar el almacenamiento: al disco solo llega texto cifrado.
+        const plain=await copia2Open(key,plan.header.id,'chunk|'+c.name,bytes);
+        const owner=plan.audios.find(m=>m.id===c.id),hash=anB64(new Uint8Array(await crypto.subtle.digest('SHA-256',plain)));
+        if(!owner||!owner.plain||hash!==(owner.plain.parts[c.part]||{hashes:[]}).hashes[c.index])throw new Error('Un fragmento de audio de la copia no coincide con su huella; no se restauró.');
+        const blob=await anSealChunk(sealedOf.get(c.id).cek,plan.header.id,c.id,c.part,c.index,plain);
+        plain.fill(0);
+        await anPutChunk(db,c.id,c.part,c.index,blob);
+        continue;
+      }
       await anPutChunk(db,c.id,c.part,c.index,new Blob([bytes],{type:'application/octet-stream'}));
     }
     for(const meta of plan.audios){
-      await anPutMeta(db,meta);
-      const health=meta.mode===AN_PLAIN_MODE ? await anPlainHealth(db,meta.id) :
-        await anAudioHealth(db,audioKey,plan.header.id,meta.id);
+      const closed=await asSealed(meta,'cerrado');
+      await anPutMeta(db,closed);
+      const health=await anAudioHealth(db,audioKey,plan.header.id,meta.id);
       if(!health.ok)throw new Error('El audio '+meta.id+' no se guardó íntegro.');
     }
     for(const [name,raw] of plan.records){
@@ -5850,11 +5883,12 @@ async function k2RestoreLocked(file,secret){
     if(localStorage.getItem(VAULT_HEADER)!==serialized)throw new Error('Cabecera sin confirmar.');
     committed=true;
     try{localStorage.removeItem(K2_JOURNAL)}catch(e){}
+    try{localStorage.removeItem(K2R_JOURNAL)}catch(e){}
     return verified;
   }catch(e){
     // Confirmación clara: si la cabecera quedó escrita completa, la restauración SÍ terminó (aunque fallara algo después).
     let header=null;try{header=localStorage.getItem(VAULT_HEADER)}catch(e2){}
-    if(!committed&&header===JSON.stringify(plan.header)){try{localStorage.removeItem(K2_JOURNAL)}catch(e3){}return verified;}
+    if(!committed&&header===JSON.stringify(plan.header)){try{localStorage.removeItem(K2_JOURNAL)}catch(e3){}try{localStorage.removeItem(K2R_JOURNAL)}catch(e3){}return verified;}
     if(!committed&&header!==null)throw new Error('Restauración en estado dudoso: no borres los datos del sitio y recargá DictaVoz. '+((e&&e.message)||''));
     if(!committed)try{await k2Rollback()}catch(cleanup){throw new Error('Restauración no confirmada; no borres los datos del sitio. Reintentá desde esta pestaña. '+cleanup.message);}
     throw e;
@@ -5877,6 +5911,174 @@ async function k2ResumeCleanup(){
   }catch(e){console.warn('K2: el lote interrumpido se conserva para recuperación, sin publicar datos.',e&&e.name);}
 }
 void k2ResumeCleanup();
+/* ---------- K2 de reemplazo: restaurar una copia sobre una instalación que YA tiene datos ----------
+   El todo o nada lo garantiza el respaldo previo, no el almacenamiento. Orden fijo, sin atajos:
+   1) comprobar la copia entera y mirar qué se perdería; 2) primera confirmación; 3) respaldo previo completo, comprobado y descargado;
+   4) segunda confirmación; 5) diario «borrando» → borrado guiado → diario «borrado» (reanudable); 6) restauración con el código de K2 vacío.
+   Un respaldo previo con exclusiones (audios dañados, sin cifrar, datos apartados) se rechaza antes de borrar nada. */
+const K2R_PHASES = ['respaldo', 'borrando', 'borrado'];
+function k2rParse(raw){
+  const j = JSON.parse(raw);
+  if (!j || j.version !== 1 || !K2R_PHASES.includes(j.phase) || !Number.isFinite(j.started)) throw new Error('Diario de reemplazo desconocido o alterado; no se tocó nada.');
+  return j;
+}
+function k2rSet(phase, started, previo){
+  const raw = JSON.stringify({version: 1, phase, started, previo: previo || null});
+  localStorage.setItem(K2R_JOURNAL, raw);
+  if (localStorage.getItem(K2R_JOURNAL) !== raw) throw new Error('No pudo confirmarse el diario del reemplazo.');
+  return JSON.parse(raw);
+}
+const k2rCancelled = () => Object.assign(new Error('Cancelaste: no se cambió nada.'), {cancelled: true});
+/* Espacio: lo que se necesita (el tamaño de la copia con margen) contra lo libre MÁS lo que el borrado libera. Sin poder medir, no se sigue. */
+function k2SpaceCheck(m){
+  if (!m || ![m.quota, m.usage, m.freed, m.need].every(x => Number.isFinite(x) && x >= 0)) return {ok: false, free: null, need: m && m.need, why: 'No se pudo medir el espacio libre del navegador.'};
+  const free = m.quota - m.usage + m.freed;
+  return {ok: free >= m.need, free, need: m.need, why: free >= m.need ? '' : 'No hay espacio suficiente para restaurar la copia: hacen falta ' + mb(m.need) + ' y hay ' + mb(Math.max(0, free)) + '.'};
+}
+async function k2LegacyInfo(){
+  const metas = await idbDo(['meta'], 'readonly', t => t.objectStore('meta').getAll());
+  const chunks = await idbDo(['chunks'], 'readonly', t => t.objectStore('chunks').getAll());
+  return {count: metas.length, bytes: chunks.reduce((t, c) => t + ((c && c.b && c.b.size) || 0), 0)};
+}
+async function k2CurrentBytes(){
+  const modern = await anListMeta(await anDb());
+  return vault.records.bytes() + modern.reduce((t, m) => t + (m.bytes || 0), 0) + (await k2LegacyInfo()).bytes;
+}
+async function k2Space(verified){
+  const need = Math.ceil(verified.bytes * 1.1) + 262144;
+  const e = globalThis.navigator && navigator.storage && navigator.storage.estimate ? await navigator.storage.estimate() : null;
+  return k2SpaceCheck({quota: e && e.quota, usage: e && e.usage, freed: await k2CurrentBytes(), need});
+}
+/* Qué se perdería: notas más nuevas que la copia o que la copia no tiene, audios que la copia no tiene, audio antiguo (que ninguna copia lleva). */
+async function k2Compare(plan, verified, key){
+  const inCopy = new Set(), raw = plan.records.get('conversaciones');
+  if (raw) { try { for (const e of (JSON.parse(await vaultOpenRecord(key, plan.header.id, 'conversaciones', raw)).entries || [])) inCopy.add(e.id); } catch (e) {} }
+  let now = []; try { now = (JSON.parse(vaultStore.getItem(CONV_KEY)) || {}).entries || []; } catch (e) {}
+  const t = e => Math.max(Number.isFinite(e.savedAt) ? e.savedAt : 0, Number.isFinite(e.textEditedAt) ? e.textEditedAt : 0);
+  const newer = now.filter(e => t(e) > verified.creado), missing = now.filter(e => !inCopy.has(e.id));
+  const lost = now.filter(e => t(e) > verified.creado || !inCopy.has(e.id));
+  const cur = await anListMeta(await anDb()), copyIds = new Set(plan.audios.map(m => m.id));
+  const legacy = await k2LegacyInfo();
+  return {
+    copiaCreada: verified.creado, copiaId: verified.id, copiaFormato: verified.formato, copiaNotas: verified.notas, copiaAudios: verified.audios, copiaBytes: verified.bytes,
+    otraInstalacion: !vault.header || vault.header.id !== verified.id, protegidaAhora: vault.state === 'open',
+    notasActuales: now.length, notasNuevas: newer.length, notasSinCopia: missing.length, notasPerdidas: lost.length,
+    audiosActuales: cur.length, audiosSinCopia: cur.filter(m => !copyIds.has(m.id)).length, audiosRepetidos: cur.filter(m => copyIds.has(m.id)).length,
+    audiosSinCifrarAhora: cur.filter(anIsPlainMeta).length, audioAntiguo: legacy.count, audiosSinCifrarEnCopia: verified.claro || 0
+  };
+}
+function k2ReplaceText(i){
+  const n = (x, one, many) => x === 1 ? '1 ' + one : x + ' ' + many;
+  const out = ['La copia es del ' + convStamp(i.copiaCreada) + (i.copiaNotas != null ? ' y trae ' + n(i.copiaNotas, 'nota', 'notas') : '') + ' y ' + n(i.copiaAudios, 'audio', 'audios') + '.',
+    i.otraInstalacion ? 'ATENCIÓN: esta copia viene de OTRA instalación (otro identificador).' : 'Esta copia es de esta misma instalación.',
+    'Se va a BORRAR todo lo que hay ahora y a reemplazarlo por la copia. Se perdería:',
+    '· ' + n(i.notasPerdidas, 'nota más nueva o ausente en la copia', 'notas más nuevas o ausentes en la copia') + ' (de ' + i.notasActuales + ' notas actuales; ' + i.notasNuevas + ' posteriores a la copia, ' + i.notasSinCopia + ' que la copia no tiene)',
+    '· ' + n(i.audiosSinCopia, 'audio que la copia no tiene', 'audios que la copia no tiene') + (i.audiosRepetidos ? ' (y ' + n(i.audiosRepetidos, 'audio con el mismo identificador será reemplazado', 'audios con el mismo identificador serán reemplazados') + ' por el de la copia)' : '')];
+  if (i.audioAntiguo) out.push('· ' + n(i.audioAntiguo, 'audio antiguo', 'audios antiguos') + ': ninguna copia los lleva, NO se podrían recuperar ni con el respaldo previo');
+  out.push('Al terminar, la contraseña y el código de recuperación de la COPIA pasan a ser los de esta instalación; los actuales dejan de servir.');
+  if (i.audiosSinCifrarEnCopia) out.push('Los ' + i.audiosSinCifrarEnCopia + ' audios que la copia tiene sin cifrar se guardan CIFRADOS.');
+  return out.join('\n');
+}
+/* Respaldo previo: completo o nada. Devuelve la copia ya comprobada; si saldría con exclusiones, lanza antes de borrar. */
+async function k2PriorBackup(ui){
+  const open = vault.state === 'open', kinds = await anStoredKinds();
+  if (kinds === null) throw new Error('No se pudieron leer los audios guardados: no se puede asegurar el respaldo previo. No se borró nada.');
+  const gaps = [];
+  if (!open && kinds.total > 0) gaps.push('hay audios cifrados que solo se pueden copiar con la protección abierta');
+  if (kinds.claros) gaps.push(kinds.claros + ' audios guardados sin cifrar que el respaldo no lleva');
+  if (vault.frozen.size || vault.damaged.length || vault.records.quarantined()) gaps.push('hay datos dañados o apartados que el respaldo no puede incluir');
+  if (gaps.length) throw new Error('El respaldo previo saldría INCOMPLETO (' + gaps.join('; ') + '). No se borró nada.');
+  let pw = null;
+  if (!open) { pw = await ui.backupPassword(); if (!pw) throw k2rCancelled(); }
+  const made = await copiaMake(pw, {completa: true});
+  if (made.omitidos || made.faltan.sinCifrar || (open && made.r.audios !== kinds.cifrados))
+    throw new Error('El respaldo previo salió INCOMPLETO (' + copiaFaltantes(made.omitidos, made.faltan.sinCifrar, true).replace(/^Atención, la copia NO está completa: /, '').replace(/\.\n$/, '') + '). No se borró nada.');
+  return made;
+}
+/* Borrado guiado. Solo con el candado tomado, el diario en «borrando» y el respaldo previo ya hecho. Se puede repetir entero. */
+async function k2rWipe(){
+  const db = await anDb();
+  await anTx(db, ['meta', 'chunks'], 'readwrite', t => { t.objectStore('meta').clear(); t.objectStore('chunks').clear(); });
+  await audioClear();
+  vault.records.clear();
+  const names = [];
+  for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith('notasvoz.') && k !== K2R_JOURNAL && k !== VAULT_HEADER && !vault.records.owns(k)) names.push(k); }
+  for (const k of names) localStorage.removeItem(k);
+  localStorage.removeItem(VAULT_HEADER);
+  vault.state = 'off'; vault.header = null; vault.key = null; vault.audioKey = null; vault.cache = new Map(); vault.pending.clear();
+  vault.frozen.clear(); vault.damaged = []; vault.leftovers = [];
+  if (!(await k2StorageEmpty())) throw new Error('El borrado no quedó completo.');
+}
+/* ui: {progress(texto), confirm(paso, info, nombreRespaldo) → bool, saveBackup(file), backupPassword() → texto|null} */
+async function k2Replace(file, secret, ui){
+  if (!(file instanceof Blob) || !secret) throw new Error('Seleccioná una copia y escribí su contraseña o código.');
+  if (k2ReplaceActive) throw new Error('Ya hay un reemplazo en curso.');
+  const pending = localStorage.getItem(K2R_JOURNAL) !== null ? k2rParse(localStorage.getItem(K2R_JOURNAL)) : null;
+  if (!pending && vault.state !== 'open' && vault.state !== 'off') throw new Error('Desbloqueá DictaVoz con tu contraseña antes de reemplazar.');
+  if (vaultBusy() || convSaving || copiaBusyN) throw new Error('Primero terminá de grabar, transcribir o guardar.');
+  if (!globalThis.navigator?.locks?.request) throw new Error('Este navegador no permite impedir escrituras de otra pestaña.');
+  if (!(await vaultTakeTabLock()) || vault.readOnly || vault.otherTab) throw new Error('Cerrá las otras pestañas antes de reemplazar.');
+  const say = t => { try { ui.progress(t); } catch (e) {} };
+  k2ReplaceActive = true;   // la marca: desde acá no se autobloquea, no se crean ni comprueban copias, no empieza otro reemplazo
+  let journal = pending, info = null, destroyed = false;   // destroyed: el borrado ya empezó (desde ahí esta pestaña queda sin escribir hasta recargar)
+  try {
+    if (vault.state === 'open') { await vault.flush(); if (vault.pending.size) throw new Error('Hay cambios que todavía no se pudieron guardar cifrados. No se hizo nada.'); }
+    vault.otherTab = true;   // esta pestaña tampoco escribe (borrador, ajustes) mientras dura el reemplazo
+    if (!journal) {
+      journal = k2rSet('respaldo', Date.now());
+      say('Comprobando la copia entera…');
+      const open = h => copiaOpenWithSecret(h, secret);
+      const verified = await copia2Verify(file, open);
+      if (verified.exclusiones > 0) throw new Error('Esta copia está INCOMPLETA (' + copia2Describe(verified) + '). Por ahora no se restaura; no se cambió nada.');
+      const {key} = await open(await k2Header(file));
+      const plan = await k2ReadPlan(file, verified, key);
+      info = await k2Compare(plan, verified, key);
+      const space = await k2Space(verified);
+      if (!space.ok) throw new Error(space.why + ' No se cambió nada.');
+      if (!(await ui.confirm(1, info))) throw k2rCancelled();
+      say('Creando y comprobando el respaldo previo…');
+      const made = await k2PriorBackup(ui);
+      await ui.saveBackup(made.file);
+      if (!(await ui.confirm(2, info, made.file.name))) throw k2rCancelled();
+      journal = k2rSet('borrando', journal.started, {name: made.file.name, bytes: made.file.size});
+      say('Borrando lo que había…');
+      destroyed = true;
+      await k2rWipe();
+      journal = k2rSet('borrado', journal.started, journal.previo);
+    } else if (journal.phase === 'respaldo') {
+      throw new Error('Quedó un reemplazo sin empezar. Recargá DictaVoz.');
+    } else {
+      if (journal.phase === 'borrando') {
+        if (!(await ui.confirm('retomar', info, journal.previo && journal.previo.name))) throw k2rCancelled();
+        say('Terminando el borrado…');
+        destroyed = true;
+        await k2rWipe();
+        journal = k2rSet('borrado', journal.started, journal.previo);
+      }
+    }
+    say('Restaurando la copia…');
+    destroyed = true;
+    const summary = await k2RestoreLocked(file, secret);
+    return {summary, info};
+  } catch (e) {
+    // Antes del borrado no se tocó nada: se limpia el diario y esta pestaña vuelve a escribir.
+    if (journal && journal.phase === 'respaldo') { try { localStorage.removeItem(K2R_JOURNAL); } catch (x) {} }
+    if (!destroyed && journal && (journal.phase === 'respaldo' || journal.phase === 'borrando' || journal.phase === 'borrado')) vault.otherTab = false;
+    throw e;
+  } finally { k2ReplaceActive = false; }
+}
+/* Al abrir: un diario «respaldo» (corte antes de borrar) se limpia solo; «borrado» con la cabecera ya escrita significa que la restauración terminó. */
+async function k2rBoot(){
+  try {
+    const raw = localStorage.getItem(K2R_JOURNAL);
+    if (!raw) return;
+    const j = k2rParse(raw);
+    if (!(await vaultTakeTabLock()) || vault.otherTab) return;
+    if (j.phase === 'respaldo') { localStorage.removeItem(K2R_JOURNAL); return; }
+    if (j.phase === 'borrado' && localStorage.getItem(VAULT_HEADER)) localStorage.removeItem(K2R_JOURNAL);   // cabecera escrita = restauración confirmada (igual que K2)
+  } catch (e) { console.warn('K2: el diario de reemplazo se conserva para recuperación.', e && e.name); }
+}
+void k2rBoot();
 /*K2-END*/
 
 
@@ -5940,37 +6142,44 @@ function copiaFaltantes(omitidos, sinCifrar, completa){
     (completa ? ' (este tipo de copia solo lleva audios cifrados)' : ''));
   return out.length ? 'Atención, la copia NO está completa: ' + out.join('; ') + '.\n' : '';
 }
+/* Arma la copia y la comprueba entera con las claves ya abiertas. No descarga ni toca el estado de «ocupado»: lo usan copiaCreate
+   y el respaldo previo del reemplazo (K2). completa: solo cuenta con la protección abierta. Los avisos sin excepción llevan .plain. */
+async function copiaMake(filePassword, opts){
+  if (vault.state !== 'off' && vault.state !== 'open') throw Object.assign(new Error(''), {plain: true, silent: true});
+  const abierta = vault.state === 'open', completa = abierta && !!opts.completa;
+  let header, key;
+  if (abierta) {
+    await vault.flush();
+    if (vault.pending.size) throw Object.assign(new Error('Hay cambios que todavía no se pudieron guardar cifrados. No se creó la copia.'), {plain: true});
+    header = vault.header; key = vault.key;
+  } else {
+    copiaSay('Preparando la contraseña de la copia…');
+    const c = await vaultCreate(filePassword);
+    try { key = await vaultImportDataKey(c.dek); } finally { c.dek.fill(0); }
+    header = c.header;
+  }
+  copiaSay('Armando la copia…');
+  const now = Date.now(), w = copiaWriter(header, key, completa ? 'completa' : 'solo-texto', now);
+  if (abierta) { for (const [name, raw] of vault.records.all()) await w.registro(name, raw); }
+  else for (const [k, name] of Object.entries(VAULT_KEYS)) { const plain = vaultStore.getItem(k); if (plain !== null) await w.registro(name, await vaultSealRecord(key, header.id, name, plain)); }
+  await w.config({cfg: localStorage.getItem(CKEY), generador: localStorage.getItem(GKEY)});
+  const faltan = completa ? await copiaAudios(w) : {omitidos: 0, sinCifrar: 0}, omitidos = faltan.omitidos;
+  // Una copia de solo texto tampoco lleva los audios sin cifrar: se avisa igual, para que nadie la crea completa.
+  if (!completa) { const k = await anStoredKinds(); if (k === null) throw new Error('no se pudieron leer los audios guardados'); faltan.sinCifrar = k.claros; }
+  const file = new File([await w.finish()], copiaName(now), {type: 'application/octet-stream'});
+  // Antes de entregarla se comprueba entera, con las claves ya abiertas.
+  copiaSay('Comprobando la copia…');
+  const r = await copiaVerify(file, async () => ({key, audioKey: abierta ? vault.audioKey : null}));
+  return {file, r, abierta, completa, omitidos, faltan, now};
+}
 /* Crea la copia. filePassword: solo con la protección apagada (contraseña elegida para el archivo). */
 async function copiaCreate(filePassword){
   if (copiaBusyN) return null;
-  if (vaultBusy() || convSaving) { copiaSay('Primero terminá de grabar, transcribir o guardar.'); return null; }
+  if (vaultBusy() || convSaving || k2ReplaceMark()) { copiaSay('Primero terminá de grabar, transcribir o guardar (o de reemplazar con una copia).'); return null; }
   if (vault.state !== 'off' && vault.state !== 'open') return null;
-  const abierta = vault.state === 'open', completa = abierta && copiaEl('copiaCompleta').checked;
   copiaBusyN++;
   try {
-    let header, key;
-    if (abierta) {
-      await vault.flush();
-      if (vault.pending.size) { copiaSay('Hay cambios que todavía no se pudieron guardar cifrados. No se creó la copia.'); return null; }
-      header = vault.header; key = vault.key;
-    } else {
-      copiaSay('Preparando la contraseña de la copia…');
-      const c = await vaultCreate(filePassword);
-      try { key = await vaultImportDataKey(c.dek); } finally { c.dek.fill(0); }
-      header = c.header;
-    }
-    copiaSay('Armando la copia…');
-    const now = Date.now(), w = copiaWriter(header, key, completa ? 'completa' : 'solo-texto', now);
-    if (abierta) { for (const [name, raw] of vault.records.all()) await w.registro(name, raw); }
-    else for (const [k, name] of Object.entries(VAULT_KEYS)) { const plain = vaultStore.getItem(k); if (plain !== null) await w.registro(name, await vaultSealRecord(key, header.id, name, plain)); }
-    await w.config({cfg: localStorage.getItem(CKEY), generador: localStorage.getItem(GKEY)});
-    const faltan = completa ? await copiaAudios(w) : {omitidos: 0, sinCifrar: 0}, omitidos = faltan.omitidos;
-    // Una copia de solo texto tampoco lleva los audios sin cifrar: se avisa igual, para que nadie la crea completa.
-    if (!completa) { const k = await anStoredKinds(); if (k === null) throw new Error('no se pudieron leer los audios guardados'); faltan.sinCifrar = k.claros; }
-    const file = new File([await w.finish()], copiaName(now), {type: 'application/octet-stream'});
-    // Antes de entregarla se comprueba entera, con las claves ya abiertas.
-    copiaSay('Comprobando la copia…');
-    const r = await copiaVerify(file, async () => ({key, audioKey: abierta ? vault.audioKey : null}));
+    const {file, r, abierta, completa, omitidos, faltan} = await copiaMake(filePassword, {completa: copiaEl('copiaCompleta').checked});
     download(file);
     logDiag('Copia cifrada: creada · ' + r.contenido + ' · ' + r.registros + ' registros · ' + r.audios + ' audios · ' + r.bytes + ' bytes' + (omitidos ? ' · ' + omitidos + ' audios omitidos' : '') + (faltan.sinCifrar ? ' · ' + faltan.sinCifrar + ' sin cifrar no incluidos' : ''));
     copiaSay('Copia creada y comprobada: ' + copiaSummary(r) + '.\n' +
@@ -5980,6 +6189,7 @@ async function copiaCreate(filePassword){
       '\nPara confirmar que la descarga terminó bien, tocá «Verificar una copia» y elegí ese archivo. Guardalo fuera del celular.');
     return file;
   } catch (e) {
+    if (e && e.plain) { if (e.message) copiaSay(e.message); return null; }
     logDiag('Copia cifrada: no se creó (' + anErrName(e) + ')');
     copiaSay('No se pudo crear la copia (' + ((e && e.message) || 'error') + '). No se cambió nada de lo guardado.');
     return null;
@@ -5988,7 +6198,7 @@ async function copiaCreate(filePassword){
 /* Comprueba un archivo elegido por el usuario. No restaura ni guarda nada. */
 async function copiaCheck(file){
   if (copiaBusyN || !file) return null;
-  if (vaultBusy() || convSaving) { copiaSay('Primero terminá de grabar, transcribir o guardar.'); return null; }
+  if (vaultBusy() || convSaving || k2ReplaceMark()) { copiaSay('Primero terminá de grabar, transcribir o guardar.'); return null; }
   copiaBusyN++;
   try {
     copiaSay('Leyendo «' + file.name + '»…');
@@ -6047,7 +6257,7 @@ copiaEl('copiaRestaurar').onclick=()=>{
 copiaEl('copiaRestArchivo').addEventListener('change',async()=>{
   const el=copiaEl('copiaRestArchivo'),file=el.files&&el.files[0];el.value='';
   if(!file||copiaBusyN)return;
-  if(vaultBusy()||convSaving)return copiaSay('Terminá primero la grabación, transcripción o guardado.');
+  if(vaultBusy()||convSaving||(k2ReplaceActive))return copiaSay('Terminá primero la grabación, transcripción o guardado.');
   copiaBusyN++;
   try{
     if(!(await k2StorageEmpty()))throw new Error('Esta instalación ya contiene datos o ajustes. No se reemplazó nada.');
@@ -6055,7 +6265,6 @@ copiaEl('copiaRestArchivo').addEventListener('change',async()=>{
     if(secret===null)return;
     copiaSay('Comprobando la integridad antes de escribir…');
     const summary=await copia2Verify(file,h=>copiaOpenWithSecret(h,secret));
-    if(summary.claro>0)throw new Error('El archivo contiene audio originalmente sin cifrar. Por ahora no puede restaurarse sin comprometer la protección; no se cambió nada.');
     if(summary.exclusiones>0)throw new Error('La copia está INCOMPLETA ('+copia2Describe(summary)+'). Por ahora no se restaura; no se cambió nada.');
     if(!confirm('Se restaurarán '+(summary.notas??'las')+' notas y '+summary.audios+' audios en esta instalación VACÍA. '+(summary.contenido==='solo-texto'?'Esta copia NO contiene audios. ':'')+'No se pueden mezclar ni reemplazar datos. ¿Continuar?'))return;
     copiaBusyN--;
@@ -6068,6 +6277,63 @@ copiaEl('copiaRestArchivo').addEventListener('change',async()=>{
 });
 
 /*COPIA-USO-END*/
+/*K2-UI-START*/
+/* K2 de reemplazo, interfaz: dos confirmaciones con las cifras, el respaldo previo se descarga ANTES de borrar, y al terminar se ofrece un código nuevo. */
+const K2R_OFFER = 'k2.ofrecerCodigoNuevo';
+const k2rUi = () => ({
+  progress: copiaSay,
+  confirm: async (step, info, backup) => {
+    if (step === 'retomar') return confirm('Un reemplazo anterior quedó a medias: ya se hizo un respaldo previo' + (backup ? ' («' + backup + '»)' : '') + ' y el borrado empezó. ¿Terminar el borrado y restaurar la copia elegida?');
+    if (step === 1) return confirm(k2ReplaceText(info) + '\n\nPrimero se va a crear y descargar un respaldo completo de lo que hay ahora. ¿Seguir?');
+    return confirm('El respaldo previo «' + backup + '» ya se creó, se comprobó y se descargó. Fijate que esté en tus descargas y guardalo fuera del celular.\n\n' +
+      k2ReplaceText(info) + '\n\nÚLTIMA CONFIRMACIÓN: ¿BORRAR lo que hay ahora y reemplazarlo por la copia?');
+  },
+  saveBackup: async file => { download(file); copiaSay('Respaldo previo creado, comprobado y descargado como «' + file.name + '».'); },
+  backupPassword: async () => {
+    const a = await copiaAsk('Elegí una contraseña para el respaldo previo (al menos 8 caracteres)'); if (a === null) return null;
+    const b = await copiaAsk('Repetí la contraseña del respaldo previo'); if (b === null) return null;
+    const problem = vaultPasswordProblem(a, b); if (problem) throw new Error(problem);
+    return a;
+  }
+});
+copiaEl('copiaReemplazar').onclick = () => {
+  if (copiaBusyN || k2ReplaceActive) return;
+  if (!confirm('Antes de reemplazar: cerrá todas las otras pestañas de DictaVoz. ¿Confirmás que solo queda abierta esta pestaña?')) return;
+  copiaEl('copiaReempArchivo').click();
+};
+copiaEl('copiaReempArchivo').addEventListener('change', async () => {
+  const el = copiaEl('copiaReempArchivo'), file = el.files && el.files[0]; el.value = '';
+  if (!file || copiaBusyN || k2ReplaceActive) return;
+  try {
+    if (vault.state === 'open') {
+      const pw = await vaultAskPassword('Escribí tu contraseña actual (el respaldo previo se abre con ella)'); if (pw === null) return;
+      try { (await vault.checkPassword(pw)).fill(0); } catch (e) { return copiaSay('La contraseña no es correcta. No se cambió nada.'); }
+    }
+    const secret = await copiaAsk('Contraseña o código de recuperación de la copia con la que vas a reemplazar');
+    if (secret === null) return;
+    const {summary} = await k2Replace(file, secret, k2rUi());
+    try { sessionStorage.setItem(K2R_OFFER, '1'); } catch (e) {}
+    copiaSay('Reemplazo confirmado: ' + copiaSummary(summary) + '. Recargando para abrir la bóveda…');
+    location.reload();
+  } catch (e) {
+    const rest = localStorage.getItem(K2R_JOURNAL) !== null && !(e && e.cancelled);
+    copiaSay((e && e.cancelled ? '' : 'No se reemplazó: ') + ((e && e.message) || 'error') + (rest ? '\nEl borrado ya empezó: recargá DictaVoz y volvé a elegir la copia (o el respaldo previo) con «Reemplazar»; no borres datos del navegador.' : ''));
+  }
+});
+if (localStorage.getItem(K2R_JOURNAL) !== null) {
+  try {
+    const j = k2rParse(localStorage.getItem(K2R_JOURNAL));
+    // «borrando»: el borrado empezó (puede quedar la cabecera, que se borra al final). «borrado»: ya está vacío; con la cabecera escrita, la restauración terminó.
+    if (j.phase === 'borrando' || (j.phase === 'borrado' && !localStorage.getItem(VAULT_HEADER)))
+      copiaSay('Quedó un reemplazo a medias: el borrado ' + (j.phase === 'borrado' ? 'ya se hizo' : 'empezó') + (j.previo ? ' y el respaldo previo se llama «' + j.previo.name + '»' : '') + '. Tocá «Reemplazar» y elegí la copia nueva o ese respaldo para terminar.');
+  } catch (e) {}
+}
+vaultWhenReady(() => {
+  let offer = null; try { offer = sessionStorage.getItem(K2R_OFFER); sessionStorage.removeItem(K2R_OFFER); } catch (e) {}
+  if (offer && vault.state === 'open' && confirm('La copia se restauró. Su código de recuperación puede haberse compartido o guardado en otro lado. ¿Querés generar uno nuevo ahora? (el anterior dejará de servir)')) vaultEl('vaultNewCode').click();
+});
+
+/*K2-UI-END*/
 
 /* ---------- Audio guardado (solo en este dispositivo) ---------- */
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -6705,7 +6971,7 @@ $('text').addEventListener('input', updWC);
 setInterval(updWC, 300);
 initErgonomics(); loadCfg(); $('recordSaveAudio').checked = $('saveAudio').checked; updateModelHint();
 // Protección cifrada: no bloquear mientras se graba o transcribe; guardar el borrador antes de bloquear.
-vaultSetHooks(() => recording || busy || outstanding > 0 || feeding || anBusyN > 0 || copiaBusyN > 0, saveDraft);   // cifrar un archivo, y crear o comprobar una copia, también cuentan como uso
+vaultSetHooks(() => recording || busy || outstanding > 0 || feeding || anBusyN > 0 || copiaBusyN > 0 || k2ReplaceActive, saveDraft);   // cifrar un archivo, y crear o comprobar una copia, también cuentan como uso
 vaultWhenReady(() => { loadNotes(); loadDict(); loadPeople(); loadGenerator(); updateGeneratorUI(); renderList(); convInit(); restoreDraft(); updWC(); });
 vaultWhenReady(() => { if (anUsable()) anReviewOnOpen(); });   // E2: después de cargar notas y borrador (el candado ya se tomó al desbloquear)
 refreshAudioBox();

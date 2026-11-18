@@ -1,7 +1,7 @@
 # CONTINUAR AQUÍ — DictaVoz
 
 > **Una sola página, un solo estado.** Quien termina un paso **reescribe esta página** (no agrega carteles arriba) y mueve lo viejo a `docs/historial/`. Si algo de acá contradice al código de `main`, vale el código; si contradice a `docs/DECISIONES.md`, vale ese registro.
-> **Última actualización: 17/11/2026, noche (Claude).** Unidos a `main`: #62 (documentación) y la cadena #59 → #60 → #61 (por el #61, que la contiene).
+> **Última actualización: 18/11/2026 (Claude).** Unidos a `main`: #62 (documentación), la cadena #59 → #60 → #61 y la capa de registros (#64). **K2 de reemplazo programado y entregado como `.patch` + descripción (sin PR; falta revisión cruzada).**
 
 ## Cómo está organizada la documentación
 
@@ -33,13 +33,13 @@ DictaVoz (antes DictaNota; solo cambió lo visible): transcribe voz a texto en e
 | #58 | Auditoría y propuesta de almacenamiento definitivo (solo documentación) | ChatGPT | — |
 | #52 | Visión de la experiencia y guía estética (solo documentación) | ChatGPT | — |
 | #49, #37 | Guía del propietario y feedback del Motorola; decisiones del 16/11 (solo documentación) | Claude | — |
-| #64 | Capa única de registros cifrados (`vault.records`), sin cambio de comportamiento | Claude (fork propio) | — (es requisito de T) |
+| #65 | K2 de reemplazo: respaldo previo, comparación y doble confirmación, borrado con diario, A11 | Claude | #64 |
 | #22, #1 | Borradores viejos de otras etapas | sin dueño vigente | — |
 
 ## Pasos a seguir (en este orden)
 
-1. **Capa única de registros** (bóveda, copias y K2 leen y escriben los registros por un solo camino). Es requisito de T: sin ella, una copia posterior a T saldría sin notas. **Hecha, en PR abierto** (ver «Qué está en curso»); sigue pendiente la revisión cruzada y unirla.
-2. **K2 de reemplazo, rediseñado** según la segunda revisión externa: respaldo verificado del estado actual → borrado guiado con diario → restauración en vacío; listar antes lo que se perderá; marca propia de «restauración en curso»; comprobar espacio; al restaurar, **cifrar los audios que estaban sin protección** (M12, decisión de Ignacio del 17/11).
+1. **Capa única de registros:** hecha y unida (#64).
+2. **K2 de reemplazo:** **programado** (respaldo previo comprobado → comparación y doble confirmación → marca propia «restauración en curso» → borrado guiado con diario reanudable → restauración; espacio comprobado; audios sin protección cifrados al restaurar, A11; código de recuperación nuevo al final). Entregado como `.patch` sobre `main`. **Falta:** revisión cruzada, unirlo y probarlo en el Motorola (confirmaciones en pantalla chica, descarga del respaldo previo, audios reales, un corte real). Sigue siendo experimental. Pregunta para Ignacio (Q1): si el respaldo previo tiene que cubrir también los audios sin cifrar, hay que habilitar el formato 2 para el usuario.
 3. **Mejoras de uso** (U16): elegir cuaderno y nombre desde Dictar (U12) y la maqueta del rediseño de Ajustes.
 4. **«Conservar audio» activado de entrada** en instalaciones nuevas (A6), cuando la restauración cubra el audio sin protección (paso 2).
 5. **Retirar el audio suelto viejo** y borrar sus datos de prueba (A7, A8).

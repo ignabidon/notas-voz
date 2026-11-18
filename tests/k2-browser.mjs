@@ -42,21 +42,18 @@ try{
   assert.equal(await run('k2StorageEmpty()'),true);
   const bytes=readFileSync(new URL('./copia-formato-1.dictanota',import.meta.url));
   const v1="new Blob([Uint8Array.from(atob("+JSON.stringify(bytes.toString('base64'))+"),x=>x.charCodeAt(0))])";
-  const p2=readFileSync(new URL('./copia-formato-2.dictanota.base64',import.meta.url),'utf8').trim();
-  const v2Plain="new Blob([Uint8Array.from(atob("+JSON.stringify(p2)+"),x=>x.charCodeAt(0))])";
   const rejected=JSON.parse(await run('(async()=>{' +
-    'const f='+v1+',plain='+v2Plain+';let wrong="",cut="",occupied="",plainMode="";'+
+    'const f='+v1+';let wrong="",cut="",occupied="";'+
     "try{await k2RestoreEmpty(f,'clave falsa')}catch(e){wrong=e.copia||e.message}"+
     "try{await k2RestoreEmpty(f.slice(0,f.size-22),'frase de prueba inventada 901')}catch(e){cut=e.copia||e.message}"+
-    "try{await k2RestoreEmpty(plain,'clave-fixture-dictavoz-903')}catch(e){plainMode=e.message}"+
     "localStorage.setItem('notasvoz.gamma.draft.v1','borrador ficticio');"+
     "try{await k2RestoreEmpty(f,'frase de prueba inventada 901')}catch(e){occupied=e.message}"+
     "localStorage.removeItem('notasvoz.gamma.draft.v1');"+
-    'return JSON.stringify({wrong,cut,occupied,plainMode,empty:await k2StorageEmpty(),audios:(await anListMeta(await anDb())).length});'+
+    'return JSON.stringify({wrong,cut,occupied,empty:await k2StorageEmpty(),audios:(await anListMeta(await anDb())).length});'+
     '})()'));
   assert.equal(rejected.wrong,'Clave');
   assert.ok(rejected.cut);
-  assert.match(rejected.plainMode,/en claro|sin cifrar/);
+  // La copia formato 2 con audio sin cifrar ya no se rechaza: se restaura cifrada (A11); lo prueba k2-reemplazo-browser.mjs.
   assert.match(rejected.occupied,/contiene datos/);
   assert.equal(rejected.empty,true);
   assert.equal(rejected.audios,0);

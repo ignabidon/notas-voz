@@ -77,6 +77,7 @@ Una línea con ID nuevo, fecha, la frase de Ignacio lo más literal posible y la
 | A9 | **T (mudar el texto): en la misma base que los audios.** T sigue exigiendo su permiso explícito antes de programar y antes de unir. Reemplaza lo «a reconsiderar» de D13 | 17/11 | chat | Vigente; T pendiente |
 | A10 | **Contraseña mínima: se mantiene en 8 caracteres.** La revisión externa sugirió subirla a 12 porque protege las copias que salen del teléfono; Ignacio decidió no subirla | 17/11 | chat | Vigente |
 | A11 | **Audios sin protección al restaurar (M12): se cifran** y quedan protegidos dentro de la bóveda. Con esto la restauración cubrirá el audio sin protección (condición de A2 y A6) | 17/11 | chat | Pendiente (K2 de reemplazo) |
+| A12 | **Q1 por ahora: el formato 2 sigue en laboratorio.** El respaldo previo del reemplazo usa el formato 1; si hay audios guardados sin protección, el reemplazo se frena sin borrar nada. Ignacio delegó la decisión en Claude, que eligió lo más seguro | 18/11 | chat | Vigente |
 
 ## Q · Todavía sin decidir
 

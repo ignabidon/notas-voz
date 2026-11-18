@@ -205,10 +205,15 @@ test('#60: el recorrido de la copia 2 y el panel solo leen; nada nuevo se conect
   assert.match(html, /'Atención, la copia NO está completa: '/);
 });
 
-test('#61 + #60: K2 no restaura una copia formato 2 incompleta ni escribe audio descifrado', () => {
+test('#61 + #60 + A11: K2 no restaura una copia formato 2 incompleta y nunca escribe audio descifrado', () => {
   const k2 = html.slice(html.indexOf('/*K2-START*/'), html.indexOf('/*K2-END*/'));
   assert.match(k2, /if\(verified\.exclusiones>0\)throw new Error\('Esta copia está INCOMPLETA/);
   assert.match(html, /if\(summary\.exclusiones>0\)throw new Error\('La copia está INCOMPLETA/);
-  assert.match(k2, /if\(c\.type==='B'\)throw new Error/);
-  assert.doesNotMatch(k2, /copia2Open\(key,plan\.header\.id,'chunk\|'/);
+  // A11 (reemplaza al rechazo de M12): un fragmento que estaba sin cifrar (B) se abre, se comprueba y se vuelve a cifrar
+  // con anSealChunk ANTES de escribirse; el único anPutChunk que recibe bytes sin sellar es el de los fragmentos ya cifrados.
+  const bloque = k2.slice(k2.indexOf("if(c.type==='B'){"), k2.indexOf("await anPutChunk(db,c.id,c.part,c.index,new Blob([bytes]"));
+  assert.match(bloque, /anSealChunk\(sealedOf\.get\(c\.id\)\.cek,plan\.header\.id,c\.id,c\.part,c\.index,plain\)/);
+  assert.match(bloque, /await anPutChunk\(db,c\.id,c\.part,c\.index,blob\);\n\s*continue;/);
+  assert.doesNotMatch(bloque, /anPutChunk\([^)]*(plain|bytes)/);
+  assert.doesNotMatch(k2, /anPlainHealth|anPutMeta\(db,meta\)/, 'ninguna ficha «en claro» se escribe al restaurar');
 });
