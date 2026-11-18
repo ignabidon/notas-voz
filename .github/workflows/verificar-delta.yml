@@ -70,3 +70,8 @@ jobs:
       - name: Correcciones PR 60 en Chrome (guarda, panel, copia 1 con avisos, copia 2 mezclada; datos ficticios)
         run: node tests/p2-correcciones-browser.mjs
         timeout-minutes: 5
+      - name: Capa única de registros cifrados - prueba estática y almacén falso (Node)
+        run: node --test tests/capa-registros.test.mjs
+      - name: "Capa única de registros cifrados en Chrome (almacén falso: protección, copia, verificación y restauración K2; datos ficticios)"
+        run: node tests/capa-registros-browser.mjs
+        timeout-minutes: 5

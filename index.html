@@ -1375,7 +1375,6 @@ document.addEventListener('DOMContentLoaded',function(){
    ==================================================================== */
 /*VAULT-CORE-START*/
 const VAULT_HEADER = 'notasvoz.boveda.v1';
-const VAULT_REC_PREFIX = 'notasvoz.boveda.v1.r.';
 const VAULT_PBKDF2_IT = 600000;
 const VAULT_KEYS = {
   'notasvoz.gamma.v1': 'notas',
@@ -1385,6 +1384,48 @@ const VAULT_KEYS = {
   'notasvoz.gamma.dict.v1': 'diccionario',
   'notasvoz.dictanota.v2': 'conversaciones' // rediseño conversacional: cuadernos y mensajes de la pantalla Notas
 };
+/*REGISTROS-CIFRADOS-START*/
+/* Capa única de registros cifrados (paso previo a T, 17/11/2026). Es el ÚNICO código que sabe dónde y con qué clave
+   se guarda cada registro cifrado (hoy: localStorage, clave VAULT_REC_PREFIX + nombre). La bóveda, la copia cifrada (K1),
+   la restauración (K2) y la medición de espacio leen y escriben registros solo con estos métodos (vault.records).
+   Una prueba estática falla si otro código arma esa clave. Cuando T mude los registros a IndexedDB, se cambia solo este
+   bloque: el almacén de fondo se puede reemplazar con useBackend. Por ahora es sincrónica, igual que localStorage; T la
+   volverá asincrónica y habrá que sumar await en sus llamadores (todos están ya dentro de funciones async, salvo k2LocalEmpty). */
+const VAULT_REC_PREFIX = 'notasvoz.boveda.v1.r.';
+function createRecordStore(backend){
+  let store = backend;   // con la forma de Storage: getItem, setItem, removeItem y, si lo tiene, length y key(i)
+  const key = name => VAULT_REC_PREFIX + name;
+  const names = () => Object.values(VAULT_KEYS);
+  // Claves de este almacén que son registros (incluye los apartados por dañados). Sin enumeración, solo los nombres conocidos.
+  const keys = () => {
+    if (typeof store.length === 'number' && typeof store.key === 'function') {
+      const out = [];
+      for (let i = 0; i < store.length; i++) { const k = store.key(i); if (typeof k === 'string' && k.startsWith(VAULT_REC_PREFIX)) out.push(k); }
+      return out;
+    }
+    return names().map(key).filter(k => store.getItem(k) !== null);
+  };
+  return {
+    get: name => store.getItem(key(name)),
+    set: (name, raw) => store.setItem(key(name), raw),
+    remove: name => store.removeItem(key(name)),
+    // Todos los registros conocidos tal como están guardados (ya cifrados), en el orden de VAULT_KEYS. Solo lectura (copia K1).
+    all: () => names().map(name => [name, store.getItem(key(name))]).filter(x => x[1] !== null),
+    // ¿Hay algún registro guardado, aunque sea uno apartado por dañado?
+    any: () => keys().length > 0,
+    // ¿Esta clave de almacenamiento es de un registro? Para que quien recorre todas las claves no las trate como suyas.
+    owns: k => typeof k === 'string' && k.startsWith(VAULT_REC_PREFIX),
+    // Tamaño aproximado de todos los registros, con la misma cuenta que el panel de espacio (2 por carácter, clave y valor).
+    bytes: () => keys().reduce((t, k) => t + 2 * (k.length + (store.getItem(k) || '').length), 0),
+    // Aparta intacto un registro que no se pudo leer (queda como «.danado.<fecha>») y libera su lugar. Si falla, lanza.
+    quarantine: (name, raw) => { store.setItem(key(name) + '.danado.' + Date.now(), raw); store.removeItem(key(name)); },
+    // Borra todos los registros conocidos (al quitar la protección). Los apartados por dañados se conservan.
+    clear: () => { for (const name of names()) store.removeItem(key(name)); },
+    // Cambia el almacén de fondo y devuelve el anterior. Para pruebas (almacén falso en memoria) y para T.
+    useBackend: next => { const previous = store; store = next; return previous; }
+  };
+}
+/*REGISTROS-CIFRADOS-END*/
 const VAULT_B32 = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
 const vaultEnc = new TextEncoder(), vaultDec = new TextDecoder('utf-8', {fatal: true});
 function vb64(bytes){
@@ -1492,12 +1533,13 @@ function createVault(storage, opts){
     // Candado de una sola pestaña (segunda revisión de E2): se toma ANTES de cualquier escritura de datos protegidos o de la cabecera.
     // Devuelve true si esta pestaña es la única que escribe. La aplicación lo reemplaza por el candado real (vaultTakeTabLock).
     takeLock: (opts && opts.takeLock) || (async () => true)};
+  // Los registros cifrados se leen y escriben solo por esta capa (opts.records permite compartirla o probarla con otro almacén).
+  v.records = (opts && opts.records) || createRecordStore(storage);
   try {
     const raw = storage.getItem(VAULT_HEADER);
     if (raw !== null) { v.state = 'locked'; try { v.header = vaultParseHeader(raw); } catch (e) { v.state = 'broken'; } }
   } catch (e) { v.state = 'broken'; }
   const isProtected = k => Object.prototype.hasOwnProperty.call(VAULT_KEYS, k);
-  const recKey = k => VAULT_REC_PREFIX + VAULT_KEYS[k];
   v.setError = msg => { v.error = msg; v.onError(msg); };
   /* Una sola pestaña escribe (diseño 2.5). La otra queda en «solo lectura»: ve los datos pero no guarda nada protegido,
      ni notas, ni borrador, ni personas, ni diccionario, ni la cabecera. Así no pisa lo que guarda la primera. */
@@ -1520,8 +1562,8 @@ function createVault(storage, opts){
       for (const k of keys) {
         if (v.frozen.has(k)) { v.setError('Hay datos cifrados dañados que no se pueden reemplazar sin espacio libre; los cambios de esa parte no se guardan.'); continue; }
         try {
-          if (!v.cache.has(k)) storage.removeItem(recKey(k));
-          else { const value = v.cache.get(k); storage.setItem(recKey(k), await vaultSealRecord(v.key, v.header.id, VAULT_KEYS[k], value)); }
+          if (!v.cache.has(k)) v.records.remove(VAULT_KEYS[k]);
+          else { const value = v.cache.get(k); v.records.set(VAULT_KEYS[k], await vaultSealRecord(v.key, v.header.id, VAULT_KEYS[k], value)); }
           if (v.error) v.setError('');
         } catch (e) { v.pending.add(k); v.setError('No se pudo guardar cifrado (' + (e && e.name || 'error') + '). Liberá espacio y volvé a intentar.'); }
       }
@@ -1544,14 +1586,14 @@ function createVault(storage, opts){
     const audioKey = await vaultDeriveAudioKey(dek, v.header.id);
     const cache = new Map(); v.damaged = [];
     for (const [k, name] of Object.entries(VAULT_KEYS)) {
-      const raw = storage.getItem(VAULT_REC_PREFIX + name);
+      const raw = v.records.get(name);
       if (raw === null) continue;
       try { cache.set(k, await vaultOpenRecord(key, v.header.id, name, raw)); }
       catch (e) {
         // Nunca sobrescribir un registro que no se pudo leer: se aparta intacto y se avisa.
         v.damaged.push(name);
         if (!soloLectura) {
-          try { storage.setItem(VAULT_REC_PREFIX + name + '.danado.' + Date.now(), raw); storage.removeItem(VAULT_REC_PREFIX + name); }
+          try { v.records.quarantine(name, raw); }
           catch (e2) { v.frozen.add(k); }
         }
       }
@@ -1597,11 +1639,11 @@ function createVault(storage, opts){
       cache.set(k, plain); records.set(name, rec);
     }
     try {
-      for (const [name, rec] of records) storage.setItem(VAULT_REC_PREFIX + name, rec);
+      for (const [name, rec] of records) v.records.set(name, rec);
       storage.setItem(VAULT_HEADER, JSON.stringify(header));
-      for (const [name, rec] of records) if (storage.getItem(VAULT_REC_PREFIX + name) !== rec) throw new Error('relectura distinta');
+      for (const [name, rec] of records) if (v.records.get(name) !== rec) throw new Error('relectura distinta');
     } catch (e) {
-      for (const name of records.keys()) try { storage.removeItem(VAULT_REC_PREFIX + name); } catch (e2) {}
+      for (const name of records.keys()) try { v.records.remove(name); } catch (e2) {}
       try { storage.removeItem(VAULT_HEADER); } catch (e2) {}
       throw new Error('No hay espacio para guardar la copia cifrada; no se cambió nada.');
     }
@@ -1610,8 +1652,7 @@ function createVault(storage, opts){
     return {recovery, dek};
   };
   v.checkPassword = password => vaultUnwrapPassword(v.header, password);
-  // Copia cifrada (K1): los registros cifrados tal como están guardados, sin descifrarlos ni tocarlos. Solo lectura.
-  v.rawRecords = () => Object.values(VAULT_KEYS).map(name => [name, storage.getItem(VAULT_REC_PREFIX + name)]).filter(x => x[1] !== null);
+  // Copia cifrada (K1): los registros cifrados tal como están guardados, sin descifrarlos ni tocarlos, con v.records.all(). Solo lectura.
   v.changePassword = async (current, next) => {
     assertWritable();
     const dek = await vaultUnwrapPassword(v.header, current);
@@ -1654,7 +1695,7 @@ function createVault(storage, opts){
       for (const [k, old] of previous) { try { if (old === null) storage.removeItem(k); else storage.setItem(k, old); } catch (e2) {} }
       throw e;
     }
-    for (const name of Object.values(VAULT_KEYS)) storage.removeItem(VAULT_REC_PREFIX + name);
+    v.records.clear();
     storage.removeItem(VAULT_HEADER);
     v.state = 'off'; v.header = null; v.key = null; v.audioKey = null; v.cache = new Map();
   };
@@ -4771,7 +4812,7 @@ async function e3RefreshSpace(){
       (claros.length ? ' · ' + claros.length + ' audio(s) SIN CIFRAR (ensayo, no protegidos) · ' + mb(sum(claros)) : '')) +
       (free === null ? ' · Espacio libre no disponible.' : ' · Espacio libre estimado del sitio: ' + mb(free) + (free < 50 * 1024 * 1024 ? ' · Queda poco espacio. Creá una copia y revisá tus audios.' : ''));
     $('e3Persistence').textContent = 'Protegido contra la limpieza automática: ' + (persisted === null ? 'no disponible.' : persisted ? 'Sí.' : 'No. Creá una copia cifrada como respaldo.');
-    let textBytes = 0; for (let i = 0; i < localStorage.length; i++) { const key = localStorage.key(i); if (key && key.startsWith('notasvoz.')) textBytes += 2 * (key.length + (localStorage.getItem(key) || '').length); }
+    let textBytes = vault.records.bytes(); for (let i = 0; i < localStorage.length; i++) { const key = localStorage.key(i); if (key && key.startsWith('notasvoz.') && !vault.records.owns(key)) textBytes += 2 * (key.length + (localStorage.getItem(key) || '').length); }
     $('e3TextSpace').textContent = 'Texto, ajustes y registros: aproximadamente ' + mb(textBytes) + '. El cupo de texto depende del navegador; no se mide escribiendo datos de prueba.' +
       (textBytes >= 4 * 1024 * 1024 ? ' Uso alto: se acerca a la referencia habitual de 5 MB. Creá una copia.' : textBytes >= 2.5 * 1024 * 1024 ? ' Supera la mitad de la referencia habitual de 5 MB.' : '');
     const order = (a, b) => $('e3Sort').value === 'size' ? (b.bytes || 0) - (a.bytes || 0) : (b.createdAt || 0) - (a.createdAt || 0);
@@ -5639,6 +5680,7 @@ function k2DraftEmpty(raw){
 }
 function k2LocalEmpty(){
   if (vault.state !== 'off') return false;
+  if (vault.records.any()) return false;   // los registros cifrados se consultan por su capa, donde sea que estén guardados
   for (let i=0;i<localStorage.length;i++){
     const name=localStorage.key(i);
     if (name===DRAFT && k2DraftEmpty(localStorage.getItem(name))) continue;
@@ -5745,7 +5787,7 @@ async function k2Rollback(){
     if(m&&(m.createdAt!==a.createdAt||m.bytes!==a.bytes))throw new Error('Un audio del lote no coincide con lo restaurado; no se tocó nada.');
   }
   for(const a of j.audios) await anDelete(db,a.id);
-  for(const name of j.names) localStorage.removeItem(VAULT_REC_PREFIX+name);
+  for(const name of j.names) vault.records.remove(name);
   localStorage.removeItem(CKEY);localStorage.removeItem(GKEY);   // la instalación estaba vacía antes de restaurar
   localStorage.removeItem(K2_JOURNAL);
   return true;
@@ -5797,8 +5839,8 @@ async function k2RestoreLocked(file,secret){
       if(!health.ok)throw new Error('El audio '+meta.id+' no se guardó íntegro.');
     }
     for(const [name,raw] of plan.records){
-      localStorage.setItem(VAULT_REC_PREFIX+name,raw);
-      if(localStorage.getItem(VAULT_REC_PREFIX+name)!==raw)throw new Error('Registro sin confirmar.');
+      vault.records.set(name,raw);
+      if(vault.records.get(name)!==raw)throw new Error('Registro sin confirmar.');
     }
     if(plan.cfg.cfg!==null)localStorage.setItem(CKEY,plan.cfg.cfg);
     if(plan.cfg.generador!==null)localStorage.setItem(GKEY,plan.cfg.generador);
@@ -5919,7 +5961,7 @@ async function copiaCreate(filePassword){
     }
     copiaSay('Armando la copia…');
     const now = Date.now(), w = copiaWriter(header, key, completa ? 'completa' : 'solo-texto', now);
-    if (abierta) { for (const [name, raw] of vault.rawRecords()) await w.registro(name, raw); }
+    if (abierta) { for (const [name, raw] of vault.records.all()) await w.registro(name, raw); }
     else for (const [k, name] of Object.entries(VAULT_KEYS)) { const plain = vaultStore.getItem(k); if (plain !== null) await w.registro(name, await vaultSealRecord(key, header.id, name, plain)); }
     await w.config({cfg: localStorage.getItem(CKEY), generador: localStorage.getItem(GKEY)});
     const faltan = completa ? await copiaAudios(w) : {omitidos: 0, sinCifrar: 0}, omitidos = faltan.omitidos;

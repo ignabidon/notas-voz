@@ -33,11 +33,12 @@ DictaVoz (antes DictaNota; solo cambió lo visible): transcribe voz a texto en e
 | #58 | Auditoría y propuesta de almacenamiento definitivo (solo documentación) | ChatGPT | — |
 | #52 | Visión de la experiencia y guía estética (solo documentación) | ChatGPT | — |
 | #49, #37 | Guía del propietario y feedback del Motorola; decisiones del 16/11 (solo documentación) | Claude | — |
+| #64 | Capa única de registros cifrados (`vault.records`), sin cambio de comportamiento | Claude (fork propio) | — (es requisito de T) |
 | #22, #1 | Borradores viejos de otras etapas | sin dueño vigente | — |
 
 ## Pasos a seguir (en este orden)
 
-1. **Capa única de registros** (bóveda, copias y K2 leen y escriben los registros por un solo camino). Es requisito de T: sin ella, una copia posterior a T saldría sin notas. Puede hacerla un colaborador externo por PR desde un fork.
+1. **Capa única de registros** (bóveda, copias y K2 leen y escriben los registros por un solo camino). Es requisito de T: sin ella, una copia posterior a T saldría sin notas. **Hecha, en PR abierto** (ver «Qué está en curso»); sigue pendiente la revisión cruzada y unirla.
 2. **K2 de reemplazo, rediseñado** según la segunda revisión externa: respaldo verificado del estado actual → borrado guiado con diario → restauración en vacío; listar antes lo que se perderá; marca propia de «restauración en curso»; comprobar espacio; al restaurar, **cifrar los audios que estaban sin protección** (M12, decisión de Ignacio del 17/11).
 3. **Mejoras de uso** (U16): elegir cuaderno y nombre desde Dictar (U12) y la maqueta del rediseño de Ajustes.
 4. **«Conservar audio» activado de entrada** en instalaciones nuevas (A6), cuando la restauración cubra el audio sin protección (paso 2).
@@ -50,7 +51,7 @@ DictaVoz (antes DictaNota; solo cambió lo visible): transcribe voz a texto en e
 ## Estado de las pruebas (tres niveles, siempre separados)
 
 - **Código guardado:** lo de `main` está publicado; lo de los PR está solo en sus ramas.
-- **Pruebas técnicas:** 166 de 166 en Node y diez suites de Chrome en verde para `main` (CAMBIOS.md, 17/11). Los PR traen las suyas en el CI.
+- **Pruebas técnicas:** 187 en Node (más 11 de la capa de registros) y diez suites de Chrome en verde para `main` (CAMBIOS.md, 17/11). Los PR traen las suyas en el CI.
 - **Probado en el Motorola:** grabar, guardar, reproducir, editar, protección con contraseña, quitar audio y panel de espacio. **Sin probar:** copia cifrada, adelantar/pausar el audio, «Ver nota» y todo lo de los PR abiertos. Ignacio tiene limitaciones técnicas para probar: las IA hacen todo lo posible en laboratorio y piden solo lo que únicamente se ve en el teléfono (`docs/PRUEBA-CORTA-MOTOROLA.md`).
 
 ## Pendientes de producto sin prioridad
