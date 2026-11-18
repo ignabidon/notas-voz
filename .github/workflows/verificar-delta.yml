@@ -65,3 +65,8 @@ jobs:
       - name: K2 · candado universal entre pestañas, lotes alterados, cuota por fase y cortes reales (datos ficticios)
         run: node tests/k2-candado-browser.mjs
         timeout-minutes: 6
+      - name: Correcciones PR 60 - inventario, exclusiones, copias mezcladas y cortes (Node)
+        run: node --test tests/p2-correcciones.test.mjs
+      - name: Correcciones PR 60 en Chrome (guarda, panel, copia 1 con avisos, copia 2 mezclada; datos ficticios)
+        run: node tests/p2-correcciones-browser.mjs
+        timeout-minutes: 5

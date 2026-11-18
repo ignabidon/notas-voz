@@ -1,3 +1,39 @@
+## 17/11/2026 · PR #61 actualizado con las correcciones del #60 (Claude)
+
+Paso 3 del plan. Se unió la rama del #60 (incluido `4e7758d`, el arreglo de «Quitar la protección») en la del #61. Conflictos solo en `CAMBIOS.md` y el CI: se conservaron ambos lados.
+
+- **K2 rechaza copias formato 2 incompletas** (hallazgo de la revisión externa del 17/11): con las correcciones del #60, la verificación admite copias con exclusiones; K2 ahora las rechaza con el detalle de lo que falta, en el botón y en `k2RestoreLocked`. No se escribe nada.
+- **Rama peligrosa eliminada:** el fragmento de tipo B (audio que estaba en claro) ya no se descifra y escribe; lanza un error. Por decisión de Ignacio (M12), en el futuro esos audios se cifrarán al restaurar.
+- La prueba estática del #60 que prohibía usar el formato 2 fuera de su bloque ahora permite el uso de K2 (su bloque y su botón). Prueba nueva para lo anterior.
+- Pruebas: Node (`delta`, `entrega2`, `p2-correcciones`) y Chrome (K2, candado K2, correcciones #60, biblioteca P2, cifrado, copia K1) en verde en laboratorio. **No probado en el Motorola.** K2 sigue experimental, solo en instalación vacía; el reemplazo no está programado.
+
+## 17/11/2026 · Quitar la protección no deja texto en claro si falla a mitad de camino (Claude, rama del PR #60)
+
+Hallazgo grave de una revisión externa de seguridad (IA de un amigo de Ignacio, solo lectura), verificado contra `37e28a0`. Al quitar la protección, `v.disable` escribía en claro cada registro y, si una escritura o la relectura fallaba (por ejemplo, almacenamiento lleno), cortaba sin borrar lo ya escrito: la protección seguía activa pero quedaba texto legible hasta el próximo desbloqueo.
+
+- Ahora se guarda el valor previo de cada clave y, ante cualquier error, se deshace lo escrito antes de avisar. La protección sigue activa y no queda nada en claro.
+- Prueba nueva en `tests/delta.test.mjs`: almacenamiento que falla en la segunda escritura; comprueba que no queda ninguna clave en claro ni el texto ficticio, y que después se puede quitar la protección normalmente. Falla sin el arreglo y pasa con él.
+- No cambia nada más: ni formatos, ni claves, ni la interfaz. Probado en laboratorio (Node); **no probado en el Motorola**.
+
+## 17/11/2026 · Correcciones del PR #60 a pedido del propietario (Claude, misma rama; sin merge)
+
+Pedido de Ignacio con seis puntos. Base: `314843d` (cabeza del #60). No se tocaron #59, #61 ni `main`. Nada nuevo se conectó a la interfaz habitual ni se implementó K2.
+
+- **1 · Quitar la protección:** la guarda contaba **todas** las fichas de audio; una ficha sin cifrar (ensayo P2) trababa quitar la protección sin motivo. Ahora `anStoredKinds()` separa cifrados y sin cifrar y `vault.disableGuard` cuenta solo los cifrados. Para no abrir un hueco, «sin cifrar» exige la marca `mode: claro` **y** ninguna clave (`anIsPlainMeta`); una ficha ambigua o dañada cuenta como cifrada.
+- **2 · Panel de almacenamiento (Ajustes):** antes decía «N audio(s) cifrado(s)» incluyendo los sin cifrar y les ofrecía «Preparar nota» y «Borrar audio», que usan la clave de la protección. Ahora muestra las dos cantidades por separado («SIN CIFRAR (ensayo, no protegidos)»), lista los sin cifrar **sin botones** (también con la protección apagada) y marca los cortados como «a medio guardar». `anAudioHealth`, `e3Play`, `e3Recover` y `e3Remove` rechazan una ficha sin cifrar sin tocarla.
+- **3 · La copia no se presenta como completa si falta algo:**
+  - *Formato 1 (el que usa la app):* los audios sin cifrar no entran (el formato 1 solo lleva cifrados), pero antes se contaban como «dañados o a medio guardar». Ahora se cuentan aparte y el mensaje dice «Atención, la copia NO está completa: N audios guardados sin cifrar no entraron…». La copia de solo texto también lo avisa. **El formato 1, su lector y su archivo fijo no cambian.**
+  - *Formato 2 (ensayo):* el inventario cifrado ahora trae `exclusiones` (cada audio que no entró, con su motivo: `a-medio-guardar`, `danado`, `cifrado-sin-clave`, `solo-texto`) y `biblioteca` (cuántos audios había). El lector devuelve `exclusiones`, `motivos` y `todoIncluido`, y `copia2Describe` nunca dice «completa» si falta un audio.
+- **4 · Copias mezcladas:** se comprobó que el formato 2 verifica audios cifrados y sin cifrar en la misma copia, en ambos órdenes, con contraseña y con código de recuperación.
+- **5 · Cortes, archivos incompletos, memoria e inventario:**
+  - Cada audio entra **entero o nada** en la copia 2 (los bloques se arman aparte y se agregan juntos); antes un fallo a mitad podía dejar medio audio.
+  - El fragmento sin cifrar se vuelve a comprobar en el momento de cifrarlo: si cambió, el audio queda excluido como dañado.
+  - Los fragmentos ya cifrados para la copia se guardan como `Blob` y no como memoria de JavaScript (audios largos).
+  - El escritor no arma la copia si lo incluido más lo excluido no suma lo que había en la biblioteca; después de cerrarla no acepta nada más.
+  - Nuevo recorrido de laboratorio `copia2Audios` (bloque `COPIA2-USO`, solo lee, sin botón).
+- **Pruebas nuevas:** `tests/p2-correcciones.test.mjs` (Node, 9 pruebas: inventario, exclusiones, copia mezclada, corte en cada límite de bloque, byte cambiado en cada bloque, escritor todo-o-nada, formato 1 intacto) y `tests/p2-correcciones-browser.mjs` (Chrome: corte real de escritura simulado, guarda, panel, copia 1 con avisos, copia 2 mezclada, fragmento alterado, protección quitada con audios sin cifrar presentes). Ajustada una prueba de `delta.test.mjs` que fijaba el texto viejo de la guarda. Se comprobó que en el código anterior los tres problemas se reproducen.
+- **Resultados:** Node 166 + 10 + 9 en verde; las 13 suites de Chrome en verde. `e2-correcciones-browser` falló una vez en local sin mensaje y pasó en las tres corridas siguientes (también con el código anterior): se anota como posible inestabilidad, a mirar en el CI.
+- **Decisiones del propietario recibidas con este pedido:** los datos guardados hoy son de prueba y pueden descartarse (no hacen falta migraciones complejas); sin pruebas en el Motorola hasta una etapa más avanzada; las pruebas de Node y Chrome siguen siendo obligatorias; **no autoriza borrar datos automáticamente ni desproteger información futura**. Este cambio no borra ni migra nada.
 **K2 (PR #61, borrador):** el bloqueo universal sin bóveda ya está programado y probado en laboratorio (ver la entrada de correcciones). Falta revisión cruzada de esas correcciones y el CI de GitHub antes de unir.
 
 ## 17/11/2026 · K2: correcciones de la revisión cruzada — candado universal (Claude, PR #61)
