@@ -195,13 +195,20 @@ try{
     'const r=put.apply(this,a);location.reload();return r}return put.apply(this,a)};'+
     'k2RestoreEmpty('+V1+',"'+PASS+'").catch(()=>{});return 1})()');
   await sleep(300);await E.ready();
-  let st=await state(E);
-  assert.equal(st.journal,null,'el arranque limpió el lote cortado');assert.equal(st.empty,true);assert.equal(st.audios,0);
+  // La limpieza del lote cortado corre al arrancar y es asincrónica: se espera a que termine (máx. 10 s) en vez de mirar a ciegas.
+  const settle=async(tab,ok)=>{let s;for(let i=0;i<100;i++){s=await state(tab);if(ok(s))return s;await sleep(100)}return s};
+  // location.reload() no detiene la página al instante: a veces la restauración alcanza a terminar antes de recargar.
+  // Lo que se exige es todo o nada: o quedó vacía (lote limpiado al arrancar) o quedó la copia entera (cabecera y su audio), nunca a medias.
+  let st=await settle(E,s=>s.journal===null&&((s.empty&&s.audios===0&&!s.header)||(s.header&&s.audios===1)));
+  assert.equal(st.journal,null,'el arranque limpió el lote cortado');
+  if(st.header){assert.equal(st.audios,1,'si la cabecera quedó escrita, la copia está entera');
+    await json(E,'vault.otherTab=false;localStorage.clear();const db=await anDb();for(const m of await anListMeta(db))await anDelete(db,m.id);return "1"');await E.reload();st=await state(E);}
+  assert.equal(st.empty,true,'estado: '+JSON.stringify(st));assert.equal(st.audios,0);
   // Corte justo después de escribir la cabecera: la restauración vale y el lote se descarta al arrancar.
   await E.run('(()=>{const S=Storage.prototype,set=S.setItem;S.setItem=function(k,v){const r=set.call(this,k,v);'+
     'if(k===VAULT_HEADER)location.reload();return r};k2RestoreEmpty('+V1+',"'+PASS+'").catch(()=>{});return 1})()');
   await sleep(300);await E.ready();
-  st=await state(E);
+  st=await settle(E,s=>s.header&&s.journal===null&&s.audios===1);
   assert.equal(st.header,true);assert.equal(st.journal,null);assert.equal(st.audios,1);
   assert.equal(await E.run('vault.state'),'locked');
   await E.close();

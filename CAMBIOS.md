@@ -1,3 +1,8 @@
+## 18/11/2026 · Prueba inestable de K2 corregida y reemplazo probado en el Motorola (Claude)
+
+- **`tests/k2-candado-browser.mjs` (parte 6, «corte real»):** fallaba a veces (1 de cada 10 en laboratorio, también en el CI). Causa: `location.reload()` no detiene la página al instante, y a veces la restauración alcanzaba a terminar entera antes de recargar; la prueba solo aceptaba «vacía». Además miraba el estado a los 300 ms, sin esperar la limpieza asincrónica del arranque. Ahora espera hasta 10 s y exige **todo o nada**: vacía (lote limpiado) o la copia entera (cabecera y su audio), nunca a medias. **La app no cambió.** 0 fallas en 20 corridas.
+- **Probado en el Motorola (Ignacio, 18/11, mañana):** recorrido del reemplazo K2 con datos inventados (copia, nota posterior, reemplazo, dos confirmaciones, descarga del respaldo previo, resultado y código nuevo). Sin problemas según Ignacio.
+
 ## 18/11/2026 · K2 de reemplazo: restaurar una copia sobre una instalación que ya tiene datos (Claude Sonnet 5.5; entregado como `.patch`, sin tocar GitHub)
 
 Base: `main` con la capa `vault.records` (#64). Rama `feature/k2-reemplazo-2026-11-17`. Sin T. No cambian los formatos de copia 1 y 2, ni las claves, ni la cabecera, ni los archivos de ejemplo. Los registros cifrados se leen y escriben **solo** por `vault.records`.
