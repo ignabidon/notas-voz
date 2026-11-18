@@ -46,7 +46,7 @@ Una línea con ID nuevo, fecha, la frase de Ignacio lo más literal posible y la
 | U9 | Autoría visible solo en Ajustes: «Psicólogo Ignacio Lasarte · creador de la aplicación». Sin nombres de IA en la interfaz | 16/11 | PR #37 (sin unir) | Pendiente |
 | U10 | Motor Whisper y lamejs dentro del repositorio (sacar jsDelivr de la CSP). Modelos dentro o descargados una vez: **sin decidir** | 16/11 | PR #37 (sin unir) | Pendiente |
 | U11 | Proteger `main` en GitHub. Lo activa Ignacio | 16/11 | chat | **Pendiente: `main` sigue sin protección (verificado 17/11)** |
-| U12 | Elegir cuaderno y nombre desde Dictar (por defecto, uno nuevo con fecha y hora) | 17/11 | PR #49 y #52 (sin unir) | Pendiente |
+| U12 | Elegir cuaderno y nombre desde Dictar (por defecto, uno nuevo con fecha y hora) | 17/11 | PR #49 y #52 (sin unir) | Entregado como .patch (18/11), falta unirlo |
 | U13 | Revisar la transcripción como borrador dentro del cuaderno y confirmar a mano; conservar borradores al volver a la app | 17/11 | PR #52 (sin unir) | En curso (#59) |
 | U14 | Si Whisper falla y «Conservar audio» estaba activado: mostrar el audio en el cuaderno y permitir «guardar solo audio», reintentar y escribir a mano. Si estaba desactivado: no guardar el audio | 17/11 | PR #52 (sin unir) | En curso (#59 hace «guardar solo audio»; falta reintentar) |
 | U15 | Reproductor compacto en la misma burbuja, con prioridad visual para el texto | 17/11 | PR #52 (sin unir) | Pendiente |

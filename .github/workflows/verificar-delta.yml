@@ -70,6 +70,9 @@ jobs:
       - name: K2 de reemplazo · respaldo previo, doble confirmación, cortes en cada paso, espacio y audio sin cifrar que se cifra (datos ficticios)
         run: node tests/k2-reemplazo-browser.mjs
         timeout-minutes: 10
+      - name: U12 elegir cuaderno y nombre desde Dictar (Chrome, 360 px, datos ficticios)
+        run: node tests/dictar-destino-browser.mjs
+        timeout-minutes: 6
       - name: Correcciones PR 60 - inventario, exclusiones, copias mezcladas y cortes (Node)
         run: node --test tests/p2-correcciones.test.mjs
       - name: Correcciones PR 60 en Chrome (guarda, panel, copia 1 con avisos, copia 2 mezclada; datos ficticios)

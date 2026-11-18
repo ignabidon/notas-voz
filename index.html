@@ -555,6 +555,14 @@ label,.hint,.warn,.sub,.section-hint,.selection-help,.mark-help,.record-caption-
 .capture-shortcuts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:24px;text-align:center}
 .capture-shortcuts button{min-height:52px}
 #openSheets,#writeNewNote{background:var(--acc-soft);color:var(--ink)}
+/* U12 · destino de lo que se dicta: una columna, campos de 48 px para el pulgar, sin pantallas nuevas */
+.dict-dest{display:grid;gap:6px;margin-top:20px;text-align:left}
+.dict-dest label{font-size:max(13px,calc(13px * var(--text-scale)));font-weight:700;color:var(--ink);margin:0}
+.dict-dest select,.dict-dest input[type=text]{width:100%;min-height:48px;font-size:16px;box-sizing:border-box;border:1px solid var(--line-strong);border-radius:14px;padding:0 12px}
+.dict-dest #dictNameRow{display:grid;gap:6px;margin-top:6px}
+.dict-dest #dictNameRow[hidden]{display:none}
+.dict-dest .hint{margin:2px 0 0;min-height:0}
+.dict-dest .hint:empty{display:none}
 #captureWarning,#vaultWarn,#vaultSaveError,#vaultLockMsg,#correctionRuleNotice,.conv-msg{color:var(--note-ink)}
 #captureWarning{background:var(--note-bg);border-color:var(--note-ink)}
 #correctionError{color:var(--error)}
@@ -816,6 +824,15 @@ body.delta-recording #transcriptionDockBar{height:3px;margin-top:3px}
         <button id="pause" type="button" disabled title="Pausar o reanudar (tecla P)">Pausar</button>
         <button id="mark" type="button" disabled title="Insertá una marca de tiempo en la transcripción (tecla M)" aria-label="Marcar momento en la transcripción">Marcar momento</button>
       </div>
+    </div>
+    <div class="dict-dest" id="dictDest">
+      <label for="dictDestSel">Guardar en</label>
+      <select id="dictDestSel" aria-describedby="dictDestHint"><option value="">Cuaderno nuevo</option></select>
+      <div id="dictNameRow">
+        <label for="dictName">Nombre del cuaderno nuevo <span class="opt">(opcional)</span></label>
+        <input type="text" id="dictName" maxlength="120" autocomplete="off" enterkeyhint="done" placeholder="Si lo dejás vacío: fecha y hora">
+      </div>
+      <p class="hint" id="dictDestHint" role="status"></p>
     </div>
     <div class="capture-shortcuts"><button type="button" id="openSheets" data-go-view="transcripcion">Ver cuadernos guardados</button><button type="button" id="writeNewNote">Escribir una nota</button></div>
     <p class="mark-help">«Marcar» señala un momento en la transcripción.</p>
@@ -2403,7 +2420,9 @@ function convAddEntry(data, input, opts = {}){
   if (!convHasContent(entry)) return {data, entry: null, conversation: null, created: false};
   let conversations = data.conversations, conversation;
   if (input.conversationId == null) {
-    conversation = {id: newId(), title: convStamp(entry.savedAt, entry.tzOffsetMin), createdAt: entry.savedAt, updatedAt: entry.savedAt, tags: []};
+    // U12: el nombre es opcional; vacío (o solo espacios) = fecha y hora, como siempre (U7).
+    const custom = typeof opts.title === 'string' ? opts.title.trim().slice(0, 120) : '';
+    conversation = {id: newId(), title: custom || convStamp(entry.savedAt, entry.tzOffsetMin), createdAt: entry.savedAt, updatedAt: entry.savedAt, tags: []};
     conversations = conversations.concat(conversation);
   } else {
     const c = conversations.find(x => x.id === input.conversationId);
@@ -2655,6 +2674,9 @@ function renderList(){
 const convStore = convMakeStore(vaultStore, () => vault.state === 'off' || vault.state === 'open');
 let convOpenId = null, convTargetId = null, convTargetSet = false, convEditingId = null, convFromAudio = false, convRecordedAt = null;
 let convComposeNew = false, convEditorCollapsed = false;
+/* U12: destino elegido en Dictar. Vive solo en memoria (no se guarda en ningún lado): al abrir la app de nuevo vuelve a «Cuaderno nuevo».
+   convDictar = la nota pendiente nació en Dictar, así que el selector todavía puede cambiarle el destino; convDictarArmed = «Escribir una nota» desde Dictar. */
+let dictDestId = null, dictDestName = '', convDictar = false, convDictarArmed = false;
 let convAudioId = null, convAudioMs = null;   // E2: audio cifrado pendiente de unir a la nota que se está escribiendo o editando
 // E2 (correcciones): convAudioBase = cuántas partes tenía el audio de la nota en edición antes de grabarle encima (null: no se agregó nada).
 // convCtx cambia cada vez que el editor pasa a otra nota: un audio que termina de guardarse tarde solo se une si sigue siendo la misma.
@@ -2669,13 +2691,16 @@ function convDest(){
   if (convTargetSet) return convTargetId && convHas(convTargetId) ? convTargetId : null;
   return convOpenId;
 }
-function convResetPending(){ convTargetId = null; convTargetSet = false; convEditingId = null; convFromAudio = false; convRecordedAt = null; }
+function convResetPending(){ convTargetId = null; convTargetSet = false; convEditingId = null; convFromAudio = false; convRecordedAt = null; convDictar = false; convDictarArmed = false; }
 /* Al empezar un mensaje nuevo (grabación, archivo o primera letra) se fija su destino. */
 function convStartPending(fromAudio){
   if (fromAudio) convEditorCollapsed = false;
   if (convEditingId) { if (fromAudio) convFromAudio = true; refreshConvTarget(); return; }
   if (!convTargetSet || !$('text').value.trim()) {
-    convTargetId = fromAudio && document.body.dataset.view !== 'transcripcion' ? null : convOpenId;
+    // Desde Dictar (o «Escribir una nota» en Dictar) el destino lo decide el selector; dentro de un cuaderno, ese cuaderno (U7).
+    const fromDictar = (fromAudio && document.body.dataset.view !== 'transcripcion') || (convDictarArmed && !convOpenId);
+    convTargetId = fromDictar ? (dictDestId && convHas(dictDestId) ? dictDestId : null) : convOpenId;
+    convDictar = fromDictar; convDictarArmed = false;
     convTargetSet = true; convRecordedAt = Date.now(); convFromAudio = !!fromAudio;
   } else if (fromAudio) convFromAudio = true;
   refreshConvTarget(); renderConv();
@@ -2687,9 +2712,37 @@ function refreshConvTarget(){
   if (!convStore.data) { t.textContent = 'Los cuadernos no están disponibles todavía. Lo que escribas queda como borrador.'; return; }
   const e = convEditingId && convEntry(convEditingId);
   if (e) { t.textContent = 'Editando una nota de «' + convTitleOf(e.conversationId) + '». Guardar cambia el texto; la fecha y hora (' + (e.savedAt === null ? 'sin fecha' : convStamp(e.savedAt, e.tzOffsetMin)) + ') no cambian.'; return; }
-  const d = convDest();
-  t.textContent = d ? 'Al guardar, esta nota se agrega a «' + convTitleOf(d) + '».' : 'Al guardar, se crea un cuaderno nuevo con la fecha y hora.';
+  const d = convDest(), nm = convDictar && !d ? dictDestName.trim() : '';
+  t.textContent = d ? 'Al guardar, esta nota se agrega a «' + convTitleOf(d) + '».' : nm ? 'Al guardar, se crea el cuaderno nuevo «' + nm + '».' : 'Al guardar, se crea un cuaderno nuevo con la fecha y hora.';
+  dictDestRefresh();
 }
+/* Selector de destino de Dictar. Solo cambia dónde irá la nota al tocar Guardar: el texto sigue siendo un borrador sin guardar (U13). */
+let dictDestSig = null;
+function dictDestRefresh(){
+  const sel = $('dictDestSel'); if (!sel) return;
+  const data = convStore.data, sums = data ? convSummaries(data) : [];
+  if (dictDestId && !sums.some(x => x.id === dictDestId)) dictDestId = null;   // el cuaderno elegido ya no existe: vuelve a «Cuaderno nuevo»
+  const sig = JSON.stringify(sums.map(x => [x.id, x.title]));
+  if (sig !== dictDestSig) {   // no se rearma mientras no cambie la lista: así no se cierra el selector del celular
+    dictDestSig = sig; sel.textContent = '';
+    const nuevo = document.createElement('option'); nuevo.value = ''; nuevo.textContent = 'Cuaderno nuevo'; sel.append(nuevo);
+    sums.forEach(x => { const o = document.createElement('option'); o.value = x.id; o.textContent = x.title || 'Sin título'; sel.append(o); });
+  }
+  // Si la nota sin guardar ya tiene un destino que no salió de Dictar (o se está editando una guardada), el selector lo muestra y no lo cambia.
+  const pendingElsewhere = !!(convTargetSet && !convDictar && !convEditingId && ($('text').value.trim() || convAudioId || recording));
+  const locked = pendingElsewhere || !!convEditingId, lockedDest = locked ? convDest() : null;
+  sel.value = locked ? (lockedDest || '') : (dictDestId || '');
+  sel.disabled = locked;
+  $('dictNameRow').hidden = locked || !!sel.value;
+  $('dictDestHint').textContent = convEditingId ? 'Estás editando una nota guardada: no cambia de cuaderno.'
+    : pendingElsewhere ? 'La nota sin guardar ya va a ' + (lockedDest ? '«' + convTitleOf(lockedDest) + '»' : 'un cuaderno nuevo') + '. Guardala o descartala para elegir otro destino.' : '';
+}
+$('dictDestSel').addEventListener('change', () => {
+  dictDestId = $('dictDestSel').value || null;
+  if (convDictar && convTargetSet && !convEditingId) convTargetId = dictDestId;   // elegir al terminar de dictar también vale
+  refreshConvTarget();
+});
+$('dictName').addEventListener('input', () => { dictDestName = $('dictName').value; refreshConvTarget(); });
 function convShowMsg(t){ $('convMsg').textContent = t || ''; }
 /* Menú «⋯» de una nota (B3). Uno solo abierto a la vez; se cierra al elegir, al tocar afuera o con Escape. No guarda nada. */
 let convMenuOpen = null;
@@ -2730,7 +2783,7 @@ function renderConv(){
   const composing = !!(convOpenId || convComposeNew || $('text').value.trim() || convAudioId || convTargetSet || convEditingId);
   document.body.classList.toggle('conv-open', !!convOpenId);
   document.body.classList.toggle('conv-composing', composing);
-  refreshConvEditor();
+  refreshConvEditor(); dictDestRefresh();
   $('convListView').hidden = !!convOpenId; $('convOpenView').hidden = !convOpenId;
   const list = $('convList'); list.textContent = '';
   if (!convOpenId) {
@@ -2860,7 +2913,8 @@ function convBeginNew(){
     renderConv(); flash('Primero guardá o descartá la nota pendiente. Su cuaderno de destino no cambió.'); return false;
   }
   convEditorCollapsed = false;
-  convResetPending(); convOpenId = null; convComposeNew = true;
+  const fromDictar = document.body.dataset.view === 'grabacion';
+  convResetPending(); convOpenId = null; convComposeNew = true; convDictarArmed = fromDictar;
   document.querySelector('[data-delta-view="transcripcion"]').click(); renderConv();
   $('text').focus(); return true;
 }
@@ -2980,9 +3034,10 @@ async function convSave(){
       next = convEditText(convStore.data, editing.id, text, now); dest = editing.conversationId; savedAt = editing.savedAt;
       if (convAudioId) next = convSetAudio(next, editing.id, convAudioId, convAudioMs, audioParts);
     } else {
+      const newName = convDictar && !convDest() ? dictDestName : '';   // el nombre solo vale para un cuaderno nuevo que nació en Dictar
       const r = convAddEntry(convStore.data, {conversationId: convDest(), kind: convFromAudio ? 'audio' : 'texto', savedAt: now,
         tzOffsetMin: new Date(now).getTimezoneOffset(), recordedAt: convRecordedAt, text, audioId: convAudioId, durationMs: convAudioMs, audioParts,
-        transcriptionStatus: convFromAudio ? ((dead || failedParts) ? 'error' : text.trim() ? 'listo' : 'pendiente') : 'listo'});
+        transcriptionStatus: convFromAudio ? ((dead || failedParts) ? 'error' : text.trim() ? 'listo' : 'pendiente') : 'listo'}, {title: newName});
       next = r.data; dest = r.conversation.id; savedAt = now;
     }
   } catch (e) { return flash('No se guardó: ' + e.message); }
@@ -3002,7 +3057,7 @@ async function convSave(){
   }
   if ($('learnAuto').checked) learnFromEdits();
   else { showSuggestions(suggest(baseline, text, D.rules.map(r => r.a.toLowerCase()))); baseline = text; }
-  convComposeNew = false; convOpenId = dest; convClearComposer();
+  convComposeNew = false; convOpenId = dest; dictDestName = ''; $('dictName').value = ''; convClearComposer();
   const draftCleared = await saveDraft();
   const when = convStamp(savedAt), where = convTitleOf(dest);
   const msg = editing ? 'Cambios guardados. La fecha no cambió.' : (where === when ? 'Guardado como cuaderno nuevo · ' + when : 'Guardado en «' + where + '» · ' + when);

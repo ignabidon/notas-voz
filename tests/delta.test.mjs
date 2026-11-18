@@ -1426,7 +1426,8 @@ test('conversaciones: el bloque está aislado y la pantalla Notas lo usa con el 
 
 test('Notas: la captura global va a cuaderno nuevo y dentro de un cuaderno abierto se agrega ahí', () => {
   assert.match(html, /function prepareNew\(\)\{[\s\S]*?convStartPending\(true\);\n\}/);
-  assert.match(html, /convTargetId = fromAudio && document\.body\.dataset\.view !== 'transcripcion' \? null : convOpenId;/);
+  // U7 + U12: dentro de un cuaderno, ese cuaderno; desde Dictar, el destino que eligió el usuario (por defecto, uno nuevo).
+  assert.match(html, /const fromDictar = \(fromAudio && document\.body\.dataset\.view !== 'transcripcion'\) \|\| \(convDictarArmed && !convOpenId\);\n\s*convTargetId = fromDictar \? \(dictDestId && convHas\(dictDestId\) \? dictDestId : null\) : convOpenId;/);
   assert.match(html, /<span>Cuadernos<\/span><\/a>/);
   for (const id of ['convPanel', 'convList', 'convBubbles', 'convTarget', 'convDiscard', 'convCancelEdit', 'convMoveDialog', 'convMoveAllBtn', 'convCopyAll', 'convUndo', 'convRename']) assert.ok(ids.includes(id), 'falta #' + id);
 });

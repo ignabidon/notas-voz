@@ -1,3 +1,15 @@
+## 18/11/2026 · Elegir cuaderno y nombre desde Dictar (U12) (Claude Sonnet 5.5; entregado como `.patch`, sin tocar GitHub)
+
+Base: `main` (#65 y #66). No cambian el formato de lo guardado, las claves, el cifrado, las copias ni K2: todo se sigue guardando por `vaultStore`, como hoy.
+
+- **Selector «Guardar en» en Dictar:** «Cuaderno nuevo» (por defecto) o cualquier cuaderno existente, del más reciente al más viejo. Con «Cuaderno nuevo» aparece un campo opcional de nombre; vacío o solo espacios = fecha y hora (U7). El nombre se recorta y tiene un máximo de 120 caracteres.
+- **Borrador (U13):** el dictado sigue siendo un borrador; no se guarda nada hasta tocar Guardar en Cuadernos. También se puede elegir el destino después de dictar.
+- **Dentro de un cuaderno** no se ve el selector y lo dictado va a ese cuaderno (U7). Si la nota sin guardar ya tiene otro destino, o se edita una guardada, el selector se ve bloqueado con una explicación.
+- **La elección dura solo la sesión** (variables en memoria, no se guarda). Al abrir la app vuelve a «Cuaderno nuevo». Si el cuaderno elegido desaparece, vuelve a «Cuaderno nuevo».
+- **Código:** `convAddEntry` acepta `opts.title`; `convStartPending`, `refreshConvTarget` y `convBeginNew` usan el destino de Dictar; `dictDestRefresh` arma la lista solo si cambia (no cierra el selector del celular). Ninguna pantalla nueva.
+- **Pruebas:** `tests/dictar-destino-browser.mjs` (Chrome a 360 px, con protección activada y desactivada) y se ajustó una regla de `tests/delta.test.mjs`. Capturas en `docs/capturas/u12-selector-360-*.png`.
+- **Límite conocido:** tras recargar, un borrador restaurado va a un cuaderno nuevo, como hoy.
+
 ## 18/11/2026 · Prueba inestable de K2 corregida y reemplazo probado en el Motorola (Claude)
 
 - **`tests/k2-candado-browser.mjs` (parte 6, «corte real»):** fallaba a veces (1 de cada 10 en laboratorio, también en el CI). Causa: `location.reload()` no detiene la página al instante, y a veces la restauración alcanzaba a terminar entera antes de recargar; la prueba solo aceptaba «vacía». Además miraba el estado a los 300 ms, sin esperar la limpieza asincrónica del arranque. Ahora espera hasta 10 s y exige **todo o nada**: vacía (lote limpiado) o la copia entera (cabecera y su audio), nunca a medias. **La app no cambió.** 0 fallas en 20 corridas.
