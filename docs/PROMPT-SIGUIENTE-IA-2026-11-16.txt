@@ -1,3 +1,5 @@
+HISTÓRICO (17/11/2026): NO USAR ESTE PEDIDO. Da órdenes obsoletas (nombre y pestañas viejas, pasos ya hechos). Los pedidos vigentes están en docs/PEDIDOS.md.
+
 Quiero continuar el rediseño de mi aplicación DictaNota sin modificar todavía el código. Leé primero `CONTINUAR-AQUI.md` en la raíz y luego `docs/REDISENO-CONVERSACIONAL-2026-11-16.md` como especificación central.
 
 Repositorio: https://github.com/ignabidon/notas-voz

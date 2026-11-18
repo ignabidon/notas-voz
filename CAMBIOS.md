@@ -1,3 +1,7 @@
+## 17/11/2026 · Cadena #59 → #60 → #61 unida a `main` (Claude)
+
+Se unió `main` (con el #62) en la rama del #61; los conflictos eran solo de documentación (se tomó la versión ordenada del #62 y se actualizó). Condición A5 cumplida: segunda revisión externa sin hallazgos graves sobre `4e7758d` y `c4cb29f`, CI en verde y candado universal del #61. `CONTINUAR-AQUI.md` reescrita; `docs/DECISIONES.md` suma A10 (contraseña de 8) y A11 (cifrar al restaurar audios sin protección). Nada probado en el Motorola.
+
 ## 17/11/2026 · PR #61 actualizado con las correcciones del #60 (Claude)
 
 Paso 3 del plan. Se unió la rama del #60 (incluido `4e7758d`, el arreglo de «Quitar la protección») en la del #61. Conflictos solo en `CAMBIOS.md` y el CI: se conservaron ambos lados.
@@ -80,6 +84,16 @@ Pedido de Ignacio con seis puntos. Base: `314843d` (cabeza del #60). No se tocar
 - **Recuperación:** si un borrador viejo coincide con la nota ya confirmada por texto, audio y origen/identificador de edición, no se restaura como duplicado; se intenta limpiar, sin descartar borradores genuinamente distintos.
 - **Pruebas agregadas:** `tests/entrega2.test.mjs` cubre cierre sin bóveda, cola pendiente, fallo de bloqueo, conciliación y preservación de cambios diferentes. Registro de detalles y limitaciones en `docs/ENTREGA2-ARQUITECTURA-B-IMPLEMENTACION-2026-11-17.md`.
 - **Alcance:** sin cambios de formato de copia, K2/T/AO, migraciones ni borrados. Código guardado en la rama del PR #59; ver CI de esa rama. **Sin prueba física nueva en el Motorola ni merge a `main`**.
+## 17/11/2026 · Orden de la documentación (Claude Sonnet 5.5, solo documentación)
+
+- **Qué:** se reorganizó la documentación para que cada documento tenga un solo rol y las dos IA trabajen sobre lo mismo. Rama `docs/ordenar-documentacion-2026-11-17`, base `main` = `7171650`. **No se tocó `index.html`, ni pruebas, ni datos, ni formatos.**
+- **Nuevo:** `docs/INDICE.md` (qué es cada documento y cuál manda), `docs/DECISIONES.md` (registro único de decisiones de Ignacio, con la fuente de cada una), `docs/PEDIDOS.md` (pedidos para copiar y pegar, iguales para cualquier IA) y `docs/historial/` (copia textual de los carteles de estado anteriores de `CONTINUAR-AQUI.md`, sin perder nada).
+- **Reescrito:** `CONTINUAR-AQUI.md` (una página de estado, con los PR abiertos y su dueño). **Ajustado:** el tablero `docs/PLAN-ALMACENAMIENTO-CIFRADO.md` (columna «Dueño», cruce con la Entrega 2 de los PR #58 a #61, pedidos y decisiones ahora enlazados en vez de copiados), `AGENTS.md` y `CLAUDE.md` (solo los carteles de estado: pasan a enlaces; ninguna regla técnica se quitó). **Marcados como históricos:** `INFORME-CONTINUIDAD`, `TRASPASO-A-CHATGPT` y los dos `PROMPT-*.txt`.
+- **Hallazgos de la primera pasada (después respondidos, ver abajo):** (1) el PR #61 implementaba un ensayo de K2 y el tablero decía que K2 se consulta siempre; no había permiso registrado. (2) Las decisiones A1 a A3 solo constaban en descripciones de PR sin unir. (3) `main` sigue sin protección (verificado por la API el 17/11): **sigue pendiente de Ignacio**.
+- **Respuestas de Ignacio (17/11, tarde), ya anotadas en `docs/DECISIONES.md` y en `CONTINUAR-AQUI.md`:** K2 autorizado, ensayo y reemplazo, y se une sin consultar de nuevo con revisión cruzada sin hallazgos graves y CI en verde (A4, A5); arquitectura B, audio sin protección con aviso y formato 2 confirmados (A1 a A3); «Conservar audio» activado de entrada solo en instalaciones nuevas, con aviso (A6); se puede retirar la compatibilidad con el audio suelto viejo y borrar sus datos de prueba (A7, A8); T en la misma base que los audios, con su permiso explícito (A9); prioridad de mejoras: elegir cuaderno desde Dictar y rediseño de Ajustes con maqueta (U16). Quedan sin decidir: publicación del formato 2 (Q1), reglas de AO (Q2) y pendientes menores (Q3). **Nota:** el reemplazo de datos de K2 todavía no está programado y el bloqueante de #61 sigue abierto.
+- **Conflictos esperables:** los PR #58 y #61 también tocan `AGENTS.md` y `CONTINUAR-AQUI.md`; #59, #60 y #61, `CAMBIOS.md`; #61, el tablero. Son líneas sueltas: se resuelven pasando sus dos líneas a las páginas nuevas.
+- **Pendiente a propósito:** separar en `AGENTS.md` las reglas permanentes de las secciones fechadas del 15/11, y actualizar textos viejos de `README.md`; mover documentos históricos (hoy solo marcados) para no chocar con el PR #52.
+- **Tres niveles:** código guardado: **ninguno** (solo documentos) · pruebas técnicas: enlaces entre documentos verificados y `node --test` sin cambios · Motorola: no aplica.
 
 ## 17/11/2026 · Nombre visible: DictaVoz (decisión del usuario)
 

@@ -1,3 +1,5 @@
+HISTÓRICO (17/11/2026): NO USAR ESTE PEDIDO. Da órdenes obsoletas (nombre y pestañas viejas, pasos ya hechos). Los pedidos vigentes están en docs/PEDIDOS.md.
+
 Retomá el trabajo de DictaNota. Primero leé `docs/TRASPASO-A-CHATGPT-2026-11-16.md`. Tu rama `rediseno-04-clinica-chat-chatgpt` no tiene commits sin unir (todo está en `main` por el PR #36); verificalo y, si hay algo más, hacelo en un PR nuevo, sin squash y solo con mi permiso para unir a `main`.
 
 Cuando eso esté terminado e integrado, incorporá las mejoras estéticas que propuso Claude tras revisar la app. Leé en este orden: `CONTINUAR-AQUI.md`, `AGENTS.md`, `SEGURIDAD.md` y `docs/PROPUESTA-ESTETICA-2026-11-16.md` (el documento central de este pedido).
