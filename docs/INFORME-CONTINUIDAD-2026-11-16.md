@@ -1,3 +1,5 @@
+> **HISTÓRICO · no usar como fuente de estado ni de instrucciones** (17/11/2026). Describe cómo estaban las cosas el 16/11. Lo vigente: [CONTINUAR-AQUI.md](../CONTINUAR-AQUI.md), [DECISIONES.md](DECISIONES.md) y [INDICE.md](INDICE.md).
+
 # DictaNota · Informe de continuidad para la próxima IA (16/11/2026, 10:15)
 
 > **Leé esto primero.** Resume qué se hizo hasta ahora en el rediseño conversacional, qué falta y en qué orden seguir.

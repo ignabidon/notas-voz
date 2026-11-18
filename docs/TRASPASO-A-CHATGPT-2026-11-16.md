@@ -1,3 +1,5 @@
+> **HISTÓRICO · no usar como fuente de estado ni de instrucciones** (17/11/2026). Describe cómo estaban las cosas el 16/11. Lo vigente: [CONTINUAR-AQUI.md](../CONTINUAR-AQUI.md), [DECISIONES.md](DECISIONES.md) y [INDICE.md](INDICE.md).
+
 # DictaNota · Traspaso a ChatGPT tras la Etapa A (16/11/2026)
 
 > **Responsable de este documento:** Claude. **Solo documentación.** No autoriza uniones a `main` ni reemplaza decisiones del usuario.
