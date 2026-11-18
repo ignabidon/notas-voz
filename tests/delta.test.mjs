@@ -2218,7 +2218,7 @@ test('copia K1: solo lee; no escribe, no borra y no sale a la red', () => {
   assert.doesNotMatch(copiaUso, /setItem\(|removeItem\(|anPut\w*\(|anDelete\w*\(|anTruncate\w*\(|\.put\(|\.delete\(|\.clear\(|fetch\(|XMLHttpRequest|innerHTML|\beval\b|new Function|convStore\.save|vault\.(enable|disable|changePassword|newRecovery|addBio|removeBio)/);
   // Lo protegido se lee por el almacén cifrado o como registros ya cifrados; nunca en claro desde localStorage.
   assert.deepEqual([...copiaUso.matchAll(/localStorage\.getItem\((\w+)\)/g)].map(m => m[1]).sort(), ['CKEY', 'GKEY']);
-  assert.match(copiaUso, /vault\.rawRecords\(\)/); assert.match(copiaUso, /vaultStore\.getItem\(k\)/);
+  assert.match(copiaUso, /vault\.records\.all\(\)/); assert.match(copiaUso, /vaultStore\.getItem\(k\)/);
   // Se comprueba entera antes de descargarla.
   assert.ok(copiaUso.indexOf('await copiaVerify(file') < copiaUso.indexOf('download(file)'), 'primero se comprueba, después se descarga');
   for (const id of ['copiaPanel', 'copiaCrear', 'copiaVerificar', 'copiaArchivo', 'copiaContenido', 'copiaCompleta', 'copiaSoloTexto', 'copiaPwForm', 'copiaClaveForm', 'copiaMsg']) assert.ok(ids.includes(id), 'falta #' + id);

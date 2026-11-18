@@ -38,6 +38,7 @@
 
 ## Protección cifrada (16/11/2026; leer `DISENO-CIFRADO.md`)
 - Notas, borrador, deshacer, personas y diccionario se leen y escriben **solo con `vaultStore`** (misma forma que `localStorage`). Nunca usar `localStorage` directo para esas claves: hay una prueba que lo exige.
+- **Registros cifrados (`notasvoz.boveda.v1.r.*`): solo por la capa `vault.records`** (bloque `REGISTROS-CIFRADOS` dentro de `VAULT-CORE`; métodos `get`, `set`, `remove`, `all`, `any`, `owns`, `bytes`, `quarantine`, `clear` y `useBackend`). La bóveda, la copia (K1) y la restauración (K2) no arman esas claves ni usan `localStorage` para ellos; una prueba estática (`tests/capa-registros.test.mjs`) falla si aparece un acceso directo. Es el paso previo a T: cuando los registros se muden a IndexedDB se cambia solo esa capa (hoy es sincrónica, como `localStorage`).
 - Lo que lee esos datos al arrancar va dentro de `vaultWhenReady(...)`, porque con la protección activada se carga recién al desbloquear.
 - No bloquear mientras se graba o transcribe: lo controla `vaultSetHooks`. Si se agrega otro trabajo largo, sumarlo ahí.
 - No cambiar el formato (`notasvoz.boveda.v1`, AAD y parámetros) sin versión nueva y migración. Una futura app de Android depende de él.
