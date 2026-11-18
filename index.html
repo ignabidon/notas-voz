@@ -1640,8 +1640,16 @@ function createVault(storage, opts){
     (await vaultUnwrapPassword(v.header, password)).fill(0);
     await v.flush();
     if (v.pending.size) throw new Error('Hay cambios sin guardar; no se quitó la protección.');
-    for (const [k, value] of v.cache) storage.setItem(k, value);
-    for (const [k, value] of v.cache) if (storage.getItem(k) !== value) throw new Error('No se pudo escribir la copia sin cifrar; la protección sigue activa.');
+    // Si una escritura o la relectura falla (por ejemplo, almacenamiento lleno), se deshace lo ya escrito en claro
+    // antes de avisar: la protección sigue activa y no queda texto clínico legible (revisión externa, 17/11).
+    const previous = new Map();
+    try {
+      for (const [k, value] of v.cache) { previous.set(k, storage.getItem(k)); storage.setItem(k, value); }
+      for (const [k, value] of v.cache) if (storage.getItem(k) !== value) throw new Error('No se pudo escribir la copia sin cifrar; la protección sigue activa.');
+    } catch (e) {
+      for (const [k, old] of previous) { try { if (old === null) storage.removeItem(k); else storage.setItem(k, old); } catch (e2) {} }
+      throw e;
+    }
     for (const name of Object.values(VAULT_KEYS)) storage.removeItem(VAULT_REC_PREFIX + name);
     storage.removeItem(VAULT_HEADER);
     v.state = 'off'; v.header = null; v.key = null; v.audioKey = null; v.cache = new Map();

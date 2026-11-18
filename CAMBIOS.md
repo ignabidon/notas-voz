@@ -1,3 +1,11 @@
+## 17/11/2026 · Quitar la protección no deja texto en claro si falla a mitad de camino (Claude, rama del PR #60)
+
+Hallazgo grave de una revisión externa de seguridad (IA de un amigo de Ignacio, solo lectura), verificado contra `37e28a0`. Al quitar la protección, `v.disable` escribía en claro cada registro y, si una escritura o la relectura fallaba (por ejemplo, almacenamiento lleno), cortaba sin borrar lo ya escrito: la protección seguía activa pero quedaba texto legible hasta el próximo desbloqueo.
+
+- Ahora se guarda el valor previo de cada clave y, ante cualquier error, se deshace lo escrito antes de avisar. La protección sigue activa y no queda nada en claro.
+- Prueba nueva en `tests/delta.test.mjs`: almacenamiento que falla en la segunda escritura; comprueba que no queda ninguna clave en claro ni el texto ficticio, y que después se puede quitar la protección normalmente. Falla sin el arreglo y pasa con él.
+- No cambia nada más: ni formatos, ni claves, ni la interfaz. Probado en laboratorio (Node); **no probado en el Motorola**.
+
 ## 17/11/2026 · Correcciones del PR #60 a pedido del propietario (Claude, misma rama; sin merge)
 
 Pedido de Ignacio con seis puntos. Base: `314843d` (cabeza del #60). No se tocaron #59, #61 ni `main`. Nada nuevo se conectó a la interfaz habitual ni se implementó K2.

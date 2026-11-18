@@ -1350,6 +1350,24 @@ test('cifrado: quitar la protección exige la contraseña y deja los datos como 
   assert.ok([...st.map.keys()].every(k => !k.startsWith(vaultCore.VAULT_HEADER)));
 });
 
+test('cifrado: si quitar la protección falla a mitad de camino, no queda texto en claro', async () => {
+  const datos = datosFicticios(), st = memStorage(datos), v = vaultCore.createVault(st);
+  await v.enable('frase de prueba larga');
+  const claves = Object.keys(vaultCore.VAULT_KEYS);
+  assert.ok(claves.every(k => st.getItem(k) === null), 'con la protección activa no hay claves en claro');
+  // Almacenamiento que se llena en la segunda escritura en claro
+  const setOriginal = st.setItem.bind(st); let escrituras = 0;
+  st.setItem = (k, val) => { if (claves.includes(k) && ++escrituras === 2) throw new Error('QuotaExceededError'); return setOriginal(k, val); };
+  await assert.rejects(v.disable('frase de prueba larga'), /QuotaExceededError/);
+  st.setItem = setOriginal;
+  assert.equal(v.state, 'open', 'la protección sigue activa');
+  assert.ok(claves.every(k => st.getItem(k) === null), 'no quedó ninguna clave en claro');
+  assert.ok(sinMarca(st), 'el texto ficticio no aparece legible en ningún lado');
+  assert.ok(st.getItem(vaultCore.VAULT_HEADER));
+  await v.disable('frase de prueba larga');
+  for (const [k, val] of Object.entries(datos)) assert.equal(st.getItem(k), val);
+});
+
 test('cifrado: cabecera dañada o con parámetros abusivos deja todo bloqueado, sin caer a texto en claro', () => {
   const st = memStorage({...datosFicticios()});
   st.setItem(vaultCore.VAULT_HEADER, JSON.stringify({v: 1, id: 'AAAAAAAAAAAAAAAAAAAAAA==', pw: {kdf: 'PBKDF2-SHA256', it: 999999999, salt: 'AA==', box: {iv: 'AA==', ct: 'AA=='}}, rec: {kdf: 'HKDF-SHA256', salt: 'AA==', box: {iv: 'AA==', ct: 'AA=='}}, bio: null}));
