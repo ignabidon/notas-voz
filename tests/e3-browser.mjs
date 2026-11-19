@@ -107,6 +107,25 @@ try {
   const A=await createNote('Persona Inventada Uno X-901',2), B=await createNote('Persona Inventada Dos X-902');
   assert.equal(await run('__persistCalls'),1,'persistencia solicitada al primer audio');
   await run(`document.querySelector('[data-delta-view=transcripcion]').click(); convOpen(${JSON.stringify(A.conversationId)})`);
+  // Beta de Cuadernos: el reproductor existe para audio asociado; las transcripciones sin audio muestran una guía honesta.
+  assert.equal(await run("document.getElementById('betaAudioMissingGuide').hidden"),true,'no se advierte falta de audio cuando el cuaderno sí lo tiene');
+  await run(`(async()=>{
+    window.__beforeBetaAudioGuide=convStore.data;
+    const r=convAddEntry(convStore.data,{conversationId:${JSON.stringify(A.conversationId)},kind:'audio',savedAt:Date.now(),
+      tzOffsetMin:new Date().getTimezoneOffset(),recordedAt:null,text:'Nota ficticia sin audio adjunto',
+      audioId:null,durationMs:null,audioParts:null,transcriptionStatus:'listo'});
+    const w=convStore.save(r.data);if(!w.ok)throw Error(w.error);convOpen(${JSON.stringify(A.conversationId)});
+  })()`);
+  assert.equal(await run("document.getElementById('betaAudioMissingGuide').hidden"),false,'se explica la ausencia de reproductor');
+  assert.ok(await run("document.getElementById('betaAudioMissingGo').getBoundingClientRect().height>=48"),'configuración accesible');
+  assert.equal(await run("document.querySelectorAll('.note-audio button').length"),1,'el reproductor de otra nota se conserva');
+  await run("document.getElementById('betaAudioMissingGo').click()");
+  assert.equal(await run('document.body.dataset.view'),'ajustes','la guía conduce a Ajustes');
+  await run(`(async()=>{
+    const w=convStore.save(window.__beforeBetaAudioGuide);if(!w.ok)throw Error(w.error);await vault.flush();
+    document.querySelector('[data-delta-view=transcripcion]').click();convOpen(${JSON.stringify(A.conversationId)});
+  })()`);
+  assert.equal(await run("document.getElementById('betaAudioMissingGuide').hidden"),true,'la guía desaparece cuando no hay notas sin audio');
   const before=await crudo();
   assert.equal(await run('__urls.size'),0,'abrir cuaderno no descifra audio');
   await run("document.querySelector('.note-audio button').click()");
