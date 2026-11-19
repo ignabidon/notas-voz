@@ -22,6 +22,7 @@ DictaVoz (antes DictaNota; solo cambió lo visible): transcribe voz a texto en e
 | Documentación ordenada (índice, decisiones únicas, pedidos) | #62 |
 | Entrega 2: borradores confirmados y notas de solo audio (P1, P4 parcial) | #59 |
 | Biblioteca en claro y copia formato 2 (**ensayo, sin activar**) | #60 |
+| U12: elegir cuaderno y nombre desde Dictar | #67 |
 | K2: restaurar en instalación **vacía** (experimental; rechaza copias incompletas y con audio en claro) | #61 |
 
 **Revisiones del 17/11 a la noche.** Una revisión externa de seguridad (IA de un amigo de Ignacio, solo lectura) encontró un hallazgo grave en «Quitar la protección» (si fallaba a mitad de camino quedaba texto en claro) y un riesgo en K2 (copias incompletas). Se corrigieron en `4e7758d` y `c4cb29f`, con pruebas nuevas. Una segunda revisión externa de esos dos commits no encontró hallazgos graves: con eso se cumplió A5 y se unió K2.
@@ -33,7 +34,7 @@ DictaVoz (antes DictaNota; solo cambió lo visible): transcribe voz a texto en e
 | #58 | Auditoría y propuesta de almacenamiento definitivo (solo documentación) | ChatGPT | — |
 | #52 | Visión de la experiencia y guía estética (solo documentación) | ChatGPT | — |
 | #49, #37 | Guía del propietario y feedback del Motorola; decisiones del 16/11 (solo documentación) | Claude | — |
-| #67 | U12: elegir cuaderno y nombre desde Dictar (entregado como `.patch`, 18/11) | Claude | — |
+| #68 | U16: rediseño de Ajustes (lista de secciones con subpantallas; entregado como `.patch`, 18/11) | Claude | #67 |
 | #65 | K2 de reemplazo: respaldo previo, comparación y doble confirmación, borrado con diario, A11 | Claude | #64 |
 | #22, #1 | Borradores viejos de otras etapas | sin dueño vigente | — |
 
@@ -41,7 +42,7 @@ DictaVoz (antes DictaNota; solo cambió lo visible): transcribe voz a texto en e
 
 1. **Capa única de registros:** hecha y unida (#64).
 2. **K2 de reemplazo:** **programado** (respaldo previo comprobado → comparación y doble confirmación → marca propia «restauración en curso» → borrado guiado con diario reanudable → restauración; espacio comprobado; audios sin protección cifrados al restaurar, A11; código de recuperación nuevo al final). Entregado como `.patch` sobre `main`. **Unido (#65). Probado en el Motorola por Ignacio el 18/11** (recorrido con datos inventados; sin problemas). Sin probar todavía con audios reales largos ni un corte real en el celular. Sigue siendo experimental. Pregunta para Ignacio (Q1): si el respaldo previo tiene que cubrir también los audios sin cifrar, hay que habilitar el formato 2 para el usuario.
-3. **Mejoras de uso** (U16): elegir cuaderno y nombre desde Dictar (U12) está **programado** (`.patch` del 18/11, falta unirlo y probarlo en el Motorola); sigue la maqueta del rediseño de Ajustes.
+3. **Mejoras de uso** (U16): elegir cuaderno y nombre desde Dictar (U12) está **unido** (#67); el **rediseño de Ajustes** está **programado** (`.patch` del 18/11 según la maqueta aprobada, U17; falta unirlo y probarlo en el Motorola).
 4. **«Conservar audio» activado de entrada** en instalaciones nuevas (A6), cuando la restauración cubra el audio sin protección (paso 2).
 5. **Retirar el audio suelto viejo** y borrar sus datos de prueba (A7, A8).
 6. **T**, con permiso explícito de Ignacio (cabecera v:2, durabilidad estricta, borrar `localStorage` recién en el desbloqueo siguiente). Después, AO.
