@@ -1173,7 +1173,7 @@ body[data-view="anonimizar"] #anon{border-radius:var(--r-row)}
           <p class="hint" id="copiaOffHint">La protección está apagada: la copia igual sale cifrada, con una contraseña que elegís solo para ese archivo. Lleva el texto, no los audios de «Mis grabaciones».</p>
           <fieldset id="copiaContenido" class="copia-opciones" hidden>
             <legend>Qué lleva la copia</legend>
-            <label class="chk"><input type="radio" name="copiaTipo" id="copiaCompleta" value="completa" checked><span><b>Completa</b><small>Texto y audios cifrados guardados con tus notas.</small></span></label>
+            <label class="chk"><input type="radio" name="copiaTipo" id="copiaCompleta" value="completa" checked><span><b>Completa</b><small>Texto y audios de las notas. Los audios sin protección se cifran dentro del archivo de copia.</small></span></label>
             <label class="chk"><input type="radio" name="copiaTipo" id="copiaSoloTexto" value="solo-texto"><span><b>Solo texto</b><small>Más liviana: sin audios.</small></span></label>
           </fieldset>
           <div class="row"><button type="button" id="copiaCrear" class="p">Crear una copia</button></div>
@@ -5088,7 +5088,7 @@ async function e3Play(root, entry, button, range, status, clock){
       if (!h.ok) throw new Error('audio sin cifrar incompleto');
       s.plain = true; s.detail = h.m.plain;
     } else {
-      if (!anUsable()) { e3Failure(s, 'Desbloqueá la protección para escuchar este audio cifrado.'); return; }
+      if (!anUsable()) { e3Stop(); status.textContent = 'Desbloqueá la protección para escuchar este audio cifrado.'; return; }
       if (!anValidMeta(meta) || meta.state !== 'cerrado') throw new Error('ficha');
       s.detail = await anOpenDetail(vault.audioKey, s.hid, s.id, meta.sealed);
       if (!e3Alive(s)) return;
@@ -6604,7 +6604,7 @@ function copiaSummary(r){
   const out = ['creada el ' + convStamp(r.creado)];
   if (Number.isInteger(r.cuadernos)) out.push(r.cuadernos === 1 ? '1 cuaderno' : r.cuadernos + ' cuadernos');
   if (Number.isInteger(r.notas)) out.push(r.notas === 1 ? '1 nota' : r.notas + ' notas');
-  out.push(r.contenido === 'completa' ? (r.audios === 1 ? '1 audio cifrado' : r.audios + ' audios cifrados') : 'solo texto, sin audios');
+  out.push(r.contenido === 'completa' ? (r.audios === 1 ? '1 audio incluido y cifrado en la copia' : r.audios + ' audios incluidos y cifrados en la copia') : 'solo texto, sin audios');
   out.push('archivo de ' + (r.bytes < 104858 ? Math.max(1, Math.round(r.bytes / 1024)) + ' KB' : mb(r.bytes)));
   return out.join(' · ');
 }
@@ -6658,7 +6658,7 @@ function copiaFaltantes(omitidos, sinCifrar, completa){
    y el respaldo previo del reemplazo (K2). completa: solo cuenta con la protección abierta. Los avisos sin excepción llevan .plain. */
 async function copiaMake(filePassword, opts){
   if (vault.state !== 'off' && vault.state !== 'open') throw Object.assign(new Error(''), {plain: true, silent: true});
-  const abierta = vault.state === 'open', completa = abierta && !!opts.completa;
+  const abierta = vault.state === 'open', completa = !!opts.completa;
   let header, key;
   if (abierta) {
     await vault.flush();
@@ -6671,18 +6671,32 @@ async function copiaMake(filePassword, opts){
     header = c.header;
   }
   copiaSay('Armando la copia…');
-  const now = Date.now(), w = copiaWriter(header, key, completa ? 'completa' : 'solo-texto', now);
+  const kinds=await anStoredKinds();
+  if(kinds === null)throw new Error('no se pudieron leer los audios guardados');
+  // En esta beta el formato 2 (compatible con K2) incluye los audios sin cifrar, cifrándolos dentro del archivo.
+  // Sin audios sin cifrar se conserva sin modificaciones el formato 1 ya publicado.
+  const withPlain=completa && kinds.claros>0;
+  const now = Date.now(), w = withPlain
+    ? copia2Writer(header,key,'completa',now)
+    : copiaWriter(header,key,completa?'completa':'solo-texto',now);
   if (abierta) { for (const [name, raw] of vault.records.all()) await w.registro(name, raw); }
   else for (const [k, name] of Object.entries(VAULT_KEYS)) { const plain = vaultStore.getItem(k); if (plain !== null) await w.registro(name, await vaultSealRecord(key, header.id, name, plain)); }
   await w.config({cfg: localStorage.getItem(CKEY), generador: localStorage.getItem(GKEY)});
-  const faltan = completa ? await copiaAudios(w) : {omitidos: 0, sinCifrar: 0}, omitidos = faltan.omitidos;
-  // Una copia de solo texto tampoco lleva los audios sin cifrar: se avisa igual, para que nadie la crea completa.
-  if (!completa) { const k = await anStoredKinds(); if (k === null) throw new Error('no se pudieron leer los audios guardados'); faltan.sinCifrar = k.claros; }
-  const file = new File([await w.finish()], copiaName(now), {type: 'application/octet-stream'});
-  // Antes de entregarla se comprueba entera, con las claves ya abiertas.
+  let omitidos=0, faltan={omitidos:0,sinCifrar:0}, blob;
+  if(withPlain){
+    const total=await copia2Audios(w,'completa',{kAudio:abierta?vault.audioKey:null,hid:abierta?vault.header.id:null});
+    blob=await w.finish(total);
+  }else{
+    faltan = completa && abierta ? await copiaAudios(w) : {omitidos:0,sinCifrar:kinds.claros};
+    omitidos=faltan.omitidos;blob=await w.finish();
+  }
+  const file = new File([blob], copiaName(now), {type:'application/octet-stream'});
   copiaSay('Comprobando la copia…');
-  const r = await copiaVerify(file, async () => ({key, audioKey: abierta ? vault.audioKey : null}));
-  return {file, r, abierta, completa, omitidos, faltan, now};
+  const r = withPlain
+    ? await copia2Verify(file,async()=>({key,audioKey:abierta?vault.audioKey:null}))
+    : await copiaVerify(file,async()=>({key,audioKey:abierta?vault.audioKey:null}));
+  if(withPlain){omitidos=r.exclusiones;faltan={omitidos:r.exclusiones,sinCifrar:0};}
+  return {file,r,abierta,completa,omitidos,faltan,now};
 }
 /* Crea la copia. filePassword: solo con la protección apagada (contraseña elegida para el archivo). */
 async function copiaCreate(filePassword){
@@ -6716,7 +6730,7 @@ async function copiaCheck(file){
   try {
     copiaSay('Leyendo «' + file.name + '»…');
     let last = 0;
-    const r = await copiaVerify(file, async h => {
+    const r = await copia2Verify(file, async h => {
       const secret = await copiaAsk('Contraseña o código de recuperación de esta copia');
       if (secret === null) throw copiaError('Cancelada');
       copiaSay('Abriendo la copia…');
