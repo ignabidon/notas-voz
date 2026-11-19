@@ -6,13 +6,47 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob: https://cdn.jsdelivr.net; worker-src 'self' blob: https://cdn.jsdelivr.net; connect-src 'self' blob: data: https://cdn.jsdelivr.net https://huggingface.co https://*.huggingface.co https://*.hf.co; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob: data:; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'; manifest-src 'none'">
 <meta name="viewport" content="width=device-width,initial-scale=1,interactive-widget=resizes-content">
 <meta name="color-scheme" content="light">
-
-
 <meta name="theme-color" content="#F4F7F8">
+<script>
+/* U5 (18/11/2026) · Apariencia (Clara, Nocturna o Automática). Se aplica ANTES de pintar la página, para que no haya destello claro al abrir
+   en nocturno, y se repite en la pantalla de bloqueo y en todas las pantallas (todo sale de las variables de :root). Lee solo el campo «theme»
+   de la configuración existente (notasvoz.gamma.cfg.v1, sin cifrar): no contiene datos de pacientes. Ver SEGURIDAD.md, regla 7. */
+var dvTheme=(function(){
+  var CFG='notasvoz.gamma.cfg.v1',BG={light:'#F4F7F8',dark:'#0B1E24'},mq=null,pref='light';
+  try{mq=matchMedia('(prefers-color-scheme: dark)')}catch(e){}
+  function resolved(){return pref==='dark'||(pref==='auto'&&!!mq&&mq.matches)?'dark':'light'}
+  function paint(){
+    var r=resolved(),d=document.documentElement;
+    d.dataset.theme=r;d.dataset.themePref=pref;
+    var cs=document.querySelector('meta[name="color-scheme"]'),tc=document.querySelector('meta[name="theme-color"]');
+    if(cs)cs.setAttribute('content',r);
+    if(tc)tc.setAttribute('content',BG[r]);
+    return r;
+  }
+  function set(p){pref=(p==='dark'||p==='auto')?p:'light';return paint()}
+  if(mq&&mq.addEventListener)mq.addEventListener('change',function(){if(pref==='auto')paint()});
+  try{var c=JSON.parse(localStorage.getItem(CFG)||'{}');set(c&&c.theme)}catch(e){set('light')}
+  return {set:set,get:function(){return pref},resolved:resolved};
+})();
+</script>
 <meta name="studio-design" content="delta-11">
 <title>DictaVoz · Prueba Delta</title>
 <style>
 :root{color-scheme:light;--bg:#F4F7F8;--bg2:#E6F0F3;--card:#FFFFFF;--ink:#12262C;--mut:#4F646A;--line:#D6E1E5;--acc:#0E5A6B;--acc-ink:#FFFFFF;--acc-soft:#E6F0F3;--rec:#FBEAEA;--rec-ink:#9B2C26;--note-bg:#FFF4DD;--note-ink:#7A4E00;--surface-soft:#F4F7F8;--shadow-color:#12262C12;--bar-l:65%;--error:#9B2C26;--error-bg:#FBEAEA;--success:#23634B;--success-bg:#E8F3EC}
+/* U5 · «Clínica serena» pulida: el resto de la paleta, también como variables. Nada de colores escritos a mano en las reglas de abajo: si hace falta un tono, se agrega acá (claro) y en el bloque nocturno. */
+:root{--line-strong:#768F97;--field:#FFFFFF;--btn-ink:#31515B;--stamp:#335B65;--bubble-bg:#EDF4F5;--shadow-soft:#12262C0B;--shadow-ring:#12262C18;--scrim:#12262C66;
+--switch-off:#B7C6CB;--knob:#FFFFFF;--knob-shadow:#0003;
+--rec-bg:#B53D3B;--rec-fg:#FFFFFF;--recon-edge:#F5DDDB;--recon-halo:#FBEFEE;--recon-glow:#B53D3B20;--rec-edge:#D5E7EC;--rec-halo:#EEF5F6;
+--pause-bg:#B78228;--pause-fg:#12262C;--pause-ink:#946219;--pause-edge:#F5E8CF;--pause-halo:#FCF5E8;
+--disabled-bg:#EEF1F2;--disabled-ink:#596E75;--disabled-line:#91A2A8;
+--r-card:20px;--r-row:18px;--gap-block:16px;--gap-row:12px;--fs-title:26px}
+/* Apariencia nocturna (U5). Contrastes medidos en la descripción del PR: texto 4,5:1 o más; bordes de controles 3:1 o más. */
+:root[data-theme="dark"]{color-scheme:dark;--bg:#0B1E24;--bg2:#1F4D57;--card:#12343D;--ink:#E6F2F2;--mut:#A9C1C4;--line:#24505A;--acc:#7FD1C7;--acc-ink:#0B1E24;--acc-soft:#1F4D57;--rec:#3D1E21;--rec-ink:#FFA8A2;--note-bg:#3B2E12;--note-ink:#F2C879;--surface-soft:#0B1E24;--shadow-color:#00000059;--error:#FFA8A2;--error-bg:#3D1E21;--success:#86DDB0;--success-bg:#133A2D;
+--line-strong:#6FA3AB;--field:#0B1E24;--btn-ink:#E6F2F2;--stamp:#C3D9DB;--bubble-bg:#1F4D57;--shadow-soft:#00000040;--shadow-ring:#00000066;--scrim:#000000B3;
+--switch-off:#5E939B;--knob:#0B1E24;--knob-shadow:#0000;
+--rec-bg:#FF9E98;--rec-fg:#0B1E24;--recon-edge:#5A2A2D;--recon-halo:#FF9E9826;--recon-glow:#FF9E9840;--rec-edge:#1F4D57;--rec-halo:#7FD1C71F;
+--pause-bg:#F0BF62;--pause-fg:#0B1E24;--pause-ink:#F0BF62;--pause-edge:#5A4720;--pause-halo:#F0BF6224;
+--disabled-bg:#173A43;--disabled-ink:#9DB8BC;--disabled-line:#4F7D86}
 
 
 *{box-sizing:border-box}html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;scroll-padding-top:24px}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif;padding:24px max(16px,env(safe-area-inset-right)) 100px max(16px,env(safe-area-inset-left))}button,input,textarea,select{font:inherit}button,summary,a{ -webkit-tap-highlight-color:transparent;touch-action:manipulation}button,summary{cursor:pointer}button:focus-visible,summary:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--acc);outline-offset:4px}[hidden]{display:none!important}.wrap{max-width:1060px;margin:auto}.top{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:28px}.brand{display:flex;align-items:center;gap:12px}.logo{width:43px;height:43px;display:grid;place-items:center;border:1px solid var(--line);border-radius:14px;color:var(--ink);background:var(--surface-soft)}.logo svg{width:23px;height:23px}h1{font-size:23px;letter-spacing:-1px;line-height:1.1;margin:0}.sub{font-size:12px;color:var(--mut);margin:6px 0 0}.pill{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--ink)}.pill svg{width:14px;height:14px}.layout{display:grid;grid-template-columns:350px minmax(0,1fr);gap:20px;align-items:start}.col{display:contents}.c-rec{grid-column:1;grid-row:1}.c-edit{grid-column:2;grid-row:1 / span 3}.c-set{grid-column:1;grid-row:2}.card{min-width:0;background:var(--card);border:1px solid var(--line);border-radius:24px;padding:22px}h2{font-size:18px;line-height:1.3;letter-spacing:-.4px;margin:0 0 18px}.section-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:16px}.section-heading h2{margin:0}.section-hint{font-size:11px;color:var(--ink);background:var(--surface-soft);border-radius:20px;padding:4px 9px}.eyebrow{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--ink);margin:0 0 8px}.c-rec{background:radial-gradient(ellipse at 50% 35%,var(--surface-soft) 0, var(--surface-soft) 55%,var(--surface-soft) 100%);text-align:center;position:relative}.c-rec h2{font-size:25px;letter-spacing:-.8px;margin-bottom:8px}.rec-caption{color:var(--ink);font-size:13px;margin:0 0 15px}.recrow{display:flex;flex-direction:column;align-items:center;gap:18px}button{background:var(--bg2);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:10px 14px;min-height:44px;font-size:13px;font-weight:600;transition:background .15s,transform .15s}button:hover:not(:disabled){background:var(--surface-soft)}button:active:not(:disabled){transform:scale(.98)}button:disabled{opacity:.4;cursor:not-allowed}button.p{background:var(--acc);color:var(--acc-ink);border-color:transparent}button.p:hover:not(:disabled){background:var(--surface-soft)}button.ghost{background:transparent;color:var(--mut)}button.danger:hover:not(:disabled){color:var(--ink)}#rec{width:130px;height:130px;min-height:130px;border-radius:50%;background:var(--surface-soft);color:var(--ink);border:8px solid var(--line);box-shadow:0 0 0 8px var(--shadow-color),0 10px 32px var(--shadow-color);display:flex;flex-direction:column;justify-content:center;align-items:center;gap:9px;font-size:16px;margin:12px 0}#rec:hover:not(:disabled){background:var(--surface-soft)}#rec::before{content:"";width:18px;height:27px;border:2.5px solid currentColor;border-radius:12px}#rec.on{background:var(--rec);color:var(--rec-ink);border-color:var(--line);box-shadow:0 0 0 8px var(--shadow-color)}#rec.on::before{width:20px;height:20px;border:0;border-radius:5px;background:currentColor}#rec.on.paused{background:var(--surface-soft);border-color:var(--line);box-shadow:none}.side{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;max-width:300px}#clock{grid-column:1 / -1;font-size:35px;font-weight:400;letter-spacing:3px;line-height:1.2;font-variant-numeric:tabular-nums;margin-bottom:4px}#clock.on{color:var(--ink)}#pause,#mark{font-size:12px;background:var(--surface-soft)}.mark-help{font-size:11px;color:var(--mut);margin:12px 0 0}.warn,.hint{font-size:12px;color:var(--mut);overflow-wrap:anywhere}.hint{margin-top:6px}.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px}.row>*{min-width:0}.row button{flex-grow:1}label{display:block;color:var(--mut);font-size:12px;font-weight:600;margin-bottom:7px}input[type=text],input[type=number],textarea,select{width:100%;min-width:0;background:var(--surface-soft);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:12px;font-size:16px}select option{background:var(--bg)}::placeholder{color:var(--ink);opacity:1}textarea{resize:vertical;min-height:200px;line-height:1.7}textarea#text{border:0;background:var(--surface-soft);min-height:245px;padding:16px}.lbl-row>label{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}.tools{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}.tools button{font-size:11px;min-height:36px;padding:7px 9px;border:0;background:var(--surface-soft)}.meta{display:flex;justify-content:space-between;font-size:11px;color:var(--mut);margin-top:9px}#flash{color:var(--acc);font-size:12px;margin-top:8px}#flash:empty{display:none}.privacy-group{border:1px solid var(--line);background:var(--surface-soft);border-radius:18px;padding:16px;margin-top:22px}.privacy-group>.gl{color:var(--ink);font-size:12px;font-weight:650}.studio-anon-actions{margin-top:12px}.studio-anon-secondary{display:flex;gap:8px;margin-top:8px}.studio-anon-secondary button{flex:1;font-size:11px;padding:8px;min-height:40px;background:transparent;border-color:var(--line);color:var(--ink)}#anon{width:100%;min-height:52px;background:var(--surface-soft);color:var(--ink);font-size:14px;border:0}#anon:hover{background:var(--surface-soft)}.note{display:flex;gap:9px;color:var(--ink);font-size:11px;line-height:1.5;margin-top:14px}.note svg{width:16px;height:16px;flex:none;margin-top:2px}details{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}summary{font-size:13px;font-weight:600;list-style:none;display:block;min-height:34px;padding:5px 22px 5px 0;position:relative}summary::-webkit-details-marker{display:none}summary::after{content:'+';position:absolute;right:0;top:2px;font-size:20px;font-weight:400;color:var(--mut)}details[open]>summary::after{content:'−'}summary small{display:block;color:var(--mut);font-weight:400;font-size:11px;margin-top:5px}.c-rec>details{text-align:left}.c-rec>details>summary{font-size:11px;color:var(--mut)}details.card{margin-top:0;padding:18px 20px}details.card>.body{padding-top:14px}#studioAnonConfig:not([open]){display:none}.studio-patients{padding:12px;background:var(--surface-soft);border:1px solid var(--line);border-radius:12px}.studio-workflow{padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--surface-soft)}.studio-workflow-body{padding-top:14px}.note-details label{margin-top:12px}.tagrow{display:flex;gap:8px;flex-wrap:wrap}.tagrow input{flex:1;width:130px}.tagrow #tagSug{flex-basis:100%}.save-row{margin-top:16px}.group .gl{font-size:12px;margin-top:14px}.eng{display:grid;gap:8px}.eng label{display:flex;gap:10px;padding:12px;border:1px solid var(--line);border-radius:12px;color:var(--ink);font-weight:400}.eng label:has(input:checked){background:var(--acc-soft);border-color:var(--line)}.eng small,.chk small{display:block;font-size:11px;color:var(--mut);font-weight:400;margin-top:4px}.chk{display:flex;gap:10px;margin:16px 0;color:var(--ink);font-size:13px}input[type=checkbox],input[type=radio]{accent-color:var(--acc);width:19px;height:19px;flex:none}.body>label{margin-top:16px}.code-config{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}.code-config label{font-size:10px;min-height:30px}.code-config input,.code-config select{padding:8px;font-size:14px}#pGenerate{width:100%;margin-top:10px}.chip{border-radius:30px;font-size:12px;margin:0 5px 5px 0;min-height:34px;padding:5px 12px}.chip.sel{background:var(--acc);color:var(--acc-ink)}.n{padding:12px 0;border-top:1px solid var(--line)}.n small{display:block;color:var(--mut)}.n button{margin:8px 8px 0 0}.mono{font-family:monospace;font-size:13px;min-height:150px}.abox{border-top:1px solid var(--line);margin-top:16px;padding-top:16px}.two small{display:block;font-size:11px;font-weight:400}.bar{display:none;height:6px;border-radius:10px;background:var(--bg2);margin-top:12px;overflow:hidden}.bar i,.pbar i{display:block;height:100%;width:0;background:var(--acc);transition:width .15s}.pbar{height:7px;border-radius:8px;background:var(--bg2);overflow:hidden}#tp{display:none;margin-top:14px}#tp.on{display:block}#tpTxt,#status,#interim,#lvTxt{font-size:12px;margin-top:10px;color:var(--mut);overflow-wrap:anywhere}#status:empty,#interim:empty,#nativeInterim:empty{display:none}.processing-timer{font-size:13px;color:var(--acc);margin-top:10px}.cancel-processing{width:100%;margin-top:10px}.cancel-help{font-size:11px}#busy{display:none;background:var(--note-bg);color:var(--note-ink);padding:10px;border-radius:10px;font-size:12px;margin-bottom:10px}#busy.on{display:block}footer{font-size:11px;color:var(--mut);text-align:center;margin-top:25px}.studio-nav{position:fixed;bottom:max(12px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);width:min(400px,calc(100% - 32px));display:flex;justify-content:space-around;padding:8px;background:var(--surface-soft);border:1px solid var(--line);box-shadow:0 8px 30px var(--shadow-color);border-radius:20px;z-index:5;backdrop-filter:blur(16px)}.studio-nav a{display:flex;align-items:center;justify-content:center;gap:7px;flex:1;padding:9px 8px;color:var(--ink);font-size:12px;text-decoration:none;border-radius:12px}.studio-nav a:hover{background:var(--surface-soft)}.studio-nav svg{width:17px;height:17px}
@@ -537,7 +571,7 @@ button.p:hover:not(:disabled),#save:hover:not(:disabled),#studioDockStart:hover:
 button.ghost{color:var(--mut)}
 button.danger,#clearLocalTexts{color:var(--error)}
 button.danger:hover:not(:disabled){background:var(--error-bg);color:var(--error)}
-input,textarea,select,textarea#text,input[type=password]{background:var(--card);color:var(--ink)}
+input,textarea,select,textarea#text,input[type=password]{background:var(--field);color:var(--ink)}
 ::placeholder{color:var(--mut)}
 label,.hint,.warn,.sub,.section-hint,.selection-help,.mark-help,.record-caption-label,footer,summary small,.settings-module .hint{color:var(--mut)}
 .logo,.module-icon{background:var(--acc-soft);color:var(--acc);border-color:var(--line)}
@@ -580,8 +614,8 @@ label,.hint,.warn,.sub,.section-hint,.selection-help,.mark-help,.record-caption-
 .aj-switch-row{display:flex;align-items:center;justify-content:space-between;gap:14px;min-height:60px;padding:10px 16px;margin:0!important;flex-direction:row-reverse}
 .aj-switch-row>span{flex:1 1 auto;min-width:0}
 .aj-switch-row small{display:block;margin-top:2px;font-weight:400;color:var(--mut)}
-input.aj-sw{appearance:none;-webkit-appearance:none;flex:none;width:52px;height:32px;border-radius:16px;background:#B7C6CB;position:relative;margin:0;cursor:pointer;transition:background .15s}
-input.aj-sw::before{content:"";position:absolute;top:4px;left:4px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 1px 3px #0003;transition:transform .15s}
+input.aj-sw{appearance:none;-webkit-appearance:none;flex:none;width:52px;height:32px;border-radius:16px;background:var(--switch-off);position:relative;margin:0;cursor:pointer;transition:background .15s}
+input.aj-sw::before{content:"";position:absolute;top:4px;left:4px;width:24px;height:24px;border-radius:50%;background:var(--knob);box-shadow:0 1px 3px var(--knob-shadow);transition:transform .15s}
 input.aj-sw:checked{background:var(--acc)}
 input.aj-sw:checked::before{transform:translateX(20px)}
 .aj-field{display:grid;gap:6px;padding:12px 16px}
@@ -620,7 +654,7 @@ input.aj-sw:checked::before{transform:translateX(20px)}
 #correctionOriginal{background:var(--surface-soft)!important;color:var(--ink)!important}
 #correctSelection{background:var(--acc-soft)!important;border-color:var(--line)!important;color:var(--acc)!important}
 #convMoveDialog,#correctionDialog{background:var(--card)}
-#convMoveDialog::backdrop,#correctionDialog::backdrop{background:#12262C66}
+#convMoveDialog::backdrop,#correctionDialog::backdrop{background:var(--scrim)}
 .retention-switch input:checked+.switch-track{background:var(--acc)}
 .switch-track{background:var(--mut)}.switch-track::before{background:var(--card)}
 .audio-done{background:var(--success-bg);color:var(--success);border:1px solid var(--success);box-shadow:none}
@@ -661,7 +695,7 @@ input.aj-sw:checked::before{transform:translateX(20px)}
 body[data-view="transcripcion"] .conv-actions .conv-more{font-size:26px;font-weight:800}
 .conv-menu{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;padding-top:10px;border-top:1px dashed var(--line-strong)}
 .conv-menu[hidden]{display:none}
-.conv-menu button{flex:1 1 150px;min-height:48px;background:#FFF;color:#31515B;border-color:var(--line-strong);font-weight:650;font-size:max(14px,calc(14px * var(--text-scale)));white-space:normal}
+.conv-menu button{flex:1 1 150px;min-height:48px;background:var(--card);color:var(--btn-ink);border-color:var(--line-strong);font-weight:650;font-size:max(14px,calc(14px * var(--text-scale)));white-space:normal}
 .conv-menu button.danger{color:var(--error)}
 .conv-item .conv-preview{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:max(14px,calc(14px * var(--text-scale)));font-weight:400;color:var(--ink)}
 body.conv-open .text-screen-title{display:none}
@@ -705,44 +739,42 @@ body.delta-recording #convComposer{display:none!important}
 }
 
 /* Clínica editorial · ChatGPT · 16/11/2026. Solo presentación, sin alterar estados ni controles. */
-:root{--editorial-coral:#B53D3B;--editorial-amber:#B78228;--editorial-chat:#EDF4F5}
 
 /* Dictar: el micrófono y el tiempo establecen la jerarquía visual. */
-body[data-view="grabacion"] .c-rec{box-shadow:0 8px 28px #12262C0B}
+body[data-view="grabacion"] .c-rec{box-shadow:0 8px 28px var(--shadow-soft)}
 body[data-view="grabacion"] .record-head h2{font-weight:800;letter-spacing:-.8px}
 body[data-view="grabacion"] .record-overline{letter-spacing:1.8px}
 body[data-view="grabacion"] .record-clock #clock{font-size:clamp(54px,14vw,66px);font-weight:650;letter-spacing:-1.5px;line-height:1.1}
 body[data-view="grabacion"] .record-caption-label{color:var(--mut);font-weight:550}
-body[data-view="grabacion"] .c-rec #rec{width:clamp(136px,38vw,150px);height:clamp(136px,38vw,150px);min-height:136px;border-width:6px;border-color:#D5E7EC;box-shadow:0 0 0 9px #EEF5F6,0 12px 24px #12262C18;font-size:max(16px,calc(16px * var(--text-scale)));font-weight:750}
-body[data-view="grabacion"] .c-rec #rec.on{background:var(--editorial-coral);color:#FFF;border-color:#F5DDDB;box-shadow:0 0 0 9px #FBEFEE,0 10px 24px #B53D3B20}
-body[data-view="grabacion"] .c-rec #rec.on.paused{background:var(--editorial-amber);color:var(--ink);border-color:#F5E8CF;box-shadow:0 0 0 9px #FCF5E8}
-body[data-view="grabacion"]:has(#rec.on.paused) .record-clock #clock.on{color:#946219}
+body[data-view="grabacion"] .c-rec #rec{width:clamp(144px,42vw,152px);height:clamp(144px,42vw,152px);min-height:144px;border-width:6px;border-color:var(--rec-edge);box-shadow:0 0 0 12px var(--rec-halo),0 14px 28px var(--shadow-ring);font-size:max(16px,calc(16px * var(--text-scale)));font-weight:750}
+body[data-view="grabacion"] .c-rec #rec.on{background:var(--rec-bg);color:var(--rec-fg);border-color:var(--recon-edge);box-shadow:0 0 0 12px var(--recon-halo),0 10px 24px var(--recon-glow)}
+body[data-view="grabacion"] .c-rec #rec.on.paused{background:var(--pause-bg);color:var(--pause-fg);border-color:var(--pause-edge);box-shadow:0 0 0 12px var(--pause-halo)}
+body[data-view="grabacion"]:has(#rec.on.paused) .record-clock #clock.on{color:var(--pause-ink)}
 body[data-view="grabacion"] .capture-shortcuts button,
 body[data-view="grabacion"] #recordDownloadAudio,
-body[data-view="grabacion"] .audio-shortcut{background:#FFF;color:var(--acc);border:1px solid #C9DDE3;box-shadow:none;font-weight:650}
+body[data-view="grabacion"] .audio-shortcut{background:var(--card);color:var(--acc);border:1px solid var(--line);box-shadow:none;font-weight:650}
 body[data-view="grabacion"] .audio-tools{border-top:1px solid var(--line);padding-top:14px}
-#studioDockCapture.paused .capture-dot{background:var(--editorial-amber);box-shadow:0 0 0 3px #F6E9CE}
-#studioDockCapture.paused #studioDockMode{color:#946219}
+#studioDockCapture.paused .capture-dot{background:var(--pause-bg);box-shadow:0 0 0 3px var(--pause-halo)}
+#studioDockCapture.paused #studioDockMode{color:var(--pause-ink)}
 
 /* Cuadernos: conversaciones privadas, notas legibles, acciones discretas. */
 body[data-view="transcripcion"] .conv-h{font-weight:800;letter-spacing:-.45px}
-body[data-view="transcripcion"] .conv-item{background:#FFFEFC;border-color:#D3E1E5;border-radius:18px;box-shadow:0 3px 14px #12262C0B;gap:6px}
+body[data-view="transcripcion"] .conv-item{background:var(--card);border-color:var(--line);border-radius:var(--r-row);box-shadow:0 3px 14px var(--shadow-soft)}
 body[data-view="transcripcion"] .conv-item>span{letter-spacing:-.25px;line-height:1.35}
-body[data-view="transcripcion"] .conv-bubble{background:var(--editorial-chat);border-color:#CFDFE4;border-radius:20px 20px 6px 20px;box-shadow:0 4px 14px #12262C0B;padding:16px 17px}
+body[data-view="transcripcion"] .conv-bubble{background:var(--bubble-bg);border-color:var(--line);border-radius:20px 20px 6px 20px;box-shadow:0 4px 14px var(--shadow-soft);padding:16px 17px}
 body[data-view="transcripcion"] .conv-text{color:var(--ink);line-height:1.72}
-body[data-view="transcripcion"] .conv-meta{border-top:1px solid #D3E1E5;padding-top:9px;margin-top:14px;gap:6px 10px;font-size:max(12px,calc(12px * var(--text-scale)));color:var(--mut)}
-body[data-view="transcripcion"] .conv-stamp{color:#335B65;font-weight:750}
-body[data-view="transcripcion"] .conv-actions{border-top:1px solid #D3E1E5;padding-top:10px;margin-top:12px;gap:8px}
-body[data-view="transcripcion"] .conv-actions button{background:#FFF;color:#31515B;border-color:#CEDFE4;font-weight:650;min-height:48px}
-body[data-view="transcripcion"] #convComposer textarea#text{background:#FFF;border-color:#C9DBE1}
+body[data-view="transcripcion"] .conv-meta{border-top:1px solid var(--line);padding-top:9px;margin-top:14px;gap:6px 10px;font-size:max(12px,calc(12px * var(--text-scale)));color:var(--mut)}
+body[data-view="transcripcion"] .conv-stamp{color:var(--stamp);font-weight:750}
+body[data-view="transcripcion"] .conv-actions{border-top:1px solid var(--line);padding-top:10px;margin-top:12px;gap:8px}
+body[data-view="transcripcion"] .conv-actions button{background:var(--card);color:var(--btn-ink);border-color:var(--line);font-weight:650;min-height:48px}
+body[data-view="transcripcion"] #convComposer textarea#text{background:var(--field);border-color:var(--line)}
 body[data-view="transcripcion"] #convComposer label{font-weight:700}
 
 /* Navegación: mismo orden y mismas zonas táctiles; selección visible además del color. */
-.studio-dock .studio-nav a[aria-current="page"]{background:#E1EEF2;color:var(--acc);font-weight:800;box-shadow:inset 0 0 0 1px #C3DAE1}
+.studio-dock .studio-nav a[aria-current="page"]{background:var(--acc-soft);color:var(--acc);font-weight:800;border-radius:999px;box-shadow:inset 0 0 0 1px var(--line)}
 .studio-dock .studio-nav a[aria-current="page"] svg{stroke-width:2.25}
 
 /* Correcciones de ergonomía: lectura libre y editor amplio con el mismo textarea. */
-:root{--line-strong:#768F97}
 input,textarea,select,button{border-color:var(--line-strong)}
 body[data-view="transcripcion"] #convComposer textarea#text,
 body[data-view="transcripcion"] .conv-actions button,
@@ -752,8 +784,7 @@ body[data-view="transcripcion"] .conv-actions button.danger{color:var(--error)}
 #pause.p{background:var(--acc-soft);color:var(--acc);border-color:var(--line-strong)}
 body[data-view="transcripcion"] .conv-actions button{font-size:max(14px,calc(14px * var(--text-scale)))}
 button:disabled,#pause:disabled,#mark:disabled,#recordDownloadAudio:disabled,
-body[data-view="grabacion"] .c-rec #rec:disabled{opacity:1;background:#EEF1F2;color:#596E75;border-color:#91A2A8;box-shadow:none}
-.studio-dock .studio-nav a[aria-current="page"]{box-shadow:inset 0 3px 0 var(--acc),inset 0 0 0 1px #C3DAE1}
+body[data-view="grabacion"] .c-rec #rec:disabled{opacity:1;background:var(--disabled-bg);color:var(--disabled-ink);border-color:var(--disabled-line);box-shadow:none}
 .conv-heading{flex-wrap:wrap}.conv-heading button{white-space:normal;max-width:100%}
 body[data-view="transcripcion"] #studioDockStart{background:var(--card);color:var(--acc);border-color:var(--line-strong)}
 #convExpandEditor,#convMinimizeEditor{min-height:48px;font-size:max(14px,calc(14px * var(--text-scale)));white-space:normal}
@@ -837,6 +868,45 @@ body.delta-recording #transcriptionDockBar{height:3px;margin-top:3px}
 .note-audio-time,.note-audio-status{grid-column:1/-1;font-size:14px;overflow-wrap:anywhere}
 .e3-audio-row{border-top:1px solid var(--line);padding:12px 0;overflow-wrap:anywhere}
 #e3Space .row{flex-wrap:wrap}#e3Space button{min-height:48px;white-space:normal}
+/* U5 · Pulido «Clínica serena» (las dos apariencias). Solo presentación: nada cambia de lugar ni de función; ids y textos iguales. */
+.card{border-radius:var(--r-card)}
+.aj-status,.settings-module,.privacy-group,.vault-lock-card,#convMoveDialog,#correctionDialog{border-radius:var(--r-card)}
+.conv-item,.record-save-audio,.anon-explain,.note-audio,#noteTools,.transcription-dock,.dict-dest{border-radius:var(--r-row)}
+.card,.aj-status,.settings-module,.conv-item,.dict-dest,.transcription-dock,.record-save-audio,.anon-explain,.note-audio,#noteTools{border-width:1px}
+.settings-module,.aj-status,.record-save-audio,.privacy-group,.audio-tools,.capture-shortcuts{margin-top:var(--gap-block)}
+.aj-group{margin:calc(var(--gap-block) + 8px) 4px 8px}
+.settings-module.aj-list{margin-top:0}
+.conv-item{margin-top:var(--gap-row)}
+/* Campos de texto: borde de control (3:1 o más) también en los diálogos; antes algunos usaban el borde fino de las tarjetas. */
+input[type=text],input[type=number],input[type=password],textarea,select{border-color:var(--line-strong)}
+/* Tipografía: la del sistema, con jerarquía más clara. */
+body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
+.record-head h2,.screen-title h2,.c-rec h2{font-size:max(var(--fs-title),calc(var(--fs-title) * var(--text-scale)));font-weight:800;letter-spacing:-.6px;line-height:1.2}
+.record-overline,.screen-overline{font-size:12px;letter-spacing:.14em;font-weight:750}
+.screen-title p,.c-rec .rec-caption{line-height:1.5}
+.aj-title{font-size:max(24px,calc(24px * var(--text-scale)))}
+/* Dictar: botón de grabar redondo y grande (unos 150 px) con un anillo suave; «Guardar en» dentro de una tarjeta. */
+.c-rec #rec{border-radius:50%}
+body[data-view="grabacion"] .c-rec #rec{margin:18px auto 14px}
+.dict-dest{margin-top:var(--gap-block);padding:16px;background:var(--bg);border:1px solid var(--line);gap:8px}
+.dict-dest label{font-size:max(14px,calc(14px * var(--text-scale)))}
+.dict-dest select,.dict-dest input[type=text]{background:var(--card)}
+/* Cuadernos: ícono en un cuadrado suave a la izquierda, nombre en negrita y debajo «N notas · fecha». */
+.conv-item{display:grid;grid-template-columns:44px minmax(0,1fr);column-gap:14px;row-gap:2px;align-items:center;justify-items:start;text-align:left;padding:14px 16px;min-height:76px}
+.conv-item>.conv-ico{grid-column:1;grid-row:1 / span 3;align-self:center;width:44px;height:44px;padding:11px;box-sizing:border-box;border-radius:12px;background:var(--acc-soft);color:var(--acc)}
+.conv-item>span,.conv-item>small{grid-column:2;min-width:0;max-width:100%}
+.conv-item>span:not(.conv-preview){font-weight:800}
+/* Barra de pestañas: la activa en píldora (fondo suave) y texto en negrita. */
+.studio-dock .studio-nav a{border-radius:999px}
+/* Ajustes · Apariencia: tres opciones en una fila. */
+.aj-appearance{display:grid;gap:8px;padding:12px 16px}
+.aj-appearance .aj-lbl-t{font-size:max(16px,calc(16px * var(--text-scale)));font-weight:700;color:var(--ink)}
+.aj-seg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;padding:4px;background:var(--bg);border:1px solid var(--line-strong);border-radius:16px}
+.aj-seg-opt{position:relative;display:flex;align-items:center;justify-content:center;min-height:48px;margin:0!important;padding:0 4px;border-radius:12px;text-align:center;font-size:max(14px,calc(14px * var(--text-scale)));font-weight:700;color:var(--ink);cursor:pointer}
+.aj-seg-opt input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}
+.aj-seg-opt:has(input:checked){background:var(--acc);color:var(--acc-ink)}
+.aj-seg-opt:has(input:focus-visible){outline:3px solid var(--acc);outline-offset:2px}
+:root[data-text-size="large"] .aj-seg{grid-template-columns:1fr}
 </style>
 </head>
 <body data-view="grabacion">
@@ -966,6 +1036,15 @@ body.delta-recording #transcriptionDockBar{height:3px;margin-top:3px}
       </section>
       <h3 class="aj-group">Lectura</h3>
       <section class="settings-module aj-list" id="settingsReading">
+        <div class="aj-appearance" id="ajAppearance" role="radiogroup" aria-labelledby="themeLbl" aria-describedby="themeHint">
+          <span class="aj-lbl-t" id="themeLbl">Apariencia</span>
+          <div class="aj-seg">
+            <label class="aj-seg-opt"><input type="radio" name="theme" id="theme-light" value="light" checked><span>Clara</span></label>
+            <label class="aj-seg-opt"><input type="radio" name="theme" id="theme-dark" value="dark"><span>Nocturna</span></label>
+            <label class="aj-seg-opt"><input type="radio" name="theme" id="theme-auto" value="auto"><span>Automática</span></label>
+          </div>
+          <p class="hint" id="themeHint">«Automática» sigue la apariencia del sistema. Los archivos exportados (Word, TXT) siguen saliendo en claro sobre blanco.</p>
+        </div>
         <div class="aj-field">
         <div class="label-row"><label for="textSize" class="aj-lbl">Tamaño del texto</label><button type="button" class="info-toggle" aria-label="Ayuda sobre tamaño del texto" aria-expanded="false" aria-controls="textSizeHelp"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7v1"/></svg></button></div>
         <select id="textSize" aria-describedby="textSizeHelp"><option value="compact">Compacto</option><option value="normal" selected>Normal</option><option value="large">Grande</option></select>
@@ -2875,6 +2954,13 @@ function convToggleMenu(menu, btn){
 }
 document.addEventListener('click', ev => { const o = convMenuOpen; if (o && !o.menu.contains(ev.target) && !o.btn.contains(ev.target)) convCloseMenu(false); });
 document.addEventListener('keydown', ev => { if (ev.key === 'Escape' && convMenuOpen) { ev.stopPropagation(); convCloseMenu(true); } });
+function convIcon(){   // U5: ícono decorativo del cuaderno (solo presentación; hereda el color del texto)
+  const NS = 'http://www.w3.org/2000/svg', svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('viewBox', '0 0 24 24'); svg.setAttribute('fill', 'none'); svg.setAttribute('stroke', 'currentColor'); svg.setAttribute('stroke-width', '1.8');
+  svg.setAttribute('stroke-linecap', 'round'); svg.setAttribute('stroke-linejoin', 'round'); svg.setAttribute('aria-hidden', 'true'); svg.setAttribute('focusable', 'false'); svg.setAttribute('class', 'conv-ico');
+  ['M6.5 4h10A1.5 1.5 0 0 1 18 5.5V20H8a1.5 1.5 0 0 1-1.5-1.5z', 'M6.5 18.5A1.5 1.5 0 0 1 8 17h10', 'M10 8h5'].forEach(d => { const p = document.createElementNS(NS, 'path'); p.setAttribute('d', d); svg.append(p); });
+  return svg;
+}
 function convButton(label, fn, cls){ const b = document.createElement('button'); b.type = 'button'; b.textContent = label; if (cls) b.className = cls; b.onclick = fn; return b; }
 /* Solo presentación: conserva el mismo editor, borrador, destino y acciones de guardado. */
 function refreshConvEditor(){
@@ -2910,10 +2996,10 @@ function renderConv(){
       // B3: cantidad y fecha corta, sin repetir la fecha del título; y una línea con el comienzo de la última nota (se puede apagar en Ajustes).
       const when = x.lastSavedAt !== null ? convRelative(x.lastSavedAt) : '';
       const sm = document.createElement('small'); sm.textContent = x.count + (x.count === 1 ? ' nota' : ' notas') + (when ? ' · ' + when : '');
-      b.append(t);
+      b.append(convIcon(), t, sm);   // U5: nombre y, debajo, «N notas · fecha»; la vista previa (si está encendida) va en la tercera línea
       const pv = $('listPreview').checked ? convPreview(x.preview) : '';
       if (pv) { const q = document.createElement('span'); q.className = 'conv-preview'; q.textContent = pv; b.append(q); }
-      b.append(sm); list.append(b);
+      list.append(b);
     });
     refreshConvTarget(); return;
   }
@@ -7000,6 +7086,13 @@ function initErgonomics(){
   else new MutationObserver(schedule).observe(dock,{subtree:true,attributes:true,childList:true,characterData:true});
   schedule();
 }
+/* U5 · Apariencia. La aplica antes de pintar el script de la cabecera (dvTheme); acá solo se sincroniza la fila de Ajustes y se guarda en la configuración existente. */
+function applyTheme(value){
+  const p = ['light','dark','auto'].includes(value) ? value : 'light';
+  dvTheme.set(p);
+  const r = document.querySelector('input[name=theme][value=' + p + ']'); if (r) r.checked = true;
+}
+const themePref = () => ['light','dark','auto'].find(v => $('theme-' + v).checked) || 'light';
 function applyTextSize(value){
   const size = ['compact','normal','large'].includes(value) ? value : 'normal';
   document.documentElement.dataset.textSize = size;
@@ -7029,11 +7122,11 @@ $('model').addEventListener('change', updateModelHint);
 const hasOpt = (sel, v) => [...sel.options].some(o => o.value === v);
 let cfgLastBackup = 0;   // U16: fecha de la última copia creada (milisegundos); único dato nuevo de Ajustes, sin datos de pacientes
 function loadCfg(){
-  applyTextSize('normal');
+  applyTextSize('normal'); applyTheme('light');
   try {
     const c = JSON.parse(localStorage.getItem(CKEY) || '{}');
     $('liveAnon').checked = false; // Solo anonimización posterior
-    applyTextSize(c.textSize);
+    applyTextSize(c.textSize); applyTheme(c.theme);
     if (typeof c.pVolatile === 'boolean') $('pVolatile').checked = c.pVolatile;
     if (typeof c.learnAuto === 'boolean') $('learnAuto').checked = c.learnAuto;
     if (typeof c.listPreview === 'boolean') $('listPreview').checked = c.listPreview;
@@ -7048,8 +7141,9 @@ function loadCfg(){
   } catch (e) {}
   ajRefresh();
 }
-const saveCfg = () => { if (typeof vault !== 'undefined' && vault.otherTab) return false; try { localStorage.setItem(CKEY, JSON.stringify({textSize:$('textSize').value, model:$('model').value, accel:$('accel').value, mic:$('mic').value, eng:eng(), replace:$('replace').checked, saveAudio:$('saveAudio').checked, pVolatile:$('pVolatile').checked, learnAuto:$('learnAuto').checked, listPreview:$('listPreview').checked, ...(cfgLastBackup ? {lastBackupAt: cfgLastBackup} : {})})); return true; } catch (e) { return false; } };
+const saveCfg = () => { if (typeof vault !== 'undefined' && vault.otherTab) return false; try { localStorage.setItem(CKEY, JSON.stringify({textSize:$('textSize').value, theme:(['light','dark','auto'].find(v => $('theme-' + v).checked) || 'light'), model:$('model').value, accel:$('accel').value, mic:$('mic').value, eng:eng(), replace:$('replace').checked, saveAudio:$('saveAudio').checked, pVolatile:$('pVolatile').checked, learnAuto:$('learnAuto').checked, listPreview:$('listPreview').checked, ...(cfgLastBackup ? {lastBackupAt: cfgLastBackup} : {})})); return true; } catch (e) { return false; } };
 $('textSize').addEventListener('change', () => { applyTextSize($('textSize').value); if (!saveCfg()) flash('El tamaño se aplicó, pero este navegador no permitió guardar el ajuste.'); });
+document.querySelectorAll('input[name=theme]').forEach(r => r.addEventListener('change', () => { applyTheme(themePref()); if (!saveCfg()) flash('La apariencia se aplicó, pero este navegador no permitió guardar el ajuste.'); }));
 ['model', 'accel', 'mic', 'replace', 'saveAudio', 'pVolatile', 'learnAuto'].forEach(id => $(id).addEventListener('change', saveCfg));
 $('listPreview').addEventListener('change', () => { saveCfg(); renderConv(); });   // B3: campo opcional de la configuración existente; solo cambia lo que se muestra
 document.querySelectorAll('input[name=eng]').forEach(r => r.addEventListener('change', () => { setStatus(''); saveCfg(); }));

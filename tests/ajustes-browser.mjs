@@ -207,7 +207,7 @@ try {
   assert.match(await run(`document.getElementById('copiaMsg').textContent`), /Copia creada y comprobada/);
   const antes = Date.now(); const lb = (await cfg()).lastBackupAt;
   assert.ok(lb && lb <= antes && lb > antes - 60000, 'la fecha de la copia quedó en la configuración existente');
-  assert.deepEqual(Object.keys(await cfg()).filter(k => !['textSize', 'model', 'accel', 'mic', 'eng', 'replace', 'saveAudio', 'pVolatile', 'learnAuto', 'listPreview', 'lastBackupAt'].includes(k)), [], 'la configuración no suma ningún otro campo');
+  assert.deepEqual(Object.keys(await cfg()).filter(k => !['textSize', 'model', 'accel', 'mic', 'eng', 'replace', 'saveAudio', 'pVolatile', 'learnAuto', 'listPreview', 'lastBackupAt', 'theme'].includes(k)), [], 'la configuración no suma ningún otro campo');   // U5: «theme» es el único campo nuevo (apariencia)
   await volver();
   assert.equal(await run(`document.getElementById('ajLastCopy').textContent`), 'Última copia: hoy. Conviene hacer una por semana.');
   // Pasan los días: «hace N días».
