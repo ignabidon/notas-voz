@@ -1,3 +1,7 @@
+## 19/11/2026 · Beta visual compacta (ChatGPT, rama separada; sin unir a main)
+
+Base: `edfacda1`. Alternativa de diseño para evaluar en Motorola G56 5G: acciones de notas menos grandes con área táctil de 48 px, burbujas y lista de cuadernos más compactas, acceso destacado a motor/modelo Whisper al comienzo de Ajustes, escalas más coherentes, avisos y controles secundarios menos dominantes, y reducción de espacios en Anonimizar. Mantiene modos claro/nocturno, navegación y la lógica actual de grabación, guardado y cifrado. Se identifica como BETA y exige usar exclusivamente datos ficticios. Alcance y advertencias sobre la URL externa: `docs/BETA-VISUAL-2026-11-19.md`. No hay autorización para unir a `main`.
+
 ## 18/11/2026 · U19: Dictar simplificado (parche propuesto, sin modificar GitHub)
 
 Base leída: `main` en `cfda606ddef42602405ddf26b1f90949cabffd24` (incluye #69, U5/U18).
