@@ -234,7 +234,7 @@ try {
     const dest = await run(`(() => { const d = document.getElementById('dictDest'), cs = getComputedStyle(d); return {radio: parseFloat(cs.borderTopLeftRadius), borde: cs.borderTopWidth, fondo: cs.backgroundColor, contiene: !!d.querySelector('select#dictDestSel')} })()`);
     assert.ok(dest.contiene && dest.radio >= 18 && dest.radio <= 20 && dest.borde === '1px', nombre + ': «Guardar en» está en una tarjeta de esquinas 18 a 20 px y borde fino');
     assert.notEqual(dest.fondo, 'rgba(0, 0, 0, 0)');
-    const tit = await run(`parseFloat(getComputedStyle(document.querySelector('.c-rec h2')).fontSize)`);
+    const tit = await run(`parseFloat(getComputedStyle(document.querySelector('.screen-title h2')).fontSize)`);
     assert.ok(tit >= 25.5 && tit <= 27, 'título de pantalla de unos 26 px (' + tit + ')');
     const tarj = await run(`parseFloat(getComputedStyle(document.querySelector('.c-rec')).borderTopLeftRadius)`);
     assert.ok(tarj >= 18 && tarj <= 20, 'tarjetas con esquinas de 18 a 20 px (' + tarj + ')');

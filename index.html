@@ -891,6 +891,16 @@ body[data-view="grabacion"] .c-rec #rec{margin:18px auto 14px}
 .dict-dest{margin-top:var(--gap-block);padding:16px;background:var(--bg);border:1px solid var(--line);gap:8px}
 .dict-dest label{font-size:max(14px,calc(14px * var(--text-scale)))}
 .dict-dest select,.dict-dest input[type=text]{background:var(--card)}
+/* U19 · El destino precede al micrófono y la gestión histórica del audio queda en Ajustes. */
+.c-rec>.dict-dest{margin-top:0;margin-bottom:var(--gap-block)}
+/* Mientras se graba, el destino ya está elegido: el selector se oculta para que el botón de grabar quede completo sobre la franja. */
+body.delta-recording .c-rec>.dict-dest{display:none}
+#grabacion>.audio-tools,#grabacion>#recordDownloadCard,#grabacion>#audioBox{display:none!important}
+#audioAdvanced{padding:14px;border:1px solid var(--line);border-radius:var(--r-row);background:var(--card);margin-top:var(--gap-block)}
+#audioAdvanced>summary{min-height:48px;font-size:max(15px,calc(15px * var(--text-scale)));color:var(--ink)}
+#audioAdvanced .audio-tools{margin-top:12px;border-top:0;padding-top:0}
+#audioAdvanced #audioShortcut{margin:4px 0;font-weight:700}
+#audioAdvanced .record-save-audio{margin-top:12px}
 /* Cuadernos: ícono en un cuadrado suave a la izquierda, nombre en negrita y debajo «N notas · fecha». */
 .conv-item{display:grid;grid-template-columns:44px minmax(0,1fr);column-gap:14px;row-gap:2px;align-items:center;justify-items:start;text-align:left;padding:14px 16px;min-height:76px}
 .conv-item>.conv-ico{grid-column:1;grid-row:1 / span 3;align-self:center;width:44px;height:44px;padding:11px;box-sizing:border-box;border-radius:12px;background:var(--acc-soft);color:var(--acc)}
@@ -930,7 +940,15 @@ body[data-view="grabacion"] .c-rec #rec{margin:18px auto 14px}
 
   <!-- 1 · Grabar -->
   <section class="card c-rec" id="grabacion">
-    <div class="record-head"><span class="record-overline">CAPTURA RÁPIDA</span><h2>Nueva nota</h2><div class="audio-retention"><label for="recordSaveAudio">Conservar audio</label><label class="retention-switch"><input type="checkbox" id="recordSaveAudio" role="switch" aria-label="Conservar audio" aria-describedby="retainHelp"><span class="switch-track" aria-hidden="true"></span><span id="recordSaveState" aria-hidden="true">No</span></label><button type="button" class="info-toggle" aria-label="Ayuda sobre conservar audio" aria-expanded="false" aria-controls="retainHelp"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7v1"/></svg></button></div><p class="hint help-content" id="retainHelp" hidden>Activá antes de grabar para conservar la voz en este navegador. Con la protección de Ajustes activada, el audio se guarda cifrado y unido a su nota (escucharlo desde la nota llega en una versión próxima). Sin la protección, se guarda sin cifrar en «Mis grabaciones», donde Descargar crea un archivo aparte. El audio nunca está anonimizado.</p><p class="rec-caption">Grabá tu voz o cargá un audio para transcribirlo en tu dispositivo.</p>
+    <!-- U19: cada nota tiene su fecha; el nombre opcional corresponde al cuaderno. -->
+    <div class="dict-dest" id="dictDest">
+      <label for="dictDestSel">Guardar en</label>
+      <select id="dictDestSel" aria-describedby="dictDestHint"><option value="">Cuaderno nuevo</option></select>
+      <div id="dictNameRow">
+        <label for="dictName">Nombre del cuaderno nuevo <span class="opt">(opcional)</span></label>
+        <input type="text" id="dictName" maxlength="120" autocomplete="off" enterkeyhint="done" placeholder="Si lo dejás vacío: fecha y hora">
+      </div>
+      <p class="hint" id="dictDestHint" role="status"></p>
     </div>
     <div class="audio-done" id="audioDone" role="status" aria-live="polite" hidden>
       <span class="audio-done-check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7"/></svg></span>
@@ -946,19 +964,9 @@ body[data-view="grabacion"] .c-rec #rec{margin:18px auto 14px}
         <button id="mark" type="button" disabled title="Insertá una marca de tiempo en la transcripción (tecla M)" aria-label="Marcar momento en la transcripción">Marcar momento</button>
       </div>
     </div>
-    <div class="dict-dest" id="dictDest">
-      <label for="dictDestSel">Guardar en</label>
-      <select id="dictDestSel" aria-describedby="dictDestHint"><option value="">Cuaderno nuevo</option></select>
-      <div id="dictNameRow">
-        <label for="dictName">Nombre del cuaderno nuevo <span class="opt">(opcional)</span></label>
-        <input type="text" id="dictName" maxlength="120" autocomplete="off" enterkeyhint="done" placeholder="Si lo dejás vacío: fecha y hora">
-      </div>
-      <p class="hint" id="dictDestHint" role="status"></p>
-    </div>
-    <div class="capture-shortcuts"><button type="button" id="openSheets" data-go-view="transcripcion">Ver cuadernos guardados</button><button type="button" id="writeNewNote">Escribir una nota</button></div>
     <p class="mark-help">«Marcar» señala un momento en la transcripción.</p>
     <div class="audio-tools">
-      <button type="button" class="audio-shortcut" id="audioShortcut" data-go-view="grabacion" data-go-target="audioBox">Mis grabaciones</button>
+      <p class="hint" id="audioShortcut">Mis grabaciones</p>
       <button type="button" id="loadAudioBtn">Cargar un audio para transcribir</button>
       <input type="file" id="loadAudioFile" accept="audio/*,.m4a,.mp3,.wav,.ogg,.opus,.aac,.amr,.webm" hidden>
       <p class="hint" id="loadAudioHint">Se transcribe en este celular. Con «Conservar audio» y la protección activados, el archivo se guarda cifrado con su nota; si no, <b>no se guarda</b>. Máximo 30 MB y 15 minutos por archivo. Los audios largos tardan más que su duración.</p>
@@ -1143,7 +1151,7 @@ body[data-view="grabacion"] .c-rec #rec{margin:18px auto 14px}
     <section class="aj-screen aj-sub" id="ajSub-espacio" data-aj-sub="espacio" aria-labelledby="ajT-espacio" hidden>
       <button type="button" class="aj-back" data-aj-back>‹ Ajustes</button>
       <h3 class="aj-title" id="ajT-espacio" tabindex="-1">Espacio y audios guardados</h3>
-        <button type="button" class="ghost" data-go-view="grabacion" data-go-target="audioBox">Ver, descargar o recuperar audios guardados</button>
+        <button type="button" class="ghost" data-go-view="ajustes" data-go-target="audioBox">Ver, descargar o recuperar audios guardados</button>
         <section class="vault-panel" id="e3Space" aria-labelledby="e3SpaceTitle">
           <h4 id="e3SpaceTitle">Espacio y audios guardados</h4>
           <p id="e3SpaceMsg" class="hint" role="status"></p>
@@ -1160,6 +1168,10 @@ body[data-view="grabacion"] .c-rec #rec{margin:18px auto 14px}
             <div class="row"><button type="button" id="e3LegacyDownload">Descargar audio anterior</button><button type="button" id="e3LegacyDelete" class="ghost danger">Borrar audio anterior</button></div>
           </div>
         </section>
+        <details id="audioAdvanced">
+          <summary>Audios guardados en este dispositivo (avanzado)</summary>
+          <!-- Los controles originales se trasladan aquí al inicializar la página, conservando IDs y acciones. -->
+        </details>
     </section>
     <section class="aj-screen aj-sub" id="ajSub-calidad" data-aj-sub="calidad" aria-labelledby="ajT-calidad" hidden>
       <button type="button" class="aj-back" data-aj-back>‹ Ajustes</button>
@@ -1420,7 +1432,7 @@ body[data-view="grabacion"] .c-rec #rec{margin:18px auto 14px}
     </div>
     <div id="busy" role="status"></div>
     <p class="hint selection-help" id="selectionHelp">Tocá una palabra o seleccioná una frase para corregirla.</p>
-    <p class="hint where-audio">¿Buscás el audio? Está en <b>Dictar → Tus audios guardados</b>. <button type="button" class="ghost" data-go-view="grabacion" data-go-target="audioBox">Ver audios guardados</button></p>
+    <p class="hint where-audio">¿Buscás el audio? Está en <b>Ajustes → Espacio y audios guardados</b>. <button type="button" class="ghost" data-go-view="ajustes" data-go-target="audioBox">Ver audios guardados</button></p>
 
     <div id="learn"></div>
 
@@ -1527,6 +1539,12 @@ body[data-view="grabacion"] .c-rec #rec{margin:18px auto 14px}
 <script>
 document.addEventListener('DOMContentLoaded',function(){
   /* Las tres pantallas comparten un solo DOM para mantener la grabación activa al cambiar de vista. */
+  /* U19: mover nodos existentes, no recrearlos; sus eventos y datos permanecen intactos. */
+  const advancedAudio=document.getElementById('audioAdvanced');
+  for(const selector of ['#grabacion>.audio-tools','#grabacion>#recordDownloadCard','#grabacion>#audioBox']){
+    const node=document.querySelector(selector);
+    if(node)advancedAudio.append(node);
+  }
   const validDeltaViews = ['grabacion','transcripcion','anonimizar','ajustes'];
   function chooseDeltaView(view, scrollToTop=true) {
     if (!validDeltaViews.includes(view)) view='grabacion';
@@ -1570,7 +1588,12 @@ document.addEventListener('DOMContentLoaded',function(){
   document.querySelectorAll('[data-go-view]').forEach(link=>{
     link.addEventListener('click',()=>{
       const target=link.dataset.goTarget?document.getElementById(link.dataset.goTarget):null;
-      const view=chooseDeltaView(link.dataset.goView,!target);
+      const audioTarget=link.dataset.goTarget==='audioBox';
+      const view=chooseDeltaView(audioTarget?'ajustes':link.dataset.goView,!target);
+      if(audioTarget){
+        ajShow('espacio',false);
+        document.getElementById('audioAdvanced').open=true;
+      }
       if (window.location.hash!=='#'+view) history.replaceState(null,'','#'+view);
       if (target) requestAnimationFrame(()=>target.scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'}));
     });
@@ -2055,7 +2078,7 @@ function vaultRefreshPanel(){
     if (vault.damaged.length) extra.push('No se pudo leer: ' + vault.damaged.join(', ') + '. Se apartó intacto sin borrarlo.');
     vaultEl('vaultWarn').textContent = extra.join(' ');
   }
-  ajRefresh();
+  if (typeof ajRefresh === 'function') ajRefresh();   // se puede llamar antes de que el bloque de Ajustes se defina
   const priv = vaultEl('localPrivacyNote');
   if (priv) priv.textContent = vault.state === 'off'
     ? 'Guardar .txt descarga un archivo, pero también deja una copia del texto en Brave. Además, el borrador se guarda automáticamente. Estas copias no están cifradas: activá la protección más arriba.'
@@ -3121,12 +3144,10 @@ function convBeginNew(){
 }
 $('convNewNote').onclick = convBeginNew;
 $('convNewFromSheet').onclick = convBeginNew;
-$('writeNewNote').onclick = convBeginNew;
 $('convToolsToggle').onclick = () => {
   const tools = $('noteTools'); tools.open = !tools.open;
   if (tools.open) { tools.scrollIntoView({block:'start',behavior:'smooth'}); tools.querySelector('summary').focus(); }
 };
-$('openSheets').addEventListener('click', () => { convComposeNew = false; convOpenId = null; renderConv(); });
 $('convRename').onclick = () => {
   if (!convStore.data || !convOpenId) return;
   const t = prompt('Nuevo nombre del cuaderno', convTitleOf(convOpenId)); if (t === null) return;
@@ -4205,7 +4226,7 @@ document.addEventListener('visibilitychange', () => {
   }
 });
 function lockUI(on){
-  $('model').disabled = on; $('accel').disabled = on; $('mic').disabled = on; $('saveAudio').disabled = on; $('recordSaveAudio').disabled = on;
+  $('model').disabled = on; $('accel').disabled = on; $('mic').disabled = on; $('saveAudio').disabled = on;
   document.querySelectorAll('input[name=eng]').forEach(r => r.disabled = on || (r.value === 'native' && !nativeReady));
 }
 function fmtEta(ms){
@@ -6801,7 +6822,6 @@ function clearNavBadge(view){
 new MutationObserver(() => clearNavBadge(document.body.dataset.view)).observe(document.body, {attributes: true, attributeFilter: ['data-view']});
 let armTextBadge = false;
 async function refreshAudioBox(){
-  $('recordSaveState').textContent = $('saveAudio').checked ? 'Sí' : 'No';
   const box = $('audioBox'); let m = null, previous = null;
   try { [m, previous] = await Promise.all([audioGetMeta(), audioGetPrevious()]); } catch (e) {}
   $('recordDownloadCard').hidden = !m;
@@ -6830,15 +6850,7 @@ $('recordDownloadAudio').onclick = () => {
   if (audioBusy()) return flash('Esperá a que termine la grabación y la transcripción para descargar el audio.');
   $('aDown').click();
 };
-$('recordSaveAudio').addEventListener('change', () => {
-  $('saveAudio').checked = $('recordSaveAudio').checked;
-  $('saveAudio').dispatchEvent(new Event('change', {bubbles:true}));
-  refreshAudioBox();
-});
-$('saveAudio').addEventListener('change', () => {
-  $('recordSaveAudio').checked = $('saveAudio').checked;
-  refreshAudioBox();
-});
+$('saveAudio').addEventListener('change', refreshAudioBox);
 $('aDown').onclick = async () => {
   if (audioBusy()) return audioMsg('Esperá a que termine la grabación y la transcripción.');
   hideAudioDone();
@@ -6952,6 +6964,7 @@ async function transcribeSaved(){
   let m = null; try { m = await withDeadline(audioGetMeta(), 15000, 'lectura de la grabación'); } catch (e) { audioMsg(e.message); return; }
   if (!m) return refreshAudioBox();
   if (!confirm('¿Transcribir el audio guardado? Guardá antes las correcciones del editor.')) return;
+  if(document.body.dataset.view==='ajustes')document.querySelector('[data-delta-view="grabacion"]').click();
   return transcribeBlob(() => withDeadline(audioGetBlob(m), 15000, 'lectura del audio guardado'), m.ms, 'el audio guardado');
 }
 /* Transcribe un audio ya existente (guardado o cargado desde el celular) con el mismo proceso de siempre.
@@ -6992,6 +7005,8 @@ $('loadAudioFile').addEventListener('change', () => {
   if (f.type && !/^(audio|video)\//.test(f.type)) return flash('Ese archivo no parece un audio. Elegí un archivo de sonido (MP3, M4A, WAV, OGG…).');
   const guarda = anUsable() && $('saveAudio').checked;
   if (!confirm('¿Transcribir «' + f.name + '» (' + mb(f.size) + ')? ' + (guarda ? 'El archivo se guarda cifrado en DictaVoz, unido a la nota.' : 'El archivo no se guarda en DictaVoz.') + ' Guardá antes las correcciones del editor: el texto actual se reemplaza si «Empezar de cero al grabar» está activado.')) return;
+  // El usuario inició la carga en Ajustes: la transcripción y sus errores siguen en Dictar.
+  if(document.body.dataset.view==='ajustes')document.querySelector('[data-delta-view="grabacion"]').click();
   transcribeBlob(() => f, null, 'el audio cargado', true);
 });
 
@@ -7293,7 +7308,7 @@ function updWC(){
 }
 $('text').addEventListener('input', updWC);
 setInterval(updWC, 300);
-initErgonomics(); loadCfg(); $('recordSaveAudio').checked = $('saveAudio').checked; updateModelHint();
+initErgonomics(); loadCfg(); updateModelHint();
 // Protección cifrada: no bloquear mientras se graba o transcribe; guardar el borrador antes de bloquear.
 vaultSetHooks(() => recording || busy || outstanding > 0 || feeding || anBusyN > 0 || copiaBusyN > 0 || k2ReplaceActive, saveDraft);   // cifrar un archivo, y crear o comprobar una copia, también cuentan como uso
 vaultWhenReady(() => { loadNotes(); loadDict(); loadPeople(); loadGenerator(); updateGeneratorUI(); renderList(); convInit(); restoreDraft(); updWC(); });

@@ -53,6 +53,7 @@ Una línea con ID nuevo, fecha, la frase de Ignacio lo más literal posible y la
 | U16 | **Prioridad de mejoras de uso** (después de las revisiones cruzadas): primero **elegir cuaderno y nombre desde Dictar** (U12) y el **rediseño de Ajustes** (primero una maqueta; no se programa hasta que Ignacio la apruebe). No eligió por ahora: reintentar Whisper desde el audio guardado (U14, parte pendiente) ni deshacer una edición guardada | 17/11 | chat | Vigente |
 | U17 | **Ignacio aprobó la maqueta de Ajustes (lista de secciones con subpantallas) el 18/11.** Pantalla principal con tarjeta de estado y filas; cada fila abre su subpantalla con «‹ Ajustes»; sin pestañas nuevas | 18/11 | chat | Entregado como `.patch` (18/11), falta unirlo y probarlo en el Motorola |
 | U18 | Estética elegida por Ignacio el 18/11: Clínica serena (la actual, pulida) + modo nocturno opcional (U5) | 18/11 | chat | Entregado como `.patch` (18/11), falta unirlo y probarlo en el Motorola |
+| U19 | Dictar simplificado (18/11): «Guardar en» arriba; «Conservar audio» solo en Ajustes; sin accesos a Cuadernos ni a escribir nota; audios guardados en Ajustes › Espacio | 18/11 | pedido adjunto de Ignacio | Preparado como `.patch` sobre #69; pendiente de ejecución de pruebas y revisión antes de unir |
 
 ## W · Forma de trabajo
 
