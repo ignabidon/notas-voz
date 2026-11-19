@@ -168,7 +168,7 @@ try {
 
   // Archivos malos: cortado, alterado, de un formato más nuevo y uno que no es una copia. Nunca se pide la contraseña de más.
   await run(`window.__malos = (() => { const f = window.__dl[1]; return f.arrayBuffer().then(b => { const u = new Uint8Array(b);
-    const alterado = u.slice(); alterado[Math.floor(u.length / 2)] ^= 1; const nuevo = u.slice(); new DataView(nuevo.buffer).setUint32(16, 2);
+    const alterado = u.slice(); alterado[Math.floor(u.length / 2)] ^= 1; const nuevo = u.slice(); new DataView(nuevo.buffer).setUint32(16, 3);
     return {cortado: new File([u.subarray(0, u.length - 9)], 'cortado.dictanota'), alterado: new File([alterado], 'alterado.dictanota'), nuevo: new File([nuevo], 'nuevo.dictanota'), otro: new File(['Persona Inventada Uno: un texto cualquiera, no una copia.'], 'nota.txt')}; }); })(); window.__malos.then(m => { window.__malos = m; return true; })`);
   v = await comprobar('window.__malos.cortado', PASS); assert.equal(v.r, null); assert.match(v.msg, /incompleta/);
   v = await comprobar('window.__malos.alterado', PASS); assert.equal(v.r, null); assert.match(v.msg, /dañada o fue modificada/);
