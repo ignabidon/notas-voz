@@ -563,6 +563,57 @@ label,.hint,.warn,.sub,.section-hint,.selection-help,.mark-help,.record-caption-
 .dict-dest #dictNameRow[hidden]{display:none}
 .dict-dest .hint{margin:2px 0 0;min-height:0}
 .dict-dest .hint:empty{display:none}
+/* U16 · Ajustes como lista de secciones con subpantallas (misma pestaña; sin pantallas nuevas). 360 px: una columna, filas y botones de 48 px o más */
+.aj-screen[hidden]{display:none}
+.c-set .aj-screen{display:block}
+.aj-group{margin:22px 4px 6px;font-size:max(13px,calc(13px * var(--text-scale)));letter-spacing:.08em;text-transform:uppercase;color:var(--mut);font-weight:750}
+.settings-module.aj-list{padding:4px 0;overflow:hidden;margin-top:0;background:var(--card)}
+.aj-row{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:60px;padding:10px 16px;margin:0;background:transparent;border:0;border-radius:0;text-align:left;color:var(--ink);font:inherit;cursor:pointer}
+.aj-list>.aj-row+.aj-row,.aj-list>*+*{border-top:1px solid var(--line)}
+.aj-row-t{display:grid;gap:2px;min-width:0}
+.aj-row-t b{font-size:max(16px,calc(16px * var(--text-scale)));font-weight:700}
+.aj-row-t small{font-size:max(13px,calc(13px * var(--text-scale)));color:var(--mut);font-weight:400}
+.aj-chev{font-size:26px;line-height:1;color:var(--mut);flex:none}
+.aj-row:active{background:var(--acc-soft)}
+.aj-row:focus-visible,.aj-back:focus-visible,.aj-sw:focus-visible{outline:3px solid var(--acc);outline-offset:-3px}
+.aj-row-danger b,.aj-row-danger .aj-chev{color:var(--error)}
+.aj-switch-row{display:flex;align-items:center;justify-content:space-between;gap:14px;min-height:60px;padding:10px 16px;margin:0!important;flex-direction:row-reverse}
+.aj-switch-row>span{flex:1 1 auto;min-width:0}
+.aj-switch-row small{display:block;margin-top:2px;font-weight:400;color:var(--mut)}
+input.aj-sw{appearance:none;-webkit-appearance:none;flex:none;width:52px;height:32px;border-radius:16px;background:#B7C6CB;position:relative;margin:0;cursor:pointer;transition:background .15s}
+input.aj-sw::before{content:"";position:absolute;top:4px;left:4px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 1px 3px #0003;transition:transform .15s}
+input.aj-sw:checked{background:var(--acc)}
+input.aj-sw:checked::before{transform:translateX(20px)}
+.aj-field{display:grid;gap:6px;padding:12px 16px}
+.aj-field .label-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.aj-field select{width:100%;min-height:48px}
+.aj-status{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px;margin-top:6px}
+.aj-status-top{display:flex;align-items:center;gap:12px}
+.aj-status-top h3{margin:0;font-size:max(18px,calc(18px * var(--text-scale)));font-weight:750}
+.aj-status-line{margin:2px 0 0;font-size:max(14px,calc(14px * var(--text-scale)));color:var(--mut)}
+.aj-lock{width:44px;height:44px;border-radius:14px;background:var(--acc-soft);color:var(--acc);display:grid;place-items:center;flex:none}
+.aj-lock svg{width:24px;height:24px}
+.aj-status[data-on="1"] .aj-lock{background:var(--success-bg);color:var(--success)}
+.aj-status-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.aj-status-btns button{min-height:48px;margin:0}
+.aj-status-btns button[hidden]{display:none}
+.aj-status-btns:has(#ajLock[hidden]){grid-template-columns:1fr}
+.aj-soft{margin:12px 0 0;padding:10px 12px;border-radius:12px;background:var(--note-bg);color:var(--note-ink);font-size:max(14px,calc(14px * var(--text-scale)))}
+.aj-credit{margin:26px 8px 8px;text-align:center;color:var(--mut);font-size:max(13px,calc(13px * var(--text-scale)))}
+.aj-back{display:inline-flex;align-items:center;min-height:48px;padding:0 14px 0 8px;margin:0 0 4px -8px;background:transparent;border:0;color:var(--acc);font:inherit;font-weight:700;cursor:pointer}
+.aj-title{margin:4px 0 14px;font-size:max(22px,calc(22px * var(--text-scale)));font-weight:750;letter-spacing:-.3px;outline:none}
+.aj-title-danger{color:var(--error)}
+.aj-sub .settings-module.aj-block{margin-top:0}
+.aj-sub .vault-panel{border-top:0;padding-top:0}
+.aj-sub .vault-panel .row{display:grid;gap:10px}
+.aj-sub .vault-panel .row button{width:100%}
+.aj-restore{margin-top:18px;border:2px solid var(--error);border-radius:16px;padding:14px}
+.aj-restore h5{margin:0 0 6px;font-size:max(16px,calc(16px * var(--text-scale)));display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.aj-tag{font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--error);background:var(--error-bg);border-radius:999px;padding:3px 10px}
+.aj-restore .aj-danger-btn{color:var(--error);border-color:var(--error);min-height:48px}
+.aj-legacy-del{margin-top:14px}
+.aj-legacy-del[hidden]{display:none}
+
 #captureWarning,#vaultWarn,#vaultSaveError,#vaultLockMsg,#correctionRuleNotice,.conv-msg{color:var(--note-ink)}
 #captureWarning{background:var(--note-bg);border-color:var(--note-ink)}
 #correctionError{color:var(--error)}
@@ -893,44 +944,46 @@ body.delta-recording #transcriptionDockBar{height:3px;margin-top:3px}
   <details class="card c-set" id="ajustes" open>
     <summary>Ajustes</summary>
     <div class="body">
-      <div class="screen-title"><span class="screen-overline">PERSONALIZACIÓN</span><h2>Ajustes</h2><p>Configurá DictaVoz a tu manera.</p></div>
-
-      <section class="settings-module" id="settingsReading"><div class="settings-module-top"><span class="module-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 19 8.5 6l5 13M5.5 14.5h6"/><path d="m14.5 19 3-8 3 8M15.7 16.5h4.6"/></svg></span><h3>Lectura y comodidad</h3></div>
-        <div class="label-row"><label for="textSize">Tamaño del texto</label><button type="button" class="info-toggle" aria-label="Ayuda sobre tamaño del texto" aria-expanded="false" aria-controls="textSizeHelp"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7v1"/></svg></button></div>
+    <div id="ajHome" class="aj-screen">
+      <div class="screen-title"><span class="screen-overline">PERSONALIZACIÓN</span><h2>Ajustes</h2></div>
+      <section class="aj-status" id="ajStatus" aria-labelledby="ajStatusTitle">
+        <div class="aj-status-top"><span class="aj-lock" id="ajLockIcon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="10.5" width="14" height="9.5" rx="2.5"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/></svg></span><div><h3 id="ajStatusTitle">Protección desactivada</h3><p class="aj-status-line" id="ajStatusLine"></p></div></div>
+        <div class="aj-status-btns"><button type="button" id="ajLock" hidden>Bloquear ahora</button><button type="button" id="ajCopy" class="p">Crear copia</button></div>
+        <p class="aj-soft" id="ajLastCopy" role="status"></p>
+      </section>
+      <h3 class="aj-group">Datos y privacidad</h3>
+      <section class="settings-module aj-list" id="settingsPrivacy">
+        <button type="button" class="aj-row" data-aj-open="proteccion" id="ajRow-proteccion"><span class="aj-row-t"><b>Protección y contraseña</b><small>Contraseña, huella y código de recuperación</small></span><span class="aj-chev" aria-hidden="true">›</span></button>
+        <button type="button" class="aj-row" data-aj-open="copias" id="ajRow-copias"><span class="aj-row-t"><b>Copias de seguridad</b><small>Crear, verificar y restaurar</small></span><span class="aj-chev" aria-hidden="true">›</span></button>
+        <button type="button" class="aj-row" data-aj-open="espacio" id="ajRow-espacio"><span class="aj-row-t"><b>Espacio y audios guardados</b><small>Lo que ocupan tus notas y audios</small></span><span class="aj-chev" aria-hidden="true">›</span></button>
+      </section>
+      <h3 class="aj-group">Dictado</h3>
+      <section class="settings-module aj-list" id="settingsAudio">
+                <label class="chk aj-switch-row"><input type="checkbox" id="saveAudio" class="aj-sw">
+        <span><b>Conservar audio</b><small>Permite recuperar la voz original. Con la protección activada se guarda cifrada y unida a su nota; sin ella, sin cifrar. Nunca está anonimizada.</small></span></label>
+        <button type="button" class="aj-row" data-aj-open="calidad" id="ajRow-calidad"><span class="aj-row-t"><b>Calidad de transcripción</b><small>Modelo, micrófono y cómo transcribir</small></span><span class="aj-chev" aria-hidden="true">›</span></button>
+        <button type="button" class="aj-row" data-aj-open="diccionario" id="ajRow-diccionario"><span class="aj-row-t"><b>Diccionario y correcciones</b><small>Palabras que se corrigen solas</small></span><span class="aj-chev" aria-hidden="true">›</span></button>
+      </section>
+      <h3 class="aj-group">Lectura</h3>
+      <section class="settings-module aj-list" id="settingsReading">
+        <div class="aj-field">
+        <div class="label-row"><label for="textSize" class="aj-lbl">Tamaño del texto</label><button type="button" class="info-toggle" aria-label="Ayuda sobre tamaño del texto" aria-expanded="false" aria-controls="textSizeHelp"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7v1"/></svg></button></div>
         <select id="textSize" aria-describedby="textSizeHelp"><option value="compact">Compacto</option><option value="normal" selected>Normal</option><option value="large">Grande</option></select>
         <p class="hint help-content" id="textSizeHelp" hidden>Se conserva en este navegador. Los archivos exportados mantienen su formato.</p>
-        <label class="chk" style="margin-top:16px"><input type="checkbox" id="listPreview" checked>
+        </div>
+                <label class="chk aj-switch-row"><input type="checkbox" id="listPreview" class="aj-sw" checked>
         <span><b>Mostrar vista previa en la lista</b><small>En Cuadernos, cada cuaderno muestra el comienzo de su última nota. Puede dejar a la vista nombres reales si la nota no está anonimizada: apagalo si alguien más mira tu pantalla.</small></span></label>
       </section>
-      <section class="settings-module" id="settingsQuality"><div class="settings-module-top"><span class="module-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 3.5 12.8 9 18.5 11l-5.7 2L11 18.5 9.2 13 3.5 11 9.2 9z"/><path d="m19 15.5.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7z"/></svg></span><h3>Calidad de transcripción</h3></div>
-        <label for="model" style="margin-top:16px">Modelo de Whisper</label>
-      <select id="model">
-        <option value="Xenova/whisper-tiny">Tiny · más liviano</option>
-        <option value="Xenova/whisper-base">Base · equilibrado</option>
-        <option value="Xenova/whisper-small" selected>Small · más preciso</option>
-      </select>
-      <div class="hint" id="modelHint" role="status">Small: para mayor precisión. Requiere más memoria y tiempo de procesamiento.</div>
-      <div class="hint">Cambiar de modelo puede requerir una descarga.</div>
+      <h3 class="aj-group">Avanzado</h3>
+      <section class="settings-module aj-list" id="settingsAdvanced">
+        <button type="button" class="aj-row" data-aj-open="diagnostico" id="ajRow-diagnostico"><span class="aj-row-t"><b>Diagnóstico</b><small>Detalles técnicos para soporte</small></span><span class="aj-chev" aria-hidden="true">›</span></button>
+        <button type="button" class="aj-row aj-row-danger" data-aj-open="borrar" id="ajRow-borrar"><span class="aj-row-t"><b>Borrar datos</b><small>Notas, borradores y audio antiguo</small></span><span class="aj-chev" aria-hidden="true">›</span></button>
       </section>
-      <section class="settings-module" id="settingsAudio"><div class="settings-module-top"><span class="module-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10v4M8 7v10M12 4v16M16 8v8M20 11v2"/></svg></span><h3>Audio</h3></div>
-        <label class="chk" style="margin-top:18px"><input type="checkbox" id="saveAudio">
-        <span><b>Conservar audio</b><small>Permite recuperar la voz original. Con la protección activada se guarda cifrada y unida a su nota; sin ella, sin cifrar. Nunca está anonimizada.</small></span></label>
-        <button type="button" class="ghost" data-go-view="grabacion" data-go-target="audioBox">Ver, descargar o recuperar audios guardados</button>
-        <details class="settings-inner"><summary>Micrófono y rendimiento</summary><div class="settings-inner-content"><label for="accel" style="margin-top:14px">Velocidad de cálculo</label>
-      <select id="accel">
-        <option value="auto" selected>Automática (usa la placa de video si puede)</option>
-        <option value="cpu">Solo procesador (si da errores o escribe cosas raras)</option>
-      </select>
-
-      <label for="mic" style="margin-top:14px">Micrófono</label>
-      <select id="mic">
-        <option value="std" selected>Con filtros del navegador (reducen ruido y eco)</option>
-        <option value="agc">Solo volumen automático</option>
-        <option value="raw">Natural, sin filtros</option>
-      </select>
-      <div class="hint">Para comparar, grabá el mismo párrafo con cada opción.</div></div></details>
-      </section>
-      <section class="settings-module" id="settingsPrivacy"><div class="settings-module-top"><span class="module-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span><h3>Privacidad y almacenamiento</h3></div>
+      <p class="aj-credit" id="ajCredit">Psicólogo Ignacio Lasarte · creador de la aplicación</p>
+    </div>
+    <section class="aj-screen aj-sub" id="ajSub-proteccion" data-aj-sub="proteccion" aria-labelledby="ajT-proteccion" hidden>
+      <button type="button" class="aj-back" data-aj-back>‹ Ajustes</button>
+      <h3 class="aj-title" id="ajT-proteccion" tabindex="-1">Protección y contraseña</h3>
         <section class="vault-panel" id="vaultPanel" aria-labelledby="vaultTitle">
           <h4 id="vaultTitle">Protección con contraseña y huella</h4>
           <p class="hint" id="vaultStatus" role="status"></p>
@@ -966,22 +1019,32 @@ body.delta-recording #transcriptionDockBar{height:3px;margin-top:3px}
           <p id="vaultWarn" role="alert"></p>
           <p id="vaultSaveError" role="alert"></p>
         </section>
+    </section>
+    <section class="aj-screen aj-sub" id="ajSub-copias" data-aj-sub="copias" aria-labelledby="ajT-copias" hidden>
+      <button type="button" class="aj-back" data-aj-back>‹ Ajustes</button>
+      <h3 class="aj-title" id="ajT-copias" tabindex="-1">Copias de seguridad</h3>
         <section class="vault-panel" id="copiaPanel" aria-labelledby="copiaTitle">
           <h4 id="copiaTitle">Copia cifrada</h4>
-          <p class="hint">Podés crear y comprobar una copia cifrada. La restauración experimental solo funciona en una instalación completamente vacía, nunca mezcla ni reemplaza datos existentes. Se conserva la contraseña de la copia y deberás registrar de nuevo la huella. Los audios antiguos de «Mis grabaciones» no están incluidos; por ahora tampoco se pueden restaurar copias que tengan audios originalmente sin cifrar.</p>
+          <p class="hint">Una copia es un archivo cifrado con tus notas (y, si querés, tus audios). Sirve para recuperar todo si perdés el celular o se borran los datos del navegador. Guardala fuera del celular.</p>
           <p class="hint" id="copiaOffHint">La protección está apagada: la copia igual sale cifrada, con una contraseña que elegís solo para ese archivo. Lleva el texto, no los audios de «Mis grabaciones».</p>
           <fieldset id="copiaContenido" class="copia-opciones" hidden>
             <legend>Qué lleva la copia</legend>
             <label class="chk"><input type="radio" name="copiaTipo" id="copiaCompleta" value="completa" checked><span><b>Completa</b><small>Texto y audios cifrados guardados con tus notas.</small></span></label>
             <label class="chk"><input type="radio" name="copiaTipo" id="copiaSoloTexto" value="solo-texto"><span><b>Solo texto</b><small>Más liviana: sin audios.</small></span></label>
           </fieldset>
-          <div class="row"><button type="button" id="copiaCrear" class="p">Crear copia cifrada</button><button type="button" id="copiaVerificar">Verificar una copia</button></div>
+          <div class="row"><button type="button" id="copiaCrear" class="p">Crear una copia</button></div>
+          <div class="row"><button type="button" id="copiaVerificar">Verificar una copia</button></div>
           <input type="file" id="copiaArchivo" hidden>
-           <div class="row"><button type="button" id="copiaRestaurar">Restaurar en instalación vacía (experimental)</button></div>
-           <input type="file" id="copiaRestArchivo" accept=".dictanota" hidden>
-           <div class="row"><button type="button" id="copiaReemplazar">Reemplazar lo que hay con una copia (experimental)</button></div>
-           <p class="hint">Borra TODO lo guardado en este navegador y lo cambia por una copia. Antes crea y comprueba un respaldo completo de lo actual, y te muestra qué se perdería.</p>
-           <input type="file" id="copiaReempArchivo" accept=".dictanota" hidden>
+          <section class="aj-restore" id="ajRestore" aria-labelledby="ajRestoreTitle">
+            <h5 id="ajRestoreTitle">Restaurar una copia <span class="aj-tag">Experimental</span></h5>
+            <p class="hint" id="ajRestoreHint">Elegís el archivo y DictaVoz decide solo: si esta instalación está vacía, restaura la copia; si ya tiene datos, la reemplaza (antes crea un respaldo de lo actual y te pide dos confirmaciones).</p>
+            <div class="row"><button type="button" id="ajRestoreBtn" class="aj-danger-btn">Restaurar una copia</button></div>
+            <!-- Los dos caminos de K2 siguen con sus id y su lógica; este botón único solo elige cuál tocar (ver AJUSTES-NAV). -->
+            <button type="button" id="copiaRestaurar" hidden>Restaurar en instalación vacía (experimental)</button>
+            <input type="file" id="copiaRestArchivo" accept=".dictanota" hidden>
+            <button type="button" id="copiaReemplazar" hidden>Reemplazar lo que hay con una copia (experimental)</button>
+            <input type="file" id="copiaReempArchivo" accept=".dictanota" hidden>
+          </section>
           <form id="copiaPwForm" class="vault-box" hidden>
             <p class="hint">Elegí una contraseña para este archivo. Si la olvidás, <b>la copia no se puede abrir</b>.</p>
             <label for="copiaPw1">Contraseña de la copia (al menos 8 caracteres; mejor una frase)</label>
@@ -997,6 +1060,11 @@ body.delta-recording #transcriptionDockBar{height:3px;margin-top:3px}
           </form>
           <p id="copiaMsg" role="status"></p>
         </section>
+    </section>
+    <section class="aj-screen aj-sub" id="ajSub-espacio" data-aj-sub="espacio" aria-labelledby="ajT-espacio" hidden>
+      <button type="button" class="aj-back" data-aj-back>‹ Ajustes</button>
+      <h3 class="aj-title" id="ajT-espacio" tabindex="-1">Espacio y audios guardados</h3>
+        <button type="button" class="ghost" data-go-view="grabacion" data-go-target="audioBox">Ver, descargar o recuperar audios guardados</button>
         <section class="vault-panel" id="e3Space" aria-labelledby="e3SpaceTitle">
           <h4 id="e3SpaceTitle">Espacio y audios guardados</h4>
           <p id="e3SpaceMsg" class="hint" role="status"></p>
@@ -1013,16 +1081,51 @@ body.delta-recording #transcriptionDockBar{height:3px;margin-top:3px}
             <div class="row"><button type="button" id="e3LegacyDownload">Descargar audio anterior</button><button type="button" id="e3LegacyDelete" class="ghost danger">Borrar audio anterior</button></div>
           </div>
         </section>
-        <details id="localPrivacy" class="privacy-panel">
-        <summary>Privacidad y datos guardados <small>Notas y borradores en Brave</small></summary>
-        <p class="hint" id="localPrivacyNote">Guardar .txt descarga un archivo, pero también deja una copia del texto en Brave. Además, el borrador se guarda automáticamente. Estas copias no están cifradas.</p>
-        <p class="hint" id="localTextInfo" role="status"></p>
-        <button type="button" id="clearLocalTexts" class="ghost danger">Borrar notas y borradores de Brave</button>
-        <p class="hint">Esta acción irreversible vacía el texto visible y la opción Deshacer. No elimina los archivos de Descargas, audios, asociaciones, diccionario, modelos ni ajustes.</p>
-        <p class="hint">No garantiza una eliminación segura de los datos. No uses información sensible real hasta contar con una protección adecuada.</p>
-      </details>
-      </section>
-      <section class="settings-module" id="settingsDictionary"><div class="settings-module-top"><span class="module-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4.5h10.5A2.5 2.5 0 0 1 18 7v12.5H7.5A2.5 2.5 0 0 1 5 17z"/><path d="M5 17a2.5 2.5 0 0 1 2.5-2.5H18"/></svg></span><h3>Diccionario</h3></div>
+    </section>
+    <section class="aj-screen aj-sub" id="ajSub-calidad" data-aj-sub="calidad" aria-labelledby="ajT-calidad" hidden>
+      <button type="button" class="aj-back" data-aj-back>‹ Ajustes</button>
+      <h3 class="aj-title" id="ajT-calidad" tabindex="-1">Calidad de transcripción</h3>
+        <section class="settings-module aj-block" id="settingsQuality">
+        <label for="model" style="margin-top:16px">Modelo de Whisper</label>
+      <select id="model">
+        <option value="Xenova/whisper-tiny">Tiny · más liviano</option>
+        <option value="Xenova/whisper-base">Base · equilibrado</option>
+        <option value="Xenova/whisper-small" selected>Small · más preciso</option>
+      </select>
+      <div class="hint" id="modelHint" role="status">Small: para mayor precisión. Requiere más memoria y tiempo de procesamiento.</div>
+      <div class="hint">Cambiar de modelo puede requerir una descarga.</div>
+        <details class="settings-inner" open><summary>Micrófono y rendimiento</summary><div class="settings-inner-content"><label for="accel" style="margin-top:14px">Velocidad de cálculo</label>
+      <select id="accel">
+        <option value="auto" selected>Automática (usa la placa de video si puede)</option>
+        <option value="cpu">Solo procesador (si da errores o escribe cosas raras)</option>
+      </select>
+
+      <label for="mic" style="margin-top:14px">Micrófono</label>
+      <select id="mic">
+        <option value="std" selected>Con filtros del navegador (reducen ruido y eco)</option>
+        <option value="agc">Solo volumen automático</option>
+        <option value="raw">Natural, sin filtros</option>
+      </select>
+      <div class="hint">Para comparar, grabá el mismo párrafo con cada opción.</div></div></details>
+        <div class="aj-block-eng">
+        <details class="settings-inner" open><summary>Cómo transcribir y otras opciones</summary><div class="settings-inner-content">
+        <label>Cómo transcribir</label>
+      <div class="eng">
+        <label><input type="radio" name="eng" value="whisper" checked>
+          <span><strong>Whisper</strong> (recomendado)<small>Transcribe en el celular. La primera vez descarga el modelo.</small></span></label>
+        <label id="lblNative"><input type="radio" name="eng" value="native" disabled>
+          <span><strong>Dictado del navegador · solo local</strong><small id="nativeNote" role="status">Comprobando compatibilidad local…</small></span></label>
+      </div>
+      <div id="nativeSetup" class="row" hidden><button id="nativePrepare" type="button">Preparar dictado local en español</button></div>
+
+      <label class="chk"><input type="checkbox" id="replace" checked><span><b>Empezar de cero al grabar</b><small>Podés deshacer el borrado. Si lo desactivás, lo nuevo se suma al final.</small></span></label>
+        </div></details></div>
+        </section>
+    </section>
+    <section class="aj-screen aj-sub" id="ajSub-diccionario" data-aj-sub="diccionario" aria-labelledby="ajT-diccionario" hidden>
+      <button type="button" class="aj-back" data-aj-back>‹ Ajustes</button>
+      <h3 class="aj-title" id="ajT-diccionario" tabindex="-1">Diccionario y correcciones</h3>
+        <section class="settings-module aj-block" id="settingsDictionary">
         <div class="chk-row"><label class="chk"><input type="checkbox" id="learnAuto" checked><span><b>Aprender de mis correcciones</b></span></label><button type="button" class="info-toggle" aria-label="Ayuda sobre aprendizaje de correcciones" aria-expanded="false" aria-controls="learnHelp"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7v1"/></svg></button></div><p class="hint help-content" id="learnHelp" hidden>Si corregís una palabra en el texto de una nota, DictaVoz la recuerda y la escribe bien la próxima vez, sin que toques ningún botón. Aprende solo palabras en minúscula que se parecen a lo que escribió Whisper; nunca nombres con mayúscula ni números. Aparece un aviso con «Deshacer» por si fue un error.</p>
         <details class="studio-dictionary">
       <summary>Corregir palabras frecuentes <small>Opcional · para errores que se repiten</small></summary>
@@ -1038,21 +1141,31 @@ body.delta-recording #transcriptionDockBar{height:3px;margin-top:3px}
         <button id="voseo">Agregar formas rioplatenses (vos, tenés…)</button>
       </div>
     </details>
-      </section>
-      <details class="settings-module settings-experimental" id="settingsAdvanced"><summary>Otras opciones <small>Cómo transcribir, texto nuevo y compatibilidad</small></summary><div class="settings-inner-content">
-        <label>Cómo transcribir</label>
-      <div class="eng">
-        <label><input type="radio" name="eng" value="whisper" checked>
-          <span><strong>Whisper</strong> (recomendado)<small>Transcribe en el celular. La primera vez descarga el modelo.</small></span></label>
-        <label id="lblNative"><input type="radio" name="eng" value="native" disabled>
-          <span><strong>Dictado del navegador · solo local</strong><small id="nativeNote" role="status">Comprobando compatibilidad local…</small></span></label>
-      </div>
-      <div id="nativeSetup" class="row" hidden><button id="nativePrepare" type="button">Preparar dictado local en español</button></div>
-
-      <details class="settings-inner"><summary>Diagnóstico del dictado del navegador</summary><pre id="nativeDiag" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre></details>
-
-      <label class="chk"><input type="checkbox" id="replace" checked><span><b>Empezar de cero al grabar</b><small>Podés deshacer el borrado. Si lo desactivás, lo nuevo se suma al final.</small></span></label>
-      </div></details>
+        </section>
+    </section>
+    <section class="aj-screen aj-sub" id="ajSub-diagnostico" data-aj-sub="diagnostico" aria-labelledby="ajT-diagnostico" hidden>
+      <button type="button" class="aj-back" data-aj-back>‹ Ajustes</button>
+      <h3 class="aj-title" id="ajT-diagnostico" tabindex="-1">Diagnóstico</h3>
+        <p class="hint">Información técnica para quien te ayude a resolver un problema. No incluye nada de lo que dijiste.</p>
+      <details class="settings-inner" open><summary>Diagnóstico del dictado del navegador</summary><pre id="nativeDiag" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre></details>
+        <button type="button" class="ghost" data-go-view="grabacion">Ver detalles técnicos de la última grabación</button>
+    </section>
+    <section class="aj-screen aj-sub" id="ajSub-borrar" data-aj-sub="borrar" aria-labelledby="ajT-borrar" hidden>
+      <button type="button" class="aj-back" data-aj-back>‹ Ajustes</button>
+      <h3 class="aj-title aj-title-danger" id="ajT-borrar" tabindex="-1">Borrar datos</h3>
+        <details id="localPrivacy" class="privacy-panel" open>
+        <summary>Privacidad y datos guardados <small>Notas y borradores en Brave</small></summary>
+        <p class="hint" id="localPrivacyNote">Guardar .txt descarga un archivo, pero también deja una copia del texto en Brave. Además, el borrador se guarda automáticamente. Estas copias no están cifradas.</p>
+        <p class="hint" id="localTextInfo" role="status"></p>
+        <button type="button" id="clearLocalTexts" class="ghost danger">Borrar notas y borradores de Brave</button>
+        <p class="hint">Esta acción irreversible vacía el texto visible y la opción Deshacer. No elimina los archivos de Descargas, audios, asociaciones, diccionario, modelos ni ajustes.</p>
+        <p class="hint">No garantiza una eliminación segura de los datos. No uses información sensible real hasta contar con una protección adecuada.</p>
+      </details>
+        <div class="aj-legacy-del" id="ajLegacyBox" hidden>
+          <p class="hint">Hay audio suelto anterior (sin cifrar y sin vínculo con tus notas).</p>
+          <button type="button" id="ajLegacyDelete" class="ghost danger">Borrar audio anterior</button>
+        </div>
+    </section>
     </div>
   </details>
 
@@ -1358,6 +1471,7 @@ document.addEventListener('DOMContentLoaded',function(){
     const hash=window.location.hash.slice(1);
     if (hash==='localPrivacy') {
       chooseDeltaView('ajustes',false);
+      if (window.ajShow) window.ajShow('borrar',false);
       document.getElementById('localPrivacy').open=true;
       return;
     }
@@ -1862,6 +1976,7 @@ function vaultRefreshPanel(){
     if (vault.damaged.length) extra.push('No se pudo leer: ' + vault.damaged.join(', ') + '. Se apartó intacto sin borrarlo.');
     vaultEl('vaultWarn').textContent = extra.join(' ');
   }
+  ajRefresh();
   const priv = vaultEl('localPrivacyNote');
   if (priv) priv.textContent = vault.state === 'off'
     ? 'Guardar .txt descarga un archivo, pero también deja una copia del texto en Brave. Además, el borrador se guarda automáticamente. Estas copias no están cifradas: activá la protección más arriba.'
@@ -6236,6 +6351,7 @@ async function copiaCreate(filePassword){
   try {
     const {file, r, abierta, completa, omitidos, faltan} = await copiaMake(filePassword, {completa: copiaEl('copiaCompleta').checked});
     download(file);
+    document.dispatchEvent(new CustomEvent('dictavoz:copia-creada'));   // U16: Ajustes anota la fecha; este bloque no escribe nada
     logDiag('Copia cifrada: creada · ' + r.contenido + ' · ' + r.registros + ' registros · ' + r.audios + ' audios · ' + r.bytes + ' bytes' + (omitidos ? ' · ' + omitidos + ' audios omitidos' : '') + (faltan.sinCifrar ? ' · ' + faltan.sinCifrar + ' sin cifrar no incluidos' : ''));
     copiaSay('Copia creada y comprobada: ' + copiaSummary(r) + '.\n' +
       copiaFaltantes(omitidos, faltan.sinCifrar, completa) +
@@ -6389,6 +6505,62 @@ vaultWhenReady(() => {
 });
 
 /*K2-UI-END*/
+
+/*AJUSTES-NAV-START*/
+/* U16 · Ajustes: lista de secciones con subpantallas dentro de la misma pestaña. Solo navega y muestra estado: no guarda nada salvo
+   la fecha de la última copia (campo lastBackupAt de la configuración existente, ver SEGURIDAD.md, regla 7) y no toca K2 ni el cifrado. */
+const AJ_SUBS = ['proteccion', 'copias', 'espacio', 'calidad', 'diccionario', 'diagnostico', 'borrar'];
+let ajCurrent = 'home';
+function ajShow(name, focus = true){
+  const sub = AJ_SUBS.includes(name) ? name : 'home';
+  const from = ajCurrent;
+  ajCurrent = sub;
+  $('ajHome').hidden = sub !== 'home';
+  AJ_SUBS.forEach(n => { $('ajSub-' + n).hidden = n !== sub; });
+  window.scrollTo({top: 0, behavior: 'auto'});
+  if (sub === 'home') { ajRefresh(); if (focus) { const r = AJ_SUBS.includes(from) ? $('ajRow-' + from) : null; if (r) r.focus({preventScroll: true}); } }
+  else {
+    if (focus) $('ajT-' + sub).focus({preventScroll: true});
+    if (sub === 'copias') void ajRestoreHint();
+    if (sub === 'espacio' || sub === 'borrar') void e3RefreshSpace();
+    if (sub === 'borrar') ajLegacySync();
+  }
+}
+function ajRefresh(){
+  const st = document.getElementById('ajStatus'); if (!st) return;
+  const on = typeof vault !== 'undefined' && vault.state === 'open';
+  st.dataset.on = on ? '1' : '0';
+  $('ajStatusTitle').textContent = on ? 'Protección activada' : 'Protección desactivada';
+  $('ajStatusLine').textContent = on ? 'Se bloquea sola tras 15 minutos sin uso.' : 'Sin protección no hay autobloqueo: tus notas se guardan sin cifrar.';
+  $('ajLock').hidden = !on;
+  const days = cfgLastBackup ? Math.max(0, Math.floor((Date.now() - cfgLastBackup) / 86400000)) : null;
+  $('ajLastCopy').textContent = days === null ? 'Todavía no hiciste ninguna copia.'
+    : 'Última copia: ' + (days === 0 ? 'hoy' : days === 1 ? 'hace 1 día' : 'hace ' + days + ' días') + '. Conviene hacer una por semana.';
+}
+/* El botón único de restaurar elige el camino; no cambia ninguno de los dos (siguen siendo k2RestoreEmpty y k2Replace con sus confirmaciones). */
+async function ajRestoreMode(){ try { return (await k2StorageEmpty()) ? 'vacia' : 'reemplazo'; } catch (e) { return null; } }
+async function ajRestoreHint(){
+  const m = await ajRestoreMode(), h = $('ajRestoreHint');
+  h.textContent = m === 'vacia' ? 'Esta instalación está vacía: la copia se restaura sin borrar nada.'
+    : m === 'reemplazo' ? 'Esta instalación ya tiene datos: se va a reemplazar TODO por la copia. Antes se crea y se descarga un respaldo de lo actual y se piden dos confirmaciones.'
+    : 'No se pudo comprobar si esta instalación está vacía. No se cambió nada.';
+}
+function ajLegacySync(){ $('ajLegacyBox').hidden = $('e3Legacy').hidden; }
+document.querySelectorAll('[data-aj-open]').forEach(b => b.addEventListener('click', () => ajShow(b.dataset.ajOpen)));
+document.querySelectorAll('[data-aj-back]').forEach(b => b.addEventListener('click', () => ajShow('home')));
+document.querySelectorAll('[data-delta-view="ajustes"]').forEach(a => a.addEventListener('click', () => ajShow('home', false)));
+$('ajCopy').addEventListener('click', () => ajShow('copias'));
+$('ajLock').addEventListener('click', () => $('vaultLockBtn').click());
+$('ajLegacyDelete').addEventListener('click', () => $('e3LegacyDelete').click());
+new MutationObserver(ajLegacySync).observe($('e3Legacy'), {attributes: true, attributeFilter: ['hidden']});
+$('ajRestoreBtn').addEventListener('click', async () => {
+  if (copiaBusyN || k2ReplaceActive) return;
+  const m = await ajRestoreMode();
+  if (!m) return copiaSay('No se pudo comprobar si esta instalación está vacía. No se cambió nada.');
+  $(m === 'vacia' ? 'copiaRestaurar' : 'copiaReemplazar').click();
+});
+document.addEventListener('dictavoz:copia-creada', () => { cfgLastBackup = Date.now(); saveCfg(); ajRefresh(); });
+/*AJUSTES-NAV-END*/
 
 /* ---------- Audio guardado (solo en este dispositivo) ---------- */
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -6855,6 +7027,7 @@ function updateModelHint(){
 }
 $('model').addEventListener('change', updateModelHint);
 const hasOpt = (sel, v) => [...sel.options].some(o => o.value === v);
+let cfgLastBackup = 0;   // U16: fecha de la última copia creada (milisegundos); único dato nuevo de Ajustes, sin datos de pacientes
 function loadCfg(){
   applyTextSize('normal');
   try {
@@ -6871,9 +7044,11 @@ function loadCfg(){
     if (c.eng) { const r = document.querySelector('input[name=eng][value=' + c.eng + ']'); if (r && !r.disabled) r.checked = true; }
     if (typeof c.replace === 'boolean') $('replace').checked = c.replace;
     if (typeof c.saveAudio === 'boolean') $('saveAudio').checked = c.saveAudio;
+    if (Number.isFinite(c.lastBackupAt) && c.lastBackupAt > 0) cfgLastBackup = c.lastBackupAt;
   } catch (e) {}
+  ajRefresh();
 }
-const saveCfg = () => { if (typeof vault !== 'undefined' && vault.otherTab) return false; try { localStorage.setItem(CKEY, JSON.stringify({textSize:$('textSize').value, model:$('model').value, accel:$('accel').value, mic:$('mic').value, eng:eng(), replace:$('replace').checked, saveAudio:$('saveAudio').checked, pVolatile:$('pVolatile').checked, learnAuto:$('learnAuto').checked, listPreview:$('listPreview').checked})); return true; } catch (e) { return false; } };
+const saveCfg = () => { if (typeof vault !== 'undefined' && vault.otherTab) return false; try { localStorage.setItem(CKEY, JSON.stringify({textSize:$('textSize').value, model:$('model').value, accel:$('accel').value, mic:$('mic').value, eng:eng(), replace:$('replace').checked, saveAudio:$('saveAudio').checked, pVolatile:$('pVolatile').checked, learnAuto:$('learnAuto').checked, listPreview:$('listPreview').checked, ...(cfgLastBackup ? {lastBackupAt: cfgLastBackup} : {})})); return true; } catch (e) { return false; } };
 $('textSize').addEventListener('change', () => { applyTextSize($('textSize').value); if (!saveCfg()) flash('El tamaño se aplicó, pero este navegador no permitió guardar el ajuste.'); });
 ['model', 'accel', 'mic', 'replace', 'saveAudio', 'pVolatile', 'learnAuto'].forEach(id => $(id).addEventListener('change', saveCfg));
 $('listPreview').addEventListener('change', () => { saveCfg(); renderConv(); });   // B3: campo opcional de la configuración existente; solo cambia lo que se muestra

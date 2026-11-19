@@ -1,3 +1,16 @@
+## 18/11/2026 · Rediseño de Ajustes (U16, maqueta aprobada: U17) (Claude Sonnet 5.5; entregado como `.patch`, sin tocar GitHub)
+
+Base: `main` con U12 (#67). Solo cambia **cómo se llega** a cada cosa. No cambian el cifrado, los formatos de copia, las claves ni la lógica de K2.
+
+- **Ajustes pasa a ser una lista corta** (misma pestaña, sin pestañas nuevas): tarjeta de estado (candado, «Protección activada/desactivada», línea del autobloqueo, «Bloquear ahora» solo con la protección activada, «Crear copia» y el aviso de la última copia) y los grupos Datos y privacidad · Dictado · Lectura · Avanzado, con el pie de autoría (U9, sin nombres de IA).
+- **Siete subpantallas** (`#ajSub-…`, con «‹ Ajustes» para volver; el foco va al título y vuelve a la fila): Protección y contraseña, Copias de seguridad, Espacio y audios guardados, Calidad de transcripción, Diccionario y correcciones, Diagnóstico y Borrar datos. Tocar la pestaña Ajustes siempre vuelve a la lista. El vínculo `#localPrivacy` abre Borrar datos.
+- **Los nodos no se recrearon, se movieron:** ningún id existente se perdió o cambió (hay una comprobación id por id). Los módulos viejos siguen como contenedores: `#settingsReading`, `#settingsAudio`, `#settingsPrivacy` y `#settingsAdvanced` son ahora los grupos de la pantalla principal; `#settingsQuality` y `#settingsDictionary`, las subpantallas Calidad y Diccionario.
+- **Restaurar con un solo botón** (`#ajRestoreBtn`, «Experimental», borde rojo): decide con `k2StorageEmpty()`; si está vacía toca `#copiaRestaurar` (`k2RestoreEmpty`) y si no, `#copiaReemplazar` (`k2Replace` con todas sus confirmaciones). Esos dos botones y sus selectores de archivo siguen con su id y su código, pero **ocultos**. El texto de la pantalla explica qué va a pasar.
+- **Único dato nuevo: `lastBackupAt`** (fecha de la última copia) en `notasvoz.gamma.cfg.v1`. `COPIA-USO` sigue sin escribir: solo emite `dictavoz:copia-creada` y Ajustes la guarda con `saveCfg`. Documentado en SEGURIDAD.md (regla 7).
+- **«Otras opciones»** se reubicó en Calidad de transcripción («Cómo transcribir y otras opciones»); «Diagnóstico del dictado del navegador» pasó a Diagnóstico; «Ver, descargar o recuperar audios» a Espacio y audios; el aviso de audio antiguo sigue en Espacio y Borrar datos ofrece borrarlo.
+- **Pruebas:** `tests/ajustes-browser.mjs` (Chrome a 360 px, protección activada y desactivada, capturas de la principal y de cada subpantalla). Se ajustaron 4 reglas de `tests/delta.test.mjs` (módulos con encabezado, «Otras opciones», texto de la copia, forma de `saveCfg`/`listPreview`) y `tests/copia-browser.mjs` (abre la subpantalla Copias y deja la configuración fuera de la comparación, porque ahora anota la fecha de la copia).
+- **Decisiones que tomé y conviene mirar:** «Tamaño del texto» conserva sus tres opciones (Compacto/Normal/Grande) para no quitar una función; el interruptor sigue diciendo «Conservar audio» (es el texto que usan AGENTS.md, A6 y las pruebas).
+
 ## 18/11/2026 · Elegir cuaderno y nombre desde Dictar (U12) (Claude Sonnet 5.5; entregado como `.patch`, sin tocar GitHub)
 
 Base: `main` (#65 y #66). No cambian el formato de lo guardado, las claves, el cifrado, las copias ni K2: todo se sigue guardando por `vaultStore`, como hoy.

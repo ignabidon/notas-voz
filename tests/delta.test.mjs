@@ -445,9 +445,10 @@ test('Delta 08: ajustes agrupados y privacidad, audio y diccionario intactos', (
   for(const id of ['settingsQuality','settingsAudio','settingsPrivacy','settingsDictionary','settingsAdvanced','model','accel','mic','saveAudio','localPrivacy','clearLocalTexts','dict','nativeNote','nativePrepare'])
     assert.ok(ids.includes(id),'falta #'+id);
   assert.match(html, /<details class="card c-set" id="ajustes" open>/);
-  assert.match(html, /class="settings-module-top"/);
+  // U16: los módulos ya no llevan encabezado propio; cada sección es una fila de la lista o una subpantalla (ver tests/ajustes-browser.mjs).
+  assert.match(html, /class="aj-row" data-aj-open="calidad"/);
   assert.match(html, /Micrófono y rendimiento/);
-  assert.match(html, /Otras opciones/);
+  assert.match(html, /Cómo transcribir y otras opciones/);   // U16: «Otras opciones» pasó a Calidad de transcripción
   assert.match(html, /No elimina los archivos de Descargas/);
   assert.match(html, /removeLocalTextKeys\(vaultStore, TEXT_STORAGE_KEYS\)/);
   assert.match(html, /'localPrivacy'\)\.open=true/);
@@ -961,7 +962,7 @@ test('ergonomía: barra de Texto conserva acceso a Grabar y controles de grabaci
 test('ergonomía: guardar tamaño conserva configuración anterior y comunica fallo de persistencia',()=>{
   const line=html.match(/const saveCfg = \(\) => \{[^\n]+/)[0];let saved=null;
   const values={textSize:'large',model:'Xenova/whisper-small',accel:'cpu',mic:'raw'};
-  const make=storage=>new Function('localStorage','$','eng','CKEY',line+';return saveCfg;')(storage,id=>({value:values[id],checked:true}),()=> 'whisper','notasvoz.gamma.cfg.v1');
+  const make=storage=>new Function('localStorage','$','eng','CKEY','cfgLastBackup',line+';return saveCfg;')(storage,id=>({value:values[id],checked:true}),()=> 'whisper','notasvoz.gamma.cfg.v1',0);   // U16: saveCfg lee cfgLastBackup (fecha de la última copia)
   const save=make({setItem:(key,value)=>{saved={key,cfg:JSON.parse(value)};}});assert.equal(save(),true);
   assert.equal(saved.key,'notasvoz.gamma.cfg.v1');assert.equal(saved.cfg.textSize,'large');assert.equal(saved.cfg.model,values.model);assert.equal(saved.cfg.accel,'cpu');assert.equal(saved.cfg.saveAudio,true);
   assert.equal(make({setItem(){throw Error('storage blocked');}})(),false);
@@ -2225,7 +2226,7 @@ test('copia K1: solo lee; no escribe, no borra y no sale a la red', () => {
   for (const id of ['copiaPanel', 'copiaCrear', 'copiaVerificar', 'copiaArchivo', 'copiaContenido', 'copiaCompleta', 'copiaSoloTexto', 'copiaPwForm', 'copiaClaveForm', 'copiaMsg']) assert.ok(ids.includes(id), 'falta #' + id);
   // La interfaz no promete lo que todavía no existe ni usa palabras prohibidas.
   const panel = html.match(/<section class="vault-panel" id="copiaPanel"[\s\S]*?<\/section>/)[0];
-  assert.match(panel, /crear y comprobar/); assert.doesNotMatch(panel + copiaUso, /cifrado seguro|sin nube|restaurad[ao] correctamente/i);
+  assert.match(panel, /Una copia es un archivo cifrado/); assert.doesNotMatch(panel + copiaUso, /cifrado seguro|sin nube|restaurad[ao] correctamente/i);
 });
 
 /* ---------- B3: lista de cuadernos y menú de la nota (solo presentación; datos inventados) ---------- */
@@ -2261,8 +2262,8 @@ test('B3: la burbuja deja Copiar y Editar a la vista y lleva Mover y Borrar al m
   assert.match(html, /\.conv-actions \.conv-more\{flex:0 0 56px;min-width:56px/, 'el botón del menú mide al menos 48 px');
   // El ajuste es un campo opcional de la configuración existente: sin claves nuevas.
   assert.ok(ids.includes('listPreview'));
-  assert.match(html, /listPreview:\$\('listPreview'\)\.checked\}\)\);/);
+  assert.match(html, /listPreview:\$\('listPreview'\)\.checked, \.\.\.\(cfgLastBackup \? \{lastBackupAt: cfgLastBackup\} : \{\}\)\}\)\);/);   // U16: lastBackupAt es el único campo nuevo
   assert.match(html, /if \(typeof c\.listPreview === 'boolean'\) \$\('listPreview'\)\.checked = c\.listPreview;/);
-  assert.match(html, /id="listPreview" checked>/, 'activada por defecto');
+  assert.match(html, /id="listPreview" class="aj-sw" checked>/, 'activada por defecto');   // U16: ahora es un interruptor
 });
 

@@ -39,7 +39,8 @@ try {
   const visible = id => run(`(() => { const e = document.getElementById(${JSON.stringify(id)}); return !!e && !e.hidden && e.getClientRects().length > 0; })()`);
   // Todo lo guardado, para comparar antes y después: localStorage completo y la base de audios por nota (fichas y huella de cada fragmento).
   const foto = () => run(`(async () => {
-    const out = {ls: Object.entries(localStorage).sort(), bases: (await indexedDB.databases()).map(d => d.name + ':' + d.version).sort(), audio: null};
+    // U16: crear una copia anota su fecha (lastBackupAt) en la configuración existente (si no había, la crea). Es lo único que cambia: acá se deja afuera y lo prueba ajustes-browser.mjs.
+    const out = {ls: Object.entries(localStorage).filter(([k]) => k !== CKEY).sort(), bases: (await indexedDB.databases()).map(d => d.name + ':' + d.version).sort(), audio: null};
     if (out.bases.some(n => n.startsWith('notasvoz-dictanota-audio'))) {
       const db = await anDb(), leer = (s, m) => new Promise(res => { const r = db.transaction(s).objectStore(s)[m](); r.onsuccess = () => res(r.result); });
       const blobs = await leer('chunks', 'getAll'), sha = [];
@@ -78,7 +79,7 @@ try {
   // ===== A) Protección apagada: la copia igual sale cifrada, con una contraseña solo para el archivo =====
   assert.equal(await run('vault.state'), 'off');
   assert.equal(await guardarNota('Persona Inventada Uno: nota inventada X-901'), 1);
-  await run(`document.querySelector('[data-delta-view="ajustes"]').click(); true`);
+  await run(`document.querySelector('[data-delta-view="ajustes"]').click(); ajShow('copias', false); true`);   // U16: la copia vive en la subpantalla Copias de seguridad
   await run(`document.getElementById('copiaPanel').scrollIntoView({block: 'start'}); true`);
   assert.equal(await visible('copiaCrear'), true); assert.equal(await visible('copiaVerificar'), true);
   assert.equal(await visible('copiaOffHint'), true, 'explica que lleva una contraseña propia'); assert.equal(await visible('copiaContenido'), false, 'sin protección no hay audios por nota que elegir');
