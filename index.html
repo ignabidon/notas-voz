@@ -928,10 +928,6 @@ body[data-view="transcripcion"] .conv-actions .conv-more{flex:0 0 48px;min-width
 body[data-view="transcripcion"] .conv-actions .beta-note-action{width:48px;min-width:48px;padding:0;display:inline-flex;align-items:center;justify-content:center}
 body[data-view="transcripcion"] .conv-actions .beta-note-action svg{display:block;width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .beta-note-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;white-space:nowrap;clip-path:inset(50%);border:0}
-.beta-audio-guide{margin:9px 0 14px;padding:13px 14px;border:1px solid var(--line-strong);border-radius:var(--r-row);background:var(--surface-soft);color:var(--ink)}
-.beta-audio-guide strong{display:block;font-size:max(14px,calc(14px * var(--text-scale)))}
-.beta-audio-guide p{margin:5px 0 9px;font-size:max(13px,calc(13px * var(--text-scale)));line-height:1.5;color:var(--ink)}
-.beta-audio-guide button{min-height:48px;border-color:var(--line-strong);background:var(--card);color:var(--ink)}
 body[data-view="transcripcion"] .conv-actions button:hover:not(:disabled),
 body[data-view="transcripcion"] .conv-actions button:focus-visible{background:var(--card);color:var(--acc);border-color:var(--line-strong)}
 body[data-view="transcripcion"] .conv-actions button:focus-visible{outline:3px solid var(--acc);outline-offset:1px}
@@ -1099,7 +1095,7 @@ body[data-view="anonimizar"] #anon{border-radius:var(--r-row)}
       <h3 class="aj-group">Dictado</h3>
       <section class="settings-module aj-list" id="settingsAudio">
                 <label class="chk aj-switch-row"><input type="checkbox" id="saveAudio" class="aj-sw">
-        <span><b>Conservar audio</b><small>Para ver Reproducir en Cuadernos, activá también la Protección antes de grabar. Con protección el audio queda cifrado y unido a su nota; sin ella se guarda aparte y no aparece el reproductor en Cuadernos. La voz nunca está anonimizada.</small></span></label>
+        <span><b>Conservar audio</b><small>Guarda la grabación original junto a la nota para reproducirla desde Cuadernos. Con protección, cifrada; sin protección, sin cifrar. La voz original nunca está anonimizada.</small></span></label>
         <button type="button" class="aj-row" data-aj-open="calidad" id="ajRow-calidad"><span class="aj-row-t"><b>Calidad de transcripción</b><small>Modelo, micrófono y cómo transcribir</small></span><span class="aj-chev" aria-hidden="true">›</span></button>
         <button type="button" class="aj-row" data-aj-open="diccionario" id="ajRow-diccionario"><span class="aj-row-t"><b>Diccionario y correcciones</b><small>Palabras que se corrigen solas</small></span><span class="aj-chev" aria-hidden="true">›</span></button>
       </section>
@@ -1352,11 +1348,6 @@ body[data-view="anonimizar"] #anon{border-radius:var(--r-row)}
           <button type="button" class="ghost danger" id="convDeleteEmpty" hidden>Borrar cuaderno vacío</button>
         </div>
         </details>
-        <aside id="betaAudioMissingGuide" class="beta-audio-guide" role="note" hidden>
-          <strong>¿Por qué no aparece Reproducir?</strong>
-          <p>Alguna nota de voz de este cuaderno tiene texto, pero no audio adjunto. Para las próximas grabaciones, activá <b>Protección</b> y <b>Conservar audio</b> antes de grabar. Si conservaste audio sin protección, puede estar separado en Ajustes → Espacio y audios guardados.</p>
-          <button type="button" id="betaAudioMissingGo">Configurar audio para próximas notas</button>
-        </aside>
         <div id="convBubbles" class="conv-bubbles"></div>
       </div>
       <div id="convUndoRow" class="conv-undo" role="status" hidden><span id="convUndoText"></span><button type="button" id="convUndo">Deshacer</button></div>
@@ -3114,7 +3105,6 @@ function renderConv(){
   const box = $('convBubbles'); box.textContent = '';
   convMenuOpen = null;   // las burbujas se vuelven a dibujar: ningún menú queda abierto
   const es = convEntriesOf(data, convOpenId);
-  $('betaAudioMissingGuide').hidden = !es.some(e => e.kind === 'audio' && !e.audioId);
   if (!es.length) { const p = document.createElement('p'); p.className = 'hint'; p.textContent = 'Este cuaderno está vacío.'; box.append(p); }
   es.forEach(e => {
     const d = document.createElement('div'); d.className = 'conv-bubble' + (e.id === convEditingId ? ' editing' : '');
@@ -3142,10 +3132,6 @@ function renderConv(){
   });
   refreshConvTarget();
 }
-$('betaAudioMissingGo').addEventListener('click', () => {
-  document.querySelector('[data-delta-view="ajustes"]').click();
-  ajShow(vault.state === 'open' ? 'home' : 'proteccion', false);
-});
 function convOpen(id){ convComposeNew = false; convOpenId = id; if (!convTargetSet && !convEditingId) convTargetId = null; renderConv(); $('convPanel').scrollIntoView({block: 'start', behavior: 'smooth'}); }
 function convCommit(next, okMsg, undo){
   const w = convStore.save(next);
