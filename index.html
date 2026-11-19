@@ -3318,7 +3318,7 @@ async function convSave(){
   if (convAudioId) {
     if (!anAudioReady() || !audioParts) return flash('No se guardó: todavía no hay un audio por nota confirmado. El texto y el borrador siguen disponibles.');
     try {
-      const health = await anAudioHealthForNote(await anDb(), convAudioId);
+      const health = await anVerifyLinkedAudio(await anDb(), convAudioId);
       if (!health.ok) return flash('No se guardó: el audio está incompleto o dañado (' + health.why + '). Se conserva sin modificar para recuperarlo.');
     } catch (e) { return flash('No se guardó: no se pudo verificar el audio (' + anErrName(e) + '). Se conserva sin modificar.'); }
   }
@@ -5169,7 +5169,7 @@ async function e3Recover(id){
     return flash('Primero guardá o descartá el borrador actual. No se reemplazó nada.');
   convSaving = true;
   try {
-    const db = await anDb(), h = await anAudioHealthForNote(db, id);
+    const db = await anDb(), h = await anVerifyLinkedAudio(db, id);
     if (!h.ok) throw new Error('El audio está dañado o todavía no terminó de guardarse. Se conserva sin cambios.');
     if (e3Used(id)) return;
     convClearComposer(); convOpenId = null; convComposeNew = true; convStartPending(true);
@@ -5268,7 +5268,7 @@ window.addEventListener('pagehide', e3Stop);
 let anDbP = null, anBusyN = 0;
 const anUsable = () => vault.state === 'open' && !!vault.audioKey && !!vault.header;
 const anAudioReady = () => anUsable() || vault.state === 'off'; // Conservar audio no depende de contraseña
-async function anAudioHealthForNote(db,id){
+async function anVerifyLinkedAudio(db,id){
   const meta = await anGetMeta(db,id);
   if (anIsPlainMeta(meta)) {
     const h = await anPlainHealth(db,id);
