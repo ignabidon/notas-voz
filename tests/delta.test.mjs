@@ -2264,3 +2264,20 @@ test('B3: la burbuja deja Copiar y Editar a la vista y lleva Mover y Borrar al m
   assert.match(html, /id="listPreview" class="aj-sw" checked>/, 'activada por defecto');   // U16: ahora es un interruptor
 });
 
+/* UX visual selectiva 19/11/2026: únicamente presentación y navegación de Ajustes. */
+test('UX selectiva: cinco mejoras visuales sin trasladar audio experimental del PR 71', () => {
+  assert.match(html, /body\[data-view="transcripcion"\] \.conv-bubble\{max-width:100%;margin-top:10px/);
+  assert.match(html, /\.conv-actions button\{flex:0 0 auto;min-height:48px;min-width:48px/);
+  assert.match(html, /function uxNoteIcon\(button, kind\)/);
+  assert.match(html, /uxNoteIcon\(acts\.children\[0\], 'copy'\); uxNoteIcon\(acts\.children\[1\], 'edit'\)/);
+  assert.match(html, /button\.setAttribute\('aria-label', label\)/);
+  assert.match(html, /id="uxWhisperShortcut" data-aj-open="calidad"/);
+  assert.match(html, /id="uxWhisperLabel"/);
+  assert.match(html, /quick\.textContent = motor\?\.value === 'native'/);
+  assert.match(html, /body\[data-view="grabacion"\] \.capture-shortcuts/);
+  assert.match(html, /body\[data-view="anonimizar"\] \.anon-explain/);
+  assert.ok(!html.includes('betaAudioMissingGuide'), 'no debe reaparecer el aviso grande de Reproducir');
+  assert.ok(!html.includes('¿Por qué no aparece Reproducir?'));
+  assert.ok(!html.includes('function startAudioClaro('), 'no se traslada la captura experimental sin cifrar');
+  assert.ok(!html.includes('content:"BETA"'), 'la rama visual no añade una marca beta en el encabezado');
+});
