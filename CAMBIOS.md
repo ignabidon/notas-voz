@@ -1,3 +1,11 @@
+## 19/11/2026 · Beta funcional: «Conservar audio» siempre vincula la grabación a su nota (ChatGPT, PR #71)
+
+**Decisión A13 del propietario.** Conservar audio activo permite adjuntar y reproducir audio en Cuadernos tanto con protección (cifrado E2) como sin protección (audio expresamente `mode:'claro'`, con SHA-256 por fragmento). El botón Reproducir funciona en ambos modos; texto y sello de nota no cambian. Grabación MediaRecorder y carga desde archivo. Se quitó íntegro el aviso grande «¿Por qué no aparece Reproducir?» de Cuadernos (no es necesario sustituirlo). El panel Espacio indica «SIN CIFRAR» y ofrece las acciones para audios claros íntegros. Sin vinculación automática de audios históricos.
+
+**Copias:** una copia completa que incluye grabaciones en claro utiliza el formato 2 (cifrado en el archivo con contraseña); sigue intacto el formato 1 cuando no hay audios en claro. La copia «Solo texto» no incluye audio. Las verificaciones aceptan los formatos 1 y 2; el ensayo de K2 ya reconoce formato 2. Las copias con omisiones se declaran incompletas y no se admiten como respaldo previo de reemplazo. No se cifran automáticamente audios existentes en claro al habilitar la bóveda; decisión de migración pendiente, no usar datos reales.
+
+**Pruebas:** CI de Chrome E2, E3, copia/restauración K2, reproducción, ediciones y prueba nueva `tests/beta-audio-claro-browser.mjs` con tonos ficticios. Estado verificable en GitHub Actions; Motorola real pendiente. Cambios solo en la rama beta; `main` sin modificar. Ver `docs/BETA-VISUAL-2026-11-19.md` y `docs/DECISIONES.md` (A13).
+
 ## 19/11/2026 · Beta: aclaración del reproductor en Cuadernos (ChatGPT; PR #71)
 
 Revisión tras observación del usuario: las notas sin `audioId` no crean reproductor; E3 solo une audio con protección abierta y «Conservar audio» activado antes de grabar. Sin protección, la voz se guarda históricamente por separado y no aparece en Cuadernos (comportamiento existente en main). En la beta se agregó una explicación contextual para notas de voz sin audio vinculado y un acceso directo a Ajustes; se aclaró el texto del interruptor. Sin modificar cifrado, grabación, persistencia ni vinculación automática. Prueba de interfaz agregada a `tests/e3-browser.mjs`; Motorola pendiente. Detalles en `docs/BETA-VISUAL-2026-11-19.md`.
