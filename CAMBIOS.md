@@ -1,3 +1,13 @@
+## 19/11/2026 · Cinco ajustes visuales selectivos del PR #71 (ChatGPT; rama ux-selectiva-cinco-cambios-2026-11-19)
+
+- **Base:** `main` commit `edfacda113833ed871781a16404d79e455743935`. Rama nueva, sin fusionar; PR #71 sigue abierto e intacto.
+- **Cuadernos:** burbujas y tarjetas más compactas, sin achicar el texto principal; Copiar y Editar como iconos discretos con nombre accesible, 48 px de superficie táctil y foco visible. El menú «⋯» y las acciones existentes siguen funcionando.
+- **Ajustes:** acceso destacado a Motor y modelo de transcripción, vinculado a la subpantalla Calidad; resumen sincronizado con el motor/modelo elegido y jerarquía visual de las opciones.
+- **Dictar y Anonimizar:** menos sombras y espaciado redundante; se mantiene la pantalla de grabación y el único aviso global de Whisper.
+- **Cartel Reproducir:** la versión actual de `main` ya no contiene el aviso «¿Por qué no aparece Reproducir?»; se agrega una aserción para evitar regresiones. No se elimina ningún aviso de error real.
+- **Fuera de alcance:** sin marca BETA, sin cambios a IndexedDB/localStorage, claves, audio cifrado/claro, copia, restauración, guardado de notas o flujo A13. No se portó `startAudioClaro` ni `anPlainAppendFile` de #71.
+- **Verificación:** ampliada `tests/delta.test.mjs` (marcas visuales, accesibilidad estática, no traslado de audio experimental). CI en PR pendiente de verificación; prueba física Motorola G56 5G pendiente (usar datos ficticios). Ninguna IA se atribuye una prueba física no realizada.
+
 ## 18/11/2026 · U19: Dictar simplificado (parche propuesto, sin modificar GitHub)
 
 Base leída: `main` en `cfda606ddef42602405ddf26b1f90949cabffd24` (incluye #69, U5/U18).
