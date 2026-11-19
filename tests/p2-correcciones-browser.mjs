@@ -51,12 +51,12 @@ try {
   let kinds = await json(`const k = await anStoredKinds(); return JSON.stringify({total: k.total, cifrados: k.cifrados, claros: k.claros});`);
   assert.deepEqual(kinds, {total: 2, cifrados: 0, claros: 2});
 
-  // Panel con la protección apagada: los dos se ven como SIN CIFRAR, sin acciones de la protección.
+  // Panel sin protección: el audio completo puede prepararse como nota; el incompleto sigue sin acciones.
   const panelOff = await json(`await e3RefreshSpace(); const rows = [...document.querySelectorAll('#e3AudioList .e3-audio-row')];
     return JSON.stringify({msg: document.getElementById('e3SpaceMsg').textContent, filas: rows.map(r => ({modo: r.dataset.modo || '', texto: r.textContent, botones: r.querySelectorAll('button').length}))});`);
-  assert.match(panelOff.msg, /^0 audio\(s\) cifrado\(s\) · .* · 2 audio\(s\) SIN CIFRAR \(ensayo, no protegidos\)/);
+  assert.match(panelOff.msg, /^0 audio\(s\) cifrado\(s\) · .* · 2 audio\(s\) SIN CIFRAR \(no protegidos\)/);
   assert.equal(panelOff.filas.length, 2);
-  for (const f of panelOff.filas) { assert.equal(f.modo, 'claro'); assert.equal(f.botones, 0, 'ni preparar nota, ni borrar, ni reproducir'); assert.match(f.texto, /SIN CIFRAR/); }
+  for (const f of panelOff.filas) { assert.equal(f.modo, 'claro'); assert.equal(f.botones, /a medio guardar/.test(f.texto) ? 0 : 2); assert.match(f.texto, /SIN CIFRAR/); }
   assert.equal(panelOff.filas.filter(f => /a medio guardar/.test(f.texto)).length, 1, 'el cortado se nombra como tal');
 
   // Ensayo de copia 2 sin protección: entra el completo (cifrado en el archivo) y el cortado queda declarado.
@@ -97,27 +97,30 @@ try {
   assert.match(panelOn.msg, /^1 audio\(s\) cifrado\(s\) · .* · 2 audio\(s\) SIN CIFRAR/);
   assert.deepEqual(panelOn.filas.map(f => f.modo).sort(), ['', 'claro', 'claro']);
   assert.deepEqual(panelOn.filas.find(f => !f.modo).botones, ['Preparar nota', 'Borrar audio'], 'el cifrado sin nota conserva sus acciones');
-  for (const f of panelOn.filas.filter(f => f.modo)) assert.deepEqual(f.botones, []);
-  // Aunque alguien llegue a las acciones de la protección con un audio sin cifrar, se niegan sin tocar nada.
+  assert.deepEqual(panelOn.filas.filter(f => f.modo).map(f => f.botones.length).sort(), [0, 2]);
+  // Un audio sin cifrar sano puede recuperarse sin contraseña; uno incompleto conserva sus datos.
   const acciones = await json(`
     const db = await anDb(), id = ${JSON.stringify(ids.claro)}, h = await anAudioHealth(db, vault.audioKey, vault.header.id, id);
     await e3Recover(id); const recover = document.getElementById('flash').textContent;
-    window.confirm = () => true; await e3Remove(null, id); const remove = document.getElementById('flash').textContent;
-    return JSON.stringify({why: h.why, recover, remove, sigue: (await anPlainHealth(db, id)).ok, borrador: convAudioId});`);
+    const enlazado = convAudioId === id;
+    convClearComposer();
+    window.confirm = () => false; await e3Remove(null, id);
+    return JSON.stringify({why: h.why, recover, enlazado, sigue: (await anPlainHealth(db, id)).ok, borrador: convAudioId});`);
   assert.equal(acciones.why, 'sin cifrar');
-  assert.match(acciones.recover, /sin cifrar \(ensayo\): no se puede preparar una nota/);
-  assert.match(acciones.remove, /sin cifrar \(ensayo\): no se borra desde acá/);
+  assert.match(acciones.recover, /Audio recuperado como borrador/);
+  assert.equal(acciones.enlazado, true);
   assert.equal(acciones.sigue, true); assert.equal(acciones.borrador, null);
 
-  // Corrección 3: la copia que usa la app (formato 1) avisa que NO está completa y no llama «dañados» a los sin cifrar.
+  // La beta cambia a formato 2 cuando hay audios sin cifrar; se cifran dentro del archivo de copia.
   const c1 = await json(`
     document.getElementById('copiaCompleta').checked = true;
-    const file = await copiaCreate(); const r = await copiaVerify(file, async () => ({key: vault.key, audioKey: vault.audioKey}));
-    return JSON.stringify({msg: document.getElementById('copiaMsg').textContent, audios: r.audios, formato: r.formato});`);
-  assert.equal(c1.formato, 1); assert.equal(c1.audios, 1, 'el formato 1 lleva solo el audio cifrado');
-  assert.match(c1.msg, /Copia creada y comprobada: .*1 audio cifrado/);
-  assert.match(c1.msg, /Atención, la copia NO está completa: 2 audios guardados sin cifrar no entraron \(este tipo de copia solo lleva audios cifrados\)/);
-  assert.doesNotMatch(c1.msg, /dañado/, 'un audio sin cifrar no se presenta como dañado');
+    const file = await copiaCreate(); const r = await copia2Verify(file, async () => ({key: vault.key, audioKey: vault.audioKey}));
+    return JSON.stringify({msg: document.getElementById('copiaMsg').textContent, audios: r.audios, claro:r.claro,excl:r.exclusiones,formato: r.formato});`);
+  assert.equal(c1.formato, 2); assert.equal(c1.audios, 2, 'incluye un cifrado y un sin cifrar');
+  assert.equal(c1.claro,1);
+  assert.equal(c1.excl,1,'declara la ficha incompleta en vez de inventar una copia completa');
+  assert.match(c1.msg, /Copia creada y comprobada: .*2 audios incluidos y cifrados en la copia/);
+  assert.match(c1.msg, /Atención, la copia NO está completa: un audio dañado o a medio guardar no entró/);
   // Solo texto: también avisa los sin cifrar que no lleva.
   const c1t = await json(`document.getElementById('copiaSoloTexto').checked = true; await copiaCreate(); return JSON.stringify({msg: document.getElementById('copiaMsg').textContent});`);
   assert.match(c1t.msg, /solo texto, sin audios[\s\S]*NO está completa: 2 audios guardados sin cifrar no entraron\./);
