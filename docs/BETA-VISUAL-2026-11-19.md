@@ -27,3 +27,10 @@
 - Ejecutar CI de GitHub para descartar regresiones; verificar con datos ficticios los controles de las notas, el resumen del modelo y los dos modos de apariencia.
 - Prueba física en el Motorola G56 5G aún pendiente. Revisar con 360/412 px y tamaños de texto normal/grande.
 - Confirmar que cualquier vista previa abre y renderiza efectivamente en el teléfono; el estado del servicio externo no está garantizado.
+
+## Comentario del usuario: ausencia del reproductor en Cuadernos (19/11/2026)
+- **Diagnóstico en código**: el reproductor E3 se crea en `renderConv()` solamente cuando `entry.audioId` existe. El código guarda y asocia audio a una nota únicamente con la bóveda abierta y `Conservar audio` activado **antes** de grabar. Sin bóveda, conservar audio usa la biblioteca histórica, separada de las notas. Esto ya sucedía en `main`: no es una regresión causada por las reglas visuales de esta beta.
+- Se añade en el cuaderno abierto una guía, solo si alguna nota de voz guardada tiene texto pero carece de audio asociado, y un acceso a Ajustes. La descripción de «Conservar audio» explica las dos condiciones. El reproductor existente no se oculta ni se cambia.
+- Las notas antiguas sin audio asociado no ganan audio automáticamente. No migrar ni copiar grabaciones históricas, y no afirmar que se pueden recuperar si `Conservar audio` estaba apagado.
+- Prueba en `tests/e3-browser.mjs` con datos inventados: muestra/oculta guía, destino del acceso a Ajustes, no interfiere con reproductor de otra nota, mantiene 48 px de superficie táctil.
+- Pendiente: validar en Motorola con protección activada, `Conservar audio` activado y una grabación **nueva**. Si tampoco aparece entonces, analizar error real de almacenamiento/candado/cierre de audio sin poner en riesgo los datos.
