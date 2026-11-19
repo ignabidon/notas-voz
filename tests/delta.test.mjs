@@ -2088,7 +2088,10 @@ test('revisión 2: todo audio que se amplía o recorta pasa antes por la revisi�
   const part = html.match(/async function anOpenForPart[\s\S]*?\n\}\n/)[0];
   assert.match(part, /anAudioHealth\(/); assert.match(part, /anDamaged\.has\(target\.id\)/);
   const trunc = html.match(/async function anTruncateAudio[\s\S]*?\n\}\n/)[0];
-  assert.ok(trunc.indexOf('anAudioHealth(') > 0 && trunc.indexOf('anAudioHealth(') < trunc.indexOf('anTruncate(db'), 'se revisa antes de recortar');
+  const cifrado = trunc.slice(trunc.indexOf('const hid = vault.header.id'));
+  assert.ok(cifrado.indexOf('anAudioHealth(') > 0 && cifrado.indexOf('anAudioHealth(') < cifrado.indexOf('anTruncate(db'), 'E2 cifrado se revisa antes de recortar');
+  const claro = trunc.slice(trunc.indexOf('if (anIsPlainMeta(m))'), trunc.indexOf('const hid = vault.header.id'));
+  assert.ok(claro.indexOf('anPlainHealth(') > 0 && claro.indexOf('anPlainHealth(') < claro.indexOf('anTruncate(db'), 'la parte sin cifrar se revisa antes de recortar');
 });
 
 test('revisión 2: la ficha final sin espacio y el borrado fallido no dan avisos falsos', () => {
