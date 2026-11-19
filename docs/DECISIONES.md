@@ -39,7 +39,7 @@ Una línea con ID nuevo, fecha, la frase de Ignacio lo más literal posible y la
 | U2 | Pestañas **Dictar · Cuadernos · Anonimizar · Ajustes**; en la interfaz «hoja» pasa a «cuaderno» | 16/11 | chat | Hecho (#43) |
 | U3 | «Grabar» inferior en Dictar solo cuando el círculo no se ve | 16/11 | chat | Hecho (#48) |
 | U4 | Menú «⋯» en las notas y vista previa en la lista (activada por defecto, con interruptor) | 16/11 | chat | Hecho (B3 #53) |
-| U5 | Modo oscuro **opcional** | 16/11 | chat | Pendiente (Etapa D) |
+| U5 | Modo oscuro **opcional** | 16/11 | chat | Entregado como `.patch` (18/11, ver U18); falta unirlo y probarlo en el Motorola |
 | U6 | Audio dentro de la burbuja, estilo WhatsApp, **sin** resaltar la palabra que suena. Los audios cargados se guardan unidos a su nota y obedecen «Conservar audio» (apagado = no se guardan) | 16/11 | chat | Hecho (E2, E3) |
 | U7 | Guardar es explícito; el sello de guardado de cada nota es inmutable; título de un cuaderno nuevo = fecha y hora; captura global → cuaderno nuevo, dentro de un cuaderno → se agrega ahí | 16/11 | chat | Hecho |
 | U8 | Anonimización: el original se guarda junto a la versión anonimizada y se recupera fácil (mantener apretada la burbuja); al exportar se elige cada vez | 16/11 | PR #37 (sin unir) | Pendiente (AO) |
@@ -52,6 +52,7 @@ Una línea con ID nuevo, fecha, la frase de Ignacio lo más literal posible y la
 | U15 | Reproductor compacto en la misma burbuja, con prioridad visual para el texto | 17/11 | PR #52 (sin unir) | Pendiente |
 | U16 | **Prioridad de mejoras de uso** (después de las revisiones cruzadas): primero **elegir cuaderno y nombre desde Dictar** (U12) y el **rediseño de Ajustes** (primero una maqueta; no se programa hasta que Ignacio la apruebe). No eligió por ahora: reintentar Whisper desde el audio guardado (U14, parte pendiente) ni deshacer una edición guardada | 17/11 | chat | Vigente |
 | U17 | **Ignacio aprobó la maqueta de Ajustes (lista de secciones con subpantallas) el 18/11.** Pantalla principal con tarjeta de estado y filas; cada fila abre su subpantalla con «‹ Ajustes»; sin pestañas nuevas | 18/11 | chat | Entregado como `.patch` (18/11), falta unirlo y probarlo en el Motorola |
+| U18 | Estética elegida por Ignacio el 18/11: Clínica serena (la actual, pulida) + modo nocturno opcional (U5) | 18/11 | chat | Entregado como `.patch` (18/11), falta unirlo y probarlo en el Motorola |
 
 ## W · Forma de trabajo
 

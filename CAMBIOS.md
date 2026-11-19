@@ -1,3 +1,15 @@
+## 18/11/2026 · Estética «Clínica serena» pulida + modo nocturno opcional (U18, U5) (Claude Sonnet 5.5; entregado como `.patch`, sin tocar GitHub)
+
+Base: `main` con el rediseño de Ajustes (#68). Solo cambia lo visual: no cambian funciones, textos de botones, ids, datos, cifrado, copias ni K2. Lo que exporta la app (Word, TXT) no cambia.
+
+- **Paleta como variables (una sola fuente de verdad):** quedaban ~26 colores escritos a mano (interruptores, anillo del botón de grabar, estados «grabando» y «pausa», burbujas, pestaña activa, deshabilitados, fondo oscuro de los diálogos). Pasaron a variables en `:root`; el bloque `:root[data-theme="dark"]` define el nocturno. Los valores claros son los de siempre; los nocturnos son los pedidos más los tonos elegidos (avisos, error, éxito, franja de grabación).
+- **Apariencia:** Ajustes › Lectura › «Apariencia» (Clara, Nocturna, Automática; por defecto Clara). Se guarda en `theme` (configuración existente) y un script al comienzo de `<head>` la aplica **antes de pintar** (sin destello). Actualiza `color-scheme` y `theme-color` (meta y CSS). Automática sigue al sistema, también en vivo. Documentado en SEGURIDAD.md (regla 7).
+- **Pulido (las dos apariencias):** tarjetas y filas de 18 a 20 px con borde de 1 px; separaciones con variables; títulos de pantalla de 26 px; botón de grabar de unos 150 px con anillo suave; «Guardar en» dentro de una tarjeta; cada cuaderno con ícono en cuadrado suave, nombre en negrita y debajo «N notas · fecha» (la vista previa pasó a la tercera línea); pestaña activa en píldora con texto en negrita.
+- **Bordes de campos:** texto, números, contraseñas y listas usan el borde de control (3:1), también en claro (antes algunos diálogos usaban el borde fino de 1,3:1).
+- **Pruebas:** `tests/apariencia-browser.mjs` (Chrome a 360 px: las tres opciones, persistencia, destello, contrastes, 48 px, sin desplazamiento, capturas); en `tests/ajustes-browser.mjs` la lista de campos permitidos de la configuración suma `theme`. Node (202) y Chrome existentes en verde. Capturas en `docs/capturas/u5-*.png`.
+- **Hallazgos fuera de esta tarea (anotados, no arreglados):** (1) en «Herramientas del cuaderno», Renombrar, Copiar todo, Mover todo y .txt miden 44 px (`.conv-tools button`), no 48; (2) `tests/editor-browser.mjs` falla en «micrófono completo al grabar 360 normal», también en `main` sin estos cambios; (3) `tests/e3-browser.mjs` registra `ajRefresh is not defined` (llamado desde `vaultRefreshPanel` antes de definirse), también en `main`; pasa igual.
+- **Sin probar en el Motorola:** ver la lista en la descripción del PR.
+
 ## 18/11/2026 · Rediseño de Ajustes (U16, maqueta aprobada: U17) (Claude Sonnet 5.5; entregado como `.patch`, sin tocar GitHub)
 
 Base: `main` con U12 (#67). Solo cambia **cómo se llega** a cada cosa. No cambian el cifrado, los formatos de copia, las claves ni la lógica de K2.
