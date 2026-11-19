@@ -1751,8 +1751,8 @@ test('audio por nota E1: candado de una sola pestaña', async () => {
   assert.equal(sin.ok, true); assert.equal(sin.soportado, false);
 });
 
-test('audio por nota E2: solo se usa con la protección abierta y nunca sin cifrar', () => {
-  // La biblioteca P2 es un ensayo sin conexiones de producción: auditar E2 por separado.
+test('audio por nota: E2 sigue cifrado; la beta agrega modo sin cifrar explícito para notas', () => {
+  // E2 sigue cifrando sus fragmentos. La beta activa en paralelo el formato P2 de audio en claro, con modo explícito.
   const fuera = html.replace(/\/\*AUDIONOTA-START\*\/[\s\S]*?\/\*AUDIONOTA-END\*\//, '')
     .replace(/\/\*P2-BIBLIOTECA-START\*\/[\s\S]*?\/\*P2-BIBLIOTECA-END\*\//, '')
     .replace(/\/\*K2-START\*\/[\s\S]*?\/\*K2-END\*\//, '');
@@ -1761,16 +1761,19 @@ test('audio por nota E2: solo se usa con la protección abierta y nunca sin cifr
   assert.doesNotMatch(anBlock, /localStorage|fetch\(|XMLHttpRequest|innerHTML|\beval\b|new Function|gamma|document\./);
   assert.equal((anBlock.match(/indexedDB/g) || []).length, 1, 'solo el argumento por defecto de anOpen');
   assert.doesNotMatch(anBlock, /\.(clear|deleteObjectStore|deleteDatabase)\(/);
-  // Fuera del bloque, todo fragmento que se escribe viene de anSealChunk: ningún audio en claro.
+  // En E2 toda escritura usa AES-GCM; el tercer punto es la grabación P2 explícitamente en claro.
   const puts = [...fuera.matchAll(/^.*\banPut(Chunk|ChunkMeta)\(.*$/gm)].map(m => m[0]);
-  assert.equal(puts.length, 2, 'dos lugares escriben fragmentos (grabación y archivo)');
+  assert.equal(puts.length, 3, 'grabación P2, grabación E2 y archivo E2');
   assert.match(puts.join('\n'), /anPutChunk\(db, id, part, c\.n, await anSealChunk\(/);
   assert.match(fuera, /const n = r\.saved, blob = await anSealChunk\([^\n]*\n\s*await anPutChunkMeta\(r\.db, [^\n]*, blob\);/);
+  assert.match(fuera, /if \(vault\.state === 'off'\) return startAudioClaro\(mr\)/);
   assert.doesNotMatch(fuera, /\banStart\(/, 'no se usa la escritura sin cifrar de E1');
-  // Solo con la protección abierta (D2) y «Conservar audio» encendido (2.8).
+  // Conservar audio vale sin protección: E2 queda reservado a la bóveda abierta.
   assert.match(fuera, /const anUsable = \(\) => vault\.state === 'open' && !!vault\.audioKey && !!vault\.header;/);
-  assert.match(fuera, /if \(!\$\('saveAudio'\)\.checked\) return;[\s\S]{0,900}if \(anUsable\(\)\) return startAudioNota\(mr\);/);
-  assert.match(fuera, /async function anSaveFile\(f, ms\)\{\n  if \(!anUsable\(\) \|\| !\$\('saveAudio'\)\.checked\) return null;/);
+  assert.match(fuera, /const anAudioReady = \(\) => anUsable\(\) \|\| vault\.state === 'off';/);
+  assert.match(fuera, /if \(anUsable\(\)\) return startAudioNota\(mr\);/);
+  assert.match(fuera, /if \(vault\.state === 'off'\) return startAudioClaro\(mr\);/);
+  assert.match(fuera, /async function anSaveFile\(f, ms\)\{\n  if \(!anAudioReady\(\) \|\| !\$\('saveAudio'\)\.checked\) return null;/);
   // Primero el audio, después el vínculo; guardar espera a que termine de cifrarse.
   assert.match(fuera, /if \(anBusyN > 0\) return flash\('Esperá unos segundos: se está guardando el audio cifrado\.'\);/);
   assert.match(fuera, /text, audioId: convAudioId, durationMs: convAudioMs, audioParts,/);
