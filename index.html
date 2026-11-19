@@ -5015,7 +5015,7 @@ function e3Stop(){
   s.url = null; s.cek = null; s.detail = null; s.button.disabled = false;
   s.button.textContent = 'Reproducir'; s.button.setAttribute('aria-label', 'Reproducir audio de esta nota');
 }
-function e3Alive(s){ return e3Current === s && s.epoch === e3Epoch && s.root.isConnected && (s.plain ? anAudioReady() : anUsable()); }
+function e3Alive(s){ return e3Current === s && s.epoch === e3Epoch && s.root.isConnected && (s.plain === false ? anUsable() : anAudioReady()); }
 function e3Time(ms){ return Number.isFinite(ms) ? fmtClock(Math.max(0, ms)) : 'Duración no disponible'; }
 function e3Failure(s, msg){
   if (!e3Alive(s)) return;
@@ -5075,7 +5075,7 @@ async function e3Play(root, entry, button, range, status, clock){
   if (!anAudioReady()) { status.textContent = 'Desbloqueá la protección para escuchar el audio.'; return; }
   if (convAudioWork() || copiaBusyN) { status.textContent = 'Esperá a que termine la grabación, el guardado o la copia.'; return; }
   const s = e3Current = {root, id: entry.audioId, button, range, status, clock, epoch: e3Epoch, audio: new Audio(), url: null,
-    hid: vault.header && vault.header.id, plain:false, part: 0, request: 0, loading: true, timer: null};
+    hid: vault.header && vault.header.id, plain:null, part: 0, request: 0, loading: true, timer: null};
   button.disabled = true; status.textContent = 'Preparando audio…';
   try {
     if (!(await anStoredCount())) throw new Error('no existe');
@@ -5090,6 +5090,7 @@ async function e3Play(root, entry, button, range, status, clock){
     } else {
       if (!anUsable()) { e3Stop(); status.textContent = 'Desbloqueá la protección para escuchar este audio cifrado.'; return; }
       if (!anValidMeta(meta) || meta.state !== 'cerrado') throw new Error('ficha');
+      s.plain = false;
       s.detail = await anOpenDetail(vault.audioKey, s.hid, s.id, meta.sealed);
       if (!e3Alive(s)) return;
       if (!s.detail.parts.length || s.detail.parts.length !== meta.parts) throw new Error('partes');
@@ -5533,7 +5534,9 @@ async function anSaveFile(f, ms){
         }
       }
       if(!id)id=await anPlainStageFile(db,f,Math.max(0,Math.round(ms||0)));
-      if(anLinkPending(job,id,Math.max(0,Math.round(ms||0))))flash('Audio guardado sin cifrar. Queda unido a la nota al tocar Guardar.');
+      const checked=await anPlainHealth(db,id);
+      if(!checked.ok)throw new Error('audio guardado pero no verificable: se conserva sin vincular');
+      if(anLinkPending(job,id,anTotalMs(checked.m.plain)))flash('Audio guardado sin cifrar. Queda unido a la nota al tocar Guardar.');
       return id;
     } catch(e) {
       logDiag('Audio sin cifrar: error al guardar archivo ('+anErrName(e)+')');
