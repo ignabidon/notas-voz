@@ -16,7 +16,7 @@ Una línea con ID nuevo, fecha, la frase de Ignacio lo más literal posible y la
 | ID | Decisión | Estado |
 |---|---|---|
 | D1 | Los originales de notas anonimizadas se guardan solo con la protección cifrada activa | Vigente (AO pendiente) |
-| D2 | Los audios por nota se guardan solo con la protección cifrada activa; sin protección, «Conservar audio» sigue como antes | Vigente, **en revisión por A2** |
+| D2 | Los audios por nota se guardan solo con la protección cifrada activa; sin protección, «Conservar audio» sigue como antes | **Reemplazada por A13 en la beta; aún vigente en main hasta autorizar la unión** |
 | D3 | Al quitar la protección: ofrecer copia, borrar los audios por nota y preguntar qué hacer con los originales | Vigente (AO pendiente; hoy no se puede quitar la protección si hay audios) |
 | D4 | Tope de 30 MB para cargar un archivo de audio | Hecho (E2) |
 | D5 | Copia cifrada: elegir cada vez «Completa» o «Solo texto» | Hecho (K1) |
@@ -81,6 +81,7 @@ Una línea con ID nuevo, fecha, la frase de Ignacio lo más literal posible y la
 | A10 | **Contraseña mínima: se mantiene en 8 caracteres.** La revisión externa sugirió subirla a 12 porque protege las copias que salen del teléfono; Ignacio decidió no subirla | 17/11 | chat | Vigente |
 | A11 | **Audios sin protección al restaurar (M12): se cifran** y quedan protegidos dentro de la bóveda. Con esto la restauración cubrirá el audio sin protección (condición de A2 y A6) | 17/11 | chat | Pendiente (K2 de reemplazo) |
 | A12 | **Q1 por ahora: el formato 2 sigue en laboratorio.** El respaldo previo del reemplazo usa el formato 1; si hay audios guardados sin protección, el reemplazo se frena sin borrar nada. Ignacio delegó la decisión en Claude, que eligió lo más seguro | 18/11 | chat | Vigente |
+| A13 | **Regla funcional definitiva: «Conservar audio» activado adjunta la grabación a la nota y permite reproducirla en Cuadernos con o sin protección.** Con bóveda abierta se cifra; sin bóveda se guarda sin cifrar, con aviso breve en Ajustes. No debe exigirse una contraseña para guardar audio. Retirar por completo el aviso grande «¿Por qué no aparece Reproducir?» de la beta, sin sustituirlo por otro persistente. Las nuevas grabaciones no se asocian por conjetura a notas antiguas. | 19/11 | chat (pedido expreso de Ignacio) | **Implementación experimental en rama beta PR #71; main no modificado. Requiere CI completo y ensayo Motorola antes de cualquier unión** |
 
 ## Q · Todavía sin decidir
 
