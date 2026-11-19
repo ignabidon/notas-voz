@@ -1170,7 +1170,7 @@ body[data-view="anonimizar"] #anon{border-radius:var(--r-row)}
         <section class="vault-panel" id="copiaPanel" aria-labelledby="copiaTitle">
           <h4 id="copiaTitle">Copia cifrada</h4>
           <p class="hint">Una copia es un archivo cifrado con tus notas (y, si querés, tus audios). Sirve para recuperar todo si perdés el celular o se borran los datos del navegador. Guardala fuera del celular.</p>
-          <p class="hint" id="copiaOffHint">La protección está apagada: la copia igual sale cifrada, con una contraseña que elegís solo para ese archivo. Lleva el texto, no los audios de «Mis grabaciones».</p>
+          <p class="hint" id="copiaOffHint">Sin protección, la copia se cifra con una contraseña elegida solo para ese archivo. Si elegís Completa, incluye los audios de las notas de Cuadernos. Las grabaciones antiguas sueltas de «Mis grabaciones» no están incluidas.</p>
           <fieldset id="copiaContenido" class="copia-opciones" hidden>
             <legend>Qué lleva la copia</legend>
             <label class="chk"><input type="radio" name="copiaTipo" id="copiaCompleta" value="completa" checked><span><b>Completa</b><small>Texto y audios de las notas. Los audios sin protección se cifran dentro del archivo de copia.</small></span></label>
@@ -2124,7 +2124,7 @@ function vaultRefreshPanel(){
   vaultEl('vaultOff').hidden = vault.state !== 'off';
   vaultEl('vaultOn').hidden = !on;
   vaultEl('topLock').hidden = !on;
-  { const c = vaultEl('copiaContenido'), o = vaultEl('copiaOffHint'); if (c) c.hidden = !on; if (o) o.hidden = vault.state !== 'off'; }   // copia cifrada (K1)
+  { const c = vaultEl('copiaContenido'), o = vaultEl('copiaOffHint'); if (c) c.hidden = vault.state !== 'off' && vault.state !== 'open'; if (o) o.hidden = vault.state !== 'off'; }   // copia completa de audio sin protección (beta)
   vaultEl('vaultStatus').textContent = vault.state === 'off'
     ? 'Desactivada: las notas, borradores, personas y diccionario se guardan sin cifrar en este navegador.'
     : 'Activada: notas, borrador, deshacer, personas y diccionario se guardan cifrados (AES-256). Se bloquea tras 15 minutos sin uso. Con «Conservar audio», los audios nuevos se guardan cifrados junto a su nota; los guardados antes en «Mis grabaciones» siguen sin cifrar.';
