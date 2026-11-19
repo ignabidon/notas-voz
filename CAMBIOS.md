@@ -8,6 +8,7 @@ Base: `main` con el rediseño de Ajustes (#68). Solo cambia lo visual: no cambia
 - **Bordes de campos:** texto, números, contraseñas y listas usan el borde de control (3:1), también en claro (antes algunos diálogos usaban el borde fino de 1,3:1).
 - **Pruebas:** `tests/apariencia-browser.mjs` (Chrome a 360 px: las tres opciones, persistencia, destello, contrastes, 48 px, sin desplazamiento, capturas); en `tests/ajustes-browser.mjs` la lista de campos permitidos de la configuración suma `theme`. Node (202) y Chrome existentes en verde. Capturas en `docs/capturas/u5-*.png`.
 - **Hallazgos fuera de esta tarea (anotados, no arreglados):** (1) en «Herramientas del cuaderno», Renombrar, Copiar todo, Mover todo y .txt miden 44 px (`.conv-tools button`), no 48; (2) `tests/editor-browser.mjs` falla en «micrófono completo al grabar 360 normal», también en `main` sin estos cambios; (3) `tests/e3-browser.mjs` registra `ajRefresh is not defined` (llamado desde `vaultRefreshPanel` antes de definirse), también en `main`; pasa igual.
+- **Corrección en la revisión (Claude):** el margen superior del botón de grabar (26 px) lo empujaba 5 px debajo de la franja de grabación a 360 px y hacía fallar `tests/editor-browser.mjs` («micrófono completo al grabar»). Ese fallo **no** ocurría en `main`. Se bajó a 18 px; la prueba vuelve a pasar.
 - **Sin probar en el Motorola:** ver la lista en la descripción del PR.
 
 ## 18/11/2026 · Rediseño de Ajustes (U16, maqueta aprobada: U17) (Claude Sonnet 5.5; entregado como `.patch`, sin tocar GitHub)
