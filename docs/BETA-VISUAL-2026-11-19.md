@@ -7,7 +7,7 @@
 - Se modifica la presentación de la misma aplicación (`index.html`), no se crea una segunda aplicación dentro de `main`.
 
 ## Cambios
-1. Notas: botones Copiar / Editar / ⋯ sin relleno ni borde permanente, visualmente pequeños, con área táctil conservada de **48 px como mínimo** y foco visible.
+1. Notas: Copiar y Editar usan iconos de 21 px; ⋯ sigue visible. Los tres conservan áreas táctiles de **48 px como mínimo**, nombres accesibles, foco visible y un borde discreto de contraste suficiente.
 2. Burbujas más compactas: menos relleno, separaciones y divisores, sin reducir el tamaño de lectura.
 3. Cuadernos: tarjetas más sobrias y densas; se conserva el resumen, fecha y vista previa optativa.
 4. Ajustes: acceso **Motor y modelo de transcripción** al comienzo (Whisper y modelo vigente, actualizados si el usuario cambia el ajuste). En Calidad de transcripción se muestra primero la elección del motor.
