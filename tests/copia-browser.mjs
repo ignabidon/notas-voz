@@ -82,9 +82,10 @@ try {
   await run(`document.querySelector('[data-delta-view="ajustes"]').click(); ajShow('copias', false); true`);   // U16: la copia vive en la subpantalla Copias de seguridad
   await run(`document.getElementById('copiaPanel').scrollIntoView({block: 'start'}); true`);
   assert.equal(await visible('copiaCrear'), true); assert.equal(await visible('copiaVerificar'), true);
-  assert.equal(await visible('copiaOffHint'), true, 'explica que lleva una contraseña propia'); assert.equal(await visible('copiaContenido'), false, 'sin protección no hay audios por nota que elegir');
+  assert.equal(await visible('copiaOffHint'), true, 'explica que lleva una contraseña propia'); assert.equal(await visible('copiaContenido'), true, 'sin protección también se puede elegir incluir los audios por nota');
   assert.equal(await run(`document.documentElement.scrollWidth <= window.innerWidth`), true, 'sin desborde horizontal a 360 px');
   assert.equal(await run(`['copiaCrear', 'copiaVerificar'].every(id => document.getElementById(id).getBoundingClientRect().height >= 48)`), true, 'botones de al menos 48 px');
+  await click('copiaSoloTexto'); // caso K1 histórico, aunque ahora también puede elegirse completa sin contraseña.
   const antesA = await foto();
   await click('copiaCrear');
   assert.equal(await visible('copiaPwForm'), true);
@@ -108,6 +109,7 @@ try {
   assert.equal(v.r, null); assert.match(v.msg, /no abren esta copia/);
   assert.equal(await foto(), antesA, 'verificar tampoco cambió nada');
 
+  await click('copiaCompleta'); // la siguiente copia sí debe incluir audios
   // ===== B) Protección activa, con un audio cifrado unido a una nota =====
   const recovery = await run(`(async () => { const r = await vault.enable(${JSON.stringify(PASS)}); r.dek.fill(0); await vaultTakeTabLock(); vaultRefreshPanel(); return r.recovery; })()`);
   assert.equal(await run('vault.state'), 'open');
@@ -133,7 +135,7 @@ try {
   await click('copiaCrear'); await waitFor(`!document.getElementById('vaultAuth').hidden`, 'pedido de contraseña');
   await fill('vaultAuthPass', PASS); await submit('vaultAuth');
   await waitFor('window.__dl.length === 2', 'descarga de la copia completa', 60000);
-  assert.match(await msg(), /Copia creada y comprobada: .*1 cuaderno · 2 notas · 1 audio cifrado/);
+  assert.match(await msg(), /Copia creada y comprobada: .*1 cuaderno · 2 notas · 1 audio incluido y cifrado en la copia/);
   assert.match(await msg(), /contraseña actual o con tu código de recuperación/);
   assert.equal(await foto(), antesB, 'crear la copia completa no cambió notas, registros ni audios');
   const bytesB = await bytesDe(1);
@@ -143,7 +145,7 @@ try {
 
   // Verificar: con la contraseña, con el código de recuperación, con una clave equivocada y cancelando.
   v = await comprobar('window.__dl[1]', PASS);
-  assert.match(v.msg, /^Copia correcta: .*1 audio cifrado/); assert.deepEqual([v.r.contenido, v.r.cuadernos, v.r.notas, v.r.audios, v.r.registros >= 1], ['completa', 1, 2, 1, true]);
+  assert.match(v.msg, /^Copia correcta: .*1 audio incluido y cifrado en la copia/); assert.deepEqual([v.r.contenido, v.r.cuadernos, v.r.notas, v.r.audios, v.r.registros >= 1], ['completa', 1, 2, 1, true]);
   assert.match(v.msg, /No se cargó ni se cambió nada en la app/);
   v = await comprobar('window.__dl[1]', recovery.toLowerCase());
   assert.match(v.msg, /^Copia correcta: /, 'el código de recuperación también la abre');
