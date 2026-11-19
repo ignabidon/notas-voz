@@ -1,3 +1,7 @@
+## 19/11/2026 · Beta: aclaración del reproductor en Cuadernos (ChatGPT; PR #71)
+
+Revisión tras observación del usuario: las notas sin `audioId` no crean reproductor; E3 solo une audio con protección abierta y «Conservar audio» activado antes de grabar. Sin protección, la voz se guarda históricamente por separado y no aparece en Cuadernos (comportamiento existente en main). En la beta se agregó una explicación contextual para notas de voz sin audio vinculado y un acceso directo a Ajustes; se aclaró el texto del interruptor. Sin modificar cifrado, grabación, persistencia ni vinculación automática. Prueba de interfaz agregada a `tests/e3-browser.mjs`; Motorola pendiente. Detalles en `docs/BETA-VISUAL-2026-11-19.md`.
+
 ## 19/11/2026 · Beta visual compacta (ChatGPT, rama separada; sin unir a main)
 
 Base: `edfacda1`. Alternativa de diseño para evaluar en Motorola G56 5G: acciones de notas menos grandes con área táctil de 48 px, burbujas y lista de cuadernos más compactas, acceso destacado a motor/modelo Whisper al comienzo de Ajustes, escalas más coherentes, avisos y controles secundarios menos dominantes, y reducción de espacios en Anonimizar. Mantiene modos claro/nocturno, navegación y la lógica actual de grabación, guardado y cifrado. Se identifica como BETA y exige usar exclusivamente datos ficticios. Alcance y advertencias sobre la URL externa: `docs/BETA-VISUAL-2026-11-19.md`. No hay autorización para unir a `main`.
