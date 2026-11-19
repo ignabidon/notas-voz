@@ -3310,15 +3310,15 @@ async function convSave(){
   // Cuántas partes tiene el audio que se va a confirmar. Queda escrito en la nota: así, un borrador viejo que sobreviva a un corte
   // nunca puede hacer que «Cancelar» recorte partes ya confirmadas.
   let audioParts = null;
-  if (convAudioId && anUsable()) {
+  if (convAudioId && anAudioReady()) {
     try { const m = await anGetMeta(await anDb(), convAudioId); audioParts = m && anValidMeta(m) && m.state === 'cerrado' && m.parts >= 1 ? m.parts : null; }
     catch (e) { return flash('No se guardó: no se pudo comprobar el audio guardado (' + anErrName(e) + '). El texto y su audio siguen en el editor.'); }
   }
   // Toda nota con audio (con texto o sin texto) exige integridad completa antes de confirmar el vínculo.
   if (convAudioId) {
-    if (!anUsable() || !audioParts) return flash('No se guardó: todavía no hay un audio por nota confirmado. El texto y el borrador siguen disponibles.');
+    if (!anAudioReady() || !audioParts) return flash('No se guardó: todavía no hay un audio por nota confirmado. El texto y el borrador siguen disponibles.');
     try {
-      const health = await anAudioHealth(await anDb(), vault.audioKey, vault.header.id, convAudioId);
+      const health = await anAudioHealthForNote(await anDb(), convAudioId);
       if (!health.ok) return flash('No se guardó: el audio está incompleto o dañado (' + health.why + '). Se conserva sin modificar para recuperarlo.');
     } catch (e) { return flash('No se guardó: no se pudo verificar el audio (' + anErrName(e) + '). Se conserva sin modificar.'); }
   }
@@ -4988,7 +4988,7 @@ function e3Stop(){
   s.url = null; s.cek = null; s.detail = null; s.button.disabled = false;
   s.button.textContent = 'Reproducir'; s.button.setAttribute('aria-label', 'Reproducir audio de esta nota');
 }
-function e3Alive(s){ return e3Current === s && s.epoch === e3Epoch && anUsable() && s.root.isConnected; }
+function e3Alive(s){ return e3Current === s && s.epoch === e3Epoch && s.root.isConnected && (s.plain ? anAudioReady() : anUsable()); }
 function e3Time(ms){ return Number.isFinite(ms) ? fmtClock(Math.max(0, ms)) : 'Duración no disponible'; }
 function e3Failure(s, msg){
   if (!e3Alive(s)) return;
@@ -5005,9 +5005,15 @@ async function e3Part(s, part, seconds = 0){
     for (let n = 0; n < p.chunks; n++) {
       const chunk = await anGetChunk(s.db, s.id, part, n);
       if (!e3Alive(s) || request !== s.request) return;
-      const plain = await anOpenChunk(s.cek, s.hid, s.id, part, n, chunk);
-      if (!e3Alive(s) || request !== s.request) { plain.fill(0); return; }
-      bytes += plain.length; pieces.push(new Blob([plain])); plain.fill(0);
+      if (s.plain) {
+        if (!(chunk instanceof Blob) || await anPlainHash(chunk) !== p.hashes[n]) throw new Error('fragmento sin cifrar alterado');
+        if (!e3Alive(s) || request !== s.request) return;
+        bytes += chunk.size; pieces.push(chunk);
+      } else {
+        const plain = await anOpenChunk(s.cek, s.hid, s.id, part, n, chunk);
+        if (!e3Alive(s) || request !== s.request) { plain.fill(0); return; }
+        bytes += plain.length; pieces.push(new Blob([plain])); plain.fill(0);
+      }
     }
     if (bytes !== p.bytes) throw new Error('audio incompleto');
     if (!e3Alive(s) || request !== s.request) return;
@@ -5039,10 +5045,10 @@ async function e3Play(root, entry, button, range, status, clock){
     return;
   }
   e3Stop();
-  if (!anUsable()) { status.textContent = 'Desbloqueá la protección para escuchar el audio.'; return; }
+  if (!anAudioReady()) { status.textContent = 'Desbloqueá la protección para escuchar el audio.'; return; }
   if (convAudioWork() || copiaBusyN) { status.textContent = 'Esperá a que termine la grabación, el guardado o la copia.'; return; }
   const s = e3Current = {root, id: entry.audioId, button, range, status, clock, epoch: e3Epoch, audio: new Audio(), url: null,
-    hid: vault.header.id, part: 0, request: 0, loading: true, timer: null};
+    hid: vault.header && vault.header.id, plain:false, part: 0, request: 0, loading: true, timer: null};
   button.disabled = true; status.textContent = 'Preparando audio…';
   try {
     if (!(await anStoredCount())) throw new Error('no existe');
@@ -5050,13 +5056,19 @@ async function e3Play(root, entry, button, range, status, clock){
     const meta = await anGetMeta(s.db, s.id);
     if (!e3Alive(s)) return;
     if (!meta) { e3Failure(s, 'Audio no disponible. El texto se conserva. Podés quitar la referencia desde ⋯.'); return; }
-    if (anIsPlainMeta(meta)) { e3Failure(s, 'Este audio está guardado sin cifrar (ensayo) y todavía no se reproduce desde la nota. Se conserva sin cambios.'); return; }
-    if (!anValidMeta(meta) || meta.state !== 'cerrado') throw new Error('ficha');
-    s.detail = await anOpenDetail(vault.audioKey, s.hid, s.id, meta.sealed);
-    if (!e3Alive(s)) return;
-    if (!s.detail.parts.length || s.detail.parts.length !== meta.parts) throw new Error('partes');
-    const cek = await anOpenCek(vault.audioKey, s.hid, s.id, meta.key);
-    if (!e3Alive(s)) return; s.cek = cek;
+    if (anIsPlainMeta(meta)) {
+      const h = await anPlainHealth(s.db, s.id);
+      if (!h.ok) throw new Error('audio sin cifrar incompleto');
+      s.plain = true; s.detail = h.m.plain;
+    } else {
+      if (!anUsable()) { e3Failure(s, 'Desbloqueá la protección para escuchar este audio cifrado.'); return; }
+      if (!anValidMeta(meta) || meta.state !== 'cerrado') throw new Error('ficha');
+      s.detail = await anOpenDetail(vault.audioKey, s.hid, s.id, meta.sealed);
+      if (!e3Alive(s)) return;
+      if (!s.detail.parts.length || s.detail.parts.length !== meta.parts) throw new Error('partes');
+      const cek = await anOpenCek(vault.audioKey, s.hid, s.id, meta.key);
+      if (!e3Alive(s)) return; s.cek = cek;
+    }
     const total = anTotalMs(s.detail); s.total = total;
     range.disabled = total === null || total <= 0; range.max = total === null ? 0 : total / 1000; range.value = 0;
     clock.textContent = '0:00 / ' + e3Time(total);
@@ -5222,6 +5234,17 @@ window.addEventListener('pagehide', e3Stop);
    «Conservar audio» sigue usando la base histórica, como antes (D2). El reproductor (E3) está en el bloque «E3» más arriba. */
 let anDbP = null, anBusyN = 0;
 const anUsable = () => vault.state === 'open' && !!vault.audioKey && !!vault.header;
+const anAudioReady = () => anUsable() || vault.state === 'off'; // Conservar audio no depende de contraseña
+async function anAudioHealthForNote(db,id){
+  const meta = await anGetMeta(db,id);
+  if (anIsPlainMeta(meta)) {
+    const h = await anPlainHealth(db,id);
+    return {ok:h.ok, why:h.why, m:h.m, detail:h.m && h.m.plain, plain:true};
+  }
+  if (!anUsable()) return {ok:false,why:'protección bloqueada',m:meta};
+  return anAudioHealth(db,vault.audioKey,vault.header.id,id);
+}
+
 function anDb(){
   if (!anDbP) { const p = anDbP = anOpen(); p.catch(() => { if (anDbP === p) anDbP = null; }); }
   return anDbP;
