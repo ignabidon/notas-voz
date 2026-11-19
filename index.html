@@ -917,6 +917,59 @@ body.delta-recording .c-rec>.dict-dest{display:none}
 .aj-seg-opt:has(input:checked){background:var(--acc);color:var(--acc-ink)}
 .aj-seg-opt:has(input:focus-visible){outline:3px solid var(--acc);outline-offset:2px}
 :root[data-text-size="large"] .aj-seg{grid-template-columns:1fr}
+
+/* BETA-DISENO-2026-11-19 · Solo jerarquía visual. No alterar almacenamiento, audio ni cifrado. */
+body[data-view="transcripcion"] .conv-bubble{max-width:100%;margin-top:10px;padding:12px 14px;border-radius:17px 17px 5px 17px;box-shadow:none}
+body[data-view="transcripcion"] .conv-text{font-size:max(16px,calc(16px * var(--text-scale)));line-height:1.62}
+body[data-view="transcripcion"] .conv-meta{border:0;margin-top:8px;padding:0;gap:5px 9px;font-size:max(13px,calc(13px * var(--text-scale)))}
+body[data-view="transcripcion"] .conv-actions{display:flex;align-items:center;justify-content:flex-end;flex-wrap:nowrap;gap:2px;padding:0;margin-top:2px;border:0}
+body[data-view="transcripcion"] .conv-actions button{flex:0 0 auto;min-height:48px;min-width:48px;width:auto;padding:0 9px;background:transparent;border:1px solid transparent;color:var(--mut);box-shadow:none;font-weight:650;font-size:max(13px,calc(13px * var(--text-scale)))}
+body[data-view="transcripcion"] .conv-actions .conv-more{flex:0 0 48px;min-width:48px;font-size:23px;font-weight:750;letter-spacing:0}
+body[data-view="transcripcion"] .conv-actions button:hover:not(:disabled),
+body[data-view="transcripcion"] .conv-actions button:focus-visible{background:var(--card);color:var(--acc);border-color:var(--line-strong)}
+body[data-view="transcripcion"] .conv-actions button:focus-visible{outline:3px solid var(--acc);outline-offset:1px}
+body[data-view="transcripcion"] .conv-menu{margin-top:2px;padding-top:8px}
+body[data-view="transcripcion"] .conv-item{padding:12px 14px;gap:3px;margin-top:8px;box-shadow:none}
+body[data-view="transcripcion"] .conv-item>span{font-size:max(16px,calc(16px * var(--text-scale)))}
+body[data-view="transcripcion"] .conv-item small{line-height:1.4}
+body[data-view="transcripcion"] .conv-heading{margin-bottom:8px}
+body[data-view="transcripcion"] .conv-h{font-size:max(21px,calc(21px * var(--text-scale)))}
+body[data-view="transcripcion"] .conv-sheet-tools{margin-bottom:10px}
+body[data-view="transcripcion"] .conv-sheet-tools>summary{min-height:48px;display:flex;align-items:center}
+body[data-view="transcripcion"] .conv-tools button{min-height:48px}
+body[data-view="transcripcion"] .text-screen-title{margin-bottom:12px}
+body[data-view="transcripcion"] .conv-panel{padding-bottom:8px}
+.beta-whisper-shortcut{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:64px;margin:0 0 12px;padding:10px 14px;text-align:left;color:var(--ink);background:var(--acc-soft);border:1px solid var(--line-strong);border-radius:var(--r-row);cursor:pointer}
+.beta-whisper-shortcut .beta-whisper-stack{display:grid;gap:2px;min-width:0}
+.beta-whisper-shortcut .beta-whisper-overline{font-size:max(12px,calc(12px * var(--text-scale)));letter-spacing:.04em;color:var(--acc);font-weight:750}
+.beta-whisper-shortcut .beta-whisper-value{font-size:max(17px,calc(17px * var(--text-scale)));font-weight:800}
+.beta-whisper-shortcut .beta-whisper-chevron{flex:none;font-size:24px;color:var(--acc)}
+.beta-whisper-shortcut:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+#ajSub-calidad #settingsQuality{display:flex;flex-direction:column;gap:8px}
+#ajSub-calidad #settingsQuality>.aj-block-eng{order:-1;margin:0 0 4px}
+#ajSub-calidad #settingsQuality>.aj-block-eng .settings-inner{border:0;margin:0;padding:0}
+#ajSub-calidad #settingsQuality>.aj-block-eng summary{font-weight:750;color:var(--ink);min-height:48px;display:flex;align-items:center}
+#ajSub-calidad #settingsQuality>label[for="model"]{margin-top:10px!important;font-weight:750}
+#ajSub-calidad #settingsQuality>.settings-inner{margin-top:6px}
+#ajHome .aj-group{margin-top:17px}
+#ajHome .aj-row{min-height:56px;padding:9px 14px}
+#ajHome .aj-switch-row{min-height:56px;padding:9px 14px}
+#ajHome .aj-status{padding:14px}
+body[data-view="grabacion"] .capture-shortcuts{gap:8px;margin-top:15px}
+body[data-view="grabacion"] .capture-shortcuts button{box-shadow:none;font-weight:650}
+body[data-view="grabacion"] .c-rec .rec-caption{line-height:1.45}
+.transcription-dock{padding:8px 11px;margin-bottom:7px;box-shadow:none}
+#transcriptionDockMessage{margin:4px 0 5px}
+body[data-view="anonimizar"] .anon-explain{padding:14px}
+body[data-view="anonimizar"] .privacy-group{padding:14px;margin-top:16px}
+body[data-view="anonimizar"] .studio-patients{margin-top:12px}
+body[data-view="transcripcion"] .conv-tools button,
+body[data-view="grabacion"] .capture-shortcuts button,
+body[data-view="anonimizar"] #anon{border-radius:var(--r-row)}
+/* La marca visual no altera el nombre accesible ni el encabezado histórico. */
+.brand h1::after{content:"BETA";display:inline-block;vertical-align:middle;margin-left:9px;padding:3px 6px;border-radius:6px;background:var(--acc-soft);color:var(--acc);font-size:10px;font-weight:850;letter-spacing:.08em}
+@media(max-width:380px){body[data-view="transcripcion"] .conv-bubble{padding:11px 12px}body[data-view="transcripcion"] .conv-actions button{padding-inline:7px}}
+
 </style>
 </head>
 <body data-view="grabacion">
@@ -1024,6 +1077,7 @@ body.delta-recording .c-rec>.dict-dest{display:none}
     <div class="body">
     <div id="ajHome" class="aj-screen">
       <div class="screen-title"><span class="screen-overline">PERSONALIZACIÓN</span><h2>Ajustes</h2></div>
+      <button type="button" class="beta-whisper-shortcut" id="betaWhisperShortcut" data-aj-open="calidad" aria-label="Abrir ajustes del motor y modelo de transcripción"><span class="beta-whisper-stack"><span class="beta-whisper-overline">MOTOR Y MODELO DE TRANSCRIPCIÓN</span><strong class="beta-whisper-value" id="betaWhisperLabel">Whisper · Small</strong></span><span class="beta-whisper-chevron" aria-hidden="true">›</span></button>
       <section class="aj-status" id="ajStatus" aria-labelledby="ajStatusTitle">
         <div class="aj-status-top"><span class="aj-lock" id="ajLockIcon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="10.5" width="14" height="9.5" rx="2.5"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/></svg></span><div><h3 id="ajStatusTitle">Protección desactivada</h3><p class="aj-status-line" id="ajStatusLine"></p></div></div>
         <div class="aj-status-btns"><button type="button" id="ajLock" hidden>Bloquear ahora</button><button type="button" id="ajCopy" class="p">Crear copia</button></div>
@@ -1381,7 +1435,7 @@ body.delta-recording .c-rec>.dict-dest{display:none}
 
 </main>
 
-<footer>DELTA 11 · VERSIÓN DE PRUEBA<br>Usá únicamente datos ficticios.</footer>
+<footer>DICTAVOZ · BETA VISUAL SEPARADA<br>Usá únicamente datos ficticios. No ingresar datos clínicos reales en esta vista previa de terceros.</footer>
 </div>
 
 <aside class="studio-dock" aria-label="Acciones de la nota">
@@ -7132,6 +7186,12 @@ const MODEL_HELP = {
 };
 function updateModelHint(){
   $('modelHint').textContent = MODEL_HELP[$('model').value] || '';
+  const quick = document.getElementById('betaWhisperLabel');
+  if (quick) {
+    const motor = document.querySelector('input[name="eng"]:checked');
+    const modelo = $('model').selectedOptions[0]?.textContent.split(' · ')[0] || 'Small';
+    quick.textContent = motor?.value === 'native' ? 'Dictado local' : 'Whisper · ' + modelo;
+  }
 }
 $('model').addEventListener('change', updateModelHint);
 const hasOpt = (sel, v) => [...sel.options].some(o => o.value === v);
@@ -7161,7 +7221,7 @@ $('textSize').addEventListener('change', () => { applyTextSize($('textSize').val
 document.querySelectorAll('input[name=theme]').forEach(r => r.addEventListener('change', () => { applyTheme(themePref()); if (!saveCfg()) flash('La apariencia se aplicó, pero este navegador no permitió guardar el ajuste.'); }));
 ['model', 'accel', 'mic', 'replace', 'saveAudio', 'pVolatile', 'learnAuto'].forEach(id => $(id).addEventListener('change', saveCfg));
 $('listPreview').addEventListener('change', () => { saveCfg(); renderConv(); });   // B3: campo opcional de la configuración existente; solo cambia lo que se muestra
-document.querySelectorAll('input[name=eng]').forEach(r => r.addEventListener('change', () => { setStatus(''); saveCfg(); }));
+document.querySelectorAll('input[name=eng]').forEach(r => r.addEventListener('change', () => { setStatus(''); saveCfg(); updateModelHint(); }));
 
 /* ---------- Borrador autoguardado: sobrevive a recargas y cierres ---------- */
 let lastDraft = '', draftWriteQueue = Promise.resolve(), draftErrorShown = false, draftWriteVersion = 0;
