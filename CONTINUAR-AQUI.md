@@ -34,7 +34,7 @@ DictaVoz (antes DictaNota; solo cambió lo visible): transcribe voz a texto en e
 | #58 | Auditoría y propuesta de almacenamiento definitivo (solo documentación) | ChatGPT | — |
 | #52 | Visión de la experiencia y guía estética (solo documentación) | ChatGPT | — |
 | #49, #37 | Guía del propietario y feedback del Motorola; decisiones del 16/11 (solo documentación) | Claude | — |
-| (sin n.º) | U16: rediseño de Ajustes (lista de secciones con subpantallas; entregado como `.patch`, 18/11) | Claude | #67 |
+| #68 | U16: rediseño de Ajustes (lista de secciones con subpantallas; entregado como `.patch`, 18/11) | Claude | #67 |
 | #65 | K2 de reemplazo: respaldo previo, comparación y doble confirmación, borrado con diario, A11 | Claude | #64 |
 | #22, #1 | Borradores viejos de otras etapas | sin dueño vigente | — |
 
