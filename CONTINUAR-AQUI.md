@@ -1,7 +1,7 @@
 # CONTINUAR AQUÍ — DictaVoz
 
 > **Una sola página, un solo estado.** Quien termina un paso **reescribe esta página** (no agrega carteles arriba) y mueve lo viejo a `docs/historial/`. Si algo de acá contradice al código de `main`, vale el código; si contradice a `docs/DECISIONES.md`, vale ese registro.
-> **Última actualización: 18/11/2026 (Claude).** Unidos a `main`: #62 (documentación), la cadena #59 → #60 → #61 y la capa de registros (#64). **K2 de reemplazo programado y entregado como `.patch` + descripción (sin PR; falta revisión cruzada).**
+> **Última revisión: 18/11/2026 (ChatGPT, solo propuesta de parche U19).** `main` verificado en `cfda606` incluye #69 (Clínica serena y modo nocturno), #68 (Ajustes), #67 (selector Dictar). **U19 todavía no está en GitHub:** parche pendiente de pruebas Node/Chrome, capturas 360 px y revisión; no se hizo ninguna prueba en el Motorola. El resto de los estados históricos de esta página requiere conciliación antes de una futura actualización integral.
 
 ## Cómo está organizada la documentación
 
@@ -23,6 +23,8 @@ DictaVoz (antes DictaNota; solo cambió lo visible): transcribe voz a texto en e
 | Entrega 2: borradores confirmados y notas de solo audio (P1, P4 parcial) | #59 |
 | Biblioteca en claro y copia formato 2 (**ensayo, sin activar**) | #60 |
 | U12: elegir cuaderno y nombre desde Dictar | #67 |
+| U5/U18: Clínica serena y apariencia clara/nocturna, unidos en #69 | #69 (main `cfda606`) |
+| U19: Dictar simplificado (parche propuesto; sin PR ni pruebas ejecutadas) | Pendiente de revisión y validación |
 | K2: restaurar en instalación **vacía** (experimental; rechaza copias incompletas y con audio en claro) | #61 |
 
 **Revisiones del 17/11 a la noche.** Una revisión externa de seguridad (IA de un amigo de Ignacio, solo lectura) encontró un hallazgo grave en «Quitar la protección» (si fallaba a mitad de camino quedaba texto en claro) y un riesgo en K2 (copias incompletas). Se corrigieron en `4e7758d` y `c4cb29f`, con pruebas nuevas. Una segunda revisión externa de esos dos commits no encontró hallazgos graves: con eso se cumplió A5 y se unió K2.
@@ -34,8 +36,6 @@ DictaVoz (antes DictaNota; solo cambió lo visible): transcribe voz a texto en e
 | #58 | Auditoría y propuesta de almacenamiento definitivo (solo documentación) | ChatGPT | — |
 | #52 | Visión de la experiencia y guía estética (solo documentación) | ChatGPT | — |
 | #49, #37 | Guía del propietario y feedback del Motorola; decisiones del 16/11 (solo documentación) | Claude | — |
-| #69 | U5 / U18: estética «Clínica serena» pulida + modo nocturno opcional (entregado como `.patch`, 18/11; sobre `main` con #68) | Claude | — |
-| #68 | U16: rediseño de Ajustes (lista de secciones con subpantallas; entregado como `.patch`, 18/11) | Claude | #67 |
 | #65 | K2 de reemplazo: respaldo previo, comparación y doble confirmación, borrado con diario, A11 | Claude | #64 |
 | #22, #1 | Borradores viejos de otras etapas | sin dueño vigente | — |
 
@@ -43,8 +43,8 @@ DictaVoz (antes DictaNota; solo cambió lo visible): transcribe voz a texto en e
 
 1. **Capa única de registros:** hecha y unida (#64).
 2. **K2 de reemplazo:** **programado** (respaldo previo comprobado → comparación y doble confirmación → marca propia «restauración en curso» → borrado guiado con diario reanudable → restauración; espacio comprobado; audios sin protección cifrados al restaurar, A11; código de recuperación nuevo al final). Entregado como `.patch` sobre `main`. **Unido (#65). Probado en el Motorola por Ignacio el 18/11** (recorrido con datos inventados; sin problemas). Sin probar todavía con audios reales largos ni un corte real en el celular. Sigue siendo experimental. Pregunta para Ignacio (Q1): si el respaldo previo tiene que cubrir también los audios sin cifrar, hay que habilitar el formato 2 para el usuario.
-3. **Estética y modo nocturno (U18, U5):** **programado** y entregado como `.patch` (18/11): paleta en variables, pulido y apariencia Clara / Nocturna / Automática en Ajustes › Lectura. Falta unirlo y probarlo en el Motorola.
-3. **Mejoras de uso** (U16): elegir cuaderno y nombre desde Dictar (U12) está **unido** (#67); el **rediseño de Ajustes** está **programado** (`.patch` del 18/11 según la maqueta aprobada, U17; falta unirlo y probarlo en el Motorola).
+3. **Estética, modo nocturno y rediseño de Ajustes (U5, U17, U18):** unidos en `main` mediante #68 y #69; falta verificación en el Motorola.
+3. **Dictar simplificado (U19):** parche de trabajo sobre `cfda606`; **NO unido a GitHub**. Revisar `tests/dictar-simple-browser.mjs`, ejecutar Node y Chrome y producir capturas 360 px (reposo/grabando y Espacio; claro/nocturno).
 4. **«Conservar audio» activado de entrada** en instalaciones nuevas (A6), cuando la restauración cubra el audio sin protección (paso 2).
 5. **Retirar el audio suelto viejo** y borrar sus datos de prueba (A7, A8).
 6. **T**, con permiso explícito de Ignacio (cabecera v:2, durabilidad estricta, borrar `localStorage` recién en el desbloqueo siguiente). Después, AO.

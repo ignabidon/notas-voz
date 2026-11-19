@@ -1,3 +1,13 @@
+## 18/11/2026 · U19: Dictar simplificado (parche propuesto, sin modificar GitHub)
+
+Base leída: `main` en `cfda606ddef42602405ddf26b1f90949cabffd24` (incluye #69, U5/U18).
+
+- El selector existente «Guardar en» y el nombre opcional del cuaderno pasan al principio de Dictar. Se quita el encabezado «Captura rápida · Nueva nota» y los accesos duplicados a Cuadernos / escribir.
+- «Conservar audio» se conserva únicamente en Ajustes › Dictado; la lógica que lee ese ajuste, lo bloquea durante una grabación y lo muestra en la barra de grabación no cambia.
+- Se conservan intactos los controles e identificadores de audio; al inicializar se trasladan a «Ajustes › Espacio y audios guardados › Audios guardados en este dispositivo (avanzado)». Los enlaces anteriores abren esa sección y la transcripción de un archivo cargado regresa a Dictar.
+- Sin cambios de datos, claves, almacenamiento, cifrado, copias ni K2. Los avisos de fallos siguen en Dictar.
+- **Prueba Chrome agregada:** `tests/dictar-simple-browser.mjs` (360 px, claro/nocturno, destinos, fallo de Whisper simulado, controles avanzados, capturas y consola). **Comprobaciones pendientes de ejecutar:** Node, Chrome, guardado en cuaderno nuevo y existente, fallo de Whisper, consola y capturas 360 px claro/nocturno. El parche llegó sin probar (ChatGPT, sin acceso al repositorio).
+- **Revisión y correcciones de Claude (19/11):** (1) con «Guardar en» arriba, el botón de grabar quedaba debajo de la franja de grabación en pantallas chicas: mientras se graba, el selector se oculta (el destino ya está elegido) y vuelve al terminar; (2) `vaultRefreshPanel` llamaba a `ajRefresh` antes de que existiera (error de consola que ya estaba en `main` desde #68): ahora lo comprueba; (3) se adaptaron `tests/browser.mjs`, `tests/apariencia-browser.mjs` y `tests/delta.test.mjs`, que buscaban el título «Nueva nota» y el interruptor y la ayuda de «Conservar audio» quitados. Node y las 19 suites de Chrome en verde en laboratorio; capturas en `docs/capturas/u19-*.png`. **No probado en el Motorola.**
 ## 18/11/2026 · Estética «Clínica serena» pulida + modo nocturno opcional (U18, U5) (Claude Sonnet 5.5; entregado como `.patch`, sin tocar GitHub)
 
 Base: `main` con el rediseño de Ajustes (#68). Solo cambia lo visual: no cambian funciones, textos de botones, ids, datos, cifrado, copias ni K2. Lo que exporta la app (Word, TXT) no cambia.

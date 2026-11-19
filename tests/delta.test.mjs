@@ -592,9 +592,9 @@ test('Delta 10: no cambia configuración del modelo ni el motor de Whisper', () 
 });
 
 
-test('Delta 11: guardar audio accesible en Grabar reutiliza audio existente', () => {
+test('U19: botón de descarga histórico conservado en Ajustes y conectado a su acción', () => {
   assert.match(html, /id="recordDownloadAudio"/);
-  assert.match(html, /id="recordSaveAudio"/);
+  assert.doesNotMatch(html, /id="recordSaveAudio"/);
   assert.match(html, /id="recordAudioHint"/);
   assert.match(html, /\$\('recordDownloadAudio'\)\.onclick = \(\) => \{/);
   assert.match(html, /\$\('aDown'\)\.click\(\)/);
@@ -603,14 +603,11 @@ test('Delta 11: guardar audio accesible en Grabar reutiliza audio existente', ()
   assert.match(html, /audioGetBlob\(m\)/);
 });
 
-test('Delta 11: interruptor de guardar audio sincroniza Ajustes y pantalla Grabar', () => {
-  assert.match(html, /\$\('recordSaveAudio'\)\.addEventListener\('change'/);
-  assert.match(html, /\$\('saveAudio'\)\.checked = \$\('recordSaveAudio'\)\.checked/);
-  assert.match(html, /\$\('saveAudio'\)\.dispatchEvent\(new Event\('change', \{bubbles:true\}\)\)/);
-  assert.match(html, /\$\('saveAudio'\)\.addEventListener\('change'/);
-  assert.match(html, /\$\('recordSaveAudio'\)\.checked = \$\('saveAudio'\)\.checked/);
-  assert.match(html, /loadCfg\(\); \$\('recordSaveAudio'\)\.checked = \$\('saveAudio'\)\.checked/);
-  assert.match(html, /\$\('recordSaveAudio'\)\.disabled = on;/);
+test('U19: único interruptor de conservar audio en Ajustes, se bloquea durante la captura', () => {
+  assert.match(html, /id="saveAudio"/);
+  assert.doesNotMatch(html, /id="recordSaveAudio"|id="recordSaveState"/);
+  assert.match(html, /\$\('saveAudio'\)\.addEventListener\('change', refreshAudioBox\)/);
+  assert.match(html, /\$\('saveAudio'\)\.disabled = on;/);
   assert.match(html, /Solo con Whisper|recEng === 'whisper'/);
 });
 
@@ -1056,16 +1053,14 @@ test('Anonimizar: la vista previa y la lista de personas muestran cómo se escri
   assert.match(html, /'Se escribe: ' \+ \(p\.code/);
 });
 
-test('Audios: siempre a la vista, con acceso directo desde Grabar, Texto y Ajustes', () => {
-  assert.doesNotMatch(html, /<div class="abox" id="audioBox" style="display:none">/);
-  assert.doesNotMatch(html, /\$\('audioBox'\)\.style\.display/);
+test('U19: audios plegados en Espacio de Ajustes sin perder sus controles ni enlaces', () => {
+  assert.match(html, /<details id="audioAdvanced">/);
+  assert.match(html, /Audios guardados en este dispositivo \(avanzado\)/);
   assert.match(html, /<div class="abox" id="audioBox">/);
-  assert.match(html, /Tus audios guardados/);
   assert.match(html, /id="audioEmpty"/);
   assert.match(html, /id="audioShortcut"/);
-  // el cuadro de audio está antes del estado de transcripción y de los detalles técnicos
-  assert.ok(html.indexOf('id="audioBox"') < html.indexOf('id="keepOn"'));
-  assert.equal((html.match(/data-go-target="audioBox"/g) || []).length, 3, 'accesos desde Audio, Texto y Ajustes');
+  assert.match(html, /advancedAudio\.append\(node\)/);
+  assert.equal((html.match(/data-go-target="audioBox"/g) || []).length, 2, 'accesos desde Cuadernos y Ajustes');
   assert.match(html, /link\.dataset\.goTarget/);
   for (const id of ['aDown','aMp3','aTx','aDel','aUndoAudio','audioUndoRow']) assert.ok(ids.includes(id), 'falta #' + id);
   assert.match(html, /\$\('audioReady'\)\.hidden = !m; \$\('audioEmpty'\)\.hidden = !!m;/);
@@ -1134,15 +1129,17 @@ test('Aprendizaje: el aviso usa textContent y la corrección del diálogo tambi�
 test('Audio: pestaña renombrada, aviso verde de grabación completa y puntos de novedad', () => {
   const nav = html.match(/<nav class="studio-nav"[\s\S]*?<\/nav>/)[0];
   assert.match(nav, /data-delta-view="grabacion"[\s\S]*?<span>Dictar<\/span>/);
-  assert.match(html, /<h2>Nueva nota<\/h2>/);
+  assert.doesNotMatch(html, /<h2>Nueva nota<\/h2>/);
+  assert.match(html, /<div class="dict-dest" id="dictDest">/);
   for (const id of ['audioDone','audioDoneText','audioDoneDownload','audioDoneClose','audioDoneWait','audioShortcut','loadAudioBtn','loadAudioFile'])
     assert.ok(ids.includes(id), 'falta #' + id);
   assert.doesNotMatch(html, /id="audioNotice"/, 'el aviso fijo de la barra se reemplazó por el de la pestaña Audio');
   assert.match(html, /\.audio-done\{background:var\(--success-bg\)/);
   assert.match(html, /\.then\(refreshAudioBox\)\.then\(\(\) => \{ if \(!audioSaveFailed && audioN\) showAudioDone\(\); \}\)/);
   assert.match(html, /mr\.start\(10000\); hideAudioDone\(\);/);
-  // botón «Mis grabaciones» debajo del micrófono grande, antes de «Conservar también el audio»
-  assert.ok(html.indexOf('id="rec"') < html.indexOf('id="audioShortcut"') && html.indexOf('id="recordSaveAudio"') < html.indexOf('id="rec"'));
+  // La vista Dictar empieza con Guardar en y deja el audio de archivo para Ajustes.
+  assert.ok(html.indexOf('id="dictDest"') < html.indexOf('id="rec"'));
+  assert.ok(html.indexOf('id="rec"') < html.indexOf('id="audioShortcut"'));
   // puntos de novedad
   assert.match(html, /a\[data-badge\]::after/);
   assert.match(html, /notifyNav\('grabacion', 'audio guardado'\)/);
@@ -1207,7 +1204,7 @@ test('captura global: grabando, pausa y fin, con preferencia de conservación', 
 
 test('ayudas accesibles: controles únicos, destino debajo y advertencias fuera', () => {
   const buttons=[...html.matchAll(/<button[^>]*class="info-toggle"[^>]*aria-expanded="false"[^>]*aria-controls="([^"]+)"/g)];
-  assert.ok(buttons.length>=4);
+  assert.ok(buttons.length>=3);   // U19: sin la ayuda de «Conservar audio» en Dictar
   for(const m of buttons){
     assert.ok(ids.includes(m[1]));
     assert.ok(html.indexOf('id="'+m[1]+'"')>m.index);

@@ -27,17 +27,17 @@ try {
  // Native keyboard activation of help controls.
  await call('Page.bringToFront');
  await call('Emulation.setFocusEmulationEnabled',{enabled:true});
- await run('document.querySelector(".info-toggle").focus()');
- assert.equal(await run('document.activeElement.getAttribute("aria-controls")'),'retainHelp');
- for(const [key,hidden] of [['Enter',false],['Enter',true]]){await call('Input.dispatchKeyEvent',{type:'keyDown',key,code:'Enter',text:'\r',windowsVirtualKeyCode:13});await call('Input.dispatchKeyEvent',{type:'keyUp',key,code:'Enter',windowsVirtualKeyCode:13});assert.equal(await run('document.getElementById("retainHelp").hidden'),hidden); }
- assert.equal(await run('document.getElementById("retainHelp").hidden'),true);
- await run('document.getElementById("recordSaveAudio").click()');
- assert.equal(await run('document.getElementById("saveAudio").checked'),true);
- assert.equal(await run('document.getElementById("recordSaveState").textContent'),'Sí');
- await run('document.getElementById("saveAudio").click()');
- assert.equal(await run('document.getElementById("recordSaveAudio").checked'),false);
- await run('lockUI(true)');
- assert.equal(await run('document.getElementById("recordSaveAudio").disabled'),true);
+ await run('document.querySelector(\'[data-delta-view="ajustes"]\').click();document.querySelector("#settingsReading .info-toggle").focus()');   // U19: la primera ayuda visible ahora es la de «Tamaño del texto», en Ajustes
+ const helpId=await run('document.activeElement.getAttribute("aria-controls")');assert.ok(helpId,'la primera ayuda controla un texto');   // U19: ya no está la ayuda de «Conservar audio»
+ for(const [key,hidden] of [['Enter',false],['Enter',true]]){await call('Input.dispatchKeyEvent',{type:'keyDown',key,code:'Enter',text:'\r',windowsVirtualKeyCode:13});await call('Input.dispatchKeyEvent',{type:'keyUp',key,code:'Enter',windowsVirtualKeyCode:13});assert.equal(await run('document.getElementById("'+helpId+'").hidden'),hidden); }
+ assert.equal(await run('document.getElementById("'+helpId+'").hidden'),true);
+// U19: «Conservar audio» vive solo en Ajustes (#saveAudio): se cambia ahí y se bloquea durante la captura.
+await run('document.getElementById("saveAudio").click()');
+assert.equal(await run('document.getElementById("saveAudio").checked'),true);
+await run('document.getElementById("saveAudio").click()');
+assert.equal(await run('document.getElementById("saveAudio").checked'),false);
+await run('lockUI(true)');
+assert.equal(await run('document.getElementById("saveAudio").disabled'),true);
  await run('lockUI(false)');
  for(const width of [320,360,412,760,1365]){
   await call('Emulation.setDeviceMetricsOverride',{width,height:850,deviceScaleFactor:1,mobile:width<761});
