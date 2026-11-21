@@ -6564,15 +6564,22 @@ async function k2PriorBackup(ui){
   const open = vault.state === 'open', kinds = await anStoredKinds();
   if (kinds === null) throw new Error('No se pudieron leer los audios guardados: no se puede asegurar el respaldo previo. No se borró nada.');
   const gaps = [];
-  if (!open && kinds.total > 0) gaps.push('hay audios cifrados que solo se pueden copiar con la protección abierta');
-  if (kinds.claros) gaps.push(kinds.claros + ' audios guardados sin cifrar que el respaldo no lleva');
+  // Solo las fichas cifradas requieren la bóveda abierta. Las fichas P2 sin cifrar
+  // se incluyen en un respaldo de formato 2 que SÍ cifra el audio en el archivo.
+  if (!open && kinds.cifrados > 0) gaps.push('hay audios cifrados que solo se pueden copiar con la protección abierta');
   if (vault.frozen.size || vault.damaged.length || vault.records.quarantined()) gaps.push('hay datos dañados o apartados que el respaldo no puede incluir');
   if (gaps.length) throw new Error('El respaldo previo saldría INCOMPLETO (' + gaps.join('; ') + '). No se borró nada.');
   let pw = null;
   if (!open) { pw = await ui.backupPassword(); if (!pw) throw k2rCancelled(); }
   const made = await copiaMake(pw, {completa: true});
-  if (made.omitidos || made.faltan.sinCifrar || (open && made.r.audios !== kinds.cifrados))
-    throw new Error('El respaldo previo salió INCOMPLETO (' + copiaFaltantes(made.omitidos, made.faltan.sinCifrar, true).replace(/^Atención, la copia NO está completa: /, '').replace(/\.\n$/, '') + '). No se borró nada.');
+  // El respaldo no es suficiente por el solo hecho de superar su verificación
+  // criptográfica: TODOS los audios actuales deben figurar en su inventario.
+  const expectedFormat = kinds.claros ? 2 : 1;
+  const missing = made.r.audios !== kinds.total || made.r.formato !== expectedFormat ||
+    (expectedFormat === 2 && (made.r.claro !== kinds.claros || made.r.exclusiones !== 0));
+  if (made.omitidos || made.faltan.sinCifrar || missing)
+    throw new Error('El respaldo previo salió INCOMPLETO: había ' + kinds.total + ' audios en la biblioteca y se incluyeron ' +
+      made.r.audios + '. No se borró nada.');
   return made;
 }
 /* Borrado guiado. Solo con el candado tomado, el diario en «borrando» y el respaldo previo ya hecho. Se puede repetir entero. */
