@@ -1782,7 +1782,7 @@ test('audio por nota: E2 sigue cifrado; la beta agrega modo sin cifrar explícit
   assert.match(fuera, /\|\| \(d\.conv && typeof d\.conv\.audioId === 'string' && d\.conv\.audioId\)\)\) \{/, 'un audio pendiente sin texto también se recupera');
   // La revisión al abrir no crea la base si no existe.
   assert.match(fuera, /if \(indexedDB\.databases\) \{ const list = await indexedDB\.databases\(\); if \(!list\.some\(d => d\.name === AN_DB\)\) return; \}/);
-  assert.ok(html.indexOf("vaultWhenReady(() => { loadNotes();") < html.indexOf('vaultWhenReady(() => { if (anUsable()) anReviewOnOpen(); });'), 'la revisión corre después de cargar notas y borrador');
+  assert.ok(html.indexOf("vaultWhenReady(() => { loadNotes();") < html.indexOf('vaultWhenReady(async () => { await anRepairPlainOnOpen(); if (anUsable()) await anReviewOnOpen(); });'), 'las revisiones de audios en claro y cifrados corren después de cargar notas y borrador');
   // El candado de una pestaña se toma antes de cargar nada (correcciones E2).
   assert.match(html, /async function vaultAfterUnlock\(\)\{\n  await vaultTakeTabLock\(\);/);
 });
