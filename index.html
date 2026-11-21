@@ -4947,26 +4947,33 @@ async function anPlainMetaHealth(db, m, ignoreUnconfirmed = false){
 async function anPlainHealth(db, id){
   return anPlainMetaHealth(db, await anGetMeta(db, id));
 }
-/* Se usa solo desde pruebas P2. No hay botón ni llamada en el flujo de grabación todavía.
-   El orden ficha-escribiendo → chunks → ficha-cerrado permite detectar cortes sin perder datos. */
-async function anPlainStageFile(db, file, ms){
+/* Un archivo nuevo se confirma de una sola vez: ficha y todos sus fragmentos
+   en la MISMA transacción. Un corte, cuota agotada o aborto no deja restos en claro
+   ni una ficha "escribiendo". Conserva el identificador opcional para que quien
+   llama pueda distinguir un fallo de una confirmación ya realizada. */
+async function anPlainStageFile(db, file, ms, id = anNewId()){
+  if (k2ReplaceMark()) throw new Error('No se puede guardar audio durante la restauración.');
   if (vault.state !== 'off') throw new Error('El audio en claro no se puede escribir con la bóveda abierta.');
   if (!(file instanceof Blob) || !anIsInt(file.size) || file.size < 1 || file.size > AN_PLAIN_MAX_BYTES) throw new Error('archivo fuera de límite');
-  const id = anNewId(), plan = anFilePlan(file.size);
+  const plan = anFilePlan(file.size);
   if (!plan.length || !anIsInt(ms)) throw new Error('duración o archivo inválidos');
-  const part = {mime:String(file.type || 'application/octet-stream').slice(0,99), origin:'cargado',
-    name:String(file.name || '').slice(0,255), chunks:plan.length, bytes:file.size, ms, complete:true, hashes:[]};
-  const writing = {...anNewMeta(id,Date.now(),'escribiendo'),mode:AN_PLAIN_MODE,parts:1,bytes:file.size,plain:{parts:[part]}};
-  await anPutMeta(db,writing);
+  const part = {mime:String(file.type || 'application/octet-stream').slice(0,99),origin:'cargado',
+    name:String(file.name||'').slice(0,255),chunks:plan.length,bytes:file.size,ms,complete:true,hashes:[]};
+  const pieces=[];
   for(const c of plan){
-    const blob = file.slice(c.start,c.end);
+    if(k2ReplaceMark())throw new Error('Restauración iniciada durante el guardado; no se alteró la biblioteca.');
+    const blob=file.slice(c.start,c.end);
     part.hashes.push(await anPlainHash(blob));
-    await anPutChunk(db,id,0,c.n,blob);
+    pieces.push({n:c.n,blob});
   }
-  const closed = {...writing,state:'cerrado',plain:{parts:[{...part,hashes:part.hashes.slice()}]}};
-  await anPutMeta(db,closed);
-  const health = await anPlainHealth(db,id);
-  if (!health.ok) throw new Error('audio incompleto o alterado; se conserva sin confirmar');
+  if(k2ReplaceMark())throw new Error('No se puede guardar audio durante la restauración.');
+  const closed={...anNewMeta(id,Date.now(),'cerrado'),mode:AN_PLAIN_MODE,parts:1,bytes:file.size,plain:{parts:[part]}};
+  await anTx(db,['meta','chunks'],'readwrite',t=>{
+    t.objectStore('meta').put(closed);
+    for(const c of pieces)t.objectStore('chunks').put(c.blob,anChunkKey(id,0,c.n));
+  });
+  const health=await anPlainHealth(db,id);
+  if(!health.ok)throw new Error('audio posiblemente guardado, pero no verificable; se conserva sin vincular');
   return id;
 }
 async function anPlainRead(db,id){
@@ -4983,6 +4990,7 @@ async function anPlainRead(db,id){
 /* Anexar un archivo sin cifrar: las partes anteriores solo se leen; si falla, se retiran
    únicamente fragmentos NUEVOS. Nunca se cambia una parte confirmada. */
 async function anPlainAppendFile(db,id,file,ms){
+  if (k2ReplaceMark()) throw new Error('No se puede ampliar audio durante la restauración.');
   if (vault.state !== 'off' || !(file instanceof Blob) || file.size < 1 || file.size > AN_PLAIN_MAX_BYTES || !anIsInt(ms))
     throw new Error('archivo o protección inválidos');
   const h=await anPlainHealth(db,id);
@@ -4998,31 +5006,43 @@ async function anPlainAppendFile(db,id,file,ms){
     pieces.push({n:c.n,blob});
   }
   const next={...h.m,parts:part+1,bytes:h.m.bytes+file.size,plain:{parts:h.m.plain.parts.concat(p)}};
+  if(k2ReplaceMark())throw new Error('Restauración iniciada durante el guardado; no se alteró el audio.');
   // Una sola transacción: ficha nueva y todos los fragmentos, o ninguno (corte/cuota).
   await anTx(db,['meta','chunks'],'readwrite',t=>{
     const chunks=t.objectStore('chunks');
     for(const c of pieces)chunks.put(c.blob,anChunkKey(id,part,c.n));
     t.objectStore('meta').put(next);
   });
-  const checked=await anPlainHealth(db,id);
-  if(!checked.ok){
-    // La comprobación posterior también puede fallar: restaurar ATÓMICAMENTE
-    // la ficha previamente validada y retirar solo la parte recién agregada.
+  // Una lectura posterior puede LANZAR una excepción, no solo devolver ok:false.
+  // Ambos casos requieren la misma reversión antes de anunciar un fallo.
+  let checked=false;
+  try { checked=(await anPlainHealth(db,id)).ok; } catch(e) {
+    logDiag('Audio sin cifrar: falló la lectura de comprobación de la parte nueva ('+anErrName(e)+')');
+  }
+  if(!checked){
     try{await anTruncate(db,h.m,part);}
-    catch(e){throw new Error('No se pudo comprobar ni revertir la ampliación. No borres el audio; conservá esta instalación para recuperarlo.');}
-    throw new Error('El archivo agregado no pasó la comprobación; el audio anterior se conservó.');
+    catch(e){throw new Error('El archivo nuevo PODRÍA haber quedado guardado y no se pudo revertir. No borres nada: revisá el audio en Ajustes.');}
+    throw new Error('No se incorporó el archivo: se revirtió la ampliación y se conservó el audio anterior.');
   }
   return id;
 }
 async function anRepairPlainOnOpen(){
-  if(!anAudioReady() || anBusyN > 0 || recording)return;
+  if(!anAudioReady() || anBusyN > 0 || recording || k2ReplaceMark())return;
   try{
     if(indexedDB.databases && !(await indexedDB.databases()).some(d=>d.name===AN_DB))return;
     if(!(await anLockOk()) || vault.readOnly)return;
     const db=await anDb(), metas=await anListMeta(db);
-    let recovered=0, restored=0, untouched=0;
+    let recovered=0, restored=0, untouched=0, discarded=0;
+    const linked=new Set([convAudioId,...(convStore.data?.entries||[]).map(e=>e.audioId)].filter(Boolean));
     for(const m of metas){
       if(!anIsPlainMeta(m))continue;
+      // Versiones beta anteriores podían cortar una carga de archivo después
+      // de escribir la ficha "escribiendo". No existe un audio confirmado ahí:
+      // solo descartarla si NO pertenece a una nota ni a un borrador.
+      if(m.state==='escribiendo'){
+        if(linked.has(m.id)){untouched++;continue;}
+        await anDelete(db,m.id);discarded++;continue;
+      }
       // Un archivo agregado por una versión beta anterior pudo dejar fragmentos
       // nuevos sin confirmar y la ficha anterior intacta. Revisar el prefijo
       // completo antes de limpiar únicamente esas partes sobrantes.
@@ -5058,6 +5078,7 @@ async function anRepairPlainOnOpen(){
       }
       untouched++;
     }
+    if(discarded)flash('Se limpiaron '+discarded+' archivos de audio sin cifrar que habían quedado a medio cargar.');
     if(recovered)flash('Se recuperó audio sin cifrar de una grabación interrumpida ('+recovered+'). Revisá la duración: pudo quedar incompleta.');
     if(restored)flash('Se conservaron las partes anteriores de '+restored+' audio(s) sin cifrar; la parte interrumpida no pudo recuperarse.');
     if(untouched)flash('Hay '+untouched+' audio(s) sin cifrar interrumpidos que no se pudieron revisar. Se conservaron intactos.');
