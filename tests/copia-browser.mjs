@@ -36,7 +36,16 @@ try {
   const click = id => run(`document.getElementById(${JSON.stringify(id)}).click(); true`);
   const fill = (id, v) => run(`document.getElementById(${JSON.stringify(id)}).value = ${JSON.stringify(v)}; true`);
   const submit = id => run(`document.getElementById(${JSON.stringify(id)}).requestSubmit(); true`);
-  const visible = id => run(`(() => { const e = document.getElementById(${JSON.stringify(id)}); return !!e && !e.hidden && e.getClientRects().length > 0; })()`);
+  const visible = id => run(`(() => { const e = document.getElementById(${JSON.stringify(id)}); return !!e && !e.hidden && e.getClientRects().length > 0 && !e.closest('[hidden]'); })()`);
+  // Caso real del Motorola: con protección abierta, el formulario debe VERSE en Copias,
+  // no estar oculto en Protección aunque el elemento interno tenga hidden=false.
+  const pedirClaveCrear = async () => {
+    await click('copiaCrear');
+    await waitFor(`!document.getElementById('copiaClaveForm').hidden`, 'contraseña de copia solicitada');
+    assert.equal(await visible('copiaClaveForm'), true, 'formulario de copia visible en la subpantalla activa');
+    assert.equal(await visible('vaultAuth'), false, 'no se abre formulario oculto de Protección');
+    assert.equal(await run('ajCurrent'), 'copias', 'permanece en Copias de seguridad');
+  };
   // Todo lo guardado, para comparar antes y después: localStorage completo y la base de audios por nota (fichas y huella de cada fragmento).
   const foto = () => run(`(async () => {
     // U16: crear una copia anota su fecha (lastBackupAt) en la configuración existente (si no había, la crea). Es lo único que cambia: acá se deja afuera y lo prueba ajustes-browser.mjs.
@@ -123,17 +132,17 @@ try {
 
   // Ocupada: no se crea una copia mientras se graba (y la copia en curso frena el autobloqueo).
   await run('recording = true; true'); await click('copiaCrear');
-  await waitMsg('/Primero terminá de grabar/', 'aviso de ocupado'); assert.equal(await visible('vaultAuth'), false);
+  await waitMsg('/Primero terminá de grabar/', 'aviso de ocupado'); assert.equal(await visible('copiaClaveForm'), false);
   await run('recording = false; true');
   assert.equal(await run(`(() => { copiaBusyN = 1; const b = vaultBusy(); copiaBusyN = 0; return b && !vaultBusy(); })()`), true, 'la copia en curso cuenta como uso para el autobloqueo');
 
   // Contraseña equivocada: no se crea nada.
-  await click('copiaCrear'); await waitFor(`!document.getElementById('vaultAuth').hidden`, 'pedido de contraseña');
-  await fill('vaultAuthPass', 'no es la contraseña 000'); await submit('vaultAuth');
+  await pedirClaveCrear();
+  await fill('copiaClave', 'no es la contraseña 000'); await submit('copiaClaveForm');
   await waitMsg('/La contraseña no es correcta/', 'contraseña equivocada'); assert.equal(await run('window.__dl.length'), 1);
   // Contraseña correcta: copia completa.
-  await click('copiaCrear'); await waitFor(`!document.getElementById('vaultAuth').hidden`, 'pedido de contraseña');
-  await fill('vaultAuthPass', PASS); await submit('vaultAuth');
+  await pedirClaveCrear();
+  await fill('copiaClave', PASS); await submit('copiaClaveForm');
   await waitFor('window.__dl.length === 2', 'descarga de la copia completa', 60000);
   assert.match(await msg(), /Copia creada y comprobada: .*1 cuaderno · 2 notas · 1 audio incluido y cifrado en la copia/);
   assert.match(await msg(), /contraseña actual o con tu código de recuperación/);
@@ -177,8 +186,8 @@ try {
   assert.equal(await foto(), antesB, 'ninguna comprobación cambió nada');
 
   // «Solo texto»: sin audios y más liviana.
-  await click('copiaSoloTexto'); await click('copiaCrear'); await waitFor(`!document.getElementById('vaultAuth').hidden`, 'pedido de contraseña');
-  await fill('vaultAuthPass', PASS); await submit('vaultAuth');
+  await click('copiaSoloTexto'); await pedirClaveCrear();
+  await fill('copiaClave', PASS); await submit('copiaClaveForm');
   await waitFor('window.__dl.length === 3', 'descarga de la copia de solo texto', 60000);
   assert.match(await msg(), /solo texto, sin audios/);
   assert.ok(await run('window.__dl[2].size < window.__dl[1].size'), 'la copia de solo texto pesa menos');
@@ -190,8 +199,8 @@ try {
   assert.ok(extra, 'segundo audio (archivo cargado, pendiente en el borrador)');
   await run(`(async () => { const db = await anDb(); await new Promise((res, rej) => { const t = db.transaction('chunks', 'readwrite'); t.objectStore('chunks').put(new Blob([new Uint8Array(3028).fill(1)]), [${JSON.stringify(extra)}, 0, 0]); t.oncomplete = res; t.onerror = rej; }); return true; })()`);
   const antesC = await foto();
-  await click('copiaCrear'); await waitFor(`!document.getElementById('vaultAuth').hidden`, 'pedido de contraseña');
-  await fill('vaultAuthPass', PASS); await submit('vaultAuth');
+  await pedirClaveCrear();
+  await fill('copiaClave', PASS); await submit('copiaClaveForm');
   await waitFor('window.__dl.length === 4', 'descarga con un audio dañado', 60000);
   assert.match(await msg(), /un audio dañado o a medio guardar no entró en la copia/);
   v = await comprobar('window.__dl[3]', PASS); assert.equal(v.r.audios, 1, 'solo entró el audio sano');
