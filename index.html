@@ -6600,7 +6600,16 @@ function k2ReplaceText(i){
   return out.join('\n');
 }
 /* Respaldo previo: completo o nada. Devuelve la copia ya comprobada; si saldría con exclusiones, lanza antes de borrar. */
+/* Huella lógica del inventario moderno. Nunca incluye ni borra audios históricos
+   por accidente; las fichas modernas se reexaminan antes y después del respaldo
+   y otra vez justo antes del borrado K2. */
+async function k2AudioInventory(){
+  const kinds=await anStoredKinds();
+  if(kinds===null)throw new Error('No se pudo revisar el inventario de audios. No se borró nada.');
+  return JSON.stringify(kinds.metas.slice().sort((a,b)=>String(a.id).localeCompare(String(b.id))));
+}
 async function k2PriorBackup(ui){
+  const audioInventory=await k2AudioInventory();
   const open = vault.state === 'open', kinds = await anStoredKinds();
   if (kinds === null) throw new Error('No se pudieron leer los audios guardados: no se puede asegurar el respaldo previo. No se borró nada.');
   const gaps = [];
@@ -6620,7 +6629,9 @@ async function k2PriorBackup(ui){
   if (made.omitidos || made.faltan.sinCifrar || missing)
     throw new Error('El respaldo previo salió INCOMPLETO: había ' + kinds.total + ' audios en la biblioteca y se incluyeron ' +
       made.r.audios + '. No se borró nada.');
-  return made;
+  if(await k2AudioInventory()!==audioInventory)
+    throw new Error('Los audios cambiaron mientras se preparaba el respaldo previo. No se borró nada.');
+  return {...made,audioInventory};
 }
 /* Borrado guiado. Solo con el candado tomado, el diario en «borrando» y el respaldo previo ya hecho. Se puede repetir entero. */
 async function k2rWipe(){
@@ -6642,9 +6653,11 @@ async function k2Replace(file, secret, ui){
   if (k2ReplaceActive) throw new Error('Ya hay un reemplazo en curso.');
   const pending = localStorage.getItem(K2R_JOURNAL) !== null ? k2rParse(localStorage.getItem(K2R_JOURNAL)) : null;
   if (!pending && vault.state !== 'open' && vault.state !== 'off') throw new Error('Desbloqueá DictaVoz con tu contraseña antes de reemplazar.');
-  if (vaultBusy() || convSaving || copiaBusyN) throw new Error('Primero terminá de grabar, transcribir o guardar.');
+  if (vaultBusy() || convSaving || copiaBusyN || anBusyN>0 || recording || feeding) throw new Error('Primero terminá de grabar, transcribir o guardar.');
   if (!globalThis.navigator?.locks?.request) throw new Error('Este navegador no permite impedir escrituras de otra pestaña.');
   if (!(await vaultTakeTabLock()) || vault.readOnly || vault.otherTab) throw new Error('Cerrá las otras pestañas antes de reemplazar.');
+  if (vaultBusy() || convSaving || copiaBusyN || anBusyN>0 || recording || feeding)
+    throw new Error('Se inició una grabación o guardado mientras se tomaba el candado. No se reemplazó nada.');
   const say = t => { try { ui.progress(t); } catch (e) {} };
   k2ReplaceActive = true;   // la marca: desde acá no se autobloquea, no se crean ni comprueban copias, no empieza otro reemplazo
   let journal = pending, info = null, destroyed = false;   // destroyed: el borrado ya empezó (desde ahí esta pestaña queda sin escribir hasta recargar)
@@ -6667,6 +6680,10 @@ async function k2Replace(file, secret, ui){
       const made = await k2PriorBackup(ui);
       await ui.saveBackup(made.file);
       if (!(await ui.confirm(2, info, made.file.name))) throw k2rCancelled();
+      // El usuario pudo dejar la confirmación abierta; nada puede borrarse si
+      // la biblioteca ganó, perdió o cambió una ficha desde el respaldo previo.
+      if(await k2AudioInventory()!==made.audioInventory)
+        throw new Error('Los audios cambiaron después del respaldo previo. Cancelá la restauración y volvé a intentar; no se borró nada.');
       journal = k2rSet('borrando', journal.started, {name: made.file.name, bytes: made.file.size});
       say('Borrando lo que había…');
       destroyed = true;
