@@ -311,6 +311,20 @@ try {
     assert.equal(fail.journal,null);
     assert.equal(await run('foto()'),damagedBefore,'datos dañados y notas se conservan');
     void damagedId;
+    // e) Biblioteca mixta: audio en claro anterior y audio nuevo cifrado.
+    await reset();
+    await run(`nota('Persona Inventada Dos: biblioteca mixta ficticia X-902')`);
+    const mixed=await json(`const db=await anDb(),plain=await anPlainStageFile(db,new Blob([new Uint8Array(140).fill(21)]),500);
+      const enabled=await vault.enable(${JSON.stringify(PA)});enabled.dek.fill(0);await vaultTakeTabLock();
+      const cipher=await mkAudio(130,13);
+      return JSON.stringify({plain,cipher})`);
+    const m=await replace(SAMPLE1,PASS1);
+    assert.equal(m.ok,true,'respaldo mixto no impide K2: '+JSON.stringify(m));
+    const mixedBackup=await json(`const f=window.__backup,r=await copia2Verify(f,h=>copiaOpenWithSecret(h,${JSON.stringify(PA)}));
+      return JSON.stringify({version:r.formato,audios:r.audios,claros:r.claro,excluidos:r.exclusiones})`);
+    assert.deepEqual(mixedBackup,{version:2,audios:2,claros:1,excluidos:0},
+      'respaldo incluye juntos audio cifrado y sin cifrar');
+    void mixed;
     console.log('3) respaldo previo con exclusiones rechazado OK');
   }
 
