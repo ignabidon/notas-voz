@@ -1,3 +1,11 @@
+## 20/11/2026 · PR #71: K2 admite respaldo previo completo de audios claros nuevos (ChatGPT)
+
+- Decisión A14: el propietario confirma que **los audios históricos sueltos son borradores descartables**. Esta autorización **no se extiende** a nuevos audios vinculados a notas ni a datos dañados de la biblioteca moderna.
+- `k2PriorBackup` antes rechazaba cualquier audio sin cifrar. En esta beta genera y verifica un **respaldo previo formato 2** con `copiaMake` si hay audios P2 claros; si no los hay conserva el formato 1. El archivo de respaldo siempre va cifrado con contraseña, incluso sin bóveda activa.
+- El inventario del respaldo previo debe incluir el total de audios modernos, la cifra exacta de los que estaban claros y cero exclusiones. Un audio dañado, incompleto o no verificable sigue **bloqueando** el borrado. Se conserva la confirmación doble y el diario de K2.
+- Se agregan pruebas en `tests/k2-reemplazo-browser.mjs` que restauran realmente el respaldo previo formato 2 y comprueban que el audio original reaparece íntegro **cifrado**, que una biblioteca mixta se respalda completa y que un audio claro alterado impide reemplazar. La documentación de decisión A12 sigue vigente para `main` mientras esta rama no se una.
+- El almacenamiento histórico se sigue borrando solo en la acción de borrado antiguo o durante un reemplazo K2 confirmado, sin eliminar la biblioteca nueva por sorpresa. **Sin cambios en `main`; CI del nuevo commit por verificar.**
+
 ## 20/11/2026 · PR #71: recuperación segura del audio sin contraseña (ChatGPT, revisión cruzada)
 
 - Al reabrir, `anRepairPlainOnOpen` examina los audios en claro interrumpidos con el candado de una sola pestaña. Verifica tamaño, fragmentos y SHA-256 antes de cerrar una parte recibida; si la parte agregada está dañada, solo devuelve la ficha a las partes anteriores cuando estas también pasan la verificación. Un caso ambiguo se conserva intacto.
