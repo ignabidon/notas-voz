@@ -91,7 +91,7 @@ try {
     assert.match(await run(`document.getElementById('ajStatusLine').textContent`), protegida ? /15 minutos/ : /Sin protección/);
     assert.equal(await visible('ajLock'), protegida, '«Bloquear ahora» solo con la protección activada');
     assert.equal(await visible('ajCopy'), true);
-    assert.equal(await run(`document.getElementById('ajLastCopy').textContent`), 'Todavía no hiciste ninguna copia.');
+    assert.equal(await run(`document.getElementById('ajLastCopy').textContent`), 'Todavía no preparaste ninguna copia.');
     assert.equal(await run(`document.getElementById('ajCredit').textContent`), 'Psicólogo Ignacio Lasarte · creador de la aplicación');
     assert.equal(await run(`/\\b(Claude|ChatGPT|OpenAI|Anthropic)\\b/i.test(document.getElementById('ajustes').textContent)`), false, 'sin nombres de IA en Ajustes');
     assert.deepEqual(await run(`[...document.querySelectorAll('#ajHome .aj-group')].map(h=>h.textContent)`), ['Datos y privacidad', 'Dictado', 'Lectura', 'Avanzado']);
@@ -209,12 +209,12 @@ try {
   assert.ok(lb && lb <= antes && lb > antes - 60000, 'la fecha de la copia quedó en la configuración existente');
   assert.deepEqual(Object.keys(await cfg()).filter(k => !['textSize', 'model', 'accel', 'mic', 'eng', 'replace', 'saveAudio', 'pVolatile', 'learnAuto', 'listPreview', 'lastBackupAt', 'theme'].includes(k)), [], 'la configuración no suma ningún otro campo');   // U5: «theme» es el único campo nuevo (apariencia)
   await volver();
-  assert.equal(await run(`document.getElementById('ajLastCopy').textContent`), 'Última copia: hoy. Conviene hacer una por semana.');
+  assert.equal(await run(`document.getElementById('ajLastCopy').textContent`), 'Última copia preparada: hoy. Confirmá que esté descargada y verificada; conviene hacer una por semana.');
   // Pasan los días: «hace N días».
   await run(`(()=>{cfgLastBackup=Date.now()-3*86400000-5000;saveCfg();ajRefresh();return 1})()`);
-  assert.equal(await run(`document.getElementById('ajLastCopy').textContent`), 'Última copia: hace 3 días. Conviene hacer una por semana.');
+  assert.equal(await run(`document.getElementById('ajLastCopy').textContent`), 'Última copia preparada: hace 3 días. Confirmá que esté descargada y verificada; conviene hacer una por semana.');
   await load(); await irAjustes();
-  assert.equal(await run(`document.getElementById('ajLastCopy').textContent`), 'Última copia: hace 3 días. Conviene hacer una por semana.', 'la fecha sobrevive a recargar');
+  assert.equal(await run(`document.getElementById('ajLastCopy').textContent`), 'Última copia preparada: hace 3 días. Confirmá que esté descargada y verificada; conviene hacer una por semana.', 'la fecha sobrevive a recargar');
   console.log('U16 · copias OK');
 
   // ---- 6) Espacio y audios; Borrar datos (incluye el audio antiguo) ----

@@ -1,7 +1,7 @@
 # CONTINUAR AQUÍ — DictaVoz
 
 > **Una sola página, un solo estado.** Quien termina un paso **reescribe esta página** (no agrega carteles arriba) y mueve lo viejo a `docs/historial/`. Si algo de acá contradice al código de `main`, vale el código; si contradice a `docs/DECISIONES.md`, vale ese registro.
-> **Revisión de la beta, 21/11/2026 (ChatGPT):** PR #71 continúa **abierto, en borrador y sin fusionar**. La auditoría independiente halló F1 (audio claro incompleto imposible de borrar) y F2 (escritura de audio durante K2), más M1/M2. Los cuatro tienen correcciones propuestas y pruebas conductuales nuevas **en la rama del PR #71**; revisar el CI del último commit y pedir nueva auditoría independiente antes de fusionar. PR #72 incorpora cambios visuales relacionados y debe coordinarse después de #71. **No se hizo ninguna prueba nueva en Motorola.** Las filas históricas de esta página siguen requiriendo conciliación con `main` actualizado; las decisiones vigentes están en `docs/DECISIONES.md`.
+> **Estado al 21/11/2026 (ChatGPT):** PR #71 fue revisado por una IA independiente, sus cuatro hallazgos F1/F2/M1/M2 se dieron por resueltos y se **fusionó a `main` sin squash** (merge `8ccc08ac`). El propietario probó en su Motorola G56 5G grabar, guardar/reproducir audio y cerrar/reabrir sin pérdida; también descargó y **verificó** una copia cifrada de **10 cuadernos, 16 notas y 9 audios (aprox. 0,5 MB)**. No probó restaurar. Se detectó un formulario de contraseña oculto al crear la copia; corrección puntual en rama `fix-copias-formulario-visible-2026-11-21`, **sin fusionar** y pendiente de CI y prueba física. PR #72 es visual, permanece en borrador y su rama quedó desfasada respecto del `main` que incluye #71; se debe actualizar/resolver conflictos antes de fusionarlo. Solo datos ficticios hasta completar las validaciones de seguridad.
 
 ## Cómo está organizada la documentación
 
@@ -19,6 +19,7 @@ DictaVoz (antes DictaNota; solo cambió lo visible): transcribe voz a texto en e
 | Almacenamiento cifrado: base de audios, audios cifrados por nota, copia cifrada (crear y verificar), reproductor y panel de espacio | E1 #45, E2 #50, K1 #51, E3 #55 |
 | Menú «⋯» de las notas y lista con vista previa | B3 #53 |
 | Nombre DictaVoz (solo lo visible) | #57 |
+| Beta de audio claro o cifrado por nota, respaldos formato 2 y correcciones de auditoría F1/F2/M1/M2 | #71 (fusionado 21/11, `8ccc08ac`) |
 | Documentación ordenada (índice, decisiones únicas, pedidos) | #62 |
 | Entrega 2: borradores confirmados y notas de solo audio (P1, P4 parcial) | #59 |
 | Biblioteca en claro y copia formato 2 (**ensayo, sin activar**) | #60 |
@@ -33,8 +34,8 @@ DictaVoz (antes DictaNota; solo cambió lo visible): transcribe voz a texto en e
 
 | PR | Qué es | Dueño | Depende de |
 |---|---|---|---|
-| #71 | Beta de audio por nota con o sin contraseña; correcciones F1/F2/M1/M2 tras auditoría independiente. **No fusionar hasta una nueva revisión y CI verde** | ChatGPT (correcciones de auditoría); cambios previos según PR | — |
-| #72 | Ajustes visuales derivados del #71, sin tocar audio; coordinar orden de fusión | Otro trabajo en borrador | #71 / revisión de conflictos |
+| PR nuevo (rama `fix-copias-formulario-visible-2026-11-21`) | Mostrar contraseña de copias en su pantalla y mensajes honestos de descarga; sin cambios de datos | ChatGPT | #71, ya fusionado |
+| #72 | Ajustes visuales derivados del #71; rama anterior a #71 con conflictos respecto de `main` | Trabajo previo en borrador | Reconciliar con #71 y ejecutar CI |
 | #58 | Auditoría y propuesta de almacenamiento definitivo (solo documentación) | ChatGPT | — |
 | #52 | Visión de la experiencia y guía estética (solo documentación) | ChatGPT | — |
 | #49, #37 | Guía del propietario y feedback del Motorola; decisiones del 16/11 (solo documentación) | Claude | — |
@@ -43,7 +44,9 @@ DictaVoz (antes DictaNota; solo cambió lo visible): transcribe voz a texto en e
 
 ## Pasos a seguir (en este orden)
 
-1. **Capa única de registros:** hecha y unida (#64).
+1. **Corregir copia oculta:** finalizar CI del PR de formulario de contraseña, revisar y fusionar sin squash si está verde; comprobar el formulario en Motorola sin restaurar ni borrar datos.
+2. **PR #72 visual:** actualizarlo sobre el `main` que ya incluye #71, retirar aserciones obsoletas contra el audio claro, resolver conflictos y probar accesibilidad móvil. No unir directamente la rama atrasada.
+3. **Capa única de registros:** hecha y unida (#64).
 2. **K2 de reemplazo:** **programado** (respaldo previo comprobado → comparación y doble confirmación → marca propia «restauración en curso» → borrado guiado con diario reanudable → restauración; espacio comprobado; audios sin protección cifrados al restaurar, A11; código de recuperación nuevo al final). Entregado como `.patch` sobre `main`. **Unido (#65). Probado en el Motorola por Ignacio el 18/11** (recorrido con datos inventados; sin problemas). Sin probar todavía con audios reales largos ni un corte real en el celular. Sigue siendo experimental. Pregunta para Ignacio (Q1): si el respaldo previo tiene que cubrir también los audios sin cifrar, hay que habilitar el formato 2 para el usuario.
 3. **Estética, modo nocturno y rediseño de Ajustes (U5, U17, U18):** unidos en `main` mediante #68 y #69; falta verificación en el Motorola.
 3. **Dictar simplificado (U19):** parche de trabajo sobre `cfda606`; **NO unido a GitHub**. Revisar `tests/dictar-simple-browser.mjs`, ejecutar Node y Chrome y producir capturas 360 px (reposo/grabando y Espacio; claro/nocturno).
@@ -58,7 +61,7 @@ DictaVoz (antes DictaNota; solo cambió lo visible): transcribe voz a texto en e
 
 - **Código guardado:** lo de `main` está publicado; lo de los PR está solo en sus ramas.
 - **Pruebas técnicas:** 187 en Node (más 11 de la capa de registros) y diez suites de Chrome en verde para `main` (CAMBIOS.md, 17/11). Los PR traen las suyas en el CI.
-- **Probado en el Motorola:** grabar, guardar, reproducir, editar, protección con contraseña, quitar audio y panel de espacio. **Sin probar:** copia cifrada, adelantar/pausar el audio, «Ver nota» y todo lo de los PR abiertos. Ignacio tiene limitaciones técnicas para probar: las IA hacen todo lo posible en laboratorio y piden solo lo que únicamente se ve en el teléfono (`docs/PRUEBA-CORTA-MOTOROLA.md`).
+- **Probado en el Motorola:** el 21/11 el propietario confirmó grabar, conservar audio, guardar/reproducir, cerrar/reabrir, recuperar contraseña mediante código y **descargar/verificar** copia completa cifrada de 10 cuadernos/16 notas/9 audios. **Sin probar en esta ronda:** restauración y formulario corregido (aún no integrado), adelantar/pausar el audio, «Ver nota» y los cambios de PR #72. Datos ficticios; no inferir uso clínico habilitado.
 
 ## Pendientes de producto sin prioridad
 
