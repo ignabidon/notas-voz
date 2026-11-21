@@ -1,3 +1,45 @@
+## 21/11/2026 · PR #71: correcciones de la segunda auditoría independiente (ChatGPT)
+
+- Informe externo: Claude verificó los arreglos previos pero reprodujo **F1** (archivo en claro interrumpido deja ficha `escribiendo` huérfana), **F2** (escrituras de audio mientras K2 respalda y borra) y los casos **M1/M2**. La conclusión de la auditoría fue **no fusionar** hasta corregirlos.
+- **F1:** `anPlainStageFile` prepara huellas y confirma ficha y fragmentos en una única transacción IndexedDB; un aborto no deja ficha ni fragmentos. `anRepairPlainOnOpen` descarta fichas históricas `escribiendo` solo si no tienen nota ni borrador asociados. Ajustes ofrece Borrar para un audio claro sin nota aunque no esté terminado.
+- **F2:** bloquear micrófono y carga/guardado de audio al comenzar K2, incluso en rutas y colas de escritura; revisar `anBusyN` antes y después de tomar el candado. `k2PriorBackup` toma inventario por ficha y verifica que no cambió durante la copia. Tras la segunda confirmación K2 vuelve a compararlo **antes de iniciar el borrado**; si difiere, cancela sin borrar.
+- **M1:** un audio P2 anterior sin cifrar no se trata como cifrado ni se marca erróneamente como dañado al intentar ampliarlo con la bóveda abierta. Se mantiene el original y se explica por qué no se anexa el archivo.
+- **M2:** si la verificación posterior a una ampliación devuelve error **o lanza una excepción**, se revierte la parte nueva atómicamente; si revertir falla, la interfaz advierte que la grabación podría permanecer en disco y pide comprobar Ajustes.
+- Nuevas pruebas conductuales de abortos reales en IndexedDB, fichas huérfanas, fallo de lectura, ampliación con modalidades mixtas, inicio de grabación durante K2 y modificación adversarial del inventario antes del borrado. Se refuerza la espera de inicialización en el ensayo E3 tras autobloqueo.
+- **Rama beta del PR #71 exclusivamente**. No se fusionó, no se tocó el almacenamiento del celular y la revisión independiente posterior/ensayo Motorola sigue pendiente. Verificar el CI del commit final en el PR.
+
+## 20/11/2026 · PR #71: K2 admite respaldo previo completo de audios claros nuevos (ChatGPT)
+
+- Decisión A14: el propietario confirma que **los audios históricos sueltos son borradores descartables**. Esta autorización **no se extiende** a nuevos audios vinculados a notas ni a datos dañados de la biblioteca moderna.
+- `k2PriorBackup` antes rechazaba cualquier audio sin cifrar. En esta beta genera y verifica un **respaldo previo formato 2** con `copiaMake` si hay audios P2 claros; si no los hay conserva el formato 1. El archivo de respaldo siempre va cifrado con contraseña, incluso sin bóveda activa.
+- El inventario del respaldo previo debe incluir el total de audios modernos, la cifra exacta de los que estaban claros y cero exclusiones. Un audio dañado, incompleto o no verificable sigue **bloqueando** el borrado. Se conserva la confirmación doble y el diario de K2.
+- Se agregan pruebas en `tests/k2-reemplazo-browser.mjs` que restauran realmente el respaldo previo formato 2 y comprueban que el audio original reaparece íntegro **cifrado**, que una biblioteca mixta se respalda completa y que un audio claro alterado impide reemplazar. La documentación de decisión A12 sigue vigente para `main` mientras esta rama no se una.
+- El almacenamiento histórico se sigue borrando solo en la acción de borrado antiguo o durante un reemplazo K2 confirmado, sin eliminar la biblioteca nueva por sorpresa. **Sin cambios en `main`; CI del nuevo commit por verificar.**
+
+## 20/11/2026 · PR #71: recuperación segura del audio sin contraseña (ChatGPT, revisión cruzada)
+
+- Al reabrir, `anRepairPlainOnOpen` examina los audios en claro interrumpidos con el candado de una sola pestaña. Verifica tamaño, fragmentos y SHA-256 antes de cerrar una parte recibida; si la parte agregada está dañada, solo devuelve la ficha a las partes anteriores cuando estas también pasan la verificación. Un caso ambiguo se conserva intacto.
+- `anPlainAppendFile` ahora escribe ficha y partes nuevas en **una sola transacción IndexedDB**. Si falla su comprobación posterior, revierte la ampliación con `anTruncate` atómico, conservando la versión anterior. También puede limpiar sobrantes no confirmados de compilaciones beta anteriores si la ficha anterior está íntegra.
+- Al activar la bóveda, si existen audios sin cifrar, se muestra una confirmación explícita: activar contraseña **no cifra esos audios históricos**. El estado de privacidad de la bóveda mantiene esa advertencia.
+- Se amplió `tests/beta-audio-claro-browser.mjs`: simulaciones de interrupción, fragmento dañado, aborto de una transacción real, fallo tras confirmar, restos de versiones anteriores y recuperación tras recargar; advertencia al activar protección.
+- **Solo rama beta del PR #71; sin cambios en `main` ni en el formato de copia.** Revisar el CI del último commit y hacer auditoría cruzada antes de fusionar. Motorola con datos inventados pendiente.
+
+## 19/11/2026 · Beta funcional: «Conservar audio» siempre vincula la grabación a su nota (ChatGPT, PR #71)
+
+**Decisión A13 del propietario.** Conservar audio activo permite adjuntar y reproducir audio en Cuadernos tanto con protección (cifrado E2) como sin protección (audio expresamente `mode:'claro'`, con SHA-256 por fragmento). El botón Reproducir funciona en ambos modos; texto y sello de nota no cambian. Grabación MediaRecorder y carga desde archivo. Se quitó íntegro el aviso grande «¿Por qué no aparece Reproducir?» de Cuadernos (no es necesario sustituirlo). El panel Espacio indica «SIN CIFRAR» y ofrece las acciones para audios claros íntegros. Sin vinculación automática de audios históricos.
+
+**Copias:** una copia completa que incluye grabaciones en claro utiliza el formato 2 (cifrado en el archivo con contraseña); sigue intacto el formato 1 cuando no hay audios en claro. La copia «Solo texto» no incluye audio. Las verificaciones aceptan los formatos 1 y 2; el ensayo de K2 ya reconoce formato 2. Las copias con omisiones se declaran incompletas y no se admiten como respaldo previo de reemplazo. No se cifran automáticamente audios existentes en claro al habilitar la bóveda; decisión de migración pendiente, no usar datos reales.
+
+**Pruebas:** CI de Chrome E2, E3, copia/restauración K2, reproducción, ediciones y prueba nueva `tests/beta-audio-claro-browser.mjs` con tonos ficticios. Estado verificable en GitHub Actions; Motorola real pendiente. Cambios solo en la rama beta; `main` sin modificar. Ver `docs/BETA-VISUAL-2026-11-19.md` y `docs/DECISIONES.md` (A13).
+
+## 19/11/2026 · Beta: aclaración del reproductor en Cuadernos (ChatGPT; PR #71)
+
+Revisión tras observación del usuario: las notas sin `audioId` no crean reproductor; E3 solo une audio con protección abierta y «Conservar audio» activado antes de grabar. Sin protección, la voz se guarda históricamente por separado y no aparece en Cuadernos (comportamiento existente en main). En la beta se agregó una explicación contextual para notas de voz sin audio vinculado y un acceso directo a Ajustes; se aclaró el texto del interruptor. Sin modificar cifrado, grabación, persistencia ni vinculación automática. Prueba de interfaz agregada a `tests/e3-browser.mjs`; Motorola pendiente. Detalles en `docs/BETA-VISUAL-2026-11-19.md`.
+
+## 19/11/2026 · Beta visual compacta (ChatGPT, rama separada; sin unir a main)
+
+Base: `edfacda1`. Alternativa de diseño para evaluar en Motorola G56 5G: acciones de notas menos grandes con área táctil de 48 px, burbujas y lista de cuadernos más compactas, acceso destacado a motor/modelo Whisper al comienzo de Ajustes, escalas más coherentes, avisos y controles secundarios menos dominantes, y reducción de espacios en Anonimizar. Mantiene modos claro/nocturno, navegación y la lógica actual de grabación, guardado y cifrado. Se identifica como BETA y exige usar exclusivamente datos ficticios. Alcance y advertencias sobre la URL externa: `docs/BETA-VISUAL-2026-11-19.md`. No hay autorización para unir a `main`.
+
 ## 18/11/2026 · U19: Dictar simplificado (parche propuesto, sin modificar GitHub)
 
 Base leída: `main` en `cfda606ddef42602405ddf26b1f90949cabffd24` (incluye #69, U5/U18).

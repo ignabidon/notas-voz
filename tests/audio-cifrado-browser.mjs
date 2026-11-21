@@ -63,8 +63,8 @@ try {
   await load(false);
   assert.equal(await run('vault.state'), 'off');
 
-  // 1) Sin protección: «Conservar audio» sigue como antes; la base nueva no se crea (D2).
-  await run(`document.getElementById('saveAudio').checked = true; true`);
+  // 1) Sin protección, con «Conservar audio» apagado: no crear audio (el modo activo sin bóveda se prueba por separado).
+  await run(`document.getElementById('saveAudio').checked = false; true`);
   assert.equal(await run(`anSaveFile(new File([new Uint8Array(1000)], 'x.mp3', {type: 'audio/mpeg'}), 1000)`), null);
   assert.ok(!(await bases()).includes('notasvoz-dictanota-audio'), 'sin protección no se usa la base nueva');
 

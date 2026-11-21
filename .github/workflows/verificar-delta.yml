@@ -55,6 +55,9 @@ jobs:
       - name: Verificar reproductor E3 y almacenamiento
         run: node tests/e3-browser.mjs
         timeout-minutes: 4
+      - name: Beta - Conservar audio sin contraseña y respaldo completo (datos ficticios)
+        run: node tests/beta-audio-claro-browser.mjs
+        timeout-minutes: 5
       - name: Ensayar biblioteca unificada y respaldo formato 2 (no activados)
         run: node tests/p2-biblioteca-browser.mjs
         timeout-minutes: 5

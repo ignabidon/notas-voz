@@ -18,11 +18,16 @@ test('K2 reemplazo: la marca propia no usa copiaBusyN y el autobloqueo la ve', (
   assert.match(html, /vaultBusy\(\) \|\| convSaving \|\| k2ReplaceMark\(\)/, 'copiaCreate y copiaCheck respetan la marca');
 });
 
-test('K2 reemplazo: solo usa la capa de registros y nunca el formato 2 para el respaldo del usuario', () => {
+test('K2 reemplazo: respalda audios claros con formato 2 sin alterar la copia formato 1', () => {
   assert.doesNotMatch(k2, /VAULT_REC_PREFIX|\.danado\.|rawRecords/);
   assert.match(fn('k2PriorBackup'), /copiaMake\(pw, \{completa: true\}\)/);
   assert.doesNotMatch(fn('k2PriorBackup') + fn('k2Replace'), /copia2Writer|copia2Seal/);
-  assert.match(fn('k2PriorBackup'), /if \(gaps\.length\) throw[\s\S]*INCOMPLETO/);
+  const prior = fn('k2PriorBackup');
+  assert.match(prior, /if \(gaps\.length\) throw[\s\S]*INCOMPLETO/);
+  assert.match(prior, /!open && kinds\.cifrados > 0/, 'no se confunden audios claros con cifrados');
+  assert.match(prior, /expectedFormat = kinds\.claros \? 2 : 1/, 'formato 2 solamente al existir audio sin cifrar');
+  assert.match(prior, /made\.r\.audios !== kinds\.total/, 'el inventario exige todos los audios');
+  assert.match(prior, /made\.r\.exclusiones !== 0/, 'el formato 2 incompleto impide borrar');
 });
 
 test('K2 reemplazo: el respaldo previo no es creado ni descargado por copiaCreate dos veces (copiaMake comprueba y copiaCreate descarga)', () => {
