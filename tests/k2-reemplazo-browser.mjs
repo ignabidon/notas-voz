@@ -294,7 +294,7 @@ try {
     await load();await unlock(PBK);
     const safe=await json(`const db=await anDb(),m=await anGetMeta(db,${JSON.stringify(plainId)});
       const h=await anAudioHealth(db,vault.audioKey,vault.header.id,${JSON.stringify(plainId)});
-      const cek=await anOpenCek(vault.audioKey,vault.header.id,m.key),audio=await anOpenChunk(cek,vault.header.id,m.id,0,0,await anGetChunk(db,m.id,0,0));
+      const cek=await anOpenCek(vault.audioKey,vault.header.id,m.id,m.key),audio=await anOpenChunk(cek,vault.header.id,m.id,0,0,await anGetChunk(db,m.id,0,0));
       return JSON.stringify({cipher:!anIsPlainMeta(m),healthy:h.ok,len:audio.length,same:[...audio].every(b=>b===4)})`);
     assert.deepEqual(safe,{cipher:true,healthy:true,len:2000,same:true},'K2 restauró audio previo íntegro y cifrado');
 
