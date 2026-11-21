@@ -114,7 +114,90 @@ try{
     return JSON.stringify({audioId:e.audioId,player:!!document.querySelector('.note-audio')});
   })()`));
   assert.deepEqual(off,{audioId:null,player:false});
-  console.log('BETA AUDIO SIN CONTRASEÑA OK: audio cargado, partes, MediaRecorder, reproductor, copia v2 y modo apagado');
+
+  // Recuperación de una grabación interrumpida cuando ampliaba un audio confirmado.
+  const recovery=JSON.parse(await run(`(async()=>{
+    const db=await anDb(),old=new Blob([new Uint8Array(140).fill(9)],{type:'audio/wav'});
+    const id=await anPlainStageFile(db,old,1500),before=await anGetMeta(db,id);
+    const segment=new Blob([new Uint8Array(75).fill(7)],{type:'audio/wav'});
+    const p={mime:'audio/wav',origin:'grabado',chunks:1,bytes:segment.size,ms:null,complete:false,hashes:[await anPlainHash(segment)]};
+    await anPutChunkMeta(db,{...before,state:'grabando',parts:2,bytes:before.bytes+segment.size,
+      plain:{parts:before.plain.parts.concat(p)}},1,0,segment);
+    await anRepairPlainOnOpen();
+    const after=await anGetMeta(db,id),h=await anPlainHealth(db,id);
+    return JSON.stringify({ok:h.ok,parts:after.parts,state:after.state,firstUnchanged:after.plain.parts[0].bytes===before.plain.parts[0].bytes,
+      lastIncomplete:after.plain.parts[1].incompleta===true && after.plain.parts[1].interrumpida===true && after.plain.parts[1].ms===null});
+  })()`));
+  assert.deepEqual(recovery,{ok:true,parts:2,state:'cerrado',firstUnchanged:true,lastIncomplete:true},
+    'se recupera la parte recibida sin afectar la grabación anterior');
+
+  // Si la parte nueva no pasa el SHA-256, solo se restaura lo previamente confirmado.
+  const damaged=JSON.parse(await run(`(async()=>{
+    const db=await anDb(),id=await anPlainStageFile(db,new Blob([new Uint8Array(120).fill(11)],{type:'audio/wav'}),1500);
+    const before=await anGetMeta(db,id),bad=new Blob([new Uint8Array(40).fill(22)],{type:'audio/wav'});
+    const p={mime:'audio/wav',origin:'grabado',chunks:1,bytes:bad.size,ms:null,complete:false,
+      hashes:[await anPlainHash(new Blob([new Uint8Array(40).fill(99)]))]};
+    await anPutChunkMeta(db,{...before,state:'grabando',parts:2,bytes:before.bytes+bad.size,
+      plain:{parts:before.plain.parts.concat(p)}},1,0,bad);
+    await anRepairPlainOnOpen();
+    const after=await anGetMeta(db,id),h=await anPlainHealth(db,id);
+    return JSON.stringify({ok:h.ok,parts:after.parts,bytes:after.bytes,priorBytes:before.bytes,
+      removedNewChunks:(await anCountPartChunks(db,id,1))===0});
+  })()`));
+  assert.deepEqual(damaged,{ok:true,parts:1,bytes:120,priorBytes:120,removedNewChunks:true},
+    'un fragmento interrumpido alterado no inutiliza el audio anterior');
+
+  // Aborto real de la transacción IndexedDB al agregar un archivo: nada queda a medias.
+  const aborted=JSON.parse(await run(`(async()=>{
+    const db=await anDb(),id=await anPlainStageFile(db,new Blob([new Uint8Array(90).fill(8)]),1000);
+    const before=await anGetMeta(db,id),original=anTx;
+    let injected=false,error='';
+    try{
+      anTx=(db,stores,mode,fn)=>{
+        if(!injected && mode==='readwrite' && stores.includes('meta') && stores.includes('chunks')){
+          injected=true;return original(db,stores,mode,t=>{fn(t);t.abort();});
+        }
+        return original(db,stores,mode,fn);
+      };
+      await anPlainAppendFile(db,id,new Blob([new Uint8Array(300).fill(19)]),1000);
+    }catch(e){error=e.name}
+    finally{anTx=original;}
+    const after=await anGetMeta(db,id);
+    return JSON.stringify({injected,failed:!!error,unchanged:after.parts===before.parts&&after.bytes===before.bytes,
+      healthy:(await anPlainHealth(db,id)).ok,extra:(await anCountPartChunks(db,id,1))});
+  })()`));
+  assert.deepEqual(aborted,{injected:true,failed:true,unchanged:true,healthy:true,extra:0},
+    'un corte de escritura revierte ficha y fragmentos en la misma transacción');
+
+  // Si falla la verificación DESPUÉS de la transacción, restaura el estado confirmado.
+  const postCheck=JSON.parse(await run(`(async()=>{
+    const db=await anDb(),id=await anPlainStageFile(db,new Blob([new Uint8Array(90).fill(8)]),1000);
+    const original=anPlainHealth;
+    let calls=0,error='';
+    try{
+      anPlainHealth=async(...args)=>{calls++;if(calls===2)return {ok:false,why:'lectura simulada'};return original(...args);};
+      await anPlainAppendFile(db,id,new Blob([new Uint8Array(300).fill(19)]),1000);
+    }catch(e){error=e.message}
+    finally{anPlainHealth=original;}
+    const m=await anGetMeta(db,id);
+    return JSON.stringify({checks:calls,failed:!!error,parts:m.parts,healthy:(await anPlainHealth(db,id)).ok,
+      extra:(await anCountPartChunks(db,id,1))});
+  })()`));
+  assert.deepEqual(postCheck,{checks:2,failed:true,parts:1,healthy:true,extra:0},
+    'verificación fallida tras agregar un archivo restaura el audio previo');
+
+  // Activar contraseña con audios en claro requiere consentimiento informado.
+  await run(`(()=>{
+    window.__enableConfirmationSeen=false;
+    window.confirm=msg=>{if(msg.includes('SIN CIFRAR'))window.__enableConfirmationSeen=true;return false;};
+    $('vaultNew').value='Clave ficticia 2026';$('vaultNew2').value='Clave ficticia 2026';
+    $('vaultSetup').dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));
+    return true;
+  })()`);
+  await wait("window.__enableConfirmationSeen",'advertencia de privacidad al activar la contraseña');
+  assert.equal(await run("vault.state==='off'"),true,'cancelar la advertencia evita activar la bóveda');
+
+  console.log('BETA AUDIO SIN CONTRASEÑA OK: flujo habitual, recuperación, rollback atómico, advertencia de privacidad');
 }finally{
   closed=true;
   for(const p of pending.values()){clearTimeout(p.timer);p.reject(Error('cerrando Chrome'));}
