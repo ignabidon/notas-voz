@@ -4922,6 +4922,7 @@ function anPlainValidMeta(m){
 const anPlainHash = async blob => anB64(new Uint8Array(await crypto.subtle.digest('SHA-256', await blob.arrayBuffer())));
 async function anPlainMetaHealth(db, m, ignoreUnconfirmed = false){
   if (!m || !anPlainValidMeta(m) || m.state !== 'cerrado') return {ok:false, m, why:'ficha o escritura pendiente'};
+  const id = m.id;
   const b = anChunkBounds(id);
   const keys = await anTx(db, ['chunks'], 'readonly', t => t.objectStore('chunks').getAllKeys(IDBKeyRange.bound(b.lower,b.upper)));
   const expected = [];
