@@ -2127,7 +2127,7 @@ function vaultRefreshPanel(){
   { const c = vaultEl('copiaContenido'), o = vaultEl('copiaOffHint'); if (c) c.hidden = vault.state !== 'off' && vault.state !== 'open'; if (o) o.hidden = vault.state !== 'off'; }   // copia completa de audio sin protección (beta)
   vaultEl('vaultStatus').textContent = vault.state === 'off'
     ? 'Desactivada: las notas, borradores, personas y diccionario se guardan sin cifrar en este navegador.'
-    : 'Activada: notas, borrador, deshacer, personas y diccionario se guardan cifrados (AES-256). Se bloquea tras 15 minutos sin uso. Con «Conservar audio», los audios nuevos se guardan cifrados junto a su nota; los guardados antes en «Mis grabaciones» siguen sin cifrar.';
+    : 'Activada: notas, borrador, deshacer, personas y diccionario se guardan cifrados (AES-256). Se bloquea tras 15 minutos sin uso. Los audios nuevos se cifran; los audios que ya estaban SIN CIFRAR no se convierten automáticamente, aunque estén en Cuadernos.';
   if (on) {
     vaultEl('vaultBioAdd').hidden = !!vault.header.bio; vaultEl('vaultBioRemove').hidden = !vault.header.bio;
     const extra = [];
@@ -2224,9 +2224,14 @@ function vaultInitUI(){
   vaultEl('vaultSetupCancel').addEventListener('click', () => { vaultEl('vaultSetup').hidden = true; vaultEl('vaultNew').value = ''; vaultEl('vaultNew2').value = ''; });
   vaultEl('vaultSetup').addEventListener('submit', async ev => {
     ev.preventDefault();
-    if (vaultBusy()) { vaultPanelMsg('Primero detené y terminá de transcribir.'); return; }
+    if (vaultBusy() || anBusyN > 0) { vaultPanelMsg('Primero detené y terminá de transcribir.'); return; }
     const problem = vaultPasswordProblem(vaultEl('vaultNew').value, vaultEl('vaultNew2').value);
     if (problem) { vaultPanelMsg(problem); return; }
+    const audioKinds=await anStoredKinds();
+    if(audioKinds===null){vaultPanelMsg('No se pudo revisar si hay audios sin cifrar. No se activó la protección.');return;}
+    if(audioKinds.claros>0 && !confirm('Hay '+audioKinds.claros+' audio(s) guardados SIN CIFRAR. Activar la contraseña NO los cifrará ni los protegerá: seguirán accesibles en este dispositivo. ¿Querés continuar igualmente?')){
+      vaultPanelMsg('No se activó la protección; los audios existentes siguen sin cifrar.');return;
+    }
     vaultEl('vaultSetupGo').disabled = true; vaultPanelMsg('Cifrando… puede tardar unos segundos.');
     try {
       // Antes de habilitar protección, comprobar también el borrador de la modalidad anterior.
@@ -2247,7 +2252,7 @@ function vaultInitUI(){
         vaultEl('vaultRecoveryDone').onclick = null; vaultEl('vaultRecoveryBio').onclick = null;
         vaultOfferBio(dek);
       };
-      vaultRefreshPanel(); vaultPanelMsg('Tus datos ya están cifrados. Anotá el código de recuperación antes de seguir.');
+      vaultRefreshPanel(); vaultPanelMsg((audioKinds.claros ? 'Protección activada para las notas y los audios nuevos. Los '+audioKinds.claros+' audios anteriores siguen SIN CIFRAR. ' : 'Protección activada. ')+'Anotá el código de recuperación antes de seguir.');
     } catch (e) { vaultPanelMsg(vaultFriendly(e)); }
     finally { vaultEl('vaultSetupGo').disabled = false; }
   });
@@ -4915,14 +4920,14 @@ function anPlainValidMeta(m){
     m.plain.parts.reduce((n,p) => n + p.bytes, 0) === m.bytes;
 }
 const anPlainHash = async blob => anB64(new Uint8Array(await crypto.subtle.digest('SHA-256', await blob.arrayBuffer())));
-async function anPlainHealth(db, id){
-  const m = await anGetMeta(db, id);
+async function anPlainMetaHealth(db, m, ignoreUnconfirmed = false){
   if (!m || !anPlainValidMeta(m) || m.state !== 'cerrado') return {ok:false, m, why:'ficha o escritura pendiente'};
   const b = anChunkBounds(id);
   const keys = await anTx(db, ['chunks'], 'readonly', t => t.objectStore('chunks').getAllKeys(IDBKeyRange.bound(b.lower,b.upper)));
   const expected = [];
   m.plain.parts.forEach((p,part) => { for(let n=0;n<p.chunks;n++) expected.push([id,part,n]); });
-  if (keys.length !== expected.length || keys.some((k,i) => !Array.isArray(k) || k[0] !== expected[i][0] || k[1] !== expected[i][1] || k[2] !== expected[i][2]))
+  const checkedKeys = ignoreUnconfirmed ? keys.filter(k => Array.isArray(k) && k[1] < m.parts) : keys;
+  if (checkedKeys.length !== expected.length || checkedKeys.some((k,i) => !Array.isArray(k) || k[0] !== expected[i][0] || k[1] !== expected[i][1] || k[2] !== expected[i][2]))
     return {ok:false,m,why:'fragmentos faltantes o sobrantes'};
   let total = 0;
   for (let part=0;part<m.plain.parts.length;part++){
@@ -4937,6 +4942,9 @@ async function anPlainHealth(db, id){
     total += bytes;
   }
   return {ok:total === m.bytes,m,why:total === m.bytes ? '' : 'tamaño'};
+}
+async function anPlainHealth(db, id){
+  return anPlainMetaHealth(db, await anGetMeta(db, id));
 }
 /* Se usa solo desde pruebas P2. No hay botón ni llamada en el flujo de grabación todavía.
    El orden ficha-escribiendo → chunks → ficha-cerrado permite detectar cortes sin perder datos. */
@@ -4981,22 +4989,67 @@ async function anPlainAppendFile(db,id,file,ms){
   const part=h.m.parts, plan=anFilePlan(file.size);
   const p={mime:String(file.type||'application/octet-stream').slice(0,99),origin:'cargado',
     name:String(file.name||'').slice(0,255),chunks:plan.length,bytes:file.size,ms,complete:true,hashes:[]};
-  try {
-    for (const c of plan) {
-      const blob=file.slice(c.start,c.end);
-      p.hashes.push(await anPlainHash(blob));
-      await anPutChunk(db,id,part,c.n,blob);
-    }
-    const next={...h.m,parts:part+1,bytes:h.m.bytes+file.size,plain:{parts:h.m.plain.parts.concat(p)}};
-    await anPutMeta(db,next);
-    const checked=await anPlainHealth(db,id);
-    if(!checked.ok) throw new Error('nuevo fragmento incompleto: audio conservado para revisión');
-    return id;
-  } catch(e) {
-    // Si la ficha sigue siendo la anterior, los nuevos fragmentos aún no son parte del audio confirmado.
-    try { const m=await anGetMeta(db,id);if(m && m.parts===part)await anDeletePartsFrom(db,id,part); }catch(ignore){}
-    throw e;
+  // Primero se preparan todas las huellas; no se modifica lo que ya estaba guardado.
+  const pieces=[];
+  for (const c of plan) {
+    const blob=file.slice(c.start,c.end);
+    p.hashes.push(await anPlainHash(blob));
+    pieces.push({n:c.n,blob});
   }
+  const next={...h.m,parts:part+1,bytes:h.m.bytes+file.size,plain:{parts:h.m.plain.parts.concat(p)}};
+  // Una sola transacción: ficha nueva y todos los fragmentos, o ninguno (corte/cuota).
+  await anTx(db,['meta','chunks'],'readwrite',t=>{
+    const chunks=t.objectStore('chunks');
+    for(const c of pieces)chunks.put(c.blob,anChunkKey(id,part,c.n));
+    t.objectStore('meta').put(next);
+  });
+  const checked=await anPlainHealth(db,id);
+  if(!checked.ok){
+    // La comprobación posterior también puede fallar: restaurar ATÓMICAMENTE
+    // la ficha previamente validada y retirar solo la parte recién agregada.
+    try{await anTruncate(db,h.m,part);}
+    catch(e){throw new Error('No se pudo comprobar ni revertir la ampliación. No borres el audio; conservá esta instalación para recuperarlo.');}
+    throw new Error('El archivo agregado no pasó la comprobación; el audio anterior se conservó.');
+  }
+  return id;
+}
+async function anRepairPlainOnOpen(){
+  if(!anAudioReady() || anBusyN > 0 || recording)return;
+  try{
+    if(indexedDB.databases && !(await indexedDB.databases()).some(d=>d.name===AN_DB))return;
+    if(!(await anLockOk()) || vault.readOnly)return;
+    const db=await anDb(), metas=await anListMeta(db);
+    let recovered=0, restored=0, untouched=0;
+    for(const m of metas){
+      if(!anIsPlainMeta(m) || m.state!=='grabando')continue;
+      if(!m.plain || !Array.isArray(m.plain.parts) || m.parts!==m.plain.parts.length || m.parts<1){
+        untouched++;continue;
+      }
+      const prev=m.plain.parts.slice(0,-1), last=m.plain.parts[m.parts-1];
+      // Intentar recuperar TODOS los fragmentos recibidos, con duración desconocida.
+      if(last && last.chunks>0){
+        const fixed={...last,complete:true,ms:null,incompleta:true,interrumpida:true};
+        const parts=prev.concat(fixed);
+        const candidate={...m,state:'cerrado',bytes:parts.reduce((n,p)=>n+p.bytes,0),plain:{parts}};
+        if((await anPlainMetaHealth(db,candidate)).ok){
+          await anPutMeta(db,candidate);recovered++;continue;
+        }
+      }
+      // Si la parte nueva se dañó, solo se descarta esa parte SI las anteriores
+      // pasaron una comprobación completa. Si no, no se toca ningún dato.
+      if(prev.length){
+        const candidate={...m,state:'cerrado',parts:prev.length,
+          bytes:prev.reduce((n,p)=>n+p.bytes,0),plain:{parts:prev}};
+        if((await anPlainMetaHealth(db,candidate,true)).ok){
+          await anTruncate(db,candidate,prev.length);restored++;continue;
+        }
+      }
+      untouched++;
+    }
+    if(recovered)flash('Se recuperó audio sin cifrar de una grabación interrumpida ('+recovered+'). Revisá la duración: pudo quedar incompleta.');
+    if(restored)flash('Se conservaron las partes anteriores de '+restored+' audio(s) sin cifrar; la parte interrumpida no pudo recuperarse.');
+    if(untouched)flash('Hay '+untouched+' audio(s) sin cifrar interrumpidos que no se pudieron revisar. Se conservaron intactos.');
+  }catch(e){logDiag('Revisión de audio sin cifrar interrumpida; nada se borró automáticamente ('+anErrName(e)+')');}
 }
 /*P2-BIBLIOTECA-END*/
 
@@ -7567,7 +7620,7 @@ initErgonomics(); loadCfg(); updateModelHint();
 // Protección cifrada: no bloquear mientras se graba o transcribe; guardar el borrador antes de bloquear.
 vaultSetHooks(() => recording || busy || outstanding > 0 || feeding || anBusyN > 0 || copiaBusyN > 0 || k2ReplaceActive, saveDraft);   // cifrar un archivo, y crear o comprobar una copia, también cuentan como uso
 vaultWhenReady(() => { loadNotes(); loadDict(); loadPeople(); loadGenerator(); updateGeneratorUI(); renderList(); convInit(); restoreDraft(); updWC(); });
-vaultWhenReady(() => { if (anUsable()) anReviewOnOpen(); });   // E2: después de cargar notas y borrador (el candado ya se tomó al desbloquear)
+vaultWhenReady(async () => { await anRepairPlainOnOpen(); if (anUsable()) await anReviewOnOpen(); });   // Audios en claro y cifrados: recuperación luego de tomar el candado
 refreshAudioBox();
 </script>
 <script>
