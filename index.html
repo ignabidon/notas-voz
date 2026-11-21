@@ -5229,6 +5229,7 @@ async function e3Write(next){
   if (!vault.saved(CONV_KEY)) { convStore.revert(before, raw); throw new Error('No se pudo confirmar el guardado. No se borró ningún audio.'); }
 }
 async function e3Remove(entryId, audioId){
+  if(k2ReplaceMark())return flash('Terminá la restauración antes de cambiar audios.');
   if (!anAudioReady() || convAudioWork() || copiaBusyN || !(await anLockOk())) return flash('No se puede cambiar el audio ahora. Terminá las tareas pendientes y usá la pestaña con permiso para guardar.');
   if (convAudioWork() || copiaBusyN) return;
   if (convAudioId === audioId || (entryId && convEditingId === entryId)) return flash('Primero guardá o cancelá la edición de esta nota.');
@@ -5249,6 +5250,7 @@ async function e3Remove(entryId, audioId){
   finally { convSaving = false; renderConv(); void e3RefreshSpace(); }
 }
 async function e3Recover(id){
+  if(k2ReplaceMark())return flash('Terminá la restauración antes de recuperar audios.');
   if (!anAudioReady() || convAudioWork() || copiaBusyN || !(await anLockOk())) return flash('No se puede recuperar el audio ahora. Terminá las tareas pendientes y usá la pestaña con permiso para guardar.');
   if (convAudioWork() || copiaBusyN || e3Used(id)) return;
   // Recuperar nunca descarta un mensaje que el usuario todavía no confirmó.
@@ -5372,8 +5374,10 @@ function anDb(){
 /* Candado de una sola pestaña: es el mismo de toda la app (vaultTakeTabLock). En la otra pestaña no se escriben audios. */
 let anLockWarned = false;
 async function anLockOk(){
+  if (k2ReplaceMark()) { flash('Esperá a que termine la restauración antes de guardar o modificar audios.'); return false; }
   const ok = await vaultTakeTabLock();
-  if (!ok && !anLockWarned) { anLockWarned = true; flash('DictaVoz está abierta en otra pestaña: en esta no se guardan audios. Cerrá la otra y recargá.'); }
+  if (k2ReplaceMark()) return false;
+  if (!ok && !anLockWarned { anLockWarned = true; flash('DictaVoz está abierta en otra pestaña: en esta no se guardan audios. Cerrá la otra y recargá.'); }
   return ok;
 }
 function anTargetNow(){
@@ -5443,10 +5447,17 @@ function anBeginRecording(mime){
     ctx: convCtx, baseParts: null};
   const target = anTargetNow();
   r.q = (async () => {
-    if (!(await anLockOk())) { r.failed = true; r.warned = true; return; }
+    if (k2ReplaceMark() || !(await anLockOk())) { r.failed = true; r.warned = true; return; }
     const db = r.db = await anDb();
+    if (k2ReplaceMark()) {r.failed=true;r.warned=true;return;}
     const part = {mime: String(mime || 'audio/webm').slice(0, 99), chunks: 0, bytes: 0, ms: null, origin: 'grabado', complete: false};
     if (target.mode === 'parte') {
+      const current=await anGetMeta(db,target.id);
+      if(anIsPlainMeta(current)){
+        r.failed=true;r.warned=true;
+        flash('Esta nota conserva audio SIN CIFRAR. Con la protección abierta no se puede ampliarlo como si estuviera cifrado. El audio anterior se conserva intacto; no se marcó dañado.');
+        return;
+      }
       const o = await anOpenForPart(db, r.kAudio, r.hid, target);
       if (o) {
         r.id = o.m.id; r.part = o.m.parts; r.cek = o.cek;
@@ -5485,7 +5496,7 @@ function anRecFinishErr(r, e){
 function anRecChunk(r, data){
   const size = data.size;
   r.q = r.q.then(async () => {
-    if (r.failed || !r.id) return;
+    if (r.failed || !r.id || k2ReplaceMark()) return;
     const n = r.saved, blob = await anSealChunk(r.cek, r.hid, r.id, r.part, n, data);
     await anPutChunkMeta(r.db, {...r.base, bytes: r.base.bytes + r.bytes + size}, r.part, n, blob);
     r.saved = n + 1; r.bytes += size;
@@ -5523,7 +5534,7 @@ function startAudioClaro(recorder){
     if(!r.warned){r.warned=true;flash('No se pudo guardar completo el audio sin cifrar ('+anErrName(e)+'). El texto sigue disponible; se conserva lo que alcanzó a guardarse.');}
   };
   r.q=(async()=>{
-    if(vault.state!=='off' || !(await anLockOk())) {r.failed=true;return;}
+    if(k2ReplaceMark() || vault.state!=='off' || !(await anLockOk())) {r.failed=true;return;}
     r.db=await anDb();
     const part={mime:String(recorder.mimeType||'audio/webm').slice(0,99),chunks:0,bytes:0,
       ms:null,origin:'grabado',complete:false,hashes:[]};
@@ -5551,7 +5562,7 @@ function startAudioClaro(recorder){
   recorder.ondataavailable=e=>{
     if(!e.data||!e.data.size)return;
     r.q=r.q.then(async()=>{
-      if(r.failed||!r.id)return;
+      if(r.failed||!r.id||k2ReplaceMark())return;
       const hash=await anPlainHash(e.data);
       const parts=r.detail.parts.slice(), old=parts[r.part];
       parts[r.part]={...old,chunks:r.saved+1,bytes:r.bytes+e.data.size,hashes:old.hashes.concat(hash)};
@@ -5602,11 +5613,12 @@ function startAudioNota(recorder){
 /* Archivo cargado: se guarda cifrado en partes de 1 MB, sin leerlo entero. Antes se mira si hay lugar. */
 async function anSaveFile(f, ms){
   if (!anAudioReady() || !$('saveAudio').checked) return null;
+  if(k2ReplaceMark()) {flash('Esperá a que termine la restauración antes de cargar un audio.');return null;}
   if (vault.state === 'off') {
     anBusyN++;
     const job={ctx:convCtx,baseParts:null};
     try {
-      if(!(await anLockOk())) return null;
+      if(!(await anLockOk()) || k2ReplaceMark()) return null;
       const db=await anDb(), target=anTargetNow();
       let id=null;
       if(target.mode==='parte'){
@@ -5634,7 +5646,7 @@ async function anSaveFile(f, ms){
   const hid = vault.header.id, kAudio = vault.audioKey, target = anTargetNow(), job = {ctx: convCtx, baseParts: null};
   let db = null, id = null, part = 0, isNew = true;
   try {
-    if (!(await anLockOk())) return null;
+    if (!(await anLockOk()) || k2ReplaceMark()) return null;
     try {
       const e = navigator.storage && navigator.storage.estimate ? await navigator.storage.estimate() : null;
       if (e && Number.isFinite(e.quota) && Number.isFinite(e.usage) && e.quota - e.usage < f.size * 1.2) {
@@ -5647,6 +5659,10 @@ async function anSaveFile(f, ms){
       origin: 'cargado', name: String(f.name || '').slice(0, 255), complete: true};
     let cek, meta;
     if (target.mode === 'parte') {
+      if(anIsPlainMeta(await anGetMeta(db,target.id))){
+        flash('El audio anterior de esta nota está SIN CIFRAR y sigue íntegro. No se puede anexar el archivo mientras la bóveda está abierta; el archivo original sigue en tu dispositivo. No se marcó dañado.');
+        return null;
+      }
       const o = await anOpenForPart(db, kAudio, hid, target);
       if (o) {
         id = o.m.id; part = o.m.parts; isNew = false; cek = o.cek;
@@ -5661,7 +5677,10 @@ async function anSaveFile(f, ms){
       await anPutMeta(db, first);   // «escribiendo»: si se corta, se descarta al abrir (el usuario todavía tiene el archivo)
       meta = anSetState(first, 'cerrado');
     }
-    for (const c of plan) await anPutChunk(db, id, part, c.n, await anSealChunk(cek, hid, id, part, c.n, f.slice(c.start, c.end)));
+    for (const c of plan) {
+      if(k2ReplaceMark())throw new Error('Restauración iniciada durante la carga del archivo.');
+      await anPutChunk(db, id, part, c.n, await anSealChunk(cek, hid, id, part, c.n, f.slice(c.start, c.end)));
+    }
     await anPutMeta(db, meta);
     const detail = await anOpenDetail(kAudio, hid, id, meta.sealed);
     if (anLinkPending(job, id, anTotalMs(detail))) flash('El archivo quedó guardado cifrado. Queda unido a la nota al tocar Guardar.');
@@ -7099,6 +7118,7 @@ async function audioSlotOk(){
 }
 function startAudioSave(stream){
   mr = null;
+  if (k2ReplaceMark()) { flash('No se puede guardar audio mientras se reemplazan los datos.'); return; }
   if (!$('saveAudio').checked) return;
   if (!audioOk || !window.MediaRecorder) { flash('No se pudo preparar el guardado del audio: se graba igual, sin guardarlo.'); logDiag('Audio: no se guarda (no disponible).'); return; }
   const mime = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg;codecs=opus'].find(t => MediaRecorder.isTypeSupported(t));
@@ -7381,6 +7401,7 @@ function stopUI(){
 }
 $('rec').onclick = async () => {
   if (!recording) {
+    if (k2ReplaceMark()) {setStatus('Terminá la restauración antes de comenzar una grabación.');return;}
     if (!window.isSecureContext || !navigator.mediaDevices) { setStatus('El navegador no deja usar el micrófono con la página abierta de esta forma (' + location.protocol + '). Abrila desde una dirección que empiece con https.'); return; }
     if (feeding || busy || outstanding > 0) { setStatus('Todavía se está transcribiendo: esperá a que termine para grabar de nuevo.'); return; }
     if (convSaving) { setStatus('Esperá a que termine de guardarse la nota.'); return; }
