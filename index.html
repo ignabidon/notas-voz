@@ -5379,7 +5379,7 @@ async function anLockOk(){
   if (k2ReplaceMark()) { flash('Esperá a que termine la restauración antes de guardar o modificar audios.'); return false; }
   const ok = await vaultTakeTabLock();
   if (k2ReplaceMark()) return false;
-  if (!ok && !anLockWarned { anLockWarned = true; flash('DictaVoz está abierta en otra pestaña: en esta no se guardan audios. Cerrá la otra y recargá.'); }
+  if (!ok && !anLockWarned) { anLockWarned = true; flash('DictaVoz está abierta en otra pestaña: en esta no se guardan audios. Cerrá la otra y recargá.'); }
   return ok;
 }
 function anTargetNow(){
