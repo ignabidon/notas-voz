@@ -77,9 +77,10 @@ try {
   assert.equal(JSON.parse(textoConv).entries.length, 2);
 
   // Crear la copia por el recorrido real de la pantalla Ajustes.
-  await run(`document.querySelector('[data-delta-view="ajustes"]').click(); document.getElementById('copiaPanel').scrollIntoView({block: 'start'}); true`);
-  await click('copiaCrear'); await waitFor(`!document.getElementById('vaultAuth').hidden`, 'pedido de contraseña');
-  await fill('vaultAuthPass', PASS); await submit('vaultAuth');
+  await run(`document.querySelector('[data-delta-view="ajustes"]').click(); ajShow('copias', false); document.getElementById('copiaPanel').scrollIntoView({block: 'start'}); true`);
+  await click('copiaCrear'); await waitFor(`!document.getElementById('copiaClaveForm').hidden && !document.getElementById('copiaClaveForm').closest('[hidden]')`, 'contraseña visible en Copias');
+  assert.equal(await run(`document.getElementById('vaultAuth').hidden`), true, 'no se abre el formulario oculto de Protección');
+  await fill('copiaClave', PASS); await submit('copiaClaveForm');
   await waitFor('window.__dl.length === 1', 'descarga de la copia', 60000);
   assert.match(await msg(), /Copia creada y comprobada: .*1 cuaderno · 2 notas/);
   assert.equal(await run(`JSON.stringify(vault.records.all())`), originales, 'crear la copia no cambió ningún registro');
