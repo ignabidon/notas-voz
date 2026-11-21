@@ -181,28 +181,27 @@ test('#60: el formato 1 y su lector no cambian; el lector 1 rechaza el 2 y el le
   assert.doesNotMatch(block('COPIA'), /claro|AN_PLAIN|exclus/);
 });
 
-test('#60: el recorrido de la copia 2 y el panel solo leen; nada nuevo se conecta a la interfaz', () => {
+test('#60 + A13: formato 2 sigue siendo solo lectura de audio, pero la beta lo conecta a la copia y reproductor', () => {
   const uso = block('COPIA2-USO'), c2 = block('COPIA2');
-  assert.doesNotMatch(uso + c2, /anPut\w*\(|anDelete\w*\(|anTruncate\w*\(|\.put\(|\.delete\(|\.clear\(|setItem\(|removeItem\(|localStorage|fetch\(|innerHTML|\beval\b|new Function|download\(/);
-  // Ningún botón ni código fuera de su bloque llama al formato 2 ni al ensayo P2.
-  const fuera = html.replace(/\/\*COPIA2-START\*\/[\s\S]*?\/\*COPIA2-USO-END\*\//, '').replace(/\/\*P2-BIBLIOTECA-START\*\/[\s\S]*?\/\*P2-BIBLIOTECA-END\*\//, '')
-    // Al integrarse con el PR #61, la restauración experimental K2 (su bloque y el botón «K2 interfaz») sí usa
-    // la verificación del formato 2: es el único uso permitido fuera de los bloques del formato 2.
-    .replace(/\/\*K2-START\*\/[\s\S]*?\/\*K2-END\*\//, '').replace(/\/\* K2 interfaz[\s\S]*?\n\}\);/, '');
-  assert.doesNotMatch(fuera, /copia2(Writer|Verify|Audios|Describe)\(|anPlain(StageFile|Read)\(/);
-  assert.equal((html.match(/const AN_DB_VERSION = 1;/g) || []).length, 1, 'la versión de la base no cambia');
-  // Panel: cuenta aparte lo cifrado y lo sin cifrar, y a un audio sin cifrar no le ofrece acciones de la protección.
-  const panel = html.slice(html.indexOf('async function e3RefreshSpace'), html.indexOf("$('e3Refresh').onclick"));
+  assert.doesNotMatch(uso + c2, /anPut\w*\(|anDelete\w*\(|anTruncate\w*\(|\.put\(|\.delete\(|\.clear\(|setItem\(|removeItem\(|localStorage|fetch\(|innerHTML|\beval\b|new Function|download\(/,
+    'recorrer audios para respaldar nunca escribe ni borra');
+  assert.match(html, /const withPlain=completa && kinds\.claros>0;/, 'elige formato 2 si la copia completa contiene audio sin cifrar');
+  assert.match(html, /copia2Writer\(header,key,'completa',now\)/);
+  assert.match(html, /copia2Audios\(w,'completa',\{kAudio:/);
+  assert.match(html, /copia2Verify\(file,async/);
+  assert.equal((html.match(/const AN_DB_VERSION = 1;/g)||[]).length,1,'la versión de base no cambia');
+  const panel=html.slice(html.indexOf('async function e3RefreshSpace'),html.indexOf("$('e3Refresh').onclick"));
   assert.match(panel, /cifrados = metas\.filter\(m => !anIsPlainMeta\(m\)\), claros = metas\.filter\(anIsPlainMeta\)/);
-  assert.match(panel, /SIN CIFRAR \(ensayo, no protegidos\)/);
-  const filasClaras = panel.slice(panel.indexOf('for (const m of claros'));
-  assert.doesNotMatch(filasClaras, /convButton|e3Recover|e3Remove|e3Play/);
-  // Acciones de la protección rechazan una ficha sin cifrar aunque alguien llegue a ellas.
-  assert.match(html, /if \(anIsPlainMeta\(m\)\) return \{ok: false, m, why: 'sin cifrar'\};/);
-  assert.match(html, /if \(anIsPlainMeta\(meta\)\) \{ e3Failure\(s, /);
-  // La copia que usa la app (formato 1) avisa los audios sin cifrar que no lleva, sin llamarlos dañados.
-  assert.match(html, /if \(anIsPlainMeta\(m\)\) \{ sinCifrar\+\+; continue; \}/);
-  assert.match(html, /'Atención, la copia NO está completa: '/);
+  assert.match(panel, /SIN CIFRAR/);
+  const filasClaras=panel.slice(panel.indexOf('for (const m of claros'));
+  assert.match(filasClaras, /e3Recover\(m\.id\)/,'audios sanos sin contraseña pueden recuperarse');
+  assert.match(filasClaras, /e3Remove\(null,m\.id\)/,'la eliminación de huérfanos sigue usando confirmación');
+  assert.match(html, /if \(anIsPlainMeta\(m\)\) return \{ok: false, m, why: 'sin cifrar'\};/,
+    'la rutina E2 cifrada no acepta equivocadamente audio en claro');
+  assert.match(html, /if \(anIsPlainMeta\(meta\)\) \{/,'el reproductor reconoce explícitamente ambos formatos');
+  assert.match(html, /if \(anIsPlainMeta\(m\)\) \{ sinCifrar\+\+; continue; \}/,
+    'el formato 1 histórico sigue excluyendo audios en claro');
+  assert.match(html, /'Atención, la copia NO está completa: '/,'los respaldos con exclusiones siguen advirtiendo faltantes');
 });
 
 test('#61 + #60 + A11: K2 no restaura una copia formato 2 incompleta y nunca escribe audio descifrado', () => {

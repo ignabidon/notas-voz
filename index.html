@@ -917,6 +917,62 @@ body.delta-recording .c-rec>.dict-dest{display:none}
 .aj-seg-opt:has(input:checked){background:var(--acc);color:var(--acc-ink)}
 .aj-seg-opt:has(input:focus-visible){outline:3px solid var(--acc);outline-offset:2px}
 :root[data-text-size="large"] .aj-seg{grid-template-columns:1fr}
+
+/* BETA-DISENO-2026-11-19 · Solo jerarquía visual. No alterar almacenamiento, audio ni cifrado. */
+body[data-view="transcripcion"] .conv-bubble{max-width:100%;margin-top:10px;padding:12px 14px;border-radius:17px 17px 5px 17px;box-shadow:none}
+body[data-view="transcripcion"] .conv-text{font-size:max(16px,calc(16px * var(--text-scale)));line-height:1.62}
+body[data-view="transcripcion"] .conv-meta{border:0;margin-top:8px;padding:0;gap:5px 9px;font-size:max(13px,calc(13px * var(--text-scale)))}
+body[data-view="transcripcion"] .conv-actions{display:flex;align-items:center;justify-content:flex-end;flex-wrap:nowrap;gap:2px;padding:0;margin-top:2px;border:0}
+body[data-view="transcripcion"] .conv-actions button{flex:0 0 auto;min-height:48px;min-width:48px;width:auto;padding:0 9px;background:var(--bubble-bg);border:1px solid var(--line-strong);color:var(--mut);box-shadow:none;font-weight:650;font-size:max(13px,calc(13px * var(--text-scale)))}
+body[data-view="transcripcion"] .conv-actions .conv-more{flex:0 0 48px;min-width:48px;font-size:23px;font-weight:750;letter-spacing:0}
+body[data-view="transcripcion"] .conv-actions .beta-note-action{width:48px;min-width:48px;padding:0;display:inline-flex;align-items:center;justify-content:center}
+body[data-view="transcripcion"] .conv-actions .beta-note-action svg{display:block;width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.beta-note-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;white-space:nowrap;clip-path:inset(50%);border:0}
+body[data-view="transcripcion"] .conv-actions button:hover:not(:disabled),
+body[data-view="transcripcion"] .conv-actions button:focus-visible{background:var(--card);color:var(--acc);border-color:var(--line-strong)}
+body[data-view="transcripcion"] .conv-actions button:focus-visible{outline:3px solid var(--acc);outline-offset:1px}
+body[data-view="transcripcion"] .conv-menu{margin-top:2px;padding-top:8px}
+body[data-view="transcripcion"] .conv-item{padding:12px 14px;gap:3px;margin-top:8px;box-shadow:none}
+body[data-view="transcripcion"] .conv-item>span{font-size:max(16px,calc(16px * var(--text-scale)))}
+body[data-view="transcripcion"] .conv-item small{line-height:1.4}
+body[data-view="transcripcion"] .conv-heading{margin-bottom:8px}
+body[data-view="transcripcion"] .conv-h{font-size:max(21px,calc(21px * var(--text-scale)))}
+body[data-view="transcripcion"] .conv-sheet-tools{margin-bottom:10px}
+body[data-view="transcripcion"] .conv-sheet-tools>summary{min-height:48px;display:flex;align-items:center}
+body[data-view="transcripcion"] .conv-tools button{min-height:48px}
+body[data-view="transcripcion"] .text-screen-title{margin-bottom:12px}
+body[data-view="transcripcion"] .conv-panel{padding-bottom:8px}
+.beta-whisper-shortcut{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:64px;margin:0 0 12px;padding:10px 14px;text-align:left;color:var(--ink);background:var(--acc-soft);border:1px solid var(--line-strong);border-radius:var(--r-row);cursor:pointer}
+.beta-whisper-shortcut .beta-whisper-stack{display:grid;gap:2px;min-width:0}
+.beta-whisper-shortcut .beta-whisper-overline{font-size:max(12px,calc(12px * var(--text-scale)));letter-spacing:.04em;color:var(--acc);font-weight:750}
+.beta-whisper-shortcut .beta-whisper-value{font-size:max(17px,calc(17px * var(--text-scale)));font-weight:800}
+.beta-whisper-shortcut .beta-whisper-chevron{flex:none;font-size:24px;color:var(--acc)}
+.beta-whisper-shortcut:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+#ajSub-calidad #settingsQuality{display:flex;flex-direction:column;gap:8px}
+#ajSub-calidad #settingsQuality>.aj-block-eng{order:-1;margin:0 0 4px}
+#ajSub-calidad #settingsQuality>.aj-block-eng .settings-inner{border:0;margin:0;padding:0}
+#ajSub-calidad #settingsQuality>.aj-block-eng summary{font-weight:750;color:var(--ink);min-height:48px;display:flex;align-items:center}
+#ajSub-calidad #settingsQuality>label[for="model"]{margin-top:10px!important;font-weight:750}
+#ajSub-calidad #settingsQuality>.settings-inner{margin-top:6px}
+#ajHome .aj-group{margin-top:17px}
+#ajHome .aj-row{min-height:56px;padding:9px 14px}
+#ajHome .aj-switch-row{min-height:56px;padding:9px 14px}
+#ajHome .aj-status{padding:14px}
+body[data-view="grabacion"] .capture-shortcuts{gap:8px;margin-top:15px}
+body[data-view="grabacion"] .capture-shortcuts button{box-shadow:none;font-weight:650}
+body[data-view="grabacion"] .c-rec .rec-caption{line-height:1.45}
+.transcription-dock{padding:8px 11px;margin-bottom:7px;box-shadow:none}
+#transcriptionDockMessage{margin:4px 0 5px}
+body[data-view="anonimizar"] .anon-explain{padding:14px}
+body[data-view="anonimizar"] .privacy-group{padding:14px;margin-top:16px}
+body[data-view="anonimizar"] .studio-patients{margin-top:12px}
+body[data-view="transcripcion"] .conv-tools button,
+body[data-view="grabacion"] .capture-shortcuts button,
+body[data-view="anonimizar"] #anon{border-radius:var(--r-row)}
+/* La marca visual no altera el nombre accesible ni el encabezado histórico. */
+.brand h1::after{content:"BETA";display:inline-block;vertical-align:middle;margin-left:9px;padding:3px 6px;border-radius:6px;background:var(--acc-soft);color:var(--acc);font-size:10px;font-weight:850;letter-spacing:.08em}
+@media(max-width:380px){body[data-view="transcripcion"] .conv-bubble{padding:11px 12px}body[data-view="transcripcion"] .conv-actions button{padding-inline:7px}}
+
 </style>
 </head>
 <body data-view="grabacion">
@@ -927,7 +983,7 @@ body.delta-recording .c-rec>.dict-dest{display:none}
     <span class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7"/></svg></span>
     <div>
       <h1>DictaVoz</h1>
-      <p class="sub">Tu voz, en texto.</p>
+      <p class="sub">Beta · solo datos ficticios.</p>
     </div>
   </div>
   <span class="pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Procesamiento local</span>
@@ -1024,6 +1080,7 @@ body.delta-recording .c-rec>.dict-dest{display:none}
     <div class="body">
     <div id="ajHome" class="aj-screen">
       <div class="screen-title"><span class="screen-overline">PERSONALIZACIÓN</span><h2>Ajustes</h2></div>
+      <button type="button" class="beta-whisper-shortcut" id="betaWhisperShortcut" data-aj-open="calidad" aria-label="Abrir ajustes del motor y modelo de transcripción"><span class="beta-whisper-stack"><span class="beta-whisper-overline">MOTOR Y MODELO DE TRANSCRIPCIÓN</span><strong class="beta-whisper-value" id="betaWhisperLabel">Whisper · Small</strong></span><span class="beta-whisper-chevron" aria-hidden="true">›</span></button>
       <section class="aj-status" id="ajStatus" aria-labelledby="ajStatusTitle">
         <div class="aj-status-top"><span class="aj-lock" id="ajLockIcon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="10.5" width="14" height="9.5" rx="2.5"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/></svg></span><div><h3 id="ajStatusTitle">Protección desactivada</h3><p class="aj-status-line" id="ajStatusLine"></p></div></div>
         <div class="aj-status-btns"><button type="button" id="ajLock" hidden>Bloquear ahora</button><button type="button" id="ajCopy" class="p">Crear copia</button></div>
@@ -1038,7 +1095,7 @@ body.delta-recording .c-rec>.dict-dest{display:none}
       <h3 class="aj-group">Dictado</h3>
       <section class="settings-module aj-list" id="settingsAudio">
                 <label class="chk aj-switch-row"><input type="checkbox" id="saveAudio" class="aj-sw">
-        <span><b>Conservar audio</b><small>Permite recuperar la voz original. Con la protección activada se guarda cifrada y unida a su nota; sin ella, sin cifrar. Nunca está anonimizada.</small></span></label>
+        <span><b>Conservar audio</b><small>Guarda la grabación original junto a la nota para reproducirla desde Cuadernos. Con protección, cifrada; sin protección, sin cifrar. La voz original nunca está anonimizada.</small></span></label>
         <button type="button" class="aj-row" data-aj-open="calidad" id="ajRow-calidad"><span class="aj-row-t"><b>Calidad de transcripción</b><small>Modelo, micrófono y cómo transcribir</small></span><span class="aj-chev" aria-hidden="true">›</span></button>
         <button type="button" class="aj-row" data-aj-open="diccionario" id="ajRow-diccionario"><span class="aj-row-t"><b>Diccionario y correcciones</b><small>Palabras que se corrigen solas</small></span><span class="aj-chev" aria-hidden="true">›</span></button>
       </section>
@@ -1113,10 +1170,10 @@ body.delta-recording .c-rec>.dict-dest{display:none}
         <section class="vault-panel" id="copiaPanel" aria-labelledby="copiaTitle">
           <h4 id="copiaTitle">Copia cifrada</h4>
           <p class="hint">Una copia es un archivo cifrado con tus notas (y, si querés, tus audios). Sirve para recuperar todo si perdés el celular o se borran los datos del navegador. Guardala fuera del celular.</p>
-          <p class="hint" id="copiaOffHint">La protección está apagada: la copia igual sale cifrada, con una contraseña que elegís solo para ese archivo. Lleva el texto, no los audios de «Mis grabaciones».</p>
+          <p class="hint" id="copiaOffHint">Sin protección, la copia se cifra con una contraseña elegida solo para ese archivo. Si elegís Completa, incluye los audios de las notas de Cuadernos. Las grabaciones antiguas sueltas de «Mis grabaciones» no están incluidas.</p>
           <fieldset id="copiaContenido" class="copia-opciones" hidden>
             <legend>Qué lleva la copia</legend>
-            <label class="chk"><input type="radio" name="copiaTipo" id="copiaCompleta" value="completa" checked><span><b>Completa</b><small>Texto y audios cifrados guardados con tus notas.</small></span></label>
+            <label class="chk"><input type="radio" name="copiaTipo" id="copiaCompleta" value="completa" checked><span><b>Completa</b><small>Texto y audios de las notas. Los audios sin protección se cifran dentro del archivo de copia.</small></span></label>
             <label class="chk"><input type="radio" name="copiaTipo" id="copiaSoloTexto" value="solo-texto"><span><b>Solo texto</b><small>Más liviana: sin audios.</small></span></label>
           </fieldset>
           <div class="row"><button type="button" id="copiaCrear" class="p">Crear una copia</button></div>
@@ -1381,7 +1438,7 @@ body.delta-recording .c-rec>.dict-dest{display:none}
 
 </main>
 
-<footer>DELTA 11 · VERSIÓN DE PRUEBA<br>Usá únicamente datos ficticios.</footer>
+<footer>DELTA 11 · VERSIÓN DE PRUEBA<br>DICTAVOZ · BETA VISUAL SEPARADA<br>Usá únicamente datos ficticios. No ingresar datos clínicos reales en esta vista previa de terceros.</footer>
 </div>
 
 <aside class="studio-dock" aria-label="Acciones de la nota">
@@ -2067,10 +2124,10 @@ function vaultRefreshPanel(){
   vaultEl('vaultOff').hidden = vault.state !== 'off';
   vaultEl('vaultOn').hidden = !on;
   vaultEl('topLock').hidden = !on;
-  { const c = vaultEl('copiaContenido'), o = vaultEl('copiaOffHint'); if (c) c.hidden = !on; if (o) o.hidden = vault.state !== 'off'; }   // copia cifrada (K1)
+  { const c = vaultEl('copiaContenido'), o = vaultEl('copiaOffHint'); if (c) c.hidden = vault.state !== 'off' && vault.state !== 'open'; if (o) o.hidden = vault.state !== 'off'; }   // copia completa de audio sin protección (beta)
   vaultEl('vaultStatus').textContent = vault.state === 'off'
     ? 'Desactivada: las notas, borradores, personas y diccionario se guardan sin cifrar en este navegador.'
-    : 'Activada: notas, borrador, deshacer, personas y diccionario se guardan cifrados (AES-256). Se bloquea tras 15 minutos sin uso. Con «Conservar audio», los audios nuevos se guardan cifrados junto a su nota; los guardados antes en «Mis grabaciones» siguen sin cifrar.';
+    : 'Activada: notas, borrador, deshacer, personas y diccionario se guardan cifrados (AES-256). Se bloquea tras 15 minutos sin uso. Los audios nuevos se cifran; los audios que ya estaban SIN CIFRAR no se convierten automáticamente, aunque estén en Cuadernos.';
   if (on) {
     vaultEl('vaultBioAdd').hidden = !!vault.header.bio; vaultEl('vaultBioRemove').hidden = !vault.header.bio;
     const extra = [];
@@ -2167,9 +2224,14 @@ function vaultInitUI(){
   vaultEl('vaultSetupCancel').addEventListener('click', () => { vaultEl('vaultSetup').hidden = true; vaultEl('vaultNew').value = ''; vaultEl('vaultNew2').value = ''; });
   vaultEl('vaultSetup').addEventListener('submit', async ev => {
     ev.preventDefault();
-    if (vaultBusy()) { vaultPanelMsg('Primero detené y terminá de transcribir.'); return; }
+    if (vaultBusy() || anBusyN > 0) { vaultPanelMsg('Primero detené y terminá de transcribir.'); return; }
     const problem = vaultPasswordProblem(vaultEl('vaultNew').value, vaultEl('vaultNew2').value);
     if (problem) { vaultPanelMsg(problem); return; }
+    const audioKinds=await anStoredKinds();
+    if(audioKinds===null){vaultPanelMsg('No se pudo revisar si hay audios sin cifrar. No se activó la protección.');return;}
+    if(audioKinds.claros>0 && !confirm('Hay '+audioKinds.claros+' audio(s) guardados SIN CIFRAR. Activar la contraseña NO los cifrará ni los protegerá: seguirán accesibles en este dispositivo. ¿Querés continuar igualmente?')){
+      vaultPanelMsg('No se activó la protección; los audios existentes siguen sin cifrar.');return;
+    }
     vaultEl('vaultSetupGo').disabled = true; vaultPanelMsg('Cifrando… puede tardar unos segundos.');
     try {
       // Antes de habilitar protección, comprobar también el borrador de la modalidad anterior.
@@ -2190,7 +2252,7 @@ function vaultInitUI(){
         vaultEl('vaultRecoveryDone').onclick = null; vaultEl('vaultRecoveryBio').onclick = null;
         vaultOfferBio(dek);
       };
-      vaultRefreshPanel(); vaultPanelMsg('Tus datos ya están cifrados. Anotá el código de recuperación antes de seguir.');
+      vaultRefreshPanel(); vaultPanelMsg((audioKinds.claros ? 'Protección activada para las notas y los audios nuevos. Los '+audioKinds.claros+' audios anteriores siguen SIN CIFRAR. ' : 'Protección activada. ')+'Anotá el código de recuperación antes de seguir.');
     } catch (e) { vaultPanelMsg(vaultFriendly(e)); }
     finally { vaultEl('vaultSetupGo').disabled = false; }
   });
@@ -2985,6 +3047,23 @@ function convIcon(){   // U5: ícono decorativo del cuaderno (solo presentación
   return svg;
 }
 function convButton(label, fn, cls){ const b = document.createElement('button'); b.type = 'button'; b.textContent = label; if (cls) b.className = cls; b.onclick = fn; return b; }
+/* BETA: acciones visualmente pequeñas, manteniendo nombre accesible, texto y área táctil de 48 px. */
+function betaNoteIcon(button, kind){
+  const label = button.textContent;
+  button.classList.add('beta-note-action');
+  button.setAttribute('aria-label', label);
+  button.setAttribute('title', label);
+  button.textContent = '';
+  const ns = 'http://www.w3.org/2000/svg', svg = document.createElementNS(ns, 'svg');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('aria-hidden', 'true');
+  svg.setAttribute('focusable', 'false');
+  const p = document.createElementNS(ns, 'path');
+  p.setAttribute('d', kind === 'copy' ? 'M8 4H5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3M9 3h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z' : 'M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L9 17l-4 1 1-4z');
+  svg.append(p);
+  const name = document.createElement('span'); name.className = 'beta-note-sr'; name.textContent = label;
+  button.append(svg, name);
+}
 /* Solo presentación: conserva el mismo editor, borrador, destino y acciones de guardado. */
 function refreshConvEditor(){
   const hasText = !!$('text').value.trim(), hasAudio = !!convAudioId;
@@ -3049,6 +3128,7 @@ function renderConv(){
     const item = (label, fn, cls) => { const b = convButton(label, () => { convCloseMenu(false); fn(); }, cls); b.setAttribute('role', 'menuitem'); return b; };
     menu.append(item('Mover a otro cuaderno', () => convAskMove('one', e.id)), item('Borrar esta nota', () => convDelete(e.id), 'ghost danger'));
     acts.append(convButton('Copiar', () => convCopy(e.text)), convButton('Editar', () => convEdit(e.id)), more);
+    betaNoteIcon(acts.children[0], 'copy'); betaNoteIcon(acts.children[1], 'edit');
     if (e.audioId) {
       d.append(e3Player(e));
       menu.append(item('Quitar audio de esta nota', () => void e3Remove(e.id, e.audioId), 'ghost danger'));
@@ -3176,7 +3256,7 @@ function convClearComposer(){
   resetLive(); convResetPending(); updWC(); saveDraft(); renderConv();
 }
 $('convDiscard').onclick = () => {
-  if (anBusyN > 0 || convSaving) return flash('Esperá a que termine de guardarse el audio cifrado.');
+  if (anBusyN > 0 || convSaving) return flash('Esperá a que termine de guardarse el audio.');
   if (convEditingId) return;   // editando, el botón es «Cancelar edición»
   // El audio pendiente de una nota nueva se borra, salvo que (por un dato viejo) ya lo use otra nota.
   const pendingAudio = convAudioId && !(convStore.data && convAudioInUse(convStore.data, convAudioId)) ? convAudioId : null;
@@ -3235,15 +3315,15 @@ async function convSave(){
   // Cuántas partes tiene el audio que se va a confirmar. Queda escrito en la nota: así, un borrador viejo que sobreviva a un corte
   // nunca puede hacer que «Cancelar» recorte partes ya confirmadas.
   let audioParts = null;
-  if (convAudioId && anUsable()) {
+  if (convAudioId && anAudioReady()) {
     try { const m = await anGetMeta(await anDb(), convAudioId); audioParts = m && anValidMeta(m) && m.state === 'cerrado' && m.parts >= 1 ? m.parts : null; }
     catch (e) { return flash('No se guardó: no se pudo comprobar el audio guardado (' + anErrName(e) + '). El texto y su audio siguen en el editor.'); }
   }
   // Toda nota con audio (con texto o sin texto) exige integridad completa antes de confirmar el vínculo.
   if (convAudioId) {
-    if (!anUsable() || !audioParts) return flash('No se guardó: todavía no hay un audio por nota confirmado. El texto y el borrador siguen disponibles.');
+    if (!anAudioReady() || !audioParts) return flash('No se guardó: todavía no hay un audio por nota confirmado. El texto y el borrador siguen disponibles.');
     try {
-      const health = await anAudioHealth(await anDb(), vault.audioKey, vault.header.id, convAudioId);
+      const health = await anVerifyLinkedAudio(await anDb(), convAudioId);
       if (!health.ok) return flash('No se guardó: el audio está incompleto o dañado (' + health.why + '). Se conserva sin modificar para recuperarlo.');
     } catch (e) { return flash('No se guardó: no se pudo verificar el audio (' + anErrName(e) + '). Se conserva sin modificar.'); }
   }
@@ -4840,14 +4920,15 @@ function anPlainValidMeta(m){
     m.plain.parts.reduce((n,p) => n + p.bytes, 0) === m.bytes;
 }
 const anPlainHash = async blob => anB64(new Uint8Array(await crypto.subtle.digest('SHA-256', await blob.arrayBuffer())));
-async function anPlainHealth(db, id){
-  const m = await anGetMeta(db, id);
+async function anPlainMetaHealth(db, m, ignoreUnconfirmed = false){
   if (!m || !anPlainValidMeta(m) || m.state !== 'cerrado') return {ok:false, m, why:'ficha o escritura pendiente'};
+  const id = m.id;
   const b = anChunkBounds(id);
   const keys = await anTx(db, ['chunks'], 'readonly', t => t.objectStore('chunks').getAllKeys(IDBKeyRange.bound(b.lower,b.upper)));
   const expected = [];
   m.plain.parts.forEach((p,part) => { for(let n=0;n<p.chunks;n++) expected.push([id,part,n]); });
-  if (keys.length !== expected.length || keys.some((k,i) => !Array.isArray(k) || k[0] !== expected[i][0] || k[1] !== expected[i][1] || k[2] !== expected[i][2]))
+  const checkedKeys = ignoreUnconfirmed ? keys.filter(k => Array.isArray(k) && k[1] < m.parts) : keys;
+  if (checkedKeys.length !== expected.length || checkedKeys.some((k,i) => !Array.isArray(k) || k[0] !== expected[i][0] || k[1] !== expected[i][1] || k[2] !== expected[i][2]))
     return {ok:false,m,why:'fragmentos faltantes o sobrantes'};
   let total = 0;
   for (let part=0;part<m.plain.parts.length;part++){
@@ -4863,26 +4944,36 @@ async function anPlainHealth(db, id){
   }
   return {ok:total === m.bytes,m,why:total === m.bytes ? '' : 'tamaño'};
 }
-/* Se usa solo desde pruebas P2. No hay botón ni llamada en el flujo de grabación todavía.
-   El orden ficha-escribiendo → chunks → ficha-cerrado permite detectar cortes sin perder datos. */
-async function anPlainStageFile(db, file, ms){
+async function anPlainHealth(db, id){
+  return anPlainMetaHealth(db, await anGetMeta(db, id));
+}
+/* Un archivo nuevo se confirma de una sola vez: ficha y todos sus fragmentos
+   en la MISMA transacción. Un corte, cuota agotada o aborto no deja restos en claro
+   ni una ficha "escribiendo". Conserva el identificador opcional para que quien
+   llama pueda distinguir un fallo de una confirmación ya realizada. */
+async function anPlainStageFile(db, file, ms, id = anNewId()){
+  if (k2ReplaceMark()) throw new Error('No se puede guardar audio durante la restauración.');
   if (vault.state !== 'off') throw new Error('El audio en claro no se puede escribir con la bóveda abierta.');
   if (!(file instanceof Blob) || !anIsInt(file.size) || file.size < 1 || file.size > AN_PLAIN_MAX_BYTES) throw new Error('archivo fuera de límite');
-  const id = anNewId(), plan = anFilePlan(file.size);
+  const plan = anFilePlan(file.size);
   if (!plan.length || !anIsInt(ms)) throw new Error('duración o archivo inválidos');
-  const part = {mime:String(file.type || 'application/octet-stream').slice(0,99), origin:'cargado',
-    name:String(file.name || '').slice(0,255), chunks:plan.length, bytes:file.size, ms, complete:true, hashes:[]};
-  const writing = {...anNewMeta(id,Date.now(),'escribiendo'),mode:AN_PLAIN_MODE,parts:1,bytes:file.size,plain:{parts:[part]}};
-  await anPutMeta(db,writing);
+  const part = {mime:String(file.type || 'application/octet-stream').slice(0,99),origin:'cargado',
+    name:String(file.name||'').slice(0,255),chunks:plan.length,bytes:file.size,ms,complete:true,hashes:[]};
+  const pieces=[];
   for(const c of plan){
-    const blob = file.slice(c.start,c.end);
+    if(k2ReplaceMark())throw new Error('Restauración iniciada durante el guardado; no se alteró la biblioteca.');
+    const blob=file.slice(c.start,c.end);
     part.hashes.push(await anPlainHash(blob));
-    await anPutChunk(db,id,0,c.n,blob);
+    pieces.push({n:c.n,blob});
   }
-  const closed = {...writing,state:'cerrado',plain:{parts:[{...part,hashes:part.hashes.slice()}]}};
-  await anPutMeta(db,closed);
-  const health = await anPlainHealth(db,id);
-  if (!health.ok) throw new Error('audio incompleto o alterado; se conserva sin confirmar');
+  if(k2ReplaceMark())throw new Error('No se puede guardar audio durante la restauración.');
+  const closed={...anNewMeta(id,Date.now(),'cerrado'),mode:AN_PLAIN_MODE,parts:1,bytes:file.size,plain:{parts:[part]}};
+  await anTx(db,['meta','chunks'],'readwrite',t=>{
+    t.objectStore('meta').put(closed);
+    for(const c of pieces)t.objectStore('chunks').put(c.blob,anChunkKey(id,0,c.n));
+  });
+  const health=await anPlainHealth(db,id);
+  if(!health.ok)throw new Error('audio posiblemente guardado, pero no verificable; se conserva sin vincular');
   return id;
 }
 async function anPlainRead(db,id){
@@ -4895,6 +4986,103 @@ async function anPlainRead(db,id){
     out.push({mime:p.mime,origin:p.origin,ms:p.ms,blob:new Blob(pieces,{type:p.mime})});
   }
   return out;
+}
+/* Anexar un archivo sin cifrar: las partes anteriores solo se leen; si falla, se retiran
+   únicamente fragmentos NUEVOS. Nunca se cambia una parte confirmada. */
+async function anPlainAppendFile(db,id,file,ms){
+  if (k2ReplaceMark()) throw new Error('No se puede ampliar audio durante la restauración.');
+  if (vault.state !== 'off' || !(file instanceof Blob) || file.size < 1 || file.size > AN_PLAIN_MAX_BYTES || !anIsInt(ms))
+    throw new Error('archivo o protección inválidos');
+  const h=await anPlainHealth(db,id);
+  if(!h.ok) throw new Error('audio anterior incompleto: no se alteró');
+  const part=h.m.parts, plan=anFilePlan(file.size);
+  const p={mime:String(file.type||'application/octet-stream').slice(0,99),origin:'cargado',
+    name:String(file.name||'').slice(0,255),chunks:plan.length,bytes:file.size,ms,complete:true,hashes:[]};
+  // Primero se preparan todas las huellas; no se modifica lo que ya estaba guardado.
+  const pieces=[];
+  for (const c of plan) {
+    const blob=file.slice(c.start,c.end);
+    p.hashes.push(await anPlainHash(blob));
+    pieces.push({n:c.n,blob});
+  }
+  const next={...h.m,parts:part+1,bytes:h.m.bytes+file.size,plain:{parts:h.m.plain.parts.concat(p)}};
+  if(k2ReplaceMark())throw new Error('Restauración iniciada durante el guardado; no se alteró el audio.');
+  // Una sola transacción: ficha nueva y todos los fragmentos, o ninguno (corte/cuota).
+  await anTx(db,['meta','chunks'],'readwrite',t=>{
+    const chunks=t.objectStore('chunks');
+    for(const c of pieces)chunks.put(c.blob,anChunkKey(id,part,c.n));
+    t.objectStore('meta').put(next);
+  });
+  // Una lectura posterior puede LANZAR una excepción, no solo devolver ok:false.
+  // Ambos casos requieren la misma reversión antes de anunciar un fallo.
+  let checked=false;
+  try { checked=(await anPlainHealth(db,id)).ok; } catch(e) {
+    logDiag('Audio sin cifrar: falló la lectura de comprobación de la parte nueva ('+anErrName(e)+')');
+  }
+  if(!checked){
+    try{await anTruncate(db,h.m,part);}
+    catch(e){throw new Error('El archivo nuevo PODRÍA haber quedado guardado y no se pudo revertir. No borres nada: revisá el audio en Ajustes.');}
+    throw new Error('No se incorporó el archivo: se revirtió la ampliación y se conservó el audio anterior.');
+  }
+  return id;
+}
+async function anRepairPlainOnOpen(){
+  if(!anAudioReady() || anBusyN > 0 || recording || k2ReplaceMark())return;
+  try{
+    if(indexedDB.databases && !(await indexedDB.databases()).some(d=>d.name===AN_DB))return;
+    if(!(await anLockOk()) || vault.readOnly)return;
+    const db=await anDb(), metas=await anListMeta(db);
+    let recovered=0, restored=0, untouched=0, discarded=0;
+    const linked=new Set([convAudioId,...(convStore.data?.entries||[]).map(e=>e.audioId)].filter(Boolean));
+    for(const m of metas){
+      if(!anIsPlainMeta(m))continue;
+      // Versiones beta anteriores podían cortar una carga de archivo después
+      // de escribir la ficha "escribiendo". No existe un audio confirmado ahí:
+      // solo descartarla si NO pertenece a una nota ni a un borrador.
+      if(m.state==='escribiendo'){
+        if(linked.has(m.id)){untouched++;continue;}
+        await anDelete(db,m.id);discarded++;continue;
+      }
+      // Un archivo agregado por una versión beta anterior pudo dejar fragmentos
+      // nuevos sin confirmar y la ficha anterior intacta. Revisar el prefijo
+      // completo antes de limpiar únicamente esas partes sobrantes.
+      if(m.state==='cerrado' && anPlainValidMeta(m)){
+        const prefix=await anPlainMetaHealth(db,m,true);
+        if(prefix.ok && !(await anPlainMetaHealth(db,m)).ok){
+          await anDeletePartsFrom(db,m.id,m.parts);restored++;
+        }
+        continue;
+      }
+      if(m.state!=='grabando')continue;
+      if(!m.plain || !Array.isArray(m.plain.parts) || m.parts!==m.plain.parts.length || m.parts<1){
+        untouched++;continue;
+      }
+      const prev=m.plain.parts.slice(0,-1), last=m.plain.parts[m.parts-1];
+      // Intentar recuperar TODOS los fragmentos recibidos, con duración desconocida.
+      if(last && last.chunks>0){
+        const fixed={...last,complete:true,ms:null,incompleta:true,interrumpida:true};
+        const parts=prev.concat(fixed);
+        const candidate={...m,state:'cerrado',bytes:parts.reduce((n,p)=>n+p.bytes,0),plain:{parts}};
+        if((await anPlainMetaHealth(db,candidate)).ok){
+          await anPutMeta(db,candidate);recovered++;continue;
+        }
+      }
+      // Si la parte nueva se dañó, solo se descarta esa parte SI las anteriores
+      // pasaron una comprobación completa. Si no, no se toca ningún dato.
+      if(prev.length){
+        const candidate={...m,state:'cerrado',parts:prev.length,
+          bytes:prev.reduce((n,p)=>n+p.bytes,0),plain:{parts:prev}};
+        if((await anPlainMetaHealth(db,candidate,true)).ok){
+          await anTruncate(db,candidate,prev.length);restored++;continue;
+        }
+      }
+      untouched++;
+    }
+    if(discarded)flash('Se limpiaron '+discarded+' archivos de audio sin cifrar que habían quedado a medio cargar.');
+    if(recovered)flash('Se recuperó audio sin cifrar de una grabación interrumpida ('+recovered+'). Revisá la duración: pudo quedar incompleta.');
+    if(restored)flash('Se conservaron las partes anteriores de '+restored+' audio(s) sin cifrar; la parte interrumpida no pudo recuperarse.');
+    if(untouched)flash('Hay '+untouched+' audio(s) sin cifrar interrumpidos que no se pudieron revisar. Se conservaron intactos.');
+  }catch(e){logDiag('Revisión de audio sin cifrar interrumpida; nada se borró automáticamente ('+anErrName(e)+')');}
 }
 /*P2-BIBLIOTECA-END*/
 
@@ -4913,7 +5101,7 @@ function e3Stop(){
   s.url = null; s.cek = null; s.detail = null; s.button.disabled = false;
   s.button.textContent = 'Reproducir'; s.button.setAttribute('aria-label', 'Reproducir audio de esta nota');
 }
-function e3Alive(s){ return e3Current === s && s.epoch === e3Epoch && anUsable() && s.root.isConnected; }
+function e3Alive(s){ return e3Current === s && s.epoch === e3Epoch && s.root.isConnected && (s.plain === false ? anUsable() : anAudioReady()); }
 function e3Time(ms){ return Number.isFinite(ms) ? fmtClock(Math.max(0, ms)) : 'Duración no disponible'; }
 function e3Failure(s, msg){
   if (!e3Alive(s)) return;
@@ -4930,9 +5118,15 @@ async function e3Part(s, part, seconds = 0){
     for (let n = 0; n < p.chunks; n++) {
       const chunk = await anGetChunk(s.db, s.id, part, n);
       if (!e3Alive(s) || request !== s.request) return;
-      const plain = await anOpenChunk(s.cek, s.hid, s.id, part, n, chunk);
-      if (!e3Alive(s) || request !== s.request) { plain.fill(0); return; }
-      bytes += plain.length; pieces.push(new Blob([plain])); plain.fill(0);
+      if (s.plain) {
+        if (!(chunk instanceof Blob) || await anPlainHash(chunk) !== p.hashes[n]) throw new Error('fragmento sin cifrar alterado');
+        if (!e3Alive(s) || request !== s.request) return;
+        bytes += chunk.size; pieces.push(chunk);
+      } else {
+        const plain = await anOpenChunk(s.cek, s.hid, s.id, part, n, chunk);
+        if (!e3Alive(s) || request !== s.request) { plain.fill(0); return; }
+        bytes += plain.length; pieces.push(new Blob([plain])); plain.fill(0);
+      }
     }
     if (bytes !== p.bytes) throw new Error('audio incompleto');
     if (!e3Alive(s) || request !== s.request) return;
@@ -4964,10 +5158,10 @@ async function e3Play(root, entry, button, range, status, clock){
     return;
   }
   e3Stop();
-  if (!anUsable()) { status.textContent = 'Desbloqueá la protección para escuchar el audio.'; return; }
+  if (!anAudioReady()) { status.textContent = 'Desbloqueá la protección para escuchar el audio.'; return; }
   if (convAudioWork() || copiaBusyN) { status.textContent = 'Esperá a que termine la grabación, el guardado o la copia.'; return; }
   const s = e3Current = {root, id: entry.audioId, button, range, status, clock, epoch: e3Epoch, audio: new Audio(), url: null,
-    hid: vault.header.id, part: 0, request: 0, loading: true, timer: null};
+    hid: vault.header && vault.header.id, plain:null, part: 0, request: 0, loading: true, timer: null};
   button.disabled = true; status.textContent = 'Preparando audio…';
   try {
     if (!(await anStoredCount())) throw new Error('no existe');
@@ -4975,13 +5169,20 @@ async function e3Play(root, entry, button, range, status, clock){
     const meta = await anGetMeta(s.db, s.id);
     if (!e3Alive(s)) return;
     if (!meta) { e3Failure(s, 'Audio no disponible. El texto se conserva. Podés quitar la referencia desde ⋯.'); return; }
-    if (anIsPlainMeta(meta)) { e3Failure(s, 'Este audio está guardado sin cifrar (ensayo) y todavía no se reproduce desde la nota. Se conserva sin cambios.'); return; }
-    if (!anValidMeta(meta) || meta.state !== 'cerrado') throw new Error('ficha');
-    s.detail = await anOpenDetail(vault.audioKey, s.hid, s.id, meta.sealed);
-    if (!e3Alive(s)) return;
-    if (!s.detail.parts.length || s.detail.parts.length !== meta.parts) throw new Error('partes');
-    const cek = await anOpenCek(vault.audioKey, s.hid, s.id, meta.key);
-    if (!e3Alive(s)) return; s.cek = cek;
+    if (anIsPlainMeta(meta)) {
+      const h = await anPlainHealth(s.db, s.id);
+      if (!h.ok) throw new Error('audio sin cifrar incompleto');
+      s.plain = true; s.detail = h.m.plain;
+    } else {
+      if (!anUsable()) { e3Stop(); status.textContent = 'Desbloqueá la protección para escuchar este audio cifrado.'; return; }
+      if (!anValidMeta(meta) || meta.state !== 'cerrado') throw new Error('ficha');
+      s.plain = false;
+      s.detail = await anOpenDetail(vault.audioKey, s.hid, s.id, meta.sealed);
+      if (!e3Alive(s)) return;
+      if (!s.detail.parts.length || s.detail.parts.length !== meta.parts) throw new Error('partes');
+      const cek = await anOpenCek(vault.audioKey, s.hid, s.id, meta.key);
+      if (!e3Alive(s)) return; s.cek = cek;
+    }
     const total = anTotalMs(s.detail); s.total = total;
     range.disabled = total === null || total <= 0; range.max = total === null ? 0 : total / 1000; range.value = 0;
     clock.textContent = '0:00 / ' + e3Time(total);
@@ -5028,13 +5229,17 @@ async function e3Write(next){
   if (!vault.saved(CONV_KEY)) { convStore.revert(before, raw); throw new Error('No se pudo confirmar el guardado. No se borró ningún audio.'); }
 }
 async function e3Remove(entryId, audioId){
-  if (!anUsable() || convAudioWork() || copiaBusyN || !(await anLockOk())) return flash('No se puede cambiar el audio ahora. Terminá las tareas pendientes y usá la pestaña con permiso para guardar.');
+  if(k2ReplaceMark())return flash('Terminá la restauración antes de cambiar audios.');
+  if (!anAudioReady() || convAudioWork() || copiaBusyN || !(await anLockOk())) return flash('No se puede cambiar el audio ahora. Terminá las tareas pendientes y usá la pestaña con permiso para guardar.');
   if (convAudioWork() || copiaBusyN) return;
   if (convAudioId === audioId || (entryId && convEditingId === entryId)) return flash('Primero guardá o cancelá la edición de esta nota.');
   if (!entryId && e3Used(audioId)) return flash('El audio ya está unido a una nota o borrador; se conserva.');
   if (entryId && (!convEntry(entryId) || convEntry(entryId).audioId !== audioId)) return;
-  try { if (!entryId && anIsPlainMeta(await anGetMeta(await anDb(), audioId))) return flash('Ese audio está guardado sin cifrar (ensayo): no se borra desde acá. Se conserva sin cambios.'); }
-  catch (e) { return flash('No se pudo comprobar el audio. No se borró nada.'); }
+  try {
+    const m=await anGetMeta(await anDb(),audioId);
+    if (!m || !anValidMeta(m)) return flash('No se pudo comprobar el audio. No se borró nada.');
+    if (!anIsPlainMeta(m) && !anUsable()) return flash('Desbloqueá la protección antes de quitar este audio cifrado.');
+  } catch (e) { return flash('No se pudo comprobar el audio. No se borró nada.'); }
   if (!confirm(entryId ? '¿Quitar el audio de esta nota? El texto queda guardado. Si ninguna otra nota lo usa, el audio se borra. No se puede deshacer.' : '¿Borrar este audio sin nota? No se puede deshacer.')) return;
   convSaving = true; e3Stop();
   try {
@@ -5045,15 +5250,15 @@ async function e3Remove(entryId, audioId){
   finally { convSaving = false; renderConv(); void e3RefreshSpace(); }
 }
 async function e3Recover(id){
-  if (!anUsable() || convAudioWork() || copiaBusyN || !(await anLockOk())) return flash('No se puede recuperar el audio ahora. Terminá las tareas pendientes y usá la pestaña con permiso para guardar.');
+  if(k2ReplaceMark())return flash('Terminá la restauración antes de recuperar audios.');
+  if (!anAudioReady() || convAudioWork() || copiaBusyN || !(await anLockOk())) return flash('No se puede recuperar el audio ahora. Terminá las tareas pendientes y usá la pestaña con permiso para guardar.');
   if (convAudioWork() || copiaBusyN || e3Used(id)) return;
   // Recuperar nunca descarta un mensaje que el usuario todavía no confirmó.
   if ($('text').value.trim() || convAudioId || convEditingId || $('title').value.trim() || tags.length)
     return flash('Primero guardá o descartá el borrador actual. No se reemplazó nada.');
   convSaving = true;
   try {
-    const db = await anDb(), h = await anAudioHealth(db, vault.audioKey, vault.header.id, id);
-    if (!h.ok && h.why === 'sin cifrar') throw new Error('Ese audio está guardado sin cifrar (ensayo): no se puede preparar una nota con él. Se conserva sin cambios.');
+    const db = await anDb(), h = await anVerifyLinkedAudio(db, id);
     if (!h.ok) throw new Error('El audio está dañado o todavía no terminó de guardarse. Se conserva sin cambios.');
     if (e3Used(id)) return;
     convClearComposer(); convOpenId = null; convComposeNew = true; convStartPending(true);
@@ -5091,7 +5296,7 @@ async function e3RefreshSpace(){
     const sum = list => list.reduce((t, m) => t + (m && Number.isFinite(m.bytes) ? m.bytes : 0), 0);
     const free = estimate && Number.isFinite(estimate.quota) && Number.isFinite(estimate.usage) ? Math.max(0, estimate.quota - estimate.usage) : null;
     $('e3SpaceMsg').textContent = (kinds === null ? 'No se pudieron consultar los audios.' : cifrados.length + ' audio(s) cifrado(s) · ' + mb(sum(cifrados)) +
-      (claros.length ? ' · ' + claros.length + ' audio(s) SIN CIFRAR (ensayo, no protegidos) · ' + mb(sum(claros)) : '')) +
+      (claros.length ? ' · ' + claros.length + ' audio(s) SIN CIFRAR (no protegidos) · ' + mb(sum(claros)) : '')) +
       (free === null ? ' · Espacio libre no disponible.' : ' · Espacio libre estimado del sitio: ' + mb(free) + (free < 50 * 1024 * 1024 ? ' · Queda poco espacio. Creá una copia y revisá tus audios.' : ''));
     $('e3Persistence').textContent = 'Protegido contra la limpieza automática: ' + (persisted === null ? 'no disponible.' : persisted ? 'Sí.' : 'No. Creá una copia cifrada como respaldo.');
     let textBytes = vault.records.bytes(); for (let i = 0; i < localStorage.length; i++) { const key = localStorage.key(i); if (key && key.startsWith('notasvoz.') && !vault.records.owns(key)) textBytes += 2 * (key.length + (localStorage.getItem(key) || '').length); }
@@ -5112,15 +5317,21 @@ async function e3RefreshSpace(){
         row.append(actions); list.append(row);
       }
       if (!sorted.length) list.append('Todavía no hay audios cifrados guardados.');
-    } else list.append(cifrados.length ? 'Hay audios cifrados: desbloqueá la protección para verlos.' : 'Los audios por nota se guardan con la protección activada.');
-    // Audios sin cifrar del ensayo P2: solo se informan. Sin reproducir, unir a notas, recuperar ni borrar desde acá,
-    // porque esas acciones usan la clave de la protección y no corresponden a un audio sin cifrar.
+    } else list.append(cifrados.length ? 'Hay audios cifrados: desbloqueá la protección para verlos.' : 'Todavía no hay audios cifrados guardados.');
     for (const m of claros.slice().sort(order)) {
       const row = document.createElement('div'); row.className = 'e3-audio-row'; row.dataset.modo = 'claro';
+      const entries = convStore.data ? convStore.data.entries.filter(e => e.audioId === m.id) : [];
+      const pending = convAudioId === m.id, orphan = !entries.length && !pending;
       const info = document.createElement('p');
-      info.textContent = 'Audio SIN CIFRAR (ensayo, no protegido)' + (m.state === 'cerrado' ? '' : ' · a medio guardar') + ' · ' + fmt(m.createdAt) + ' · ' + mb(m.bytes || 0) +
-        ' · No se reproduce ni entra en la copia cifrada actual.';
-      row.append(info); list.append(row);
+      info.textContent = (orphan ? 'Audio sin nota' : pending ? 'Audio en edición' : 'Audio de ' + entries.length + ' nota(s)') +
+        ' · SIN CIFRAR · ' + (m.state === 'cerrado' ? '' : 'a medio guardar · ') + fmt(m.createdAt) + ' · ' + mb(m.bytes || 0);
+      row.append(info);
+      const actions = document.createElement('div'); actions.className = 'row';
+      if(orphan && anAudioReady()){
+        if(m.state === 'cerrado')actions.append(convButton('Preparar nota',()=>void e3Recover(m.id)));
+        actions.append(convButton('Borrar audio',()=>void e3Remove(null,m.id),'ghost danger'));
+      }else if(entries.length)actions.append(convButton('Ver nota',()=>{document.querySelector('[data-delta-view="transcripcion"]').click();convOpen(entries[0].conversationId);}));
+      row.append(actions); list.append(row);
     }
     const old = await audioGetMeta(), previous = await audioGetPrevious();
     if (!valid()) return;
@@ -5147,6 +5358,17 @@ window.addEventListener('pagehide', e3Stop);
    «Conservar audio» sigue usando la base histórica, como antes (D2). El reproductor (E3) está en el bloque «E3» más arriba. */
 let anDbP = null, anBusyN = 0;
 const anUsable = () => vault.state === 'open' && !!vault.audioKey && !!vault.header;
+const anAudioReady = () => anUsable() || vault.state === 'off'; // Conservar audio no depende de contraseña
+async function anVerifyLinkedAudio(db,id){
+  const meta = await anGetMeta(db,id);
+  if (anIsPlainMeta(meta)) {
+    const h = await anPlainHealth(db,id);
+    return {ok:h.ok, why:h.why, m:h.m, detail:h.m && h.m.plain, plain:true};
+  }
+  if (!anUsable()) return {ok:false,why:'protección bloqueada',m:meta};
+  return anAudioHealth(db,vault.audioKey,vault.header.id,id);
+}
+
 function anDb(){
   if (!anDbP) { const p = anDbP = anOpen(); p.catch(() => { if (anDbP === p) anDbP = null; }); }
   return anDbP;
@@ -5154,7 +5376,9 @@ function anDb(){
 /* Candado de una sola pestaña: es el mismo de toda la app (vaultTakeTabLock). En la otra pestaña no se escriben audios. */
 let anLockWarned = false;
 async function anLockOk(){
+  if (k2ReplaceMark()) { flash('Esperá a que termine la restauración antes de guardar o modificar audios.'); return false; }
   const ok = await vaultTakeTabLock();
+  if (k2ReplaceMark()) return false;
   if (!ok && !anLockWarned) { anLockWarned = true; flash('DictaVoz está abierta en otra pestaña: en esta no se guardan audios. Cerrá la otra y recargá.'); }
   return ok;
 }
@@ -5225,10 +5449,17 @@ function anBeginRecording(mime){
     ctx: convCtx, baseParts: null};
   const target = anTargetNow();
   r.q = (async () => {
-    if (!(await anLockOk())) { r.failed = true; r.warned = true; return; }
+    if (k2ReplaceMark() || !(await anLockOk())) { r.failed = true; r.warned = true; return; }
     const db = r.db = await anDb();
+    if (k2ReplaceMark()) {r.failed=true;r.warned=true;return;}
     const part = {mime: String(mime || 'audio/webm').slice(0, 99), chunks: 0, bytes: 0, ms: null, origin: 'grabado', complete: false};
     if (target.mode === 'parte') {
+      const current=await anGetMeta(db,target.id);
+      if(anIsPlainMeta(current)){
+        r.failed=true;r.warned=true;
+        flash('Esta nota conserva audio SIN CIFRAR. Con la protección abierta no se puede ampliarlo como si estuviera cifrado. El audio anterior se conserva intacto; no se marcó dañado.');
+        return;
+      }
       const o = await anOpenForPart(db, r.kAudio, r.hid, target);
       if (o) {
         r.id = o.m.id; r.part = o.m.parts; r.cek = o.cek;
@@ -5267,7 +5498,7 @@ function anRecFinishErr(r, e){
 function anRecChunk(r, data){
   const size = data.size;
   r.q = r.q.then(async () => {
-    if (r.failed || !r.id) return;
+    if (r.failed || !r.id || k2ReplaceMark()) return;
     const n = r.saved, blob = await anSealChunk(r.cek, r.hid, r.id, r.part, n, data);
     await anPutChunkMeta(r.db, {...r.base, bytes: r.base.bytes + r.bytes + size}, r.part, n, blob);
     r.saved = n + 1; r.bytes += size;
@@ -5292,6 +5523,77 @@ function anRecFinish(r, ms, complete){
   }).catch(e => anRecFinishErr(r, e)).finally(() => { anBusyN = Math.max(0, anBusyN - 1); });
   return r.q;
 }
+/* Grabación sin contraseña: misma biblioteca de audio por nota que E2, sin cifrar.
+   Cada fragmento se guarda con su huella SHA-256, manteniendo la ficha y el fragmento juntos. */
+function startAudioClaro(recorder){
+  anBusyN++;
+  const target=anTargetNow();
+  const r={id:null,part:0,saved:0,bytes:0,base:null,detail:null,failed:false,warned:false,
+    ctx:convCtx,baseParts:null,db:null};
+  const fail=e=>{
+    r.failed=true;
+    logDiag('Audio sin cifrar: error de guardado ('+anErrName(e)+')');
+    if(!r.warned){r.warned=true;flash('No se pudo guardar completo el audio sin cifrar ('+anErrName(e)+'). El texto sigue disponible; se conserva lo que alcanzó a guardarse.');}
+  };
+  r.q=(async()=>{
+    if(k2ReplaceMark() || vault.state!=='off' || !(await anLockOk())) {r.failed=true;return;}
+    r.db=await anDb();
+    const part={mime:String(recorder.mimeType||'audio/webm').slice(0,99),chunks:0,bytes:0,
+      ms:null,origin:'grabado',complete:false,hashes:[]};
+    if(target.mode==='parte'){
+      const h=await anPlainHealth(r.db,target.id);
+      if(h.ok){
+        r.id=h.m.id;r.part=h.m.parts;r.detail={parts:h.m.plain.parts.concat(part)};
+        r.base={...h.m,state:'grabando',parts:h.m.parts+1,plain:r.detail};
+        if(target.obligatorio)r.baseParts=h.m.parts;
+        return;
+      }
+      if(target.obligatorio){
+        r.failed=true;r.warned=true;flash('El audio anterior no se puede ampliar sin alterarlo. No se guardará esta grabación; el texto queda disponible.');
+        return;
+      }
+    }
+    r.id=anNewId();r.detail={parts:[part]};
+    r.base={...anNewMeta(r.id,Date.now(),'grabando'),mode:AN_PLAIN_MODE,parts:1,plain:r.detail};
+  })().catch(fail);
+  recorder._deltaStopRequested=false;
+  recorder.onerror=e=>{
+    audioStoppedEarly=true;refreshCaptureWarning();
+    logDiag('Audio sin cifrar: MediaRecorder indicó un error.');
+  };
+  recorder.ondataavailable=e=>{
+    if(!e.data||!e.data.size)return;
+    r.q=r.q.then(async()=>{
+      if(r.failed||!r.id||k2ReplaceMark())return;
+      const hash=await anPlainHash(e.data);
+      const parts=r.detail.parts.slice(), old=parts[r.part];
+      parts[r.part]={...old,chunks:r.saved+1,bytes:r.bytes+e.data.size,hashes:old.hashes.concat(hash)};
+      const next={...r.base,bytes:r.base.bytes+r.bytes+e.data.size,plain:{parts}};
+      await anPutChunkMeta(r.db,next,r.part,r.saved,e.data);
+      r.saved++;r.bytes+=e.data.size;r.detail={parts};
+      if(r.saved===1 && r.id!==convAudioId)anLinkPending(r,r.id,null);
+    }).catch(fail);
+  };
+  recorder.onstop=()=>{
+    const expected=recorder._deltaStopRequested;
+    if(!expected){audioStoppedEarly=true;refreshCaptureWarning();}
+    r.q=r.q.then(async()=>{
+      if(!r.id||!r.saved)return;
+      const parts=r.detail.parts.slice();
+      parts[r.part]={...parts[r.part],complete:true,ms:r.failed?null:Math.max(0,Math.round(elapsedMs())),
+        ...(r.failed?{incompleta:true}:{}),...(expected?{}:{interrumpida:true})};
+      const m={...r.base,state:'cerrado',bytes:r.base.bytes+r.bytes,plain:{parts}};
+      await anPutMeta(r.db,m);
+      if(!r.failed) {
+        anLinkPending(r,r.id,anTotalMs(m.plain));
+        flash('Audio guardado sin cifrar. Queda unido a la nota al tocar Guardar.');
+      }
+      logDiag('Audio sin cifrar: parte cerrada · '+r.saved+' fragmentos · '+r.bytes+' bytes');
+    }).catch(fail).finally(()=>{anBusyN=Math.max(0,anBusyN-1);});
+  };
+  try{recorder.start(10000);hideAudioDone();logDiag('Audio sin cifrar: se guarda unido a la nota ('+recorder.mimeType+')');}
+  catch(e){mr=null;fail(e);r.q.finally(()=>{anBusyN=Math.max(0,anBusyN-1);});}
+}
 function startAudioNota(recorder){
   const r = anBeginRecording(recorder.mimeType || audioMime);
   recorder._deltaStopRequested = false;
@@ -5312,12 +5614,64 @@ function startAudioNota(recorder){
 
 /* Archivo cargado: se guarda cifrado en partes de 1 MB, sin leerlo entero. Antes se mira si hay lugar. */
 async function anSaveFile(f, ms){
-  if (!anUsable() || !$('saveAudio').checked) return null;
+  if (!anAudioReady() || !$('saveAudio').checked) return null;
+  if(k2ReplaceMark()) {flash('Esperá a que termine la restauración antes de cargar un audio.');return null;}
+  if (vault.state === 'off') {
+    anBusyN++;
+    const job={ctx:convCtx,baseParts:null};
+    let stagedId=null,db=null;
+    try {
+      if(!(await anLockOk()) || k2ReplaceMark()) return null;
+      db=await anDb();const target=anTargetNow();
+      let id=null;
+      if(target.mode==='parte'){
+        const h=await anPlainHealth(db,target.id);
+        if(h.ok){
+          if(target.obligatorio)job.baseParts=h.m.parts;
+          id=await anPlainAppendFile(db,target.id,f,Math.max(0,Math.round(ms||0)));
+        } else if(target.obligatorio){
+          flash('El audio anterior no se puede ampliar. El archivo se transcribe, pero no se agregó a la nota.');
+          return null;
+        }
+      }
+      if(!id){
+        stagedId=anNewId();
+        id=await anPlainStageFile(db,f,Math.max(0,Math.round(ms||0)),stagedId);
+      }
+      const checked=await anPlainHealth(db,id);
+      if(!checked.ok)throw new Error('audio guardado pero no verificable: se conserva sin vincular');
+      if(anLinkPending(job,id,anTotalMs(checked.m.plain)))flash('Audio guardado sin cifrar. Queda unido a la nota al tocar Guardar.');
+      return id;
+    } catch(e) {
+      logDiag('Audio sin cifrar: error al guardar archivo ('+anErrName(e)+')');
+      if(stagedId && db){
+        try{
+          const m=await anGetMeta(db,stagedId);
+          if(m){
+            if(m.state==='escribiendo' && !e3Used(stagedId)){
+              await anDelete(db,stagedId); // no había sido confirmado ni enlazado
+            }else{
+              flash('Es posible que el archivo haya quedado guardado sin vincular. Revisá Ajustes > Espacio y audios antes de intentar de nuevo. No se borró.');
+              return null;
+            }
+          }
+        }catch(cleanup){
+          flash('No se pudo comprobar el archivo después del error. Podría quedar audio sin cifrar en Ajustes: revisalo antes de repetir.');
+          return null;
+        }
+      }
+      if(String(e&&e.message||'').includes('PODRÍA')){
+        flash(e.message+' La transcripción se conserva.');return null;
+      }
+      flash('No se pudo guardar el audio sin cifrar ('+anErrName(e)+'). Se conserva la transcripción.');
+      return null;
+    } finally {anBusyN=Math.max(0,anBusyN-1);}
+  }
   anBusyN++;
   const hid = vault.header.id, kAudio = vault.audioKey, target = anTargetNow(), job = {ctx: convCtx, baseParts: null};
   let db = null, id = null, part = 0, isNew = true;
   try {
-    if (!(await anLockOk())) return null;
+    if (!(await anLockOk()) || k2ReplaceMark()) return null;
     try {
       const e = navigator.storage && navigator.storage.estimate ? await navigator.storage.estimate() : null;
       if (e && Number.isFinite(e.quota) && Number.isFinite(e.usage) && e.quota - e.usage < f.size * 1.2) {
@@ -5330,6 +5684,10 @@ async function anSaveFile(f, ms){
       origin: 'cargado', name: String(f.name || '').slice(0, 255), complete: true};
     let cek, meta;
     if (target.mode === 'parte') {
+      if(anIsPlainMeta(await anGetMeta(db,target.id))){
+        flash('El audio anterior de esta nota está SIN CIFRAR y sigue íntegro. No se puede anexar el archivo mientras la bóveda está abierta; el archivo original sigue en tu dispositivo. No se marcó dañado.');
+        return null;
+      }
       const o = await anOpenForPart(db, kAudio, hid, target);
       if (o) {
         id = o.m.id; part = o.m.parts; isNew = false; cek = o.cek;
@@ -5344,7 +5702,10 @@ async function anSaveFile(f, ms){
       await anPutMeta(db, first);   // «escribiendo»: si se corta, se descarta al abrir (el usuario todavía tiene el archivo)
       meta = anSetState(first, 'cerrado');
     }
-    for (const c of plan) await anPutChunk(db, id, part, c.n, await anSealChunk(cek, hid, id, part, c.n, f.slice(c.start, c.end)));
+    for (const c of plan) {
+      if(k2ReplaceMark())throw new Error('Restauración iniciada durante la carga del archivo.');
+      await anPutChunk(db, id, part, c.n, await anSealChunk(cek, hid, id, part, c.n, f.slice(c.start, c.end)));
+    }
     await anPutMeta(db, meta);
     const detail = await anOpenDetail(kAudio, hid, id, meta.sealed);
     if (anLinkPending(job, id, anTotalMs(detail))) flash('El archivo quedó guardado cifrado. Queda unido a la nota al tocar Guardar.');
@@ -5366,10 +5727,17 @@ async function anDeleteAudio(id){
 async function anTruncateAudio(id, keep){
   if (typeof id !== 'string' || !id || !anIsInt(keep) || keep < 1) return false;
   try {
-    if (!anUsable() || !(await anLockOk())) return false;
+    if (!anAudioReady() || !(await anLockOk())) return false;
     const db = await anDb(), m = await anGetMeta(db, id);
-    if (!m || !anValidMeta(m) || m.state !== 'cerrado' || !m.sealed) return false;
+    if (!m || !anValidMeta(m) || m.state !== 'cerrado' || (!m.sealed && !anIsPlainMeta(m))) return false;
     if (m.parts <= keep) return true;   // no hay nada por encima de lo confirmado
+    if (anIsPlainMeta(m)) {
+      const h=await anPlainHealth(db,id);
+      if (!h.ok) return 'danado';
+      const parts=h.m.plain.parts.slice(0,keep);
+      await anTruncate(db,{...m,parts:keep,bytes:parts.reduce((n,p)=>n+p.bytes,0),plain:{parts}},keep);
+      return true;
+    }
     const hid = vault.header.id, kAudio = vault.audioKey;
     // Antes de recortar se comprueba que el audio esté sano; si no, no se toca nada.
     if (anDamaged.has(id)) return 'danado';
@@ -6257,20 +6625,38 @@ function k2ReplaceText(i){
   return out.join('\n');
 }
 /* Respaldo previo: completo o nada. Devuelve la copia ya comprobada; si saldría con exclusiones, lanza antes de borrar. */
+/* Huella lógica del inventario moderno. Nunca incluye ni borra audios históricos
+   por accidente; las fichas modernas se reexaminan antes y después del respaldo
+   y otra vez justo antes del borrado K2. */
+async function k2AudioInventory(){
+  const kinds=await anStoredKinds();
+  if(kinds===null)throw new Error('No se pudo revisar el inventario de audios. No se borró nada.');
+  return JSON.stringify(kinds.metas.slice().sort((a,b)=>String(a.id).localeCompare(String(b.id))));
+}
 async function k2PriorBackup(ui){
+  const audioInventory=await k2AudioInventory();
   const open = vault.state === 'open', kinds = await anStoredKinds();
   if (kinds === null) throw new Error('No se pudieron leer los audios guardados: no se puede asegurar el respaldo previo. No se borró nada.');
   const gaps = [];
-  if (!open && kinds.total > 0) gaps.push('hay audios cifrados que solo se pueden copiar con la protección abierta');
-  if (kinds.claros) gaps.push(kinds.claros + ' audios guardados sin cifrar que el respaldo no lleva');
+  // Solo las fichas cifradas requieren la bóveda abierta. Las fichas P2 sin cifrar
+  // se incluyen en un respaldo de formato 2 que SÍ cifra el audio en el archivo.
+  if (!open && kinds.cifrados > 0) gaps.push('hay audios cifrados que solo se pueden copiar con la protección abierta');
   if (vault.frozen.size || vault.damaged.length || vault.records.quarantined()) gaps.push('hay datos dañados o apartados que el respaldo no puede incluir');
   if (gaps.length) throw new Error('El respaldo previo saldría INCOMPLETO (' + gaps.join('; ') + '). No se borró nada.');
   let pw = null;
   if (!open) { pw = await ui.backupPassword(); if (!pw) throw k2rCancelled(); }
   const made = await copiaMake(pw, {completa: true});
-  if (made.omitidos || made.faltan.sinCifrar || (open && made.r.audios !== kinds.cifrados))
-    throw new Error('El respaldo previo salió INCOMPLETO (' + copiaFaltantes(made.omitidos, made.faltan.sinCifrar, true).replace(/^Atención, la copia NO está completa: /, '').replace(/\.\n$/, '') + '). No se borró nada.');
-  return made;
+  // El respaldo no es suficiente por el solo hecho de superar su verificación
+  // criptográfica: TODOS los audios actuales deben figurar en su inventario.
+  const expectedFormat = kinds.claros ? 2 : 1;
+  const missing = made.r.audios !== kinds.total || made.r.formato !== expectedFormat ||
+    (expectedFormat === 2 && (made.r.claro !== kinds.claros || made.r.exclusiones !== 0));
+  if (made.omitidos || made.faltan.sinCifrar || missing)
+    throw new Error('El respaldo previo salió INCOMPLETO: había ' + kinds.total + ' audios en la biblioteca y se incluyeron ' +
+      made.r.audios + '. No se borró nada.');
+  if(await k2AudioInventory()!==audioInventory)
+    throw new Error('Los audios cambiaron mientras se preparaba el respaldo previo. No se borró nada.');
+  return {...made,audioInventory};
 }
 /* Borrado guiado. Solo con el candado tomado, el diario en «borrando» y el respaldo previo ya hecho. Se puede repetir entero. */
 async function k2rWipe(){
@@ -6292,9 +6678,11 @@ async function k2Replace(file, secret, ui){
   if (k2ReplaceActive) throw new Error('Ya hay un reemplazo en curso.');
   const pending = localStorage.getItem(K2R_JOURNAL) !== null ? k2rParse(localStorage.getItem(K2R_JOURNAL)) : null;
   if (!pending && vault.state !== 'open' && vault.state !== 'off') throw new Error('Desbloqueá DictaVoz con tu contraseña antes de reemplazar.');
-  if (vaultBusy() || convSaving || copiaBusyN) throw new Error('Primero terminá de grabar, transcribir o guardar.');
+  if (vaultBusy() || convSaving || copiaBusyN || anBusyN>0 || recording || feeding) throw new Error('Primero terminá de grabar, transcribir o guardar.');
   if (!globalThis.navigator?.locks?.request) throw new Error('Este navegador no permite impedir escrituras de otra pestaña.');
   if (!(await vaultTakeTabLock()) || vault.readOnly || vault.otherTab) throw new Error('Cerrá las otras pestañas antes de reemplazar.');
+  if (vaultBusy() || convSaving || copiaBusyN || anBusyN>0 || recording || feeding)
+    throw new Error('Se inició una grabación o guardado mientras se tomaba el candado. No se reemplazó nada.');
   const say = t => { try { ui.progress(t); } catch (e) {} };
   k2ReplaceActive = true;   // la marca: desde acá no se autobloquea, no se crean ni comprueban copias, no empieza otro reemplazo
   let journal = pending, info = null, destroyed = false;   // destroyed: el borrado ya empezó (desde ahí esta pestaña queda sin escribir hasta recargar)
@@ -6317,6 +6705,10 @@ async function k2Replace(file, secret, ui){
       const made = await k2PriorBackup(ui);
       await ui.saveBackup(made.file);
       if (!(await ui.confirm(2, info, made.file.name))) throw k2rCancelled();
+      // El usuario pudo dejar la confirmación abierta; nada puede borrarse si
+      // la biblioteca ganó, perdió o cambió una ficha desde el respaldo previo.
+      if(await k2AudioInventory()!==made.audioInventory)
+        throw new Error('Los audios cambiaron después del respaldo previo. Cancelá la restauración y volvé a intentar; no se borró nada.');
       journal = k2rSet('borrando', journal.started, {name: made.file.name, bytes: made.file.size});
       say('Borrando lo que había…');
       destroyed = true;
@@ -6369,7 +6761,7 @@ function copiaSummary(r){
   const out = ['creada el ' + convStamp(r.creado)];
   if (Number.isInteger(r.cuadernos)) out.push(r.cuadernos === 1 ? '1 cuaderno' : r.cuadernos + ' cuadernos');
   if (Number.isInteger(r.notas)) out.push(r.notas === 1 ? '1 nota' : r.notas + ' notas');
-  out.push(r.contenido === 'completa' ? (r.audios === 1 ? '1 audio cifrado' : r.audios + ' audios cifrados') : 'solo texto, sin audios');
+  out.push(r.contenido === 'completa' ? (r.audios === 1 ? '1 audio incluido y cifrado en la copia' : r.audios + ' audios incluidos y cifrados en la copia') : 'solo texto, sin audios');
   out.push('archivo de ' + (r.bytes < 104858 ? Math.max(1, Math.round(r.bytes / 1024)) + ' KB' : mb(r.bytes)));
   return out.join(' · ');
 }
@@ -6423,7 +6815,7 @@ function copiaFaltantes(omitidos, sinCifrar, completa){
    y el respaldo previo del reemplazo (K2). completa: solo cuenta con la protección abierta. Los avisos sin excepción llevan .plain. */
 async function copiaMake(filePassword, opts){
   if (vault.state !== 'off' && vault.state !== 'open') throw Object.assign(new Error(''), {plain: true, silent: true});
-  const abierta = vault.state === 'open', completa = abierta && !!opts.completa;
+  const abierta = vault.state === 'open', completa = !!opts.completa;
   let header, key;
   if (abierta) {
     await vault.flush();
@@ -6436,18 +6828,32 @@ async function copiaMake(filePassword, opts){
     header = c.header;
   }
   copiaSay('Armando la copia…');
-  const now = Date.now(), w = copiaWriter(header, key, completa ? 'completa' : 'solo-texto', now);
+  const kinds=await anStoredKinds();
+  if(kinds === null)throw new Error('no se pudieron leer los audios guardados');
+  // En esta beta el formato 2 (compatible con K2) incluye los audios sin cifrar, cifrándolos dentro del archivo.
+  // Sin audios sin cifrar se conserva sin modificaciones el formato 1 ya publicado.
+  const withPlain=completa && kinds.claros>0;
+  const now = Date.now(), w = withPlain
+    ? copia2Writer(header,key,'completa',now)
+    : copiaWriter(header,key,completa?'completa':'solo-texto',now);
   if (abierta) { for (const [name, raw] of vault.records.all()) await w.registro(name, raw); }
   else for (const [k, name] of Object.entries(VAULT_KEYS)) { const plain = vaultStore.getItem(k); if (plain !== null) await w.registro(name, await vaultSealRecord(key, header.id, name, plain)); }
   await w.config({cfg: localStorage.getItem(CKEY), generador: localStorage.getItem(GKEY)});
-  const faltan = completa ? await copiaAudios(w) : {omitidos: 0, sinCifrar: 0}, omitidos = faltan.omitidos;
-  // Una copia de solo texto tampoco lleva los audios sin cifrar: se avisa igual, para que nadie la crea completa.
-  if (!completa) { const k = await anStoredKinds(); if (k === null) throw new Error('no se pudieron leer los audios guardados'); faltan.sinCifrar = k.claros; }
-  const file = new File([await w.finish()], copiaName(now), {type: 'application/octet-stream'});
-  // Antes de entregarla se comprueba entera, con las claves ya abiertas.
+  let omitidos=0, faltan={omitidos:0,sinCifrar:0}, blob;
+  if(withPlain){
+    const total=await copia2Audios(w,'completa',{kAudio:abierta?vault.audioKey:null,hid:abierta?vault.header.id:null});
+    blob=await w.finish(total);
+  }else{
+    faltan = completa && abierta ? await copiaAudios(w) : {omitidos:0,sinCifrar:kinds.claros};
+    omitidos=faltan.omitidos;blob=await w.finish();
+  }
+  const file = new File([blob], copiaName(now), {type:'application/octet-stream'});
   copiaSay('Comprobando la copia…');
-  const r = await copiaVerify(file, async () => ({key, audioKey: abierta ? vault.audioKey : null}));
-  return {file, r, abierta, completa, omitidos, faltan, now};
+  const r = withPlain
+    ? await copia2Verify(file,async()=>({key,audioKey:abierta?vault.audioKey:null}))
+    : await copiaVerify(file,async()=>({key,audioKey:abierta?vault.audioKey:null}));
+  if(withPlain){omitidos=r.exclusiones;faltan={omitidos:r.exclusiones,sinCifrar:0};}
+  return {file,r,abierta,completa,omitidos,faltan,now};
 }
 /* Crea la copia. filePassword: solo con la protección apagada (contraseña elegida para el archivo). */
 async function copiaCreate(filePassword){
@@ -6481,7 +6887,7 @@ async function copiaCheck(file){
   try {
     copiaSay('Leyendo «' + file.name + '»…');
     let last = 0;
-    const r = await copiaVerify(file, async h => {
+    const r = await copia2Verify(file, async h => {
       const secret = await copiaAsk('Contraseña o código de recuperación de esta copia');
       if (secret === null) throw copiaError('Cancelada');
       copiaSay('Abriendo la copia…');
@@ -6754,13 +7160,16 @@ async function audioSlotOk(){
 }
 function startAudioSave(stream){
   mr = null;
+  if (k2ReplaceMark()) { flash('No se puede guardar audio mientras se reemplazan los datos.'); return; }
   if (!$('saveAudio').checked) return;
   if (!audioOk || !window.MediaRecorder) { flash('No se pudo preparar el guardado del audio: se graba igual, sin guardarlo.'); logDiag('Audio: no se guarda (no disponible).'); return; }
   const mime = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg;codecs=opus'].find(t => MediaRecorder.isTypeSupported(t));
   try { mr = new MediaRecorder(stream, Object.assign({audioBitsPerSecond: 32000}, mime ? {mimeType: mime} : {})); }
   catch (e) { mr = null; flash('Este navegador no puede guardar el audio.'); logDiag('Audio: ' + (e.message || e)); return; }
   audioMime = mr.mimeType || mime || 'audio/webm';
-  if (anUsable()) return startAudioNota(mr);   // E2: con la protección abierta, solo cifrado y unido a la nota (nunca en la base vieja)
+  if (anUsable()) return startAudioNota(mr);
+  if (vault.state === 'off') return startAudioClaro(mr); // Beta: sin contraseña, unido a la nota en AN_DB.
+  return flash('Desbloqueá la protección para poder guardar el audio.');
   audioSid = Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,7); audioN = 0; audioBytes = 0; audioTs = Date.now(); audioQ = Promise.resolve(); audioWarned = false; audioSaveFailed = false;
   const sid = audioSid, mimeT = audioMime, ts = audioTs, recorder = mr;
   recorder._deltaStopRequested = false;
@@ -7034,17 +7443,13 @@ function stopUI(){
 }
 $('rec').onclick = async () => {
   if (!recording) {
+    if (k2ReplaceMark()) {setStatus('Terminá la restauración antes de comenzar una grabación.');return;}
     if (!window.isSecureContext || !navigator.mediaDevices) { setStatus('El navegador no deja usar el micrófono con la página abierta de esta forma (' + location.protocol + '). Abrila desde una dirección que empiece con https.'); return; }
     if (feeding || busy || outstanding > 0) { setStatus('Todavía se está transcribiendo: esperá a que termine para grabar de nuevo.'); return; }
     if (convSaving) { setStatus('Esperá a que termine de guardarse la nota.'); return; }
     if (copiaBusyN > 0) { setStatus('Esperá a que termine la copia cifrada.'); return; }
     recEng = eng(); $('rec').disabled = true; audioOk = false;
-    if (recEng === 'whisper' && $('saveAudio').checked && anUsable()) audioOk = true;   // E2: el audio va cifrado a su nota; el aviso del audio viejo no aplica
-    else if (recEng === 'whisper' && $('saveAudio').checked) {
-      const r = await audioSlotOk();
-      if (r === 'cancel') { $('rec').disabled = false; return; }
-      audioOk = r === 'ok';
-    }
+    if (recEng === 'whisper' && $('saveAudio').checked) audioOk = anAudioReady();
     try {
       if (recEng === 'native') { startNative(); return; }
       recording = true;
@@ -7132,6 +7537,12 @@ const MODEL_HELP = {
 };
 function updateModelHint(){
   $('modelHint').textContent = MODEL_HELP[$('model').value] || '';
+  const quick = document.getElementById('betaWhisperLabel');
+  if (quick) {
+    const motor = document.querySelector('input[name="eng"]:checked');
+    const modelo = $('model').selectedOptions[0]?.textContent.split(' · ')[0] || 'Small';
+    quick.textContent = motor?.value === 'native' ? 'Dictado local' : 'Whisper · ' + modelo;
+  }
 }
 $('model').addEventListener('change', updateModelHint);
 const hasOpt = (sel, v) => [...sel.options].some(o => o.value === v);
@@ -7161,7 +7572,7 @@ $('textSize').addEventListener('change', () => { applyTextSize($('textSize').val
 document.querySelectorAll('input[name=theme]').forEach(r => r.addEventListener('change', () => { applyTheme(themePref()); if (!saveCfg()) flash('La apariencia se aplicó, pero este navegador no permitió guardar el ajuste.'); }));
 ['model', 'accel', 'mic', 'replace', 'saveAudio', 'pVolatile', 'learnAuto'].forEach(id => $(id).addEventListener('change', saveCfg));
 $('listPreview').addEventListener('change', () => { saveCfg(); renderConv(); });   // B3: campo opcional de la configuración existente; solo cambia lo que se muestra
-document.querySelectorAll('input[name=eng]').forEach(r => r.addEventListener('change', () => { setStatus(''); saveCfg(); }));
+document.querySelectorAll('input[name=eng]').forEach(r => r.addEventListener('change', () => { setStatus(''); saveCfg(); updateModelHint(); }));
 
 /* ---------- Borrador autoguardado: sobrevive a recargas y cierres ---------- */
 let lastDraft = '', draftWriteQueue = Promise.resolve(), draftErrorShown = false, draftWriteVersion = 0;
@@ -7312,7 +7723,7 @@ initErgonomics(); loadCfg(); updateModelHint();
 // Protección cifrada: no bloquear mientras se graba o transcribe; guardar el borrador antes de bloquear.
 vaultSetHooks(() => recording || busy || outstanding > 0 || feeding || anBusyN > 0 || copiaBusyN > 0 || k2ReplaceActive, saveDraft);   // cifrar un archivo, y crear o comprobar una copia, también cuentan como uso
 vaultWhenReady(() => { loadNotes(); loadDict(); loadPeople(); loadGenerator(); updateGeneratorUI(); renderList(); convInit(); restoreDraft(); updWC(); });
-vaultWhenReady(() => { if (anUsable()) anReviewOnOpen(); });   // E2: después de cargar notas y borrador (el candado ya se tomó al desbloquear)
+vaultWhenReady(async () => { await anRepairPlainOnOpen(); if (anUsable()) await anReviewOnOpen(); });   // Audios en claro y cifrados: recuperación luego de tomar el candado
 refreshAudioBox();
 </script>
 <script>

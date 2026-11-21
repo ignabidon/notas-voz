@@ -277,15 +277,90 @@ try {
     assert.match(q.err || '', /INCOMPLETO[\s\S]*dañados o apartados/, JSON.stringify(q));
     assert.equal(await run('foto()'), baseQ, 'dato apartado: no se tocó nada');
     void X; void intacto; void base;
-    // c) audio sin cifrar (la bóveda apagada no puede cifrarlo ni el formato 1 llevarlo): se rechaza.
+    // c) El audio P2 sano entra en un respaldo previo cifrado de formato 2.
     await reset();
     await run(`nota('Persona Inventada Uno: nota sin protección X-901')`);
-    await run(`(async()=>{const db=await anDb();await anPlainStageFile(db,new File([new Uint8Array(2000).fill(4)],'tono.wav',{type:'audio/wav'}),1000);return 1})()`);
-    const baseP = await run('foto()');
-    const p = await replace(SAMPLE1, PASS1);
-    assert.match(p.err || '', /INCOMPLETO[\s\S]*sin cifrar/, JSON.stringify(p));
-    assert.equal(p.journal, null); assert.equal(await run('foto()'), baseP, 'audio sin cifrar: no se tocó nada');
+    const plainId=await run(`(async()=>{const db=await anDb();return anPlainStageFile(db,new File([new Uint8Array(2000).fill(4)],'tono.wav',{type:'audio/wav'}),1000)})()`);
+    const p=await replace(SAMPLE1,PASS1);
+    assert.equal(p.ok,true,'respaldo previo formato 2 permite K2 sin perder audio en claro: '+JSON.stringify(p));
+    const saved=await json(`const f=window.__backup,r=await copia2Verify(f,h=>copiaOpenWithSecret(h,${JSON.stringify(PBK)}));
+      return JSON.stringify({formato:r.formato,audios:r.audios,claros:r.claro,exclusiones:r.exclusiones,contenido:r.contenido})`);
+    assert.deepEqual(saved,{formato:2,audios:1,claros:1,exclusiones:0,contenido:'completa'},'respaldo incluye y cifra audio sin protección');
+    const backupB64=await run('b64(window.__backup)');
+    await reset();
+    const restored=await json(`const f=blob(${JSON.stringify(backupB64)}),r=await k2RestoreEmpty(f,${JSON.stringify(PBK)});
+      return JSON.stringify({formato:r.formato,audios:r.audios})`);
+    assert.deepEqual(restored,{formato:2,audios:1},'respaldo previo formato 2 puede restaurarse');
+    await load();await unlock(PBK);
+    const safe=await json(`const db=await anDb(),m=await anGetMeta(db,${JSON.stringify(plainId)});
+      const h=await anAudioHealth(db,vault.audioKey,vault.header.id,${JSON.stringify(plainId)});
+      const cek=await anOpenCek(vault.audioKey,vault.header.id,m.id,m.key),audio=await anOpenChunk(cek,vault.header.id,m.id,0,0,await anGetChunk(db,m.id,0,0));
+      return JSON.stringify({cipher:!anIsPlainMeta(m),healthy:h.ok,len:audio.length,same:[...audio].every(b=>b===4)})`);
+    assert.deepEqual(safe,{cipher:true,healthy:true,len:2000,same:true},'K2 restauró audio previo íntegro y cifrado');
+
+    // d) Un audio sin cifrar corrupto sigue bloqueando K2 antes de borrar nada.
+    await reset();
+    const damagedId=await run(`(async()=>{
+      const db=await anDb(),id=await anPlainStageFile(db,new Blob([new Uint8Array(120).fill(7)],{type:'audio/wav'}),1000);
+      await anPutChunk(db,id,0,0,new Blob([new Uint8Array(120).fill(99)]));
+      return id;
+    })()`);
+    const damagedBefore=await run('foto()');
+    const fail=await replace(SAMPLE1,PASS1);
+    assert.match(fail.err||'',/INCOMPLETO/,'audio claro dañado bloquea reemplazo: '+JSON.stringify(fail));
+    assert.equal(fail.journal,null);
+    assert.equal(await run('foto()'),damagedBefore,'datos dañados y notas se conservan');
+    void damagedId;
+    // e) Biblioteca mixta: audio en claro anterior y audio nuevo cifrado.
+    await reset();
+    await run(`nota('Persona Inventada Dos: biblioteca mixta ficticia X-902')`);
+    const mixed=await json(`const db=await anDb(),plain=await anPlainStageFile(db,new Blob([new Uint8Array(140).fill(21)]),500);
+      const enabled=await vault.enable(${JSON.stringify(PA)});enabled.dek.fill(0);await vaultTakeTabLock();
+      const cipher=await mkAudio(130,13);
+      return JSON.stringify({plain,cipher})`);
+    const m=await replace(SAMPLE1,PASS1);
+    assert.equal(m.ok,true,'respaldo mixto no impide K2: '+JSON.stringify(m));
+    const mixedBackup=await json(`const f=window.__backup,r=await copia2Verify(f,h=>copiaOpenWithSecret(h,${JSON.stringify(PA)}));
+      return JSON.stringify({version:r.formato,audios:r.audios,claros:r.claro,excluidos:r.exclusiones})`);
+    assert.deepEqual(mixedBackup,{version:2,audios:2,claros:1,excluidos:0},
+      'respaldo incluye juntos audio cifrado y sin cifrar');
+    void mixed;
     console.log('3) respaldo previo con exclusiones rechazado OK');
+  }
+
+
+  // ===== F2) K2 impide nuevas escrituras y detecta alteraciones del inventario =====
+  {
+    await reset();
+    await run(`nota('Persona Inventada Tres: dato previo a K2 X-903')`);
+    const race=await replace(SAMPLE1,PASS1, `mkUi({onConfirm: async step=>{
+      if(step!==2)return;
+      $('saveAudio').checked=true;
+      const attempted=await anSaveFile(new File([new Uint8Array(77)],'inventado.wav',{type:'audio/wav'}),1000);
+      await $('rec').onclick();
+      const db=await anDb();
+      let stageBlocked=false;
+      try{await anPlainStageFile(db,new Blob([new Uint8Array(90)]),500)}
+      catch(e){stageBlocked=/restauraci|Restauraci/.test(e.message)}
+      window.__k2Race={fileBlocked:attempted===null,micBlocked:!recording,stageBlocked};
+      // Simulación adversarial: escritura ajena que saltea deliberadamente
+      // el bloqueo de interfaz, como la sonda B1. El inventario debe detectarla.
+      const id=anNewId();window.__k2Intruder=id;
+      await anPutMeta(db,{...anNewMeta(id,Date.now(),'escribiendo'),mode:'claro',parts:1,bytes:90,
+        plain:{parts:[{mime:'audio/wav',origin:'cargado',chunks:1,bytes:90,ms:500,complete:false,hashes:[]}]}});
+    }})`);
+    assert.match(race.err||'',/Los audios cambiaron después del respaldo previo/,'F2: K2 cancela antes de borrar: '+JSON.stringify(race));
+    assert.equal(race.journal,null,'F2: diario de respaldo previo cancelado');
+    assert.equal(race.active,false,'F2: marca de K2 retirada tras abortar');
+    const evidence=await json(`const p=window.__k2Race,db=await anDb();
+      return JSON.stringify({...p,notes:JSON.parse(vaultStore.getItem(CONV_KEY)).entries.length,
+        intruder:!!(await anGetMeta(db,window.__k2Intruder)),header:localStorage.getItem(VAULT_HEADER)})`);
+    assert.deepEqual({fileBlocked:evidence.fileBlocked,micBlocked:evidence.micBlocked,stageBlocked:evidence.stageBlocked},
+      {fileBlocked:true,micBlocked:true,stageBlocked:true},'F2: archivo, micrófono y escritura directa de audio bloquearon');
+    assert.equal(evidence.notes,1,'F2: la nota que había no se borró');
+    assert.equal(evidence.intruder,true,'F2: audio aparecido durante el diálogo se conservó intacto');
+    assert.equal(evidence.header,null,'F2: la instalación original sin bóveda permanece sin reemplazar');
+    console.log('F2) escrituras durante K2 bloqueadas y cambio adversarial detectado');
   }
 
   // ===== 4) Copia de OTRA instalación (formato 1), contraseña cambiada y copia hecha con la protección apagada =====

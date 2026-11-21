@@ -50,12 +50,20 @@ try{
     await call('Page.enable');await call('Runtime.enable');
     const tab={targetId,call,run,
       async ready(){
+        // K2 puede recargar de nuevo la página justo entre la primera comprobación
+        // y la espera del candado: repetir ambas en el mismo bucle, sin dar por
+        // inicializada una pestaña por una lectura de su contexto anterior.
+        let acquired=false;
         for(let i=0;i<150;i++){
-          try{if(await run('document.readyState==="complete" && typeof k2RestoreEmpty==="function" && (vaultTabLockP!==null||vault.state==="locked")'))break;}catch(e){}
+          try{
+            if(await run('document.readyState==="complete" && typeof k2RestoreEmpty==="function" && typeof vaultTabLockP!=="undefined" && (vaultTabLockP!==null||vault.state==="locked")')){
+              await run('vaultTabLockP');   // la pestaña bloqueada no escribe hasta abrir la bóveda
+              acquired=true;break;
+            }
+          }catch(e){}  // el contexto pudo cambiar por una recarga interna de K2
           await sleep(100);
-          if(i===149)throw Error('DictaVoz no inició en '+url);
         }
-        await run('vaultTabLockP');   // bloqueada no escribe nada hasta abrirla (y al abrir toma el candado)
+        if(!acquired)throw Error('DictaVoz no inició o no tomó el candado en '+url);
         for(let i=0;i<50;i++){   // limpieza de arranque (k2ResumeCleanup): el lote desaparece si esta pestaña tiene el candado
           if(await run('vault.otherTab||vault.state==="locked"&&vaultTabLockP===null&&!localStorage.getItem(K2_JOURNAL)||!localStorage.getItem(K2_JOURNAL)'))break;await sleep(100);
         }

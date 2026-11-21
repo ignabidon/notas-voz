@@ -107,6 +107,8 @@ try {
   const A=await createNote('Persona Inventada Uno X-901',2), B=await createNote('Persona Inventada Dos X-902');
   assert.equal(await run('__persistCalls'),1,'persistencia solicitada al primer audio');
   await run(`document.querySelector('[data-delta-view=transcripcion]').click(); convOpen(${JSON.stringify(A.conversationId)})`);
+  // El aviso grande de la beta se quitó completamente a pedido del usuario.
+  assert.equal(await run("document.getElementById('betaAudioMissingGuide')===null"),true,'sin aviso grande en Cuadernos');
   const before=await crudo();
   assert.equal(await run('__urls.size'),0,'abrir cuaderno no descifra audio');
   await run("document.querySelector('.note-audio button').click()");
@@ -180,6 +182,9 @@ try {
   assert.equal(await run('vaultBusy()'),false);
   await run('vaultLastActivity=Date.now()-VAULT_IDLE_MS-1000');
   await waitFor("vault.state==='locked'",'autobloqueo con audio',25000);
+  // El autobloqueo puede recargar la aplicación. No consultar e3Current en
+  // el contexto nuevo antes de que termine la inicialización.
+  await waitFor(ready+" && typeof e3Current !== 'undefined'",'estado E3 listo tras autobloqueo');
   assert.equal(await run('e3Current===null'),true);
   console.log('E3 OK: reproducción WAV real, partes, pausa, seek, salida durante descifrado, URLs liberadas, huérfanos, error de escritura, borrado solo audio, referencia ausente, autobloqueo y anchos 320/360/412/760.');
 } finally {
