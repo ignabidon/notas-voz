@@ -186,6 +186,38 @@ try{
   assert.deepEqual(postCheck,{checks:2,failed:true,parts:1,healthy:true,extra:0},
     'verificación fallida tras agregar un archivo restaura el audio previo');
 
+  // Una compilación beta anterior dejó una parte huérfana después de fallar una carga.
+  const oldSuffix=JSON.parse(await run(`(async()=>{
+    const db=await anDb(),id=await anPlainStageFile(db,new Blob([new Uint8Array(128).fill(16)]),1000);
+    await anPutChunk(db,id,1,0,new Blob([new Uint8Array(80).fill(2)]));
+    const broken=!(await anPlainHealth(db,id)).ok;
+    await anRepairPlainOnOpen();
+    const h=await anPlainHealth(db,id);
+    return JSON.stringify({broken,healthy:h.ok,parts:h.m.parts,suffix:(await anCountPartChunks(db,id,1))});
+  })()`));
+  assert.deepEqual(oldSuffix,{broken:true,healthy:true,parts:1,suffix:0},
+    'se limpia solo el agregado nunca confirmado, sin modificar el audio previo');
+
+  // Recarga real: al volver a abrir se recupera la ficha interrumpida.
+  await run(`(async()=>{
+    const db=await anDb(),id=await anPlainStageFile(db,new Blob([new Uint8Array(72).fill(4)]),1000);
+    const m=await anGetMeta(db,id),newPart=new Blob([new Uint8Array(53).fill(5)]);
+    const p={mime:'audio/webm',origin:'grabado',chunks:1,bytes:newPart.size,ms:null,
+      complete:false,hashes:[await anPlainHash(newPart)]};
+    await anPutChunkMeta(db,{...m,state:'grabando',parts:2,bytes:m.bytes+newPart.size,
+      plain:{parts:m.plain.parts.concat(p)}},1,0,newPart);
+    localStorage.setItem('__betaRestartId',id);
+    return id;
+  })()`);
+  await call('Page.navigate',{url});
+  await wait("document.readyState==='complete' && typeof anRepairPlainOnOpen==='function'",'carga tras interrupción');
+  await wait("(async()=>{const db=await anDb(),m=await anGetMeta(db,localStorage.getItem('__betaRestartId'));return m?.state==='cerrado'})()",'reparación automática al reabrir');
+  const reopened=JSON.parse(await run(`(async()=>{
+    const db=await anDb(),m=await anGetMeta(db,localStorage.getItem('__betaRestartId')),h=await anPlainHealth(db,m.id);
+    return JSON.stringify({ok:h.ok,parts:m.parts,interrupted:m.plain.parts[1].interrumpida===true});
+  })()`));
+  assert.deepEqual(reopened,{ok:true,parts:2,interrupted:true},'el arranque recupera solo los fragmentos verificados');
+
   // Activar contraseña con audios en claro requiere consentimiento informado.
   await run(`(()=>{
     window.__enableConfirmationSeen=false;
