@@ -1,3 +1,11 @@
+## 20/11/2026 · PR #71: recuperación segura del audio sin contraseña (ChatGPT, revisión cruzada)
+
+- Al reabrir, `anRepairPlainOnOpen` examina los audios en claro interrumpidos con el candado de una sola pestaña. Verifica tamaño, fragmentos y SHA-256 antes de cerrar una parte recibida; si la parte agregada está dañada, solo devuelve la ficha a las partes anteriores cuando estas también pasan la verificación. Un caso ambiguo se conserva intacto.
+- `anPlainAppendFile` ahora escribe ficha y partes nuevas en **una sola transacción IndexedDB**. Si falla su comprobación posterior, revierte la ampliación con `anTruncate` atómico, conservando la versión anterior. También puede limpiar sobrantes no confirmados de compilaciones beta anteriores si la ficha anterior está íntegra.
+- Al activar la bóveda, si existen audios sin cifrar, se muestra una confirmación explícita: activar contraseña **no cifra esos audios históricos**. El estado de privacidad de la bóveda mantiene esa advertencia.
+- Se amplió `tests/beta-audio-claro-browser.mjs`: simulaciones de interrupción, fragmento dañado, aborto de una transacción real, fallo tras confirmar, restos de versiones anteriores y recuperación tras recargar; advertencia al activar protección.
+- **Solo rama beta del PR #71; sin cambios en `main` ni en el formato de copia.** Revisar el CI del último commit y hacer auditoría cruzada antes de fusionar. Motorola con datos inventados pendiente.
+
 ## 19/11/2026 · Beta funcional: «Conservar audio» siempre vincula la grabación a su nota (ChatGPT, PR #71)
 
 **Decisión A13 del propietario.** Conservar audio activo permite adjuntar y reproducir audio en Cuadernos tanto con protección (cifrado E2) como sin protección (audio expresamente `mode:'claro'`, con SHA-256 por fragmento). El botón Reproducir funciona en ambos modos; texto y sello de nota no cambian. Grabación MediaRecorder y carga desde archivo. Se quitó íntegro el aviso grande «¿Por qué no aparece Reproducir?» de Cuadernos (no es necesario sustituirlo). El panel Espacio indica «SIN CIFRAR» y ofrece las acciones para audios claros íntegros. Sin vinculación automática de audios históricos.
