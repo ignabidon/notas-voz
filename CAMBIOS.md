@@ -1,3 +1,11 @@
+## 21/11/2026 · Corrección de formulario oculto al crear copias (ChatGPT; rama fix-copias-formulario-visible-2026-11-21)
+
+- **Hallazgo confirmado por el propietario en Motorola G56 5G:** con la protección activa y abierta, «Crear una copia» sí esperaba contraseña, pero el formulario compartido `#vaultAuth` estaba dentro de la subpantalla oculta «Protección y contraseña». Por eso parecía no ocurrir nada; navegando a Protección se podía completar la operación.
+- **Corrección acotada:** la creación de copia y la confirmación previa a K2 usan el formulario `copiaAsk()` ya existente dentro de «Copias de seguridad». No se cambian claves, cifrado, almacenes, restauración ni contenido de archivos.
+- **Mensaje honesto:** la aplicación crea y verifica internamente la copia y solicita al navegador descargarla, pero no puede certificar que Android guardó el archivo. Ahora dice «Se solicitó la descarga» e indica buscarla en Descargas y usar «Verificar una copia». La fecha de Ajustes dice «Última copia preparada», sin prometer que la descarga concluyó; K2 solicita comprobar el respaldo previo físicamente antes de confirmar un borrado.
+- **Pruebas:** el test Chrome `tests/copia-browser.mjs` exige que el formulario sea visible en la subpantalla activa de Copias a 360 px, tanto con clave errónea como válida y en copias completas/solo texto. `tests/ajustes-browser.mjs` comprueba los textos sin dar por confirmada una descarga. CI y prueba física de este parche pendientes al abrir el PR.
+- **Ensayos anteriores sobre `main`:** el propietario grabó, conservó y reprodujo audio y reabrió notas con éxito; creó y verificó una copia cifrada descargada que contenía **10 cuadernos, 16 notas y 9 audios** (aproximadamente **0,5 MB**) el 21/11/2026. No se probó una restauración en esta ronda. La fusión de **PR #71** se verificó en `main` (`8ccc08ac`, merge normal) tras revisión independiente F1/F2/M1/M2 y CI en verde.
+
 ## 21/11/2026 · PR #71: correcciones de la segunda auditoría independiente (ChatGPT)
 
 - Informe externo: Claude verificó los arreglos previos pero reprodujo **F1** (archivo en claro interrumpido deja ficha `escribiendo` huérfana), **F2** (escrituras de audio mientras K2 respalda y borra) y los casos **M1/M2**. La conclusión de la auditoría fue **no fusionar** hasta corregirlos.
