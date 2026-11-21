@@ -43,20 +43,31 @@ try {
     class Cortado extends Blob { slice(a, b){ if (a > 0) return {size: b - a, arrayBuffer: () => Promise.reject(new DOMException('corte simulado', 'QuotaExceededError'))}; return super.slice(a, b); } }
     const f = new Cortado([new Uint8Array(AN_FILE_CHUNK + 10)], {type: 'audio/wav'});
     let error = ''; try { await anPlainStageFile(db, f, 1000); } catch (e) { error = e.name; }
-    const metas = await anListMeta(db), cortado = metas.find(m => m.id !== claro);
-    return JSON.stringify({claro, cortado: cortado.id, estado: cortado.state, error, trozos: await anCountChunks(db, cortado.id)});`);
+    const atomic = (await anListMeta(db)).length === 1;
+    // Una beta histórica SÍ podía dejar una ficha "escribiendo" y un fragmento.
+    // Se planta ese estado antiguo para probar la lectura, los avisos y el borrado,
+    // sin exigirle al escritor corregido que vuelva a dejar archivos huérfanos.
+    const staleId = anNewId(), p = {mime:'audio/wav', origin:'cargado',chunks:2,bytes:AN_FILE_CHUNK+10,
+      ms:1000,complete:false,hashes:[]};
+    await anPutMeta(db,{...anNewMeta(staleId,Date.now(),'escribiendo'),mode:'claro',
+      parts:1,bytes:p.bytes,plain:{parts:[p]}});
+    await anPutChunk(db,staleId,0,0,new Blob([new Uint8Array(AN_FILE_CHUNK).fill(1)]));
+    const cortado=await anGetMeta(db,staleId);
+    return JSON.stringify({claro, cortado:cortado.id,estado:cortado.state,error,atomic,
+      trozos:await anCountChunks(db,cortado.id)});`);
   assert.equal(ids.error, 'QuotaExceededError', 'el corte se informa, no se disimula');
-  assert.equal(ids.estado, 'escribiendo', 'la ficha cortada queda marcada como no confirmada');
-  assert.equal(ids.trozos, 1, 'quedó solo lo que alcanzó a escribirse; no se borró solo');
+  assert.equal(ids.atomic,true,'el guardado nuevo no deja fichas ni fragmentos al fallar');
+  assert.equal(ids.estado, 'escribiendo', 'ficha histórica cortada marcada como no confirmada');
+  assert.equal(ids.trozos, 1, 'la ficha heredada conserva el fragmento incompleto hasta la revisión');
   let kinds = await json(`const k = await anStoredKinds(); return JSON.stringify({total: k.total, cifrados: k.cifrados, claros: k.claros});`);
   assert.deepEqual(kinds, {total: 2, cifrados: 0, claros: 2});
 
-  // Panel sin protección: el audio completo puede prepararse como nota; el incompleto sigue sin acciones.
+  // Panel sin protección: el completo es recuperable; el resto antiguo incompleto se puede BORRAR.
   const panelOff = await json(`await e3RefreshSpace(); const rows = [...document.querySelectorAll('#e3AudioList .e3-audio-row')];
     return JSON.stringify({msg: document.getElementById('e3SpaceMsg').textContent, filas: rows.map(r => ({modo: r.dataset.modo || '', texto: r.textContent, botones: r.querySelectorAll('button').length}))});`);
   assert.match(panelOff.msg, /^0 audio\(s\) cifrado\(s\) · .* · 2 audio\(s\) SIN CIFRAR \(no protegidos\)/);
   assert.equal(panelOff.filas.length, 2);
-  for (const f of panelOff.filas) { assert.equal(f.modo, 'claro'); assert.equal(f.botones, /a medio guardar/.test(f.texto) ? 0 : 2); assert.match(f.texto, /SIN CIFRAR/); }
+  for (const f of panelOff.filas) { assert.equal(f.modo, 'claro'); assert.equal(f.botones, /a medio guardar/.test(f.texto) ? 1 : 2); assert.match(f.texto, /SIN CIFRAR/); }
   assert.equal(panelOff.filas.filter(f => /a medio guardar/.test(f.texto)).length, 1, 'el cortado se nombra como tal');
 
   // Ensayo de copia 2 sin protección: entra el completo (cifrado en el archivo) y el cortado queda declarado.
@@ -97,7 +108,7 @@ try {
   assert.match(panelOn.msg, /^1 audio\(s\) cifrado\(s\) · .* · 2 audio\(s\) SIN CIFRAR/);
   assert.deepEqual(panelOn.filas.map(f => f.modo).sort(), ['', 'claro', 'claro']);
   assert.deepEqual(panelOn.filas.find(f => !f.modo).botones, ['Preparar nota', 'Borrar audio'], 'el cifrado sin nota conserva sus acciones');
-  assert.deepEqual(panelOn.filas.filter(f => f.modo).map(f => f.botones.length).sort(), [0, 2]);
+  assert.deepEqual(panelOn.filas.filter(f => f.modo).map(f => f.botones.length).sort(), [1, 2]);
   // Un audio sin cifrar sano puede recuperarse sin contraseña; uno incompleto conserva sus datos.
   const acciones = await json(`
     const db = await anDb(), id = ${JSON.stringify(ids.claro)}, h = await anAudioHealth(db, vault.audioKey, vault.header.id, id);
