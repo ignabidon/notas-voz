@@ -182,6 +182,9 @@ try {
   assert.equal(await run('vaultBusy()'),false);
   await run('vaultLastActivity=Date.now()-VAULT_IDLE_MS-1000');
   await waitFor("vault.state==='locked'",'autobloqueo con audio',25000);
+  // El autobloqueo puede recargar la aplicación. No consultar e3Current en
+  // el contexto nuevo antes de que termine la inicialización.
+  await waitFor(ready+" && typeof e3Current !== 'undefined'",'estado E3 listo tras autobloqueo');
   assert.equal(await run('e3Current===null'),true);
   console.log('E3 OK: reproducción WAV real, partes, pausa, seek, salida durante descifrado, URLs liberadas, huérfanos, error de escritura, borrado solo audio, referencia ausente, autobloqueo y anchos 320/360/412/760.');
 } finally {
