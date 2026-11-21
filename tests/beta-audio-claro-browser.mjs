@@ -186,6 +186,59 @@ try{
   assert.deepEqual(postCheck,{checks:2,failed:true,parts:1,healthy:true,extra:0},
     'verificación fallida tras agregar un archivo restaura el audio previo');
 
+
+  // F1: si aborta la ÚNICA transacción de un archivo nuevo, no queda ficha ni fragmentos huérfanos.
+  const stageAbort=JSON.parse(await run(`(async()=>{
+    const db=await anDb(),id=anNewId(),original=anTx;
+    let aborted=false,failed=false;
+    try{
+      anTx=(db,stores,mode,fn)=>{
+        if(!aborted && mode==='readwrite' && stores.includes('meta') && stores.includes('chunks')){
+          aborted=true;return original(db,stores,mode,t=>{fn(t);t.abort();});
+        }
+        return original(db,stores,mode,fn);
+      };
+      await anPlainStageFile(db,new Blob([new Uint8Array(180).fill(6)]),700,id);
+    }catch(e){failed=true}
+    finally{anTx=original}
+    return JSON.stringify({aborted,failed,meta:(await anGetMeta(db,id))===undefined,chunks:await anCountChunks(db,id)});
+  })()`));
+  assert.deepEqual(stageAbort,{aborted:true,failed:true,meta:true,chunks:0},
+    'F1: archivo nuevo abortado deja la biblioteca completamente limpia');
+
+  // F1: restos de una versión anterior aparecen con opción Borrar; si están
+  // sueltos, se retiran al revisar sin tocar grabaciones confirmadas.
+  const stale=JSON.parse(await run(`(async()=>{
+    const db=await anDb(),id=anNewId(),m={...anNewMeta(id,Date.now(),'escribiendo'),
+      mode:'claro',parts:1,bytes:33,plain:{parts:[{mime:'audio/wav',origin:'cargado',chunks:1,bytes:33,
+        ms:1000,complete:false,hashes:[]}]}};
+    await anPutMeta(db,m);await anPutChunk(db,id,0,0,new Blob([new Uint8Array(33).fill(3)]));
+    await e3RefreshSpace();
+    const row=[...document.querySelectorAll('.e3-audio-row[data-modo=claro]')].find(e=>e.textContent.includes('a medio guardar'));
+    const canDelete=!!row && [...row.querySelectorAll('button')].some(b=>b.textContent.includes('Borrar audio'));
+    await anRepairPlainOnOpen();
+    return JSON.stringify({canDelete,removed:!(await anGetMeta(db,id)),noChunks:(await anCountChunks(db,id))===0});
+  })()`));
+  assert.deepEqual(stale,{canDelete:true,removed:true,noChunks:true},
+    'F1: ficha de archivo interrumpido es eliminable y se limpia al reabrir');
+
+  // M2: una excepción de lectura después de confirmar la ampliación TAMBIÉN revierte.
+  const thrownCheck=JSON.parse(await run(`(async()=>{
+    const db=await anDb(),id=await anPlainStageFile(db,new Blob([new Uint8Array(70).fill(7)]),1000);
+    const old=anPlainHealth;let calls=0,error='';
+    try{
+      anPlainHealth=async(...args)=>{
+        calls++;if(calls===2)throw new Error('lectura interrumpida');return old(...args);
+      };
+      await anPlainAppendFile(db,id,new Blob([new Uint8Array(100).fill(8)]),500);
+    }catch(e){error=e.message}finally{anPlainHealth=old}
+    const meta=await anGetMeta(db,id);
+    return JSON.stringify({calls,failed:error.includes('revirtió'),parts:meta.parts,healthy:(await anPlainHealth(db,id)).ok,
+      extra:await anCountPartChunks(db,id,1)});
+  })()`));
+  assert.deepEqual(thrownCheck,{calls:2,failed:true,parts:1,healthy:true,extra:0},
+    'M2: excepción de lectura no deja audio agregado tras anunciar error');
+
   // Una compilación beta anterior dejó una parte huérfana después de fallar una carga.
   const oldSuffix=JSON.parse(await run(`(async()=>{
     const db=await anDb(),id=await anPlainStageFile(db,new Blob([new Uint8Array(128).fill(16)]),1000);
@@ -229,7 +282,26 @@ try{
   await wait("window.__enableConfirmationSeen",'advertencia de privacidad al activar la contraseña');
   assert.equal(await run("vault.state==='off'"),true,'cancelar la advertencia evita activar la bóveda');
 
-  console.log('BETA AUDIO SIN CONTRASEÑA OK: flujo habitual, recuperación, rollback atómico, advertencia de privacidad');
+
+  // M1: activar la bóveda NO convierte una nota clara en cifrada ni la marca dañada.
+  const mixedEdit=JSON.parse(await run(`(async()=>{
+    $('saveAudio').checked=true;
+    const enabled=await vault.enable('Clave ficticia segura para ensayo 2026');enabled.dek.fill(0);
+    await vaultTakeTabLock();
+    const id=${JSON.stringify(first.id)};
+    const original=anTargetNow;let result;
+    try{
+      anTargetNow=()=>({mode:'parte',id,obligatorio:true});
+      result=await anSaveFile(wav(),1000);
+    }finally{anTargetNow=original}
+    const db=await anDb(),h=await anPlainHealth(db,id);
+    return JSON.stringify({noAppend:result===null,priorHealthy:h.ok,parts:h.m.parts,
+      notMarkedDamaged:!anDamaged.has(id),stillPlain:anIsPlainMeta(h.m)});
+  })()`));
+  assert.deepEqual(mixedEdit,{noAppend:true,priorHealthy:true,parts:2,notMarkedDamaged:true,stillPlain:true},
+    'M1: la bóveda abierta no daña ni vuelve ilegible un audio anterior claro');
+
+  console.log('BETA AUDIO SIN CONTRASEÑA OK: flujo habitual, recuperación, rollback atómico, advertencia de privacidad, F1 y M1/M2');
 }finally{
   closed=true;
   for(const p of pending.values()){clearTimeout(p.timer);p.reject(Error('cerrando Chrome'));}
