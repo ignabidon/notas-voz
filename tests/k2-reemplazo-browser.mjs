@@ -328,6 +328,41 @@ try {
     console.log('3) respaldo previo con exclusiones rechazado OK');
   }
 
+
+  // ===== F2) K2 impide nuevas escrituras y detecta alteraciones del inventario =====
+  {
+    await reset();
+    await run(`nota('Persona Inventada Tres: dato previo a K2 X-903')`);
+    const race=await replace(SAMPLE1,PASS1, `mkUi({onConfirm: async step=>{
+      if(step!==2)return;
+      $('saveAudio').checked=true;
+      const attempted=await anSaveFile(new File([new Uint8Array(77)],'inventado.wav',{type:'audio/wav'}),1000);
+      await $('rec').onclick();
+      const db=await anDb();
+      let stageBlocked=false;
+      try{await anPlainStageFile(db,new Blob([new Uint8Array(90)]),500)}
+      catch(e){stageBlocked=/restauraci|Restauraci/.test(e.message)}
+      window.__k2Race={fileBlocked:attempted===null,micBlocked:!recording,stageBlocked};
+      // Simulación adversarial: escritura ajena que saltea deliberadamente
+      // el bloqueo de interfaz, como la sonda B1. El inventario debe detectarla.
+      const id=anNewId();window.__k2Intruder=id;
+      await anPutMeta(db,{...anNewMeta(id,Date.now(),'escribiendo'),mode:'claro',parts:1,bytes:90,
+        plain:{parts:[{mime:'audio/wav',origin:'cargado',chunks:1,bytes:90,ms:500,complete:false,hashes:[]}]}});
+    }})`);
+    assert.match(race.err||'',/Los audios cambiaron después del respaldo previo/,'F2: K2 cancela antes de borrar: '+JSON.stringify(race));
+    assert.equal(race.journal,null,'F2: diario de respaldo previo cancelado');
+    assert.equal(race.active,false,'F2: marca de K2 retirada tras abortar');
+    const evidence=await json(`const p=window.__k2Race,db=await anDb();
+      return JSON.stringify({...p,notes:JSON.parse(vaultStore.getItem(CONV_KEY)).entries.length,
+        intruder:!!(await anGetMeta(db,window.__k2Intruder)),header:localStorage.getItem(VAULT_HEADER)})`);
+    assert.deepEqual({fileBlocked:evidence.fileBlocked,micBlocked:evidence.micBlocked,stageBlocked:evidence.stageBlocked},
+      {fileBlocked:true,micBlocked:true,stageBlocked:true},'F2: archivo, micrófono y escritura directa de audio bloquearon');
+    assert.equal(evidence.notes,1,'F2: la nota que había no se borró');
+    assert.equal(evidence.intruder,true,'F2: audio aparecido durante el diálogo se conservó intacto');
+    assert.equal(evidence.header,null,'F2: la instalación original sin bóveda permanece sin reemplazar');
+    console.log('F2) escrituras durante K2 bloqueadas y cambio adversarial detectado');
+  }
+
   // ===== 4) Copia de OTRA instalación (formato 1), contraseña cambiada y copia hecha con la protección apagada =====
   {
     await sembrarA();
