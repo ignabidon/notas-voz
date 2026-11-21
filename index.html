@@ -5021,7 +5021,18 @@ async function anRepairPlainOnOpen(){
     const db=await anDb(), metas=await anListMeta(db);
     let recovered=0, restored=0, untouched=0;
     for(const m of metas){
-      if(!anIsPlainMeta(m) || m.state!=='grabando')continue;
+      if(!anIsPlainMeta(m))continue;
+      // Un archivo agregado por una versión beta anterior pudo dejar fragmentos
+      // nuevos sin confirmar y la ficha anterior intacta. Revisar el prefijo
+      // completo antes de limpiar únicamente esas partes sobrantes.
+      if(m.state==='cerrado' && anPlainValidMeta(m)){
+        const prefix=await anPlainMetaHealth(db,m,true);
+        if(prefix.ok && !(await anPlainMetaHealth(db,m)).ok){
+          await anDeletePartsFrom(db,m.id,m.parts);restored++;
+        }
+        continue;
+      }
+      if(m.state!=='grabando')continue;
       if(!m.plain || !Array.isArray(m.plain.parts) || m.parts!==m.plain.parts.length || m.parts<1){
         untouched++;continue;
       }
