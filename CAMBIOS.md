@@ -1,3 +1,9 @@
+## 21/11/2026 · Texto de arranque rioplatense para Whisper (Claude; rama whisper-texto-arranque-rioplatense-2026-11-21)
+
+- **Qué hace:** antes de transcribir, Whisper recibe una frase corta con voseo («contame vos», «¿querés…?», «tenés razón») para que tienda a escribir «querés» y no «queréis» (Q3).
+- **Seguro ante fallos:** si el motor no admite el texto de arranque, transcribe como antes y lo anota en el diagnóstico. Si la frase aparece en el resultado, se recorta.
+- **Pruebas:** `node --test` en verde. **Sin probar con audio real ni en Motorola**: el efecto es más débil en modelos chicos (tiny/base).
+
 ## 21/11/2026 · Corrección de formulario oculto al crear copias (ChatGPT; rama fix-copias-formulario-visible-2026-11-21)
 
 - **Hallazgo confirmado por el propietario en Motorola G56 5G:** con la protección activa y abierta, «Crear una copia» sí esperaba contraseña, pero el formulario compartido `#vaultAuth` estaba dentro de la subpantalla oculta «Protección y contraseña». Por eso parecía no ocurrir nada; navegando a Protección se podía completar la operación.
