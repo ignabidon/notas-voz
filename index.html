@@ -5327,8 +5327,10 @@ async function e3RefreshSpace(){
         ' · SIN CIFRAR · ' + (m.state === 'cerrado' ? '' : 'a medio guardar · ') + fmt(m.createdAt) + ' · ' + mb(m.bytes || 0);
       row.append(info);
       const actions = document.createElement('div'); actions.className = 'row';
-      if(m.state === 'cerrado' && orphan && anAudioReady()) actions.append(convButton('Preparar nota',()=>void e3Recover(m.id)),convButton('Borrar audio',()=>void e3Remove(null,m.id),'ghost danger'));
-      else if(entries.length)actions.append(convButton('Ver nota',()=>{document.querySelector('[data-delta-view="transcripcion"]').click();convOpen(entries[0].conversationId);}));
+      if(orphan && anAudioReady()){
+        if(m.state === 'cerrado')actions.append(convButton('Preparar nota',()=>void e3Recover(m.id)));
+        actions.append(convButton('Borrar audio',()=>void e3Remove(null,m.id),'ghost danger'));
+      }else if(entries.length)actions.append(convButton('Ver nota',()=>{document.querySelector('[data-delta-view="transcripcion"]').click();convOpen(entries[0].conversationId);}));
       row.append(actions); list.append(row);
     }
     const old = await audioGetMeta(), previous = await audioGetPrevious();
@@ -5617,9 +5619,10 @@ async function anSaveFile(f, ms){
   if (vault.state === 'off') {
     anBusyN++;
     const job={ctx:convCtx,baseParts:null};
+    let stagedId=null,db=null;
     try {
       if(!(await anLockOk()) || k2ReplaceMark()) return null;
-      const db=await anDb(), target=anTargetNow();
+      db=await anDb();const target=anTargetNow();
       let id=null;
       if(target.mode==='parte'){
         const h=await anPlainHealth(db,target.id);
@@ -5631,13 +5634,35 @@ async function anSaveFile(f, ms){
           return null;
         }
       }
-      if(!id)id=await anPlainStageFile(db,f,Math.max(0,Math.round(ms||0)));
+      if(!id){
+        stagedId=anNewId();
+        id=await anPlainStageFile(db,f,Math.max(0,Math.round(ms||0)),stagedId);
+      }
       const checked=await anPlainHealth(db,id);
       if(!checked.ok)throw new Error('audio guardado pero no verificable: se conserva sin vincular');
       if(anLinkPending(job,id,anTotalMs(checked.m.plain)))flash('Audio guardado sin cifrar. Queda unido a la nota al tocar Guardar.');
       return id;
     } catch(e) {
       logDiag('Audio sin cifrar: error al guardar archivo ('+anErrName(e)+')');
+      if(stagedId && db){
+        try{
+          const m=await anGetMeta(db,stagedId);
+          if(m){
+            if(m.state==='escribiendo' && !e3Used(stagedId)){
+              await anDelete(db,stagedId); // no había sido confirmado ni enlazado
+            }else{
+              flash('Es posible que el archivo haya quedado guardado sin vincular. Revisá Ajustes > Espacio y audios antes de intentar de nuevo. No se borró.');
+              return null;
+            }
+          }
+        }catch(cleanup){
+          flash('No se pudo comprobar el archivo después del error. Podría quedar audio sin cifrar en Ajustes: revisalo antes de repetir.');
+          return null;
+        }
+      }
+      if(String(e&&e.message||'').includes('PODRÍA')){
+        flash(e.message+' La transcripción se conserva.');return null;
+      }
       flash('No se pudo guardar el audio sin cifrar ('+anErrName(e)+'). Se conserva la transcripción.');
       return null;
     } finally {anBusyN=Math.max(0,anBusyN-1);}
