@@ -6869,7 +6869,7 @@ async function copiaCreate(filePassword){
     copiaSay('Copia creada y comprobada: ' + copiaSummary(r) + '.\n' +
       copiaFaltantes(omitidos, faltan.sinCifrar, completa) +
       (vault.frozen.size ? 'Atención: hay datos dañados en este navegador que la copia no pudo incluir.\n' : '') +
-      'Se descargó como «' + file.name + '». ' + (abierta ? 'Se abre con tu contraseña actual o con tu código de recuperación (aunque después cambies la contraseña).' : 'Se abre solo con la contraseña que acabás de elegir.') +
+      'Se solicitó la descarga de «' + file.name + '». Buscalo en Descargas: si no aparece, no tenés una copia fuera de la aplicación. ' + (abierta ? 'Se abre con tu contraseña actual o con tu código de recuperación (aunque después cambies la contraseña).' : 'Se abre solo con la contraseña que acabás de elegir.') +
       '\nPara confirmar que la descarga terminó bien, tocá «Verificar una copia» y elegí ese archivo. Guardalo fuera del celular.');
     return file;
   } catch (e) {
@@ -6907,8 +6907,8 @@ copiaEl('copiaCrear').onclick = async () => {
   if (copiaBusyN) return;
   if (vaultBusy() || convSaving) return copiaSay('Primero terminá de grabar, transcribir o guardar.');
   if (vault.state === 'open') {
-    // Se pide la contraseña para confirmar que la recordás: sin ella (o sin el código) la copia no sirve.
-    const pw = await vaultAskPassword('Escribí tu contraseña (la copia se va a abrir con ella)'); if (pw === null) return;
+    // Se pide la contraseña en Copias de seguridad (no en la subpantalla oculta de Protección).
+    const pw = await copiaAsk('Escribí tu contraseña (la copia se va a abrir con ella)'); if (pw === null) return;
     copiaSay('Comprobando la contraseña…');
     try { (await vault.checkPassword(pw)).fill(0); } catch (e) { return copiaSay('La contraseña no es correcta. No se creó la copia.'); }
     return copiaCreate(null);
@@ -6969,10 +6969,10 @@ const k2rUi = () => ({
   confirm: async (step, info, backup) => {
     if (step === 'retomar') return confirm('Un reemplazo anterior quedó a medias: ya se hizo un respaldo previo' + (backup ? ' («' + backup + '»)' : '') + ' y el borrado empezó. ¿Terminar el borrado y restaurar la copia elegida?');
     if (step === 1) return confirm(k2ReplaceText(info) + '\n\nPrimero se va a crear y descargar un respaldo completo de lo que hay ahora. ¿Seguir?');
-    return confirm('El respaldo previo «' + backup + '» ya se creó, se comprobó y se descargó. Fijate que esté en tus descargas y guardalo fuera del celular.\n\n' +
+    return confirm('El respaldo previo «' + backup + '» ya se creó y se comprobó; se solicitó la descarga, pero el navegador no permite confirmar que terminó. Comprobá que el archivo esté en Descargas y guardalo fuera del celular. Si no aparece, elegí Cancelar.\n\n' +
       k2ReplaceText(info) + '\n\nÚLTIMA CONFIRMACIÓN: ¿BORRAR lo que hay ahora y reemplazarlo por la copia?');
   },
-  saveBackup: async file => { download(file); copiaSay('Respaldo previo creado, comprobado y descargado como «' + file.name + '».'); },
+  saveBackup: async file => { download(file); copiaSay('Respaldo previo comprobado. Se solicitó descargar «' + file.name + '». Confirmá el archivo en Descargas antes de permitir cualquier reemplazo.'); },
   backupPassword: async () => {
     const a = await copiaAsk('Elegí una contraseña para el respaldo previo (al menos 8 caracteres)'); if (a === null) return null;
     const b = await copiaAsk('Repetí la contraseña del respaldo previo'); if (b === null) return null;
@@ -6990,7 +6990,7 @@ copiaEl('copiaReempArchivo').addEventListener('change', async () => {
   if (!file || copiaBusyN || k2ReplaceActive) return;
   try {
     if (vault.state === 'open') {
-      const pw = await vaultAskPassword('Escribí tu contraseña actual (el respaldo previo se abre con ella)'); if (pw === null) return;
+      const pw = await copiaAsk('Escribí tu contraseña actual (el respaldo previo se abre con ella)'); if (pw === null) return;
       try { (await vault.checkPassword(pw)).fill(0); } catch (e) { return copiaSay('La contraseña no es correcta. No se cambió nada.'); }
     }
     const secret = await copiaAsk('Contraseña o código de recuperación de la copia con la que vas a reemplazar');
@@ -7047,8 +7047,8 @@ function ajRefresh(){
   $('ajStatusLine').textContent = on ? 'Se bloquea sola tras 15 minutos sin uso.' : 'Sin protección no hay autobloqueo: tus notas se guardan sin cifrar.';
   $('ajLock').hidden = !on;
   const days = cfgLastBackup ? Math.max(0, Math.floor((Date.now() - cfgLastBackup) / 86400000)) : null;
-  $('ajLastCopy').textContent = days === null ? 'Todavía no hiciste ninguna copia.'
-    : 'Última copia: ' + (days === 0 ? 'hoy' : days === 1 ? 'hace 1 día' : 'hace ' + days + ' días') + '. Conviene hacer una por semana.';
+  $('ajLastCopy').textContent = days === null ? 'Todavía no preparaste ninguna copia.'
+    : 'Última copia preparada: ' + (days === 0 ? 'hoy' : days === 1 ? 'hace 1 día' : 'hace ' + days + ' días') + '. Confirmá que esté descargada y verificada; conviene hacer una por semana.';
 }
 /* El botón único de restaurar elige el camino; no cambia ninguno de los dos (siguen siendo k2RestoreEmpty y k2Replace con sus confirmaciones). */
 async function ajRestoreMode(){ try { return (await k2StorageEmpty()) ? 'vacia' : 'reemplazo'; } catch (e) { return null; } }
