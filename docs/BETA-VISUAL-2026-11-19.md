@@ -49,3 +49,9 @@
 - Se conservan pruebas cifradas E2/E3, restauración K2 y biblioteca P2; se actualizan únicamente expectativas antiguas expresamente sustituidas por A13.
 - Prueba física en Motorola y con varios casos de transición cifrada/sin cifrar pendiente. No usar datos clínicos reales.
 
+
+## 20/11/2026 · Decisión A14 y refuerzo de K2
+
+- Los audios antiguos del sistema «Mis grabaciones» son borradores prescindibles por confirmación del propietario, no deben migrarse.
+- El nuevo audio P2 por nota, aunque esté sin cifrar en el navegador, **sí se respalda antes de cualquier reemplazo**: K2 exige copia cifrada de formato 2, comprobación del inventario completo y ninguna exclusión. Los audios dañados impiden el reemplazo.
+- El formato 1 no cambia para instalaciones sin audios claros. Doble confirmación y diario de restauración K2 permanecen. El PR sigue borrador; no se fusionó ni probó en Motorola.
