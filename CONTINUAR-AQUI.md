@@ -1,7 +1,7 @@
 # CONTINUAR AQUÍ — DictaVoz
 
 > **Una sola página, un solo estado.** Quien termina un paso **reescribe esta página** (no agrega carteles arriba) y mueve lo viejo a `docs/historial/`. Si algo de acá contradice al código de `main`, vale el código; si contradice a `docs/DECISIONES.md`, vale ese registro.
-> **Última revisión: 18/11/2026 (ChatGPT, solo propuesta de parche U19).** `main` verificado en `cfda606` incluye #69 (Clínica serena y modo nocturno), #68 (Ajustes), #67 (selector Dictar). **U19 todavía no está en GitHub:** parche pendiente de pruebas Node/Chrome, capturas 360 px y revisión; no se hizo ninguna prueba en el Motorola. El resto de los estados históricos de esta página requiere conciliación antes de una futura actualización integral.
+> **Revisión de la beta, 21/11/2026 (ChatGPT):** PR #71 continúa **abierto, en borrador y sin fusionar**. La auditoría independiente halló F1 (audio claro incompleto imposible de borrar) y F2 (escritura de audio durante K2), más M1/M2. Los cuatro tienen correcciones propuestas y pruebas conductuales nuevas **en la rama del PR #71**; revisar el CI del último commit y pedir nueva auditoría independiente antes de fusionar. PR #72 incorpora cambios visuales relacionados y debe coordinarse después de #71. **No se hizo ninguna prueba nueva en Motorola.** Las filas históricas de esta página siguen requiriendo conciliación con `main` actualizado; las decisiones vigentes están en `docs/DECISIONES.md`.
 
 ## Cómo está organizada la documentación
 
@@ -33,6 +33,8 @@ DictaVoz (antes DictaNota; solo cambió lo visible): transcribe voz a texto en e
 
 | PR | Qué es | Dueño | Depende de |
 |---|---|---|---|
+| #71 | Beta de audio por nota con o sin contraseña; correcciones F1/F2/M1/M2 tras auditoría independiente. **No fusionar hasta una nueva revisión y CI verde** | ChatGPT (correcciones de auditoría); cambios previos según PR | — |
+| #72 | Ajustes visuales derivados del #71, sin tocar audio; coordinar orden de fusión | Otro trabajo en borrador | #71 / revisión de conflictos |
 | #58 | Auditoría y propuesta de almacenamiento definitivo (solo documentación) | ChatGPT | — |
 | #52 | Visión de la experiencia y guía estética (solo documentación) | ChatGPT | — |
 | #49, #37 | Guía del propietario y feedback del Motorola; decisiones del 16/11 (solo documentación) | Claude | — |
