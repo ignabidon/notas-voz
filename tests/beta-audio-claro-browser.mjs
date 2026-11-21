@@ -292,7 +292,7 @@ try{
     const original=anTargetNow;let result;
     try{
       anTargetNow=()=>({mode:'parte',id,obligatorio:true});
-      result=await anSaveFile(wav(),1000);
+      result=await anSaveFile(new File([new Uint8Array(140).fill(4)],'carga-ficticia.wav',{type:'audio/wav'}),1000);
     }finally{anTargetNow=original}
     const db=await anDb(),h=await anPlainHealth(db,id);
     return JSON.stringify({noAppend:result===null,priorHealthy:h.ok,parts:h.m.parts,
