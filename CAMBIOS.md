@@ -1,3 +1,13 @@
+## 21/11/2026 · PR #71: correcciones de la segunda auditoría independiente (ChatGPT)
+
+- Informe externo: Claude verificó los arreglos previos pero reprodujo **F1** (archivo en claro interrumpido deja ficha `escribiendo` huérfana), **F2** (escrituras de audio mientras K2 respalda y borra) y los casos **M1/M2**. La conclusión de la auditoría fue **no fusionar** hasta corregirlos.
+- **F1:** `anPlainStageFile` prepara huellas y confirma ficha y fragmentos en una única transacción IndexedDB; un aborto no deja ficha ni fragmentos. `anRepairPlainOnOpen` descarta fichas históricas `escribiendo` solo si no tienen nota ni borrador asociados. Ajustes ofrece Borrar para un audio claro sin nota aunque no esté terminado.
+- **F2:** bloquear micrófono y carga/guardado de audio al comenzar K2, incluso en rutas y colas de escritura; revisar `anBusyN` antes y después de tomar el candado. `k2PriorBackup` toma inventario por ficha y verifica que no cambió durante la copia. Tras la segunda confirmación K2 vuelve a compararlo **antes de iniciar el borrado**; si difiere, cancela sin borrar.
+- **M1:** un audio P2 anterior sin cifrar no se trata como cifrado ni se marca erróneamente como dañado al intentar ampliarlo con la bóveda abierta. Se mantiene el original y se explica por qué no se anexa el archivo.
+- **M2:** si la verificación posterior a una ampliación devuelve error **o lanza una excepción**, se revierte la parte nueva atómicamente; si revertir falla, la interfaz advierte que la grabación podría permanecer en disco y pide comprobar Ajustes.
+- Nuevas pruebas conductuales de abortos reales en IndexedDB, fichas huérfanas, fallo de lectura, ampliación con modalidades mixtas, inicio de grabación durante K2 y modificación adversarial del inventario antes del borrado. Se refuerza la espera de inicialización en el ensayo E3 tras autobloqueo.
+- **Rama beta del PR #71 exclusivamente**. No se fusionó, no se tocó el almacenamiento del celular y la revisión independiente posterior/ensayo Motorola sigue pendiente. Verificar el CI del commit final en el PR.
+
 ## 20/11/2026 · PR #71: K2 admite respaldo previo completo de audios claros nuevos (ChatGPT)
 
 - Decisión A14: el propietario confirma que **los audios históricos sueltos son borradores descartables**. Esta autorización **no se extiende** a nuevos audios vinculados a notas ni a datos dañados de la biblioteca moderna.
