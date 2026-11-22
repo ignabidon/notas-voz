@@ -224,3 +224,28 @@ En cada PR: pruebas Node + las tres de navegador (`browser.mjs`, `cifrado-browse
 ## 7. Qué NO cambia esta propuesta
 
 Captura, pausa, marcas y cronómetro; Whisper y su aviso único; correcciones y aprendizaje; diccionario; anonimización (lógica); protección cifrada; almacenamiento y claves (salvo el almacén nuevo de audios de la Etapa E, solo aditivo); exportaciones; barra de navegación de cuatro pestañas (se renombran dos, ver Etapa N; los ids internos no cambian); paleta general.
+
+
+---
+
+## Actualización de diseño posterior — 17/11/2026 (DictaVoz)
+
+> **Aporte de experiencia y referencias estéticas acordadas con el usuario; documentación solamente.** El texto de las etapas A/B/E anterior a este apartado refleja decisiones históricas. A fecha 17/11/2026 ya están incorporados a `main` **B3** (menú `⋯` de notas, PR #53), **E3** (reproductor en burbuja, PR #55) y el nombre visible **DictaVoz** (PR #57). No volver a programar esas etapas. El estado funcional y las decisiones pendientes se explican en [VISION-EXPERIENCIA-DICTAVOZ.md](VISION-EXPERIENCIA-DICTAVOZ.md), que se publica junto a esta actualización en el PR documental #52.
+
+### Dirección visual a prototipar, no aprobada como apariencia final
+
+**«Clínica editorial cálida».** Fondo marfil, azul petróleo y acentos verde salvia; tipografía muy legible, espaciado generoso, controles redondeados pero sobrios. Explorar también una variante oscura; no fijar colores ni sustituir el tema actual sin comparar diseños completos, contraste y accesibilidad sobre Motorola G56 5G. El nombre visible DictaVoz ya está incorporado; lema «Tus palabras, bajo tu control» y bienvenida vintage de primer uso quedan como **propuestas**.
+
+**Dictar / grabadora.** El micrófono y el reloj dominan visualmente. Antes de grabar debe poder elegirse opcionalmente un cuaderno existente y un título para la nota, sin entorpecer el inicio inmediato. Si no se elige cuaderno, **se crea uno nuevo con fecha y hora al guardar**, como ya ocurre desde la captura principal. Mostrar progreso de transcripción y acceso a Cuadernos desde la barra inferior. La propuesta reciente es **mover el interruptor «Conservar audio» a Ajustes y tenerlo activado por defecto**, manteniendo en la pantalla de grabación **un indicador corto y visible del estado** y una vía fácil para cambiarlo antes de grabar; su traslado y valor por defecto siguen pendientes de validación (privacidad, espacio, preferencias existentes y pruebas).
+
+**Cuaderno abierto como conversación personal.** Texto de las notas en burbujas cronológicas y editor para un mensaje todavía sin enviar, visible en el propio cuaderno; al terminar la transcripción la app debería abrir directamente ese borrador. Corregir y pulsar **Guardar** confirma la nota; nunca significa envío a un tercero. Conservar el borrador al navegar o volver a la app. Permitir expandir la edición sin perder el contexto del cuaderno. Poner las acciones poco frecuentes en `⋯`.
+
+**Minirreproductor integrado.** E3 ya lo permite dentro de cada nota que tiene audio. La mejora estética es reducir su altura y priorizar el texto: una fila compacta con Reproducir/Pausar, barra de avance y duración, sin esconderlo detrás del menú. Solo leer/descifrar al tocar Reproducir, mantener accesibilidad táctil y conservar mensajes sobre audio no anonimizado; ningún cambio de seguridad por un motivo visual.
+
+**Fallo de Whisper como un estado de mensaje.** Si estaba activada la conservación del audio, ofrecer desde el cuaderno una burbuja o borrador de audio con aviso «No se pudo transcribir», control para escucharlo y caminos visibles para **Guardar solo audio**, **Reintentar** y **Escribir nota** (etiquetas por nota requieren decisión adicional). Si «Conservar audio» estaba apagado, **no rescatarlo ni almacenarlo de forma excepcional**: explicar con claridad que no está disponible. La lógica de este caso aún no está implementada en el flujo normal; requiere un paso técnico separado y pruebas, no solo CSS.
+
+**Ajustes y anonimización.** Reducir la densidad de Ajustes agrupando secciones y manteniendo ajustes avanzados desplegables; ubicar la gestión de retención del audio en un grupo comprensible con descripción clara. Las reglas de censura, reemplazo y códigos en anonimización son ideas para diseñar antes de AO; permitir revisión de cambios y original recuperable sin confundir un seudónimo con anonimato irreversible.
+
+### Reglas para las futuras maquetas
+
+Crear pantallas en estados reales (primer uso, reposo, grabando, pausa, transcribiendo, borrador listo, mensaje guardado con audio, fallo Whisper, tema oscuro y teclado desplegado). Comparar en 320/360/412 px y con letra grande; contraste suficiente, controles de al menos 48 px, y conservar la navegación y el indicador del estado de grabación. **No introducir código ni cambiar el almacenamiento con este documento.** Una imagen es una referencia; antes de implementar documentar la acción de cada control y la transición entre estados.
