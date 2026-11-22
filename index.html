@@ -7779,6 +7779,8 @@ function updateModelHint(){
 }
 $('model').addEventListener('change', updateModelHint);
 const hasOpt = (sel, v) => [...sel.options].some(o => o.value === v);
+// Preferencia visual de este navegador. No forma parte de la biblioteca ni de sus copias.
+const WELCOME_SEEN = 'dictavoz.ui.bienvenida.v1';
 let firstVisit = false;
 let cfgLastBackup = 0;   // U16: fecha de la última copia creada (milisegundos); único dato nuevo de Ajustes, sin datos de pacientes
 function loadCfg(){
@@ -7786,7 +7788,7 @@ function loadCfg(){
   try {
     const savedConfig = localStorage.getItem(CKEY);
     const c = JSON.parse(savedConfig || '{}');
-    firstVisit = savedConfig === null;
+    firstVisit = savedConfig === null && localStorage.getItem(WELCOME_SEEN) !== '1';
     $('liveAnon').checked = false; // Solo anonimización posterior
     applyTextSize(c.textSize); applyTheme(c.theme);
     if (typeof c.pVolatile === 'boolean') $('pVolatile').checked = c.pVolatile;
@@ -7959,7 +7961,7 @@ initErgonomics(); loadCfg(); updateModelHint();
 function finishWelcome(){
   if ($('firstWelcome').hidden) return;
   $('firstWelcome').hidden = true;
-  saveCfg();
+  try { localStorage.setItem(WELCOME_SEEN, '1'); } catch { /* Se cierra para esta visita. */ }
 }
 $('welcomeStart').addEventListener('click', () => { finishWelcome(); $('rec').focus(); });
 $('rec').addEventListener('click', finishWelcome);

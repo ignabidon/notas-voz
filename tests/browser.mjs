@@ -32,6 +32,7 @@ try {
  await call('Page.reload',{ignoreCache:true});
  for(let i=0;i<100;i++){try{if(await run('document.readyState==="complete" && typeof convStore!=="undefined" && convStore.data!==null'))break;}catch{} await new Promise(r=>setTimeout(r,50));}
  assert.equal(await run('document.getElementById("firstWelcome").hidden'),true);
+ assert.equal(await run('k2StorageEmpty()'),true,'la bienvenida conserva la restauración en vacío');
  // Native keyboard activation of help controls.
  await call('Page.bringToFront');
  await call('Emulation.setFocusEmulationEnabled',{enabled:true});
