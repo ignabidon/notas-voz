@@ -80,6 +80,12 @@ try {
 
     // ---- 1) Aspecto y comportamiento por defecto, a 360 px ----
     assert.equal(await vista('grabacion'), 'grabacion');
+    // Revisión 22/11 (D1): el destino arranca plegado en una línea «Se guarda en: …» que muestra a dónde va; al tocarla se despliegan los mismos campos.
+    assert.equal((await rect('dictDestSel')).visible, false, modo + ': plegado al entrar');
+    const tog = await rect('dictDestToggle'); assert.ok(tog.visible && tog.h >= 47.5, modo + ': la línea de destino se ve y mide 48 px');
+    assert.equal(await run(`document.getElementById('dictDestNow').textContent`), 'Cuaderno nuevo');
+    await run(`document.getElementById('dictDestToggle').click()`); await sleep(100);
+    assert.equal(await run(`document.getElementById('dictDestToggle').getAttribute('aria-expanded')`), 'true');
     const sel = await rect('dictDestSel'), nom = await rect('dictName');
     assert.ok(sel.visible && nom.visible, modo + ': el selector y el nombre se ven en Dictar');
     assert.ok(sel.h >= 47.5 && nom.h >= 47.5, modo + ': campos de 48 px para el pulgar');

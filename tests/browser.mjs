@@ -63,7 +63,8 @@ assert.equal(await run('document.getElementById("saveAudio").disabled'),true);
   await call('Emulation.setDeviceMetricsOverride',{width,height:850,deviceScaleFactor:1,mobile:true});
   for(const view of ['grabacion','transcripcion','anonimizar','ajustes']){
    await run('document.querySelector(\'[data-delta-view="'+view+'"]\').click()');await settle();
-   assert.ok(await run('(()=>{const r=document.getElementById("studioDockCapture").getBoundingClientRect();return r.height>0 && r.top>=0 && r.bottom<=innerHeight && document.documentElement.scrollWidth<=innerWidth+1})()'),'captura visible '+width+' '+view);
+   // Revisión 22/11 (R1): en Dictar, con el círculo grande a la vista, la barra fija no repite Pausar/Detener; si el círculo sale de la vista, vuelve.
+   assert.ok(await run('(()=>{const r=document.getElementById("studioDockCapture").getBoundingClientRect(),m=document.getElementById("rec").getBoundingClientRect(),micVisible=document.body.dataset.view==="grabacion"&&document.body.classList.contains("record-mic-visible");return (micVisible ? r.height===0 && m.top>=0 && m.bottom<=innerHeight : r.height>0 && r.top>=0 && r.bottom<=innerHeight) && document.documentElement.scrollWidth<=innerWidth+1})()'),'captura visible '+width+' '+view);
   }
  }
  await run('recording=false;updateDockRecording()');

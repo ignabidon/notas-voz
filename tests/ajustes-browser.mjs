@@ -91,10 +91,11 @@ try {
     assert.match(await run(`document.getElementById('ajStatusLine').textContent`), protegida ? /15 minutos/ : /Sin protección/);
     assert.equal(await visible('ajLock'), protegida, '«Bloquear ahora» solo con la protección activada');
     assert.equal(await visible('ajCopy'), true);
+    assert.equal(await visible('ajProtect'), !protegida, 'revisión 22/11 (S2): sin protección, la acción principal de la tarjeta es «Activar protección»');
     assert.equal(await run(`document.getElementById('ajLastCopy').textContent`), 'Todavía no preparaste ninguna copia.');
     assert.equal(await run(`document.getElementById('ajCredit').textContent`), 'Psicólogo Ignacio Lasarte · creador de la aplicación');
     assert.equal(await run(`/\\b(Claude|ChatGPT|OpenAI|Anthropic)\\b/i.test(document.getElementById('ajustes').textContent)`), false, 'sin nombres de IA en Ajustes');
-    assert.deepEqual(await run(`[...document.querySelectorAll('#ajHome .aj-group')].map(h=>h.textContent)`), ['Datos y privacidad', 'Dictado', 'Lectura', 'Avanzado']);
+    assert.deepEqual(await run(`[...document.querySelectorAll('#ajHome .aj-group')].map(h=>h.textContent)`), ['Datos y privacidad', 'Lectura', 'Dictado', 'Avanzado']);   // revisión 22/11: lo de lectura antes que lo técnico
     for (const id of ['saveAudio', 'listPreview', 'textSize']) assert.equal(await visible(id), true, '#' + id + ' está directamente en la pantalla principal');
     let m = await medidas();
     assert.ok(m.ancho <= 360, modo + ': sin desplazamiento horizontal en la principal (' + m.ancho + ')');
