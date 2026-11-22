@@ -1070,6 +1070,8 @@ body[data-view="transcripcion"] .conv-menu button{flex:1 1 auto}
 .brand h1,.screen-title h2,.aj-title,#ajStatusTitle,#convTitle,#vaultLockTitle,
 .dictar-heading h2,.first-welcome h2{font-family:var(--reading-font);letter-spacing:-.025em}
 .top{flex-wrap:wrap}
+.top .pill>svg{display:none}
+@media(max-width:380px){.top .brand>.logo{display:none}}
 body[data-view="grabacion"] .c-rec>.first-welcome{order:-2}
 body[data-view="grabacion"] .c-rec>.dictar-heading{order:-1}
 .dictar-heading{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;text-align:left}
@@ -1094,7 +1096,7 @@ body[data-view="transcripcion"] .conv-actions button{min-height:48px}
 .c-anon:has(#undo:not(:disabled)) .anon-after{display:inline}
 .c-anon:has(#undo:not(:disabled)) .anon-before{display:none}
 .c-anon:has(#undo:not(:disabled)) [data-go-view="transcripcion"]{display:block;width:100%;min-height:48px;margin:10px 0;background:var(--acc);color:var(--acc-ink)}
-.c-anon:has(#undo:not(:disabled)) #anon{background:var(--card);color:var(--acc);border:1px solid var(--line-strong)}
+.c-anon:has(#undo:not(:disabled)) #anon:disabled{display:none}
 .aj-group,.aj-status,.vault-lock form{box-shadow:none}
 @media(max-width:760px){
   body[data-view="transcripcion"] .conv-menu:not([hidden]){position:fixed;z-index:9;left:8px;right:8px;bottom:var(--dock-space);max-height:calc(100dvh - var(--dock-space) - 12px);overflow:auto;display:grid;grid-template-columns:1fr;background:var(--card);padding:10px;border:1px solid var(--line-strong);border-radius:16px;box-shadow:0 -6px 24px var(--shadow-ring)}
@@ -1519,11 +1521,11 @@ body[data-view="transcripcion"] .conv-actions button{min-height:48px}
     <div class="group privacy-group" id="privacidad">
       <p class="anon-preview-label" id="anonPreviewLabel">Así queda tu nota <span class="opt">(solo lectura; se edita en Cuadernos)</span></p>
       <div id="anonPreview" class="anon-preview" tabindex="0" role="region" aria-labelledby="anonPreviewLabel"></div>
-      <div class="studio-anon-actions"><button class="p" id="anon" title="Reemplaza nombres y datos por etiquetas. Se puede deshacer.">Anonimizar nota</button><div class="studio-anon-secondary"><button id="undo" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg><span>Deshacer</span></button><button type="button" id="studioAnonSettings" aria-expanded="false" aria-controls="studioAnonConfig"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg><span>Más opciones</span></button></div></div>
+      <div class="studio-anon-actions" id="anonActions"><button class="p" id="anon" title="Reemplaza nombres y datos por etiquetas. Se puede deshacer.">Anonimizar nota</button><div class="studio-anon-secondary"><button id="undo" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg><span>Deshacer</span></button><button type="button" id="studioAnonSettings" aria-expanded="false" aria-controls="studioAnonConfig"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg><span>Más opciones</span></button></div></div>
       <div class="warn" id="anonRes" role="status" style="margin-top:8px"></div>
       <div id="susBox"></div>
-      <button type="button" class="ghost" data-go-view="transcripcion">Ir a la nota para editarla</button>
-      <p class="hint anon-after">Revisá los reemplazos y los datos que quedaron visibles. Si conservaste el audio, la voz original sigue intacta.</p>
+      <button type="button" class="ghost" id="anonEditNote" data-go-view="transcripcion">Ir a la nota para editarla</button>
+      <p id="anonVoiceNotice" class="hint anon-after">Revisá los reemplazos y los datos que quedaron visibles. Si conservaste el audio, la voz original sigue intacta.</p>
       <div class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 2.5 20h19L12 3z"/><path d="M12 10v4M12 17.5v.01"/></svg><span>La anonimización es automática y puede fallar: revisá siempre el texto antes de guardarlo o exportarlo.</span></div>
       <details id="studioAnonConfig">
         <summary>Más opciones de anonimización</summary>
@@ -3066,6 +3068,9 @@ const nWords = s => (s.match(WORDS) || []).length;
 /* ---------- Notas ---------- */
 function fmt(ts){ return new Date(ts).toLocaleString('es-AR', {dateStyle:'short', timeStyle:'short'}); }
 function refreshAnonPreview(){
+  const edit = $('anonEditNote');
+  const anchor = $('undo').disabled ? $('anonVoiceNotice') : $('anonActions');
+  if (edit.nextElementSibling !== anchor) anchor.before(edit);
   const box = $('anonPreview'), txt = $('text').value, re = /\[[^\[\]\n]{1,60}\]/g;
   box.textContent = '';
   let last = 0, m;
