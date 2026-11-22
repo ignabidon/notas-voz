@@ -68,9 +68,12 @@ try{
   await reset();
 
   // La disposición visible y el DOM deben seguir siendo simples tras inicializar.
-  assert.deepEqual(await run(`(()=>{const rec=document.getElementById('grabacion'),dest=document.getElementById('dictDest'),mic=document.getElementById('rec'),adv=document.getElementById('audioAdvanced');return [rec.firstElementChild===dest,dest.getBoundingClientRect().top<mic.getBoundingClientRect().top,!rec.querySelector('.record-head'),!rec.querySelector('#openSheets'),!rec.querySelector('#writeNewNote'),!document.getElementById('recordSaveAudio'),adv.contains(document.getElementById('audioBox')),adv.contains(document.querySelector('.audio-tools')),adv.contains(document.getElementById('recordDownloadAudio')),!adv.open]})()`),Array(10).fill(true));
-  const dimensions=()=>run(`(()=>{const r=document.getElementById('rec').getBoundingClientRect(),s=document.getElementById('dictDestSel').getBoundingClientRect(),a=document.getElementById('dictName').getBoundingClientRect();return {overflow:document.documentElement.scrollWidth>360,mic:r.height,selector:s.height,name:a.height}})()`);
-  const d=await dimensions();assert.equal(d.overflow,false);assert.ok(d.mic>=48&&d.selector>=48&&d.name>=48);
+  assert.deepEqual(await run(`(()=>{const rec=document.getElementById('grabacion'),dest=document.getElementById('dictDest'),mic=document.getElementById('rec'),adv=document.getElementById('audioAdvanced');return [rec.contains(dest)&&rec.contains(document.getElementById('dictUpload')),mic.getBoundingClientRect().bottom<dest.getBoundingClientRect().top,!rec.querySelector('.record-head'),!rec.querySelector('#openSheets'),!rec.querySelector('#writeNewNote'),!document.getElementById('recordSaveAudio'),adv.contains(document.getElementById('audioBox')),adv.contains(document.querySelector('.audio-tools')),adv.contains(document.getElementById('recordDownloadAudio')),!adv.open]})()`),Array(10).fill(true));
+  // Revisión 22/11 (D1): Grabar va primero; el destino es una línea plegable que se despliega al tocarla.
+  await run(`document.getElementById('dictDestToggle').click()`);
+  const dimensions=()=>run(`(()=>{const r=document.getElementById('rec').getBoundingClientRect(),s=document.getElementById('dictDestSel').getBoundingClientRect(),a=document.getElementById('dictName').getBoundingClientRect();return {overflow:document.documentElement.scrollWidth>360,mic:r.height,toggle:document.getElementById('dictDestToggle').getBoundingClientRect().height,upload:document.getElementById('dictUpload').getBoundingClientRect().height,selector:s.height,name:a.height}})()`);
+  const d=await dimensions();assert.equal(d.overflow,false);assert.ok(d.mic>=48&&d.selector>=48&&d.name>=48&&d.toggle>=48&&d.upload>=48);
+  await run(`document.getElementById('dictDestToggle').click()`);
 
   for(const [label,theme] of [['claro','light'],['nocturno','dark']]){
     await run(`document.getElementById('theme-${theme}').click();document.activeElement.blur();`);

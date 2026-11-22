@@ -10,7 +10,7 @@ const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map(m => m[1]);
 test('título y punto único de entrada', () => {
   assert.match(html, /<title>DictaVoz · Prueba Delta/);
   assert.match(html, /<h1>DictaVoz<\/h1>/);
-  assert.match(html, /DELTA 11 · VERSIÓN DE PRUEBA/);
+  assert.match(html, /<footer>Versión de prueba · usá solo datos ficticios<\/footer>/);   // revisión estética 22/11: pie de una línea
 });
 
 test('los scripts se pueden analizar', () => {
@@ -500,7 +500,7 @@ test('Delta 09: estado único de Whisper incluye trabajo, grabación y fin', () 
   assert.equal(recording.active,true);
   assert.equal(recording.cancel,false);
   assert.equal(recording.progress,null);
-  assert.match(recording.title,/Whisper por partes/);
+  assert.match(recording.title,/por partes/);   // revisión 22/11: sin nombre técnico, pero sigue diciendo «por partes»
   assert.match(recording.message,/Podés seguir grabando/);
   assert.equal(f(true,false,false,0,false,true,false,null,false).active,true,'carga del modelo');
   assert.equal(f(true,false,false,0,true,false,false,null,false).active,true,'transcribe audio guardado');
@@ -1046,7 +1046,11 @@ test('Anonimizar: pantalla propia en la barra fija, con explicación sencilla y 
 });
 
 test('Anonimizar: la vista previa y la lista de personas muestran cómo se escribe cada nombre', () => {
-  assert.match(html, /function refreshAnonPreview\(\)\{ \$\('anonPreview'\)\.textContent = \$\('text'\)\.value; \}/);
+  // Revisión 22/11: la vista previa resalta las etiquetas con createElement/textContent, nunca con innerHTML.
+  const prev = html.match(/function refreshAnonPreview\(\)\{[\s\S]*?\n\}/)[0];
+  assert.match(prev, /box\.textContent = '';/); assert.match(prev, /chip\.className = 'anon-chip'; chip\.textContent = m\[0\]/); assert.match(prev, /createTextNode/);
+  assert.doesNotMatch(prev, /innerHTML|insertAdjacentHTML|outerHTML/);
+  const sum = html.match(/function anonSummary\([\s\S]*?\n\}/)[0]; assert.doesNotMatch(sum, /innerHTML|insertAdjacentHTML|outerHTML/);
   assert.match(html, /attributeFilter: \['data-view'\]/);
   assert.match(html, /function updatePersonPreview\(\)/);
   assert.match(html, /se va a escribir así: /);
@@ -1137,9 +1141,11 @@ test('Audio: pestaña renombrada, aviso verde de grabación completa y puntos de
   assert.match(html, /\.audio-done\{background:var\(--success-bg\)/);
   assert.match(html, /\.then\(refreshAudioBox\)\.then\(\(\) => \{ if \(!audioSaveFailed && audioN\) showAudioDone\(\); \}\)/);
   assert.match(html, /mr\.start\(10000\); hideAudioDone\(\);/);
-  // La vista Dictar empieza con Guardar en y deja el audio de archivo para Ajustes.
-  assert.ok(html.indexOf('id="dictDest"') < html.indexOf('id="rec"'));
+  // Revisión 22/11: Dictar empieza con Grabar; el destino va debajo, en una línea, y «Subir un audio» abre el mismo selector de archivo.
+  assert.ok(html.indexOf('id="rec"') < html.indexOf('id="dictDest"'));
+  assert.ok(html.indexOf('id="dictDest"') < html.indexOf('id="dictUpload"'));
   assert.ok(html.indexOf('id="rec"') < html.indexOf('id="audioShortcut"'));
+  assert.match(html, /\$\('dictUpload'\)\.addEventListener\('click', \(\) => \$\('loadAudioFile'\)\.click\(\)\);/);
   // puntos de novedad
   assert.match(html, /a\[data-badge\]::after/);
   assert.match(html, /notifyNav\('grabacion', 'audio guardado'\)/);
@@ -1186,16 +1192,16 @@ test('seguridad: importación valida bytes y duración antes de decodificar', ()
 
 test('captura global: grabando, pausa y fin, con preferencia de conservación', () => {
   const source = html.match(/function updateDockRecording\(\)\{[\s\S]*?\n\}/)[0];
-  const elements = Object.fromEntries(['studioDockCapture','studioDockNotes','studioDockMode','studioDockRetention','studioDockClock','studioDockPause','studioDockStop','pause','rec','saveAudio'].map(id=>[id,{classList:{toggle(){}},checked:true,disabled:false}]));
+  const elements = Object.fromEntries(['studioDockCapture','studioDockNotes','studioDockMode','studioDockRetention','studioDockClock','studioDockPause','studioDockStop','pause','rec','saveAudio'].map(id=>[id,{classList:{toggle(){}},checked:true,disabled:false,dataset:{}}]));
   const context = { $:id=>elements[id], recording:true, paused:false, elapsedMs:()=>3000, fmtClock:()=> '00:03' };
   new Script(source+';updateDockRecording()').runInNewContext(context);
   assert.equal(elements.studioDockCapture.hidden,false);
   assert.equal(elements.studioDockMode.textContent,'Grabando');
-  assert.equal(elements.studioDockRetention.textContent,'Conservar audio: Sí');
+  assert.equal(elements.studioDockRetention.textContent,'Guardando audio');
   context.paused=true; elements.saveAudio.checked=false;
   new Script(source+';updateDockRecording()').runInNewContext(context);
   assert.equal(elements.studioDockMode.textContent,'En pausa');
-  assert.equal(elements.studioDockRetention.textContent,'Conservar audio: No');
+  assert.equal(elements.studioDockRetention.textContent,'Sin guardar audio');
   context.recording=false;
   new Script(source+';updateDockRecording()').runInNewContext(context);
   assert.equal(elements.studioDockCapture.hidden,true);
@@ -2254,10 +2260,10 @@ test('B3: fecha corta y vista previa de la lista, sin tocar los sellos guardados
   assert.equal(JSON.stringify(d), antes, 'armar el resumen no modifica los datos');
 });
 
-test('B3: la burbuja deja Copiar y Editar a la vista y lleva Mover y Borrar al menú', () => {
+test('B3 (revisión 22/11): la burbuja muestra solo «⋯»; Copiar, Editar, Mover y Borrar van en el menú', () => {
   const render = html.match(/function renderConv\(\)\{[\s\S]*?\n\}/)[0];
-  assert.match(render, /acts\.append\(convButton\('Copiar'[^\n]*convButton\('Editar'[^\n]*, more\);/);
-  assert.match(render, /menu\.append\(item\('Mover a otro cuaderno'[^\n]*item\('Borrar esta nota'[^\n]*'ghost danger'\)\);/);
+  assert.match(render, /acts\.append\(more\);/);
+  assert.match(render, /menu\.append\(item\('Copiar'[^\n]*item\('Editar'[^\n]*item\('Mover a otro cuaderno'[^\n]*item\('Borrar esta nota'[^\n]*'ghost danger'\)\);/);
   assert.match(render, /aria-haspopup', 'menu'/); assert.match(render, /aria-expanded', 'false'/); assert.match(render, /setAttribute\('role', 'menu'\)/);
   // Todo con textContent (convButton y createElement); nada de innerHTML con datos.
   assert.doesNotMatch(render, /innerHTML|insertAdjacentHTML|outerHTML/);
@@ -2270,3 +2276,19 @@ test('B3: la burbuja deja Copiar y Editar a la vista y lleva Mover y Borrar al m
   assert.match(html, /id="listPreview" class="aj-sw" checked>/, 'activada por defecto');   // U16: ahora es un interruptor
 });
 
+
+test('Revisión estética y de marketing 22/11: marca, encabezado, Dictar y honestidad', () => {
+  assert.match(html, /<meta name="description" content="Dictá, transcribí en tu celular y anonimizá antes de compartir\.">/);
+  assert.match(html, /<link rel="icon" href="data:image\/svg\+xml,/, 'favicon en línea (img-src permite data:)');
+  assert.ok(/img-src 'self' data: blob:/.test(html));
+  assert.ok(html.includes('<span class="vh">Procesamiento local</span>'), 'el chip «Local» conserva el texto completo para lectores de pantalla');
+  assert.doesNotMatch(html, /Beta · solo datos ficticios|BETA VISUAL SEPARADA/);
+  assert.doesNotMatch(html, /sin nube|100 ?% privado|cifrado infalible|anonimización infalible/i);
+  assert.match(html, /body\[data-view="grabacion"\]\.record-mic-visible #studioDockCapture\{display:none!important\}/, 'R1: sin controles repetidos con el círculo a la vista');
+  assert.match(html, /'Transcribiendo por partes mientras grabás'/);
+  assert.ok(!/class="beta-whisper-shortcut"/.test(html), 'S1: Ajustes ya no empieza por el motor');
+  assert.ok(html.indexOf('id="ajProtect"') < html.indexOf('id="ajCopy"'), 'S2: Activar protección es la acción principal de la tarjeta');
+  assert.doesNotMatch(html, /screen-overline">(CUADERNOS|PRIVACIDAD|PERSONALIZACIÓN)/, 'G5: un título por pantalla');
+  const empty = html.match(/function convEmptyState\(\)\{[\s\S]*?\n\}/)[0], av = html.match(/function convAvatar\([\s\S]*?\n\}/)[0];
+  for (const f of [empty, av]) assert.doesNotMatch(f, /innerHTML|insertAdjacentHTML|outerHTML/);
+});

@@ -30,6 +30,8 @@ var dvTheme=(function(){
 })();
 </script>
 <meta name="studio-design" content="delta-11">
+<meta name="description" content="Dictá, transcribí en tu celular y anonimizá antes de compartir.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230E5A6B'/%3E%3Cg fill='none' stroke='%23fff' stroke-width='2.4' stroke-linecap='round'%3E%3Crect x='12.5' y='6' width='7' height='13' rx='3.5'/%3E%3Cpath d='M8.5 15.5a7.5 7.5 0 0 0 15 0M16 23v3'/%3E%3C/g%3E%3C/svg%3E">
 <title>DictaVoz · Prueba Delta</title>
 <style>
 :root{color-scheme:light;--bg:#F4F7F8;--bg2:#E6F0F3;--card:#FFFFFF;--ink:#12262C;--mut:#4F646A;--line:#D6E1E5;--acc:#0E5A6B;--acc-ink:#FFFFFF;--acc-soft:#E6F0F3;--rec:#FBEAEA;--rec-ink:#9B2C26;--note-bg:#FFF4DD;--note-ink:#7A4E00;--surface-soft:#F4F7F8;--shadow-color:#12262C12;--bar-l:65%;--error:#9B2C26;--error-bg:#FBEAEA;--success:#23634B;--success-bg:#E8F3EC}
@@ -973,6 +975,94 @@ body[data-view="anonimizar"] #anon{border-radius:var(--r-row)}
 .brand h1::after{content:"BETA";display:inline-block;vertical-align:middle;margin-left:9px;padding:3px 6px;border-radius:6px;background:var(--acc-soft);color:var(--acc);font-size:10px;font-weight:850;letter-spacing:.08em}
 @media(max-width:380px){body[data-view="transcripcion"] .conv-bubble{padding:11px 12px}body[data-view="transcripcion"] .conv-actions button{padding-inline:7px}}
 
+
+/* ===== Revisión estética y de marketing (22/11/2026, Claude; docs: CAMBIOS.md). Solo presentación: mismos ids, mismos controles. ===== */
+.vh{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+/* G1: encabezado en una sola fila */
+.top{flex-wrap:nowrap;align-items:center;gap:10px;padding-bottom:12px;margin-bottom:16px}
+.top .brand{flex:1 1 auto;min-width:0}
+.top .pill{order:0;flex:none;display:inline-flex;align-items:center;gap:6px;margin-left:auto;padding:6px 12px;min-height:32px;border-radius:999px;background:var(--acc-soft);color:var(--acc);font-size:13px;font-weight:700;line-height:1}
+.top .pill svg{width:15px;height:15px;flex:none}
+.top .top-lock{flex:none}
+/* G2: pie de una línea */
+footer{font-size:12px;letter-spacing:0;text-align:center;color:var(--mut)}
+/* D1-D3: Grabar primero; destino en una línea */
+body[data-view="grabacion"] .c-rec{display:flex;flex-direction:column}
+body[data-view="grabacion"] .c-rec>*{order:5}
+body[data-view="grabacion"] .c-rec>#audioDone{order:1}
+body[data-view="grabacion"] .c-rec>.recrow{order:2}
+body[data-view="grabacion"] .c-rec>.rec-retention,body[data-view="grabacion"] .c-rec>.mark-help{order:3}
+body[data-view="grabacion"] .c-rec>.dict-dest,body[data-view="grabacion"] .c-rec>.dict-upload{order:4}
+body[data-view="grabacion"]:not(.delta-recording) .recrow{display:flex;flex-direction:column;align-items:center}
+body[data-view="grabacion"]:not(.delta-recording) .recrow>#rec{order:-1;margin:8px auto 6px}
+body[data-view="grabacion"]:not(.delta-recording) .record-clock #clock:not(.on){font-size:20px;font-weight:600;letter-spacing:0;color:var(--mut);margin:0}
+body[data-view="grabacion"]:not(.delta-recording) .recrow>.side{display:none}
+body[data-view="grabacion"]:not(.delta-recording) .c-rec>.mark-help{display:none}
+.c-rec>.dict-dest{margin:var(--gap-block) 0 0;padding:4px 6px;background:transparent;border:0;gap:6px}
+.dict-dest-toggle{font-size:max(15px,calc(15px * var(--text-scale)));display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;min-height:48px;padding:0 14px;background:var(--card);color:var(--ink);border:1px solid var(--line-strong);border-radius:14px;font-weight:500;text-align:left}
+.dict-dest-toggle b{color:var(--acc);font-weight:700;overflow-wrap:anywhere}
+.dict-dest-toggle svg{width:20px;height:20px;flex:none;transition:transform .15s}
+.dict-dest-toggle[aria-expanded="true"] svg{transform:rotate(180deg)}
+#dictDestBody{display:grid;gap:6px;padding:8px 2px 0}
+#dictDestBody[hidden]{display:none}
+body.delta-recording .c-rec>.dict-upload{display:none}
+.dict-upload{display:grid;gap:4px;margin-top:10px;text-align:center}
+#dictUpload{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;width:100%;background:transparent;color:var(--acc);border:1px solid var(--line-strong);font-weight:650}
+#dictUpload svg{width:20px;height:20px}
+.dict-upload .hint{margin:0;font-size:max(13px,calc(13px * var(--text-scale)))}
+/* S3/D4: en Ajustes queda la administración de audios; la carga vive en Dictar */
+#audioAdvanced #loadAudioBtn,#audioAdvanced #loadAudioHint{display:none}
+/* R1: con los controles grandes a la vista en Dictar, la barra fija no los repite */
+body[data-view="grabacion"].record-mic-visible #studioDockCapture{display:none!important}
+.rec-retention{display:inline-flex;align-items:center;justify-content:center;gap:6px;margin:6px auto 0;font-size:max(14px,calc(14px * var(--text-scale)));color:var(--mut)}
+.rec-retention[hidden]{display:none}
+.rec-retention::before,#studioDockRetention::before{content:"";width:16px;height:16px;flex:none;background:currentColor;-webkit-mask:var(--ico-audio) center/contain no-repeat;mask:var(--ico-audio) center/contain no-repeat}
+.rec-retention[data-keep="0"]::before,#studioDockRetention[data-keep="0"]::before{-webkit-mask-image:var(--ico-audio-off);mask-image:var(--ico-audio-off)}
+#studioDockRetention{display:inline-flex;align-items:center;gap:5px;color:var(--mut)}
+:root{--ico-audio:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M4 10v4M8 7v10M12 4v16M16 7v10M20 10v4'/%3E%3C/svg%3E");--ico-audio-off:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M4 10v4M8 7v10M12 4v16M16 7v10M20 10v4M3 3l18 18'/%3E%3C/svg%3E")}
+/* R4: un solo halo al grabar */
+body[data-view="grabacion"] .c-rec #rec.on{box-shadow:0 0 0 10px var(--recon-halo)}
+/* G5/C1: un título por pantalla */
+.screen-title h2{margin-top:0}
+/* C2-C6: Cuadernos */
+.conv-avatar{display:inline-flex!important;align-items:center;justify-content:center;padding:0!important;font-size:19px;font-weight:800;line-height:1;background:var(--acc-soft);color:var(--acc)}
+.conv-avatar[data-tone="1"]{background:var(--note-bg);color:var(--note-ink)}
+.conv-avatar[data-tone="2"]{background:var(--success-bg);color:var(--success)}
+.conv-avatar[data-tone="3"]{background:var(--bubble-bg);color:var(--stamp)}
+.conv-empty{display:grid;justify-items:center;gap:10px;padding:28px 12px;text-align:center;color:var(--mut)}
+.conv-empty svg{width:72px;height:72px;fill:none;stroke:var(--acc);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.conv-empty p{margin:0;font-size:max(16px,calc(16px * var(--text-scale)));color:var(--ink)}
+.conv-empty button{min-width:160px}
+.conv-title-row{position:relative}
+.conv-title-row #convTitle{padding-right:56px;min-height:48px;display:flex;align-items:center}
+body[data-view="transcripcion"] .conv-sheet-tools{margin:0;border:0;background:transparent;padding:0}
+body[data-view="transcripcion"] .conv-sheet-tools>summary{position:absolute;right:0;top:0}
+.conv-avatar svg.conv-ico{width:22px;height:22px;padding:0;background:transparent}
+.conv-heading{position:relative}
+body[data-view="transcripcion"] .conv-sheet-tools>summary{list-style:none;display:inline-flex;align-items:center;justify-content:center;min-width:48px;min-height:48px;padding:0;font-size:24px;font-weight:800;color:var(--acc);border-radius:14px}
+body[data-view="transcripcion"] .conv-sheet-tools>summary::-webkit-details-marker{display:none}
+body[data-view="transcripcion"] .conv-sheet-tools>summary::after{display:none!important;content:none!important}
+body[data-view="transcripcion"] .conv-meta{display:flex;align-items:center;flex-wrap:nowrap}
+body[data-view="transcripcion"] .conv-meta .conv-actions{margin:0 0 0 auto;padding:0;border:0}
+body[data-view="transcripcion"] .conv-meta .conv-actions .conv-more{background:transparent;border-color:transparent;color:var(--mut)}
+body[data-view="transcripcion"] .conv-stamp{color:var(--mut);font-weight:500;font-size:max(13px,calc(13px * var(--text-scale)))}
+body[data-view="transcripcion"] .conv-menu button{flex:1 1 auto}
+/* A1-A3: Anonimizar — el resultado primero */
+.c-anon .privacy-group{border:0;background:transparent;padding:0;box-shadow:none}
+.c-anon .anon-preview-label{margin-top:4px}
+.anon-chip{display:inline-block;padding:0 6px;margin:0 1px;border-radius:6px;background:var(--acc-soft);color:var(--acc);font-weight:700;white-space:nowrap}
+.anon-sum{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}
+.anon-sum .anon-chip{padding:4px 10px;border-radius:999px;font-size:13px;white-space:normal}
+#anonRes p{margin:0}
+.studio-anon-secondary button{display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.studio-anon-secondary button svg{width:18px;height:18px;flex:none}
+/* S2: protección primero; copias en su fila */
+.aj-copy-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+.aj-copy-row #ajLastCopy{margin:0;padding:0;background:transparent;border:0;color:var(--mut);flex:1 1 auto}
+.aj-copy-row #ajCopy{flex:none;min-height:48px}
+/* B1: con una sola forma de desbloquear, el botón es el principal */
+#vaultBioUnlock[hidden]+#vaultLockForm #vaultLockGo{background:var(--acc);color:var(--acc-ink);border-color:var(--acc)}
+
 </style>
 </head>
 <body data-view="grabacion">
@@ -983,10 +1073,9 @@ body[data-view="anonimizar"] #anon{border-radius:var(--r-row)}
     <span class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7"/></svg></span>
     <div>
       <h1>DictaVoz</h1>
-      <p class="sub">Beta · solo datos ficticios.</p>
     </div>
   </div>
-  <span class="pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Procesamiento local</span>
+  <span class="pill" title="Procesamiento local: se transcribe en este celular"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg><span class="pill-short" aria-hidden="true">Local</span><span class="vh">Procesamiento local</span></span>
   <button type="button" id="topLock" class="ghost top-lock" hidden aria-label="Bloquear DictaVoz"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Bloquear</button>
 </header>
 
@@ -997,15 +1086,6 @@ body[data-view="anonimizar"] #anon{border-radius:var(--r-row)}
   <!-- 1 · Grabar -->
   <section class="card c-rec" id="grabacion">
     <!-- U19: cada nota tiene su fecha; el nombre opcional corresponde al cuaderno. -->
-    <div class="dict-dest" id="dictDest">
-      <label for="dictDestSel">Guardar en</label>
-      <select id="dictDestSel" aria-describedby="dictDestHint"><option value="">Cuaderno nuevo</option></select>
-      <div id="dictNameRow">
-        <label for="dictName">Nombre del cuaderno nuevo <span class="opt">(opcional)</span></label>
-        <input type="text" id="dictName" maxlength="120" autocomplete="off" enterkeyhint="done" placeholder="Si lo dejás vacío: fecha y hora">
-      </div>
-      <p class="hint" id="dictDestHint" role="status"></p>
-    </div>
     <div class="audio-done" id="audioDone" role="status" aria-live="polite" hidden>
       <span class="audio-done-check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7"/></svg></span>
       <div class="audio-done-body"><strong>Grabación completa</strong><span id="audioDoneText"></span>
@@ -1020,7 +1100,24 @@ body[data-view="anonimizar"] #anon{border-radius:var(--r-row)}
         <button id="mark" type="button" disabled title="Insertá una marca de tiempo en la transcripción (tecla M)" aria-label="Marcar momento en la transcripción">Marcar momento</button>
       </div>
     </div>
+    <p class="rec-retention" id="recRetention" hidden></p>
     <p class="mark-help">«Marcar» señala un momento en la transcripción.</p>
+    <div class="dict-dest" id="dictDest">
+      <button type="button" id="dictDestToggle" class="dict-dest-toggle" aria-expanded="false" aria-controls="dictDestBody"><span>Se guarda en: <b id="dictDestNow">Cuaderno nuevo</b></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+      <div id="dictDestBody" hidden>
+      <label for="dictDestSel">Guardar en</label>
+      <select id="dictDestSel" aria-describedby="dictDestHint"><option value="">Cuaderno nuevo</option></select>
+      <div id="dictNameRow">
+        <label for="dictName">Nombre del cuaderno nuevo <span class="opt">(opcional)</span></label>
+        <input type="text" id="dictName" maxlength="120" autocomplete="off" enterkeyhint="done" placeholder="Si lo dejás vacío: fecha y hora">
+      </div>
+      </div>
+      <p class="hint" id="dictDestHint" role="status"></p>
+    </div>
+    <div class="dict-upload">
+      <button type="button" id="dictUpload"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></svg><span>Subir un audio</span></button>
+      <p class="hint" id="dictUploadHint">Se transcribe en este celular. Máximo 30 MB y 15 minutos.</p>
+    </div>
     <div class="audio-tools">
       <p class="hint" id="audioShortcut">Mis grabaciones</p>
       <button type="button" id="loadAudioBtn">Cargar un audio para transcribir</button>
@@ -1079,25 +1176,17 @@ body[data-view="anonimizar"] #anon{border-radius:var(--r-row)}
     <summary>Ajustes</summary>
     <div class="body">
     <div id="ajHome" class="aj-screen">
-      <div class="screen-title"><span class="screen-overline">PERSONALIZACIÓN</span><h2>Ajustes</h2></div>
-      <button type="button" class="beta-whisper-shortcut" id="betaWhisperShortcut" data-aj-open="calidad" aria-label="Abrir ajustes del motor y modelo de transcripción"><span class="beta-whisper-stack"><span class="beta-whisper-overline">MOTOR Y MODELO DE TRANSCRIPCIÓN</span><strong class="beta-whisper-value" id="betaWhisperLabel">Whisper · Small</strong></span><span class="beta-whisper-chevron" aria-hidden="true">›</span></button>
+      <div class="screen-title"><h2>Ajustes</h2></div>
       <section class="aj-status" id="ajStatus" aria-labelledby="ajStatusTitle">
         <div class="aj-status-top"><span class="aj-lock" id="ajLockIcon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="10.5" width="14" height="9.5" rx="2.5"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/></svg></span><div><h3 id="ajStatusTitle">Protección desactivada</h3><p class="aj-status-line" id="ajStatusLine"></p></div></div>
-        <div class="aj-status-btns"><button type="button" id="ajLock" hidden>Bloquear ahora</button><button type="button" id="ajCopy" class="p">Crear copia</button></div>
-        <p class="aj-soft" id="ajLastCopy" role="status"></p>
+        <div class="aj-status-btns"><button type="button" id="ajProtect" class="p">Activar protección</button><button type="button" id="ajLock" hidden>Bloquear ahora</button></div>
+        <div class="aj-copy-row"><p class="aj-soft" id="ajLastCopy" role="status"></p><button type="button" id="ajCopy">Crear copia</button></div>
       </section>
       <h3 class="aj-group">Datos y privacidad</h3>
       <section class="settings-module aj-list" id="settingsPrivacy">
         <button type="button" class="aj-row" data-aj-open="proteccion" id="ajRow-proteccion"><span class="aj-row-t"><b>Protección y contraseña</b><small>Contraseña, huella y código de recuperación</small></span><span class="aj-chev" aria-hidden="true">›</span></button>
         <button type="button" class="aj-row" data-aj-open="copias" id="ajRow-copias"><span class="aj-row-t"><b>Copias de seguridad</b><small>Crear, verificar y restaurar</small></span><span class="aj-chev" aria-hidden="true">›</span></button>
         <button type="button" class="aj-row" data-aj-open="espacio" id="ajRow-espacio"><span class="aj-row-t"><b>Espacio y audios guardados</b><small>Lo que ocupan tus notas y audios</small></span><span class="aj-chev" aria-hidden="true">›</span></button>
-      </section>
-      <h3 class="aj-group">Dictado</h3>
-      <section class="settings-module aj-list" id="settingsAudio">
-                <label class="chk aj-switch-row"><input type="checkbox" id="saveAudio" class="aj-sw">
-        <span><b>Conservar audio</b><small>Guarda la grabación original junto a la nota para reproducirla desde Cuadernos. Con protección, cifrada; sin protección, sin cifrar. La voz original nunca está anonimizada.</small></span></label>
-        <button type="button" class="aj-row" data-aj-open="calidad" id="ajRow-calidad"><span class="aj-row-t"><b>Calidad de transcripción</b><small>Modelo, micrófono y cómo transcribir</small></span><span class="aj-chev" aria-hidden="true">›</span></button>
-        <button type="button" class="aj-row" data-aj-open="diccionario" id="ajRow-diccionario"><span class="aj-row-t"><b>Diccionario y correcciones</b><small>Palabras que se corrigen solas</small></span><span class="aj-chev" aria-hidden="true">›</span></button>
       </section>
       <h3 class="aj-group">Lectura</h3>
       <section class="settings-module aj-list" id="settingsReading">
@@ -1117,6 +1206,13 @@ body[data-view="anonimizar"] #anon{border-radius:var(--r-row)}
         </div>
                 <label class="chk aj-switch-row"><input type="checkbox" id="listPreview" class="aj-sw" checked>
         <span><b>Mostrar vista previa en la lista</b><small>En Cuadernos, cada cuaderno muestra el comienzo de su última nota. Puede dejar a la vista nombres reales si la nota no está anonimizada: apagalo si alguien más mira tu pantalla.</small></span></label>
+      </section>
+      <h3 class="aj-group">Dictado</h3>
+      <section class="settings-module aj-list" id="settingsAudio">
+                <label class="chk aj-switch-row"><input type="checkbox" id="saveAudio" class="aj-sw">
+        <span><b>Conservar audio</b><small>Guarda la grabación original junto a la nota para reproducirla desde Cuadernos. Con protección, cifrada; sin protección, sin cifrar. La voz original nunca está anonimizada.</small></span></label>
+        <button type="button" class="aj-row" data-aj-open="calidad" id="ajRow-calidad"><span class="aj-row-t"><b>Calidad de transcripción</b><small id="ajCalidadNow">Modelo, micrófono y cómo transcribir</small></span><span class="aj-chev" aria-hidden="true">›</span></button>
+        <button type="button" class="aj-row" data-aj-open="diccionario" id="ajRow-diccionario"><span class="aj-row-t"><b>Diccionario y correcciones</b><small>Palabras que se corrigen solas</small></span><span class="aj-chev" aria-hidden="true">›</span></button>
       </section>
       <h3 class="aj-group">Avanzado</h3>
       <section class="settings-module aj-list" id="settingsAdvanced">
@@ -1236,9 +1332,9 @@ body[data-view="anonimizar"] #anon{border-radius:var(--r-row)}
         <section class="settings-module aj-block" id="settingsQuality">
         <label for="model" style="margin-top:16px">Modelo de Whisper</label>
       <select id="model">
-        <option value="Xenova/whisper-tiny">Tiny · más liviano</option>
-        <option value="Xenova/whisper-base">Base · equilibrado</option>
-        <option value="Xenova/whisper-small" selected>Small · más preciso</option>
+        <option value="Xenova/whisper-tiny">Rápida · Whisper Tiny</option>
+        <option value="Xenova/whisper-base">Equilibrada · Whisper Base</option>
+        <option value="Xenova/whisper-small" selected>Precisa · Whisper Small</option>
       </select>
       <div class="hint" id="modelHint" role="status">Small: para mayor precisión. Requiere más memoria y tiempo de procesamiento.</div>
       <div class="hint">Cambiar de modelo puede requerir una descarga.</div>
@@ -1330,24 +1426,24 @@ body[data-view="anonimizar"] #anon{border-radius:var(--r-row)}
 
   <!-- 2 · Texto -->
   <section class="card c-edit" id="transcripcion">
-    <div class="screen-title text-screen-title"><span class="screen-overline">CUADERNOS</span><h2>Tus cuadernos</h2><p>Cada cuaderno reúne tus notas de voz y de texto.</p></div>
+    <div class="screen-title text-screen-title"><h2>Cuadernos</h2></div>
     <div id="convPanel" class="conv-panel">
       <p id="convMsg" class="warn conv-msg" role="alert"></p>
       <div id="convListView">
-        <div class="conv-heading"><h3 class="conv-h">Cuadernos guardados</h3><button type="button" class="p" id="convNewNote">+ Nueva nota</button></div>
+        <div class="conv-heading"><h3 class="conv-h vh">Cuadernos guardados</h3><button type="button" class="p" id="convNewNote">+ Nota en cuaderno nuevo</button></div>
         <div id="convList"></div>
       </div>
       <div id="convOpenView" hidden>
         <div class="conv-heading"><button type="button" class="ghost conv-back" id="convBack">← Cuadernos</button><button type="button" id="convNewFromSheet">+ Nueva nota</button></div>
-        <h3 class="conv-h" id="convTitle"></h3>
-        <details class="conv-sheet-tools"><summary>Opciones de este cuaderno</summary><div class="conv-tools">
+        <div class="conv-title-row"><h3 class="conv-h" id="convTitle"></h3>
+        <details class="conv-sheet-tools"><summary aria-label="Opciones de este cuaderno"><span class="vh">Opciones de este cuaderno</span><span aria-hidden="true">⋯</span></summary><div class="conv-tools">
           <button type="button" id="convRename">Renombrar</button>
           <button type="button" id="convCopyAll">Copiar todo</button>
           <button type="button" id="convMoveAllBtn">Pasar todo a otro cuaderno</button>
           <button type="button" id="convTxt">Descargar .txt</button>
           <button type="button" class="ghost danger" id="convDeleteEmpty" hidden>Borrar cuaderno vacío</button>
         </div>
-        </details>
+        </details></div>
         <div id="convBubbles" class="conv-bubbles"></div>
       </div>
       <div id="convUndoRow" class="conv-undo" role="status" hidden><span id="convUndoText"></span><button type="button" id="convUndo">Deshacer</button></div>
@@ -1357,7 +1453,7 @@ body[data-view="anonimizar"] #anon{border-radius:var(--r-row)}
 
   <!-- 3 · Anonimizar -->
   <section class="card c-anon" id="anonimizar">
-    <div class="screen-title"><span class="screen-overline">PRIVACIDAD</span><h2 class="title-with-help">Anonimizar <button type="button" class="info-toggle" aria-label="Cómo funciona la anonimización" aria-expanded="false" aria-controls="anonHelp"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7v1"/></svg></button></h2><p>Ocultá nombres y datos personales antes de guardar o compartir.</p></div>
+    <div class="screen-title"><h2 class="title-with-help">Anonimizar <button type="button" class="info-toggle" aria-label="Cómo funciona la anonimización" aria-expanded="false" aria-controls="anonHelp"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7v1"/></svg></button></h2><p>Ocultá nombres y datos personales antes de guardar o compartir.</p></div>
 
     <div class="anon-explain" id="anonExplain">
       <div id="anonHelp" class="help-content" hidden>
@@ -1374,15 +1470,13 @@ body[data-view="anonimizar"] #anon{border-radius:var(--r-row)}
     </div></div>
 
     <div class="group privacy-group" id="privacidad">
-      <div class="gl">Anonimizar el texto de tu nota</div>
-      <p class="hint">Reemplaza datos del texto por etiquetas. Para usar tus códigos, abrí «Personas y códigos». Podés deshacer el cambio.</p>
-      <div class="studio-anon-actions"><button class="p" id="anon" title="Reemplaza nombres y datos por etiquetas. Se puede deshacer.">Anonimizar transcripción</button><div class="studio-anon-secondary"><button id="undo" disabled>↶ Deshacer anonimizado</button><button type="button" id="studioAnonSettings" aria-expanded="false" aria-controls="studioAnonConfig">⚙ Más opciones</button></div></div>
+      <p class="anon-preview-label" id="anonPreviewLabel">Así queda tu nota <span class="opt">(solo lectura; se edita en Cuadernos)</span></p>
+      <div id="anonPreview" class="anon-preview" tabindex="0" role="region" aria-labelledby="anonPreviewLabel"></div>
+      <div class="studio-anon-actions"><button class="p" id="anon" title="Reemplaza nombres y datos por etiquetas. Se puede deshacer.">Anonimizar nota</button><div class="studio-anon-secondary"><button id="undo" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg><span>Deshacer</span></button><button type="button" id="studioAnonSettings" aria-expanded="false" aria-controls="studioAnonConfig"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg><span>Más opciones</span></button></div></div>
       <div class="warn" id="anonRes" role="status" style="margin-top:8px"></div>
       <div id="susBox"></div>
-      <div class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 2.5 20h19L12 3z"/><path d="M12 10v4M12 17.5v.01"/></svg><span>La anonimización es automática y puede fallar: revisá siempre el texto antes de guardarlo o exportarlo.</span></div>
-      <p class="anon-preview-label" id="anonPreviewLabel">Así queda tu texto ahora <span class="opt">(solo lectura; la nota se edita aparte)</span></p>
-      <div id="anonPreview" class="anon-preview" tabindex="0" role="region" aria-labelledby="anonPreviewLabel"></div>
       <button type="button" class="ghost" data-go-view="transcripcion">Ir a la nota para editarla</button>
+      <div class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 2.5 20h19L12 3z"/><path d="M12 10v4M12 17.5v.01"/></svg><span>La anonimización es automática y puede fallar: revisá siempre el texto antes de guardarlo o exportarlo.</span></div>
       <details id="studioAnonConfig">
         <summary>Más opciones de anonimización</summary>
         <label for="hideX" style="margin-top:10px">Ocultar también estas palabras <span class="opt">(separadas por coma)</span></label>
@@ -1438,14 +1532,14 @@ body[data-view="anonimizar"] #anon{border-radius:var(--r-row)}
 
 </main>
 
-<footer>DELTA 11 · VERSIÓN DE PRUEBA<br>DICTAVOZ · BETA VISUAL SEPARADA<br>Usá únicamente datos ficticios. No ingresar datos clínicos reales en esta vista previa de terceros.</footer>
+<footer>Versión de prueba · usá solo datos ficticios</footer>
 </div>
 
 <aside class="studio-dock" aria-label="Acciones de la nota">
   <section id="transcriptionDock" class="transcription-dock" aria-label="Estado de la transcripción" hidden>
     <div class="transcription-dock-top">
       <span class="transcription-spinner" aria-hidden="true"></span>
-      <strong id="transcriptionDockTitle" role="status" aria-live="polite">Whisper está transcribiendo</strong>
+      <strong id="transcriptionDockTitle" role="status" aria-live="polite">Transcribiendo</strong>
       <span id="transcriptionDockTime" aria-label="Tiempo de procesamiento" aria-live="off"></span>
       <button type="button" id="transcriptionDockToggle" aria-expanded="false" aria-controls="transcriptionDockDetails">Detalles</button>
     </div>
@@ -1548,12 +1642,12 @@ body[data-view="anonimizar"] #anon{border-radius:var(--r-row)}
 <dialog id="correctionDialog" aria-labelledby="correctionTitle" aria-describedby="correctionDescription">
   <form id="correctionForm">
     <h2 id="correctionTitle">Corregir selección</h2>
-    <p class="hint" id="correctionDescription">Cambiá esta aparición. Si la corrección es de una palabra mal transcripta, DictaVoz la aprende sola para la próxima vez (se puede apagar en Ajustes → Diccionario).</p>
+    <p class="hint" id="correctionDescription">Corregí la palabra; DictaVoz la aprende para la próxima.</p>
     <label for="correctionOriginal">Texto seleccionado</label>
     <input id="correctionOriginal" type="text" readonly>
     <label for="correctionReplacement">Reemplazar por…</label>
     <input id="correctionReplacement" type="text" autocomplete="off" spellcheck="true" required>
-    <label class="chk"><input id="correctionRemember" type="checkbox"><span>Reemplazar siempre, en cualquier contexto<small>Opcional y más fuerte que lo automático: cambia toda aparición de este texto. Se guarda en este navegador. Evitá guardar nombres de pacientes.</small></span></label>
+    <label class="chk"><input id="correctionRemember" type="checkbox"><span>Reemplazar siempre<small>Cambia toda aparición de este texto. Evitá guardar nombres de pacientes.</small></span></label>
     <p id="correctionRuleNotice" hidden></p>
     <p id="correctionError" role="alert"></p>
     <div class="dialog-actions"><button id="correctionCancel" type="button">Cancelar</button><button class="p" type="submit">Aplicar</button></div>
@@ -2923,7 +3017,17 @@ const nWords = s => (s.match(WORDS) || []).length;
 
 /* ---------- Notas ---------- */
 function fmt(ts){ return new Date(ts).toLocaleString('es-AR', {dateStyle:'short', timeStyle:'short'}); }
-function refreshAnonPreview(){ $('anonPreview').textContent = $('text').value; }
+function refreshAnonPreview(){
+  const box = $('anonPreview'), txt = $('text').value, re = /\[[^\[\]\n]{1,60}\]/g;
+  box.textContent = '';
+  let last = 0, m;
+  while ((m = re.exec(txt))) {
+    if (m.index > last) box.append(document.createTextNode(txt.slice(last, m.index)));
+    const chip = document.createElement('span'); chip.className = 'anon-chip'; chip.textContent = m[0]; box.append(chip);
+    last = m.index + m[0].length;
+  }
+  if (last < txt.length) box.append(document.createTextNode(txt.slice(last)));
+}
 new MutationObserver(() => { if (document.body.dataset.view === 'anonimizar') refreshAnonPreview(); }).observe(document.body, {attributes: true, attributeFilter: ['data-view']});
 function resetEdit(){ anonBackup = null; $('undo').disabled = true; $('anon').disabled = false; $('anonRes').textContent = ''; $('learn').innerHTML = ''; $('susBox').innerHTML = ''; }
 function renderList(){
@@ -3013,15 +3117,27 @@ function dictDestRefresh(){
   sel.value = locked ? (lockedDest || '') : (dictDestId || '');
   sel.disabled = locked;
   $('dictNameRow').hidden = locked || !!sel.value;
+  dictDestNowRefresh(locked ? (lockedDest || '') : sel.value);
   $('dictDestHint').textContent = convEditingId ? 'Estás editando una nota guardada: no cambia de cuaderno.'
     : pendingElsewhere ? 'La nota sin guardar ya va a ' + (lockedDest ? '«' + convTitleOf(lockedDest) + '»' : 'un cuaderno nuevo') + '. Guardala o descartala para elegir otro destino.' : '';
 }
+/* Revisión estética 22/11: el destino se muestra en una línea («Se guarda en: …») y se despliega al tocarla. Solo presentación. */
+function dictDestNowRefresh(id){
+  const now = document.getElementById('dictDestNow'); if (!now) return;
+  const name = ($('dictName').value || '').trim();
+  now.textContent = id ? (convTitleOf(id) || 'Sin título') : (name ? 'Cuaderno nuevo «' + name + '»' : 'Cuaderno nuevo');
+}
+$('dictDestToggle').addEventListener('click', () => {
+  const body = $('dictDestBody'), open = body.hidden;
+  body.hidden = !open; $('dictDestToggle').setAttribute('aria-expanded', String(open));
+  if (open && !$('dictDestSel').disabled) $('dictDestSel').focus();
+});
 $('dictDestSel').addEventListener('change', () => {
   dictDestId = $('dictDestSel').value || null;
   if (convDictar && convTargetSet && !convEditingId) convTargetId = dictDestId;   // elegir al terminar de dictar también vale
   refreshConvTarget();
 });
-$('dictName').addEventListener('input', () => { dictDestName = $('dictName').value; refreshConvTarget(); });
+$('dictName').addEventListener('input', () => { dictDestName = $('dictName').value; dictDestNowRefresh(''); refreshConvTarget(); });
 function convShowMsg(t){ $('convMsg').textContent = t || ''; }
 /* Menú «⋯» de una nota (B3). Uno solo abierto a la vez; se cierra al elegir, al tocar afuera o con Escape. No guarda nada. */
 let convMenuOpen = null;
@@ -3045,6 +3161,25 @@ function convIcon(){   // U5: ícono decorativo del cuaderno (solo presentación
   svg.setAttribute('stroke-linecap', 'round'); svg.setAttribute('stroke-linejoin', 'round'); svg.setAttribute('aria-hidden', 'true'); svg.setAttribute('focusable', 'false'); svg.setAttribute('class', 'conv-ico');
   ['M6.5 4h10A1.5 1.5 0 0 1 18 5.5V20H8a1.5 1.5 0 0 1-1.5-1.5z', 'M6.5 18.5A1.5 1.5 0 0 1 8 17h10', 'M10 8h5'].forEach(d => { const p = document.createElementNS(NS, 'path'); p.setAttribute('d', d); svg.append(p); });
   return svg;
+}
+/* C3 (revisión 22/11): avatar con la inicial del cuaderno y uno de cuatro tonos de la paleta, fijo por id. Solo presentación. */
+function convEmptyState(){
+  const w = document.createElement('div'); w.className = 'conv-empty';
+  const NS = 'http://www.w3.org/2000/svg', svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('viewBox', '0 0 64 64'); svg.setAttribute('aria-hidden', 'true'); svg.setAttribute('focusable', 'false');
+  [['rect', {x: 14, y: 8, width: 36, height: 48, rx: 6}], ['path', {d: 'M22 22h20M22 30h20M22 38h12'}], ['circle', {cx: 46, cy: 46, r: 10}], ['path', {d: 'M46 41v6M43 46a3 3 0 0 0 6 0'}]].forEach(([tag, at]) => { const el = document.createElementNS(NS, tag); Object.entries(at).forEach(([k, v]) => el.setAttribute(k, v)); svg.append(el); });
+  const p = document.createElement('p'); p.textContent = 'Tu primera nota aparece acá.';
+  const b = convButton('Grabar', () => document.querySelector('[data-delta-view="grabacion"]').click(), 'p');
+  w.append(svg, p, b); return w;
+}
+function convAvatar(id, title){
+  const a = document.createElement('span'); a.className = 'conv-ico conv-avatar'; a.setAttribute('aria-hidden', 'true');
+  let h = 0; for (const ch of String(id)) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  a.dataset.tone = String(h % 4);
+  const first = String(title || '').trim().match(/^[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ]*([A-Za-zÁÉÍÓÚÜÑáéíóúüñ])/);
+  // Títulos con fecha (lo habitual): sin letra, va el ícono del cuaderno.
+  if (first && !/^\d/.test(String(title).trim())) a.textContent = first[1].toUpperCase(); else a.append(convIcon());
+  return a;
 }
 function convButton(label, fn, cls){ const b = document.createElement('button'); b.type = 'button'; b.textContent = label; if (cls) b.className = cls; b.onclick = fn; return b; }
 /* BETA: acciones visualmente pequeñas, manteniendo nombre accesible, texto y área táctil de 48 px. */
@@ -3091,14 +3226,15 @@ function renderConv(){
   const list = $('convList'); list.textContent = '';
   if (!convOpenId) {
     const sums = data ? convSummaries(data) : [];
-    if (!sums.length) { const p = document.createElement('p'); p.className = 'hint'; p.textContent = data ? 'Todavía no hay cuadernos. Grabá o escribí y tocá Guardar.' : 'Los cuadernos no están disponibles.'; list.append(p); }
+    if (!sums.length && !data) { const p = document.createElement('p'); p.className = 'hint'; p.textContent = 'Los cuadernos no están disponibles.'; list.append(p); }
+    if (!sums.length && data) list.append(convEmptyState());
     sums.forEach(x => {
       const b = convButton('', () => convOpen(x.id), 'conv-item');
       const t = document.createElement('span'); t.textContent = x.title || 'Sin título';
       // B3: cantidad y fecha corta, sin repetir la fecha del título; y una línea con el comienzo de la última nota (se puede apagar en Ajustes).
       const when = x.lastSavedAt !== null ? convRelative(x.lastSavedAt) : '';
       const sm = document.createElement('small'); sm.textContent = x.count + (x.count === 1 ? ' nota' : ' notas') + (when ? ' · ' + when : '');
-      b.append(convIcon(), t, sm);   // U5: nombre y, debajo, «N notas · fecha»; la vista previa (si está encendida) va en la tercera línea
+      b.append(convAvatar(x.id, x.title), t, sm);   // U5: nombre y, debajo, «N notas · fecha»; la vista previa (si está encendida) va en la tercera línea
       const pv = $('listPreview').checked ? convPreview(x.preview) : '';
       if (pv) { const q = document.createElement('span'); q.className = 'conv-preview'; q.textContent = pv; b.append(q); }
       list.append(b);
@@ -3118,7 +3254,7 @@ function renderConv(){
     const st = document.createElement('span'); st.className = 'conv-stamp';
     st.textContent = e.savedAt === null ? 'Sin fecha' : convStamp(e.savedAt, e.tzOffsetMin);
     m.append(st);
-    if (e.kind === 'heredado') { const h = document.createElement('span'); h.textContent = 'nota anterior'; m.append(h); }
+    if (e.kind === 'heredado') { const h = document.createElement('span'); h.textContent = 'registrada antes'; m.append(h); }
     if (e.textEditedAt !== null) { const h = document.createElement('span'); h.textContent = 'editado ' + convStamp(e.textEditedAt); m.append(h); }
     // B3: Copiar y Editar quedan a la vista; lo menos frecuente (Mover, Borrar) va en el menú «⋯» de la nota.
     const acts = document.createElement('div'); acts.className = 'conv-actions';
@@ -3126,14 +3262,14 @@ function renderConv(){
     const more = convButton('⋯', () => convToggleMenu(menu, more), 'conv-more');
     more.setAttribute('aria-label', 'Más acciones de esta nota'); more.setAttribute('aria-haspopup', 'menu'); more.setAttribute('aria-expanded', 'false'); more.setAttribute('aria-controls', menu.id);
     const item = (label, fn, cls) => { const b = convButton(label, () => { convCloseMenu(false); fn(); }, cls); b.setAttribute('role', 'menuitem'); return b; };
-    menu.append(item('Mover a otro cuaderno', () => convAskMove('one', e.id)), item('Borrar esta nota', () => convDelete(e.id), 'ghost danger'));
-    acts.append(convButton('Copiar', () => convCopy(e.text)), convButton('Editar', () => convEdit(e.id)), more);
-    betaNoteIcon(acts.children[0], 'copy'); betaNoteIcon(acts.children[1], 'edit');
+    // Revisión 22/11: la burbuja muestra solo el texto, la hora y «⋯»; todas las acciones de la nota viven en ese menú.
+    menu.append(item('Copiar', () => convCopy(e.text)), item('Editar', () => convEdit(e.id)), item('Mover a otro cuaderno', () => convAskMove('one', e.id)), item('Borrar esta nota', () => convDelete(e.id), 'ghost danger'));
+    m.append(acts); acts.append(more);
     if (e.audioId) {
       d.append(e3Player(e));
       menu.append(item('Quitar audio de esta nota', () => void e3Remove(e.id, e.audioId), 'ghost danger'));
     }
-    d.append(t, m, acts, menu); box.append(d);
+    d.append(t, m, menu); box.append(d);
   });
   refreshConvTarget();
 }
@@ -3500,8 +3636,18 @@ function anonymize(){
   $('undo').disabled = false;
   $('anon').disabled = true;
   updWC(); saveDraft(); refreshAnonPreview();
-  $('anonRes').textContent = 'Se ocultaron ' + (S.np.n - np0) + ' nombre(s)' + (S.stat.t ? ', ' + S.stat.t + ' reemplazo(s) por código' : '') + ' y ' + nOther + ' dato(s) (correo, teléfono, fecha). Revisá el texto: pueden quedar nombres sin detectar.';
+  anonSummary(S.np.n - np0, S.stat.t, nOther);
   showSuspects(Array.from(S.sus).concat(sentenceStarters($('text').value, S)));
+}
+/* Resumen en pastillas (revisión 22/11). Mismo dato que antes; armado con textContent. */
+function anonSummary(names, codes, other){
+  const box = $('anonRes'); box.textContent = '';
+  const row = document.createElement('div'); row.className = 'anon-sum';
+  const add = (n, one, many) => { if (!n) return; const c = document.createElement('span'); c.className = 'anon-chip'; c.textContent = n + ' ' + (n === 1 ? one : many); row.append(c); };
+  add(names, 'nombre', 'nombres'); add(codes, 'reemplazo por código', 'reemplazos por código'); add(other, 'dato (correo, teléfono, fecha)', 'datos (correo, teléfono, fecha)');
+  const p = document.createElement('p'); p.textContent = 'Revisá el texto: pueden quedar nombres sin detectar.';
+  if (row.childNodes.length) box.append(row);
+  box.append(p);
 }
 $('anon').onclick = () => { if (!$('text').value.trim()) return flash('No hay texto para anonimizar.'); if (!pendingOk()) return; anonymize(); };
 
@@ -3648,7 +3794,7 @@ $('pAdd').onclick = () => {
   }
   proposedCode = null;
   $('pName').value = ''; $('pRel').value = ''; $('pCode').value = ''; updatePersonPreview();
-  msg('Asociación guardada. Se aplicará cuando toques «Anonimizar transcripción».');
+  msg('Asociación guardada. Se aplicará cuando toques «Anonimizar nota».');
 };
 $('pApply').onclick = () => { $('pMsg').textContent = applyPeopleToText() ? 'Listo: se reemplazaron en el texto los nombres de la lista.' : 'No había nada para cambiar en el texto.'; refreshAnonPreview(); };
 $('pClear').onclick = () => { if (!people.length || !confirm('¿Borrar toda la tabla de personas?')) return; people = []; savePeople(); renderPeople(); $('pMsg').textContent = 'Tabla borrada.'; };
@@ -4316,8 +4462,8 @@ function fmtEta(ms){
 /* Solo presentación: nunca escribe mensajes en el texto de la nota. */
 function editorFeedbackState(whisper, recording, paused, processing, failed, nativePhase){
   if (whisper && failed) return {
-    placeholder:'La transcripción se detuvo. Revisá el estado en Grabar y las opciones para reintentar.',
-    help:recording ? 'La grabación sigue activa, pero la transcripción se detuvo. Revisá el estado en Grabar y conservá el audio para reintentar.' : 'El texto confirmado se conserva. Revisá el estado en Grabar antes de reintentar.'
+    placeholder:'La transcripción se detuvo. Revisá el estado en Dictar y las opciones para reintentar.',
+    help:recording ? 'La grabación sigue activa, pero la transcripción se detuvo. Revisá el estado en Dictar y conservá el audio para reintentar.' : 'El texto confirmado se conserva. Revisá el estado en Dictar antes de reintentar.'
   };
   if (whisper && recording) return {
     placeholder:paused ? 'Grabación en pausa. Whisper completa los fragmentos recibidos.' : 'Grabando audio… Whisper mostrará el texto por fragmentos; en grabaciones cortas, después de detener.',
@@ -4352,7 +4498,7 @@ function transcriptionDockState(whisper, recording, busy, outstanding, feeding, 
   if (!active) return {active:false, cancel:false, progress:null};
   return {
     active:true,
-    title:recording ? (isPaused ? 'Whisper por partes · en pausa' : 'Whisper por partes') : 'Whisper está terminando la transcripción',
+    title:recording ? (isPaused ? 'Transcribiendo por partes · en pausa' : 'Transcribiendo por partes mientras grabás') : 'Terminando la transcripción',
     message:recording ? (isPaused ? 'La captura está en pausa. El texto aparece al procesar cada fragmento; podés reanudar o detener.' : 'Podés seguir grabando. El texto aparece al procesar cada fragmento; en grabaciones cortas, después de detener.') : 'Esperá mientras se completa la transcripción. Podés revisar el texto.',
     parts:outstanding > 0 ? outstanding + (outstanding === 1 ? ' parte pendiente' : ' partes pendientes') : loading ? 'Preparando el modelo…' : feeding ? 'Leyendo audio guardado…' : recording && !busy ? (isPaused ? 'No hay fragmentos pendientes.' : 'Reuniendo audio para el próximo fragmento…') : 'Procesando el último fragmento…',
     processing:busy || outstanding > 0 || feeding || loading,
@@ -7045,7 +7191,7 @@ function ajRefresh(){
   st.dataset.on = on ? '1' : '0';
   $('ajStatusTitle').textContent = on ? 'Protección activada' : 'Protección desactivada';
   $('ajStatusLine').textContent = on ? 'Se bloquea sola tras 15 minutos sin uso.' : 'Sin protección no hay autobloqueo: tus notas se guardan sin cifrar.';
-  $('ajLock').hidden = !on;
+  $('ajLock').hidden = !on; $('ajProtect').hidden = on;
   const days = cfgLastBackup ? Math.max(0, Math.floor((Date.now() - cfgLastBackup) / 86400000)) : null;
   $('ajLastCopy').textContent = days === null ? 'Todavía no preparaste ninguna copia.'
     : 'Última copia preparada: ' + (days === 0 ? 'hoy' : days === 1 ? 'hace 1 día' : 'hace ' + days + ' días') + '. Confirmá que esté descargada y verificada; conviene hacer una por semana.';
@@ -7063,6 +7209,7 @@ document.querySelectorAll('[data-aj-open]').forEach(b => b.addEventListener('cli
 document.querySelectorAll('[data-aj-back]').forEach(b => b.addEventListener('click', () => ajShow('home')));
 document.querySelectorAll('[data-delta-view="ajustes"]').forEach(a => a.addEventListener('click', () => ajShow('home', false)));
 $('ajCopy').addEventListener('click', () => ajShow('copias'));
+$('ajProtect').addEventListener('click', () => ajShow('proteccion'));
 $('ajLock').addEventListener('click', () => $('vaultLockBtn').click());
 $('ajLegacyDelete').addEventListener('click', () => $('e3LegacyDelete').click());
 new MutationObserver(ajLegacySync).observe($('e3Legacy'), {attributes: true, attributeFilter: ['hidden']});
@@ -7419,14 +7566,18 @@ $('loadAudioFile').addEventListener('change', () => {
   transcribeBlob(() => f, null, 'el audio cargado', true);
 });
 
+// D4 (revisión 22/11): «Subir un audio» en Dictar abre el mismo selector de archivo que antes estaba solo en Ajustes.
+$('dictUpload').addEventListener('click', () => $('loadAudioFile').click());
 function updateDockRecording(){
-  const capture=$('studioDockCapture'),active=recording;
+  const capture=$('studioDockCapture'),active=recording,ret=$('recRetention');
   $('studioDockNotes').hidden=active;
   capture.hidden=!active;
+  if(ret){ret.hidden=!active;if(active){ret.textContent=$('saveAudio').checked?'Guardando audio':'Sin guardar audio';ret.dataset.keep=$('saveAudio').checked?'1':'0';}}
   if(!active)return;
   capture.classList.toggle('paused',paused);
   $('studioDockMode').textContent=paused?'En pausa':'Grabando';
-  $('studioDockRetention').textContent='Conservar audio: ' + ($('saveAudio').checked ? 'Sí' : 'No');
+  $('studioDockRetention').textContent=$('saveAudio').checked ? 'Guardando audio' : 'Sin guardar audio';
+  $('studioDockRetention').dataset.keep=$('saveAudio').checked ? '1' : '0';
   $('studioDockClock').textContent=fmtClock(elapsedMs());
   $('studioDockPause').textContent=paused?'Reanudar':'Pausar';
   $('studioDockPause').disabled=$('pause').disabled;
@@ -7537,6 +7688,8 @@ const MODEL_HELP = {
 };
 function updateModelHint(){
   $('modelHint').textContent = MODEL_HELP[$('model').value] || '';
+  const now = document.getElementById('ajCalidadNow');
+  if (now) { const motor = document.querySelector('input[name="eng"]:checked'); now.textContent = motor?.value === 'native' ? 'Dictado local del navegador' : ($('model').selectedOptions[0]?.textContent || ''); }
   const quick = document.getElementById('betaWhisperLabel');
   if (quick) {
     const motor = document.querySelector('input[name="eng"]:checked');

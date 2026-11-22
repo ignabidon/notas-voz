@@ -231,9 +231,9 @@ try {
     assert.ok(rec.ancho >= 144 && rec.ancho <= 152 && rec.ancho === rec.alto, nombre + ': el botón de grabar es redondo y mide unos 150 px (' + rec.ancho + ')');
     assert.ok(rec.radio.includes('%') ? parseFloat(rec.radio) >= 50 : parseFloat(rec.radio) >= rec.ancho / 2 - 1, 'es redondo (' + rec.radio + ')');
     assert.match(rec.anillo, /0px 0px 0px 12px/, 'tiene un anillo suave alrededor');
-    const dest = await run(`(() => { const d = document.getElementById('dictDest'), cs = getComputedStyle(d); return {radio: parseFloat(cs.borderTopLeftRadius), borde: cs.borderTopWidth, fondo: cs.backgroundColor, contiene: !!d.querySelector('select#dictDestSel')} })()`);
-    assert.ok(dest.contiene && dest.radio >= 18 && dest.radio <= 20 && dest.borde === '1px', nombre + ': «Guardar en» está en una tarjeta de esquinas 18 a 20 px y borde fino');
-    assert.notEqual(dest.fondo, 'rgba(0, 0, 0, 0)');
+    // Revisión 22/11 (D1): «Guardar en» ya no es una tarjeta: es una línea plegable con borde de control.
+    const dest = await run(`(() => { const d = document.getElementById('dictDest'), t = document.getElementById('dictDestToggle'), cs = getComputedStyle(t); return {borde: cs.borderTopWidth, radio: parseFloat(cs.borderTopLeftRadius), alto: t.getBoundingClientRect().height, contiene: !!d.querySelector('select#dictDestSel')} })()`);
+    assert.ok(dest.contiene && dest.borde === '1px' && dest.radio >= 12 && dest.alto >= 47.5, nombre + ': «Se guarda en» es una línea de 48 px con borde fino');
     const tit = await run(`parseFloat(getComputedStyle(document.querySelector('.screen-title h2')).fontSize)`);
     assert.ok(tit >= 25.5 && tit <= 27, 'título de pantalla de unos 26 px (' + tit + ')');
     const tarj = await run(`parseFloat(getComputedStyle(document.querySelector('.c-rec')).borderTopLeftRadius)`);
@@ -256,7 +256,7 @@ try {
     assert.equal(item.ico, 44); assert.notEqual(item.icoFondo, 'rgba(0, 0, 0, 0)'); assert.ok(item.icoRadio >= 10, 'ícono en un cuadrado suave');
     assert.ok(item.icoX <= item.tX, 'el ícono queda a la izquierda del nombre'); assert.ok(item.peso >= 700, 'nombre en negrita'); assert.ok(item.sY > item.tY, '«N notas · fecha» queda debajo del nombre');
     assert.match(item.small, /^SMALL 1 nota/, 'N notas · fecha');
-    assert.deepEqual(item.hijos.slice(0, 3), ['svg', 'span', 'small']);
+    assert.deepEqual(item.hijos.slice(0, 3), ['span', 'span', 'small']);   // revisión 22/11 (C3): avatar (inicial o ícono) + nombre + «N notas · fecha»
     await medirPantalla(nombre, 'Cuadernos · lista', '.wrap'); await medirPantalla(nombre, 'Cuadernos · barra inferior', '.studio-dock');
     await captura(`u5-cuadernos-lista-360-${nombre}.png`);
     // ---- Cuadernos: un cuaderno abierto (con dos notas) ----
