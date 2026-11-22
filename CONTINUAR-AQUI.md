@@ -3,6 +3,10 @@
 > **Una sola página, un solo estado.** Quien termina un paso **reescribe esta página** (no agrega carteles arriba) y mueve lo viejo a `docs/historial/`. Si algo de acá contradice al código de `main`, vale el código; si contradice a `docs/DECISIONES.md`, vale ese registro.
 > **Estado al 21/11/2026 (ChatGPT):** PR #71 fue revisado por una IA independiente, sus cuatro hallazgos F1/F2/M1/M2 se dieron por resueltos y se **fusionó a `main` sin squash** (merge `8ccc08ac`). El propietario probó en su Motorola G56 5G grabar, guardar/reproducir audio y cerrar/reabrir sin pérdida; también descargó y **verificó** una copia cifrada de **10 cuadernos, 16 notas y 9 audios (aprox. 0,5 MB)**. No probó restaurar. Se detectó un formulario de contraseña oculto al crear la copia; corrección puntual en rama `fix-copias-formulario-visible-2026-11-21`, **sin fusionar** y pendiente de CI y prueba física. PR #72 es visual, permanece en borrador y su rama quedó desfasada respecto del `main` que incluye #71; se debe actualizar/resolver conflictos antes de fusionarlo. Solo datos ficticios hasta completar las validaciones de seguridad.
 
+## Revisión visual en curso · 22/11/2026
+
+Ignacio eligió **A · Cuaderno de margen**. ChatGPT la implementó en `diseno/cuaderno-de-margen-2026-11-22` desde `6c503b8`, con el cambio de #75 incorporado. El PR de esta rama contiene el resultado de CI. Pendiente en Motorola: comprobar letra grande, lectura y copia de una nota, conservación de audio y dictado con una mano. Coordinar cualquier integración de #72 por el solapamiento visual.
+
 ## Cómo está organizada la documentación
 
 Mapa completo, con qué manda sobre qué: [docs/INDICE.md](docs/INDICE.md). Lo que decidió Ignacio, en un solo registro: [docs/DECISIONES.md](docs/DECISIONES.md). Los pedidos para copiar y pegar a cualquier IA: [docs/PEDIDOS.md](docs/PEDIDOS.md). El tablero de pasos con dueño: [docs/PLAN-ALMACENAMIENTO-CIFRADO.md](docs/PLAN-ALMACENAMIENTO-CIFRADO.md).

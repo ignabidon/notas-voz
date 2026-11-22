@@ -31,13 +31,14 @@ try {
  const helpId=await run('document.activeElement.getAttribute("aria-controls")');assert.ok(helpId,'la primera ayuda controla un texto');   // U19: ya no está la ayuda de «Conservar audio»
  for(const [key,hidden] of [['Enter',false],['Enter',true]]){await call('Input.dispatchKeyEvent',{type:'keyDown',key,code:'Enter',text:'\r',windowsVirtualKeyCode:13});await call('Input.dispatchKeyEvent',{type:'keyUp',key,code:'Enter',windowsVirtualKeyCode:13});assert.equal(await run('document.getElementById("'+helpId+'").hidden'),hidden); }
  assert.equal(await run('document.getElementById("'+helpId+'").hidden'),true);
-// U19: «Conservar audio» vive solo en Ajustes (#saveAudio): se cambia ahí y se bloquea durante la captura.
-await run('document.getElementById("saveAudio").click()');
+// Cuaderno de margen: ambas vistas usan la misma preferencia y el bloqueo de captura.
+await run('document.getElementById("dictRetention").click()');
 assert.equal(await run('document.getElementById("saveAudio").checked'),true);
 await run('document.getElementById("saveAudio").click()');
 assert.equal(await run('document.getElementById("saveAudio").checked'),false);
 await run('lockUI(true)');
 assert.equal(await run('document.getElementById("saveAudio").disabled'),true);
+assert.equal(await run('document.getElementById("dictRetention").disabled'),true);
  await run('lockUI(false)');
  for(const width of [320,360,412,760,1365]){
   await call('Emulation.setDeviceMetricsOverride',{width,height:850,deviceScaleFactor:1,mobile:width<761});
