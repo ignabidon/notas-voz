@@ -24,6 +24,14 @@ try {
  await call('Page.navigate',{url:'http://127.0.0.1:'+server.address().port});
  for(let i=0;i<100;i++){if(await run('document.readyState==="complete" && typeof updateDockRecording === "function"'))break;await new Promise(r=>setTimeout(r,50));}
  const settle=()=>run('new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)))');
+ // Primera visita: empezar quita la bienvenida, conserva el foco en Dictar y sobrevive a recargar.
+ for(let i=0;i<100 && await run('document.getElementById("firstWelcome").hidden');i++) await new Promise(r=>setTimeout(r,50));
+ assert.equal(await run('document.getElementById("firstWelcome").hidden'),false);
+ await run('document.getElementById("welcomeStart").click()');
+ assert.equal(await run('document.getElementById("firstWelcome").hidden && document.activeElement.id==="rec"'),true);
+ await call('Page.reload',{ignoreCache:true});
+ for(let i=0;i<100;i++){try{if(await run('document.readyState==="complete" && typeof convStore!=="undefined" && convStore.data!==null'))break;}catch{} await new Promise(r=>setTimeout(r,50));}
+ assert.equal(await run('document.getElementById("firstWelcome").hidden'),true);
  // Native keyboard activation of help controls.
  await call('Page.bringToFront');
  await call('Emulation.setFocusEmulationEnabled',{enabled:true});
