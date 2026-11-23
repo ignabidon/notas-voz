@@ -43,7 +43,6 @@ try {
  await run(`convCommit(convRename(convStore.data,convOpenId,${JSON.stringify(longTitle)}));`);
  for(const [w,h] of [[320,640],[360,740],[412,892]])for(const size of ['normal','large']){
   await viewport(w,h);await run(`applyTextSize('${size}');document.activeElement.blur();convOpen(${JSON.stringify(book)});document.getElementById('flash').textContent='';window.scrollTo({top:0,behavior:'instant'});`);await waitLayout();
-  assert.ok(await run(`[...document.querySelectorAll('.studio-nav a svg')].every(icon=>icon.getBoundingClientRect().height>0)`), 'el editor conserva los íconos de las cuatro pestañas');
   const g=await geometry();assert.ok(g.scroll<=w+1,`nombre largo sin desborde ${w} ${size}: ${g.scroll}`);assert.ok(g.dock.height<=h*.3,`compositor vacío compacto ${w} ${size}: ${g.dock.height}`);
   await run(`document.querySelector('.conv-actions button').scrollIntoView({block:'center',behavior:'instant'});`);await waitLayout();
   assert.ok(await run(`(()=>{const e=document.querySelector('.conv-actions button'),r=e.getBoundingClientRect(),h=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return r.top>=0&&r.bottom<document.querySelector('.studio-dock').getBoundingClientRect().top&&(h===e||e.contains(h))})()`),`acciones de la nota accesibles ${w} ${size}`);
@@ -62,6 +61,7 @@ try {
  await view('anonimizar');assert.equal(await run('document.getElementById("text").value'),revised);await view('transcripcion');
  for(const [w,h,kh] of [[320,640,360],[360,740,360],[412,892,420]])for(const size of ['normal','large']){
   await viewport(w,h);await run(`applyTextSize('${size}');document.getElementById('text').focus();`);await waitLayout();await viewport(w,kh);
+  assert.ok(await run(`[...document.querySelectorAll('.studio-nav a svg')].every(icon=>icon.getBoundingClientRect().height>0)`), 'el editor conserva los íconos de las cuatro pestañas');
   const g=await geometry();assert.ok(g.scroll<=w+1,`editor sin desborde ${w} ${size}`);assert.ok(g.text.height>=120,`editor con teclado amplio ${w} ${size}: ${g.text.height}`);assert.ok(g.text.top>=0&&g.text.bottom<=g.save.top,`texto libre de acciones ${w} ${size}`);assert.ok(await controlsReachable(),`Guardar/Cancelar/Grabar accesibles ${w} ${size}`);
   await run(`(()=>{const t=document.getElementById('text');t.setSelectionRange(t.value.length,t.value.length);t.scrollTop=t.scrollHeight;})()`);assert.ok(await run(`(()=>{const t=document.getElementById('text');return t.scrollTop+t.clientHeight>=t.scrollHeight-2})()`),'última línea del texto desplazable');
   if(size==='normal')await capture('teclado-'+w);
