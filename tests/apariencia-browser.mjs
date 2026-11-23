@@ -232,7 +232,7 @@ try {
     assert.ok(rec.radio.includes('%') ? parseFloat(rec.radio) >= 50 : parseFloat(rec.radio) >= rec.ancho / 2 - 1, 'es redondo (' + rec.radio + ')');
     assert.match(rec.anillo, /0px 0px 0px 12px/, 'tiene un anillo suave alrededor');
     // Revisión 22/11 (D1): «Guardar en» ya no es una tarjeta: es una línea plegable con borde de control.
-    const dest = await run(`(() => { const d = document.getElementById('dictDest'), t = document.getElementById('dictDestToggle'), cs = getComputedStyle(t); return {borde: cs.borderBottomWidth, radio: parseFloat(cs.borderTopLeftRadius), alto: t.getBoundingClientRect().height, contiene: !!d.querySelector('select#dictDestSel')} })()`);
+    const dest = await run(`(() => { const d = document.getElementById('dictDest'), t = document.getElementById('dictDestToggle'), cs = getComputedStyle(t); return {borde: cs.borderTopWidth, radio: parseFloat(cs.borderTopLeftRadius), alto: t.getBoundingClientRect().height, contiene: !!d.querySelector('select#dictDestSel')} })()`);
     assert.ok(dest.contiene && dest.borde === '1px' && dest.radio >= 12 && dest.alto >= 47.5, nombre + ': «Se guarda en» es una línea de 48 px con borde fino');
     const tit = await run(`parseFloat(getComputedStyle(document.querySelector('.screen-title h2')).fontSize)`);
     assert.ok(tit >= 25.5 && tit <= 27, 'título de pantalla de unos 26 px (' + tit + ')');
@@ -250,7 +250,7 @@ try {
     assert.equal(await ir('transcripcion'), 'transcripcion'); await sleep(150);
     assert.equal(await run('document.querySelectorAll("#convList .conv-item").length'), 3);
     const item = await run(`(() => { const b = document.querySelector('#convList .conv-item'), cs = getComputedStyle(b), ico = b.querySelector('.conv-ico'), t = b.children[1], s = b.children[2];
-      return {radio: parseFloat(cs.borderTopLeftRadius), borde: cs.borderTopWidth, ico: !!ico && ico.getBoundingClientRect().width, icoFondo: getComputedStyle(ico).backgroundColor, icoRadio: parseFloat(getComputedStyle(ico).borderTopLeftRadius),
+      return {radio: parseFloat(cs.borderTopLeftRadius), borde: cs.borderBottomWidth, ico: !!ico && ico.getBoundingClientRect().width, icoFondo: getComputedStyle(ico).backgroundColor, icoRadio: parseFloat(getComputedStyle(ico).borderTopLeftRadius),
         peso: +getComputedStyle(t).fontWeight, tY: t.getBoundingClientRect().top, sY: s.getBoundingClientRect().top, icoX: ico.getBoundingClientRect().right, tX: t.getBoundingClientRect().left, small: s.tagName + ' ' + s.textContent, hijos: [...b.children].map(c => c.tagName.toLowerCase())} })()`);
     assert.ok(item.radio === 0 && item.borde === '1px', nombre + ': filas de índice con separador inferior');
     assert.equal(item.ico, 0, 'el índice reserva el ancho para los títulos');
