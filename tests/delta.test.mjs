@@ -475,7 +475,7 @@ test('Delta 09: banner global en barra fija y visible desde las tres pantallas',
   for(const id of ['transcriptionDockTitle','transcriptionDockMessage','transcriptionDockParts',
     'transcriptionDockTime','transcriptionDockPercent','transcriptionDockBar','transcriptionDockBarFill','transcriptionDockCancel'])
     assert.match(banner[0],new RegExp('id="'+id+'"'));
-  assert.match(banner[0],/Esperá mientras se completa la transcripción/);
+  assert.match(banner[0],/Podés revisar el texto/);
   assert.match(html,/\.transcription-dock\[hidden\]\{display:none!important\}/);
   assert.match(html,/body\.delta-transcribing\{padding-bottom:/);
   assert.match(html,/document\.body\.classList\.toggle\('delta-transcribing', state\.active\)/);
@@ -494,7 +494,11 @@ test('Delta 09: estado único de Whisper incluye trabajo, grabación y fin', () 
   assert.equal(active.active,true);
   assert.equal(active.cancel,true);
   assert.equal(active.progress,38);
-  assert.match(active.message,/Esperá mientras se completa/);
+  assert.equal(active.title,'Transcribiendo el audio');
+  assert.match(active.message,/cuánto audio se procesó por fragmentos/);
+  assert.equal(f(true,false,false,0,false,true,false,null,true).title,'Preparando el modelo');
+  assert.equal(f(true,false,false,0,true,false,false,null,true).title,'Leyendo el audio');
+  assert.doesNotMatch(f(true,false,true,0,false,false,false,null,true).parts,/último/);
   assert.match(active.parts,/2 partes pendientes/);
   const recording=f(true,true,true,1,false,false,false,null,true);
   assert.equal(recording.active,true);

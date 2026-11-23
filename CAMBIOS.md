@@ -1,3 +1,7 @@
+## 22/11/2026 · Primeras impresiones en el celular
+
+ChatGPT · rama `fix/impresiones-movil-dictavoz` · base `1cb38a4`. La lectura y edición de cuadernos usan la letra del cuerpo de la app y la navegación conserva las cuatro pestañas con íconos. El botón de grabar reutiliza el dibujo del micrófono de la navegación y muestra el símbolo de detener durante la captura. El estado de Whisper indica preparación, lectura o transcripción según la actividad. El porcentaje aproxima la proporción de audio procesada por fragmentos; el tiempo restante es una estimación. Se mantienen los motores y las rutas de guardado. Validación física de estas correcciones pendiente.
+
 ## 22/11/2026 · Cuaderno de margen (opción A)
 
 ChatGPT · rama `diseno/cuaderno-de-margen-2026-11-22` · base `6c503b8`. Se aplica la dirección elegida por Ignacio en la comparación visual. Paleta marfil/ciruela y tema nocturno, tipografía local de lectura, índice de cuadernos con vistas previas configurables, agrupación por fecha, copia directa y menú inferior móvil. Dictar expone la preferencia de audio también en Ajustes y oculta el reloj en reposo. La revisión posterior resalta editar y deshacer. La bienvenida se muestra en perfiles nuevos y se descarta al empezar. Cerrar la bienvenida recuerda un indicador visual del navegador independiente de la biblioteca; K2 sigue reconociendo una instalación vacía. El bloqueo, los siete apartados de Ajustes y el editor usan la misma paleta. No se cambian modelos, cifrado ni formato de las notas o de las copias.

@@ -43,6 +43,7 @@ try {
  await run(`convCommit(convRename(convStore.data,convOpenId,${JSON.stringify(longTitle)}));`);
  for(const [w,h] of [[320,640],[360,740],[412,892]])for(const size of ['normal','large']){
   await viewport(w,h);await run(`applyTextSize('${size}');document.activeElement.blur();convOpen(${JSON.stringify(book)});document.getElementById('flash').textContent='';window.scrollTo({top:0,behavior:'instant'});`);await waitLayout();
+  assert.ok(await run(`[...document.querySelectorAll('.studio-nav a svg')].every(icon=>icon.getBoundingClientRect().height>0)`), 'el editor conserva los íconos de las cuatro pestañas');
   const g=await geometry();assert.ok(g.scroll<=w+1,`nombre largo sin desborde ${w} ${size}: ${g.scroll}`);assert.ok(g.dock.height<=h*.3,`compositor vacío compacto ${w} ${size}: ${g.dock.height}`);
   await run(`document.querySelector('.conv-actions button').scrollIntoView({block:'center',behavior:'instant'});`);await waitLayout();
   assert.ok(await run(`(()=>{const e=document.querySelector('.conv-actions button'),r=e.getBoundingClientRect(),h=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return r.top>=0&&r.bottom<document.querySelector('.studio-dock').getBoundingClientRect().top&&(h===e||e.contains(h))})()`),`acciones de la nota accesibles ${w} ${size}`);
