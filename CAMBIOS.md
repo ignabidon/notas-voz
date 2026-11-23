@@ -1,3 +1,9 @@
+## 22/11/2026 · Cuaderno de margen (opción A)
+
+ChatGPT · rama `diseno/cuaderno-de-margen-2026-11-22` · base `6c503b8`. Se aplica la dirección elegida por Ignacio en la comparación visual. Paleta marfil/ciruela y tema nocturno, tipografía local de lectura, índice de cuadernos con vistas previas configurables, agrupación por fecha, copia directa y menú inferior móvil. Dictar expone la preferencia de audio también en Ajustes y oculta el reloj en reposo. La revisión posterior resalta editar y deshacer. La bienvenida se muestra en perfiles nuevos y se descarta al empezar. Cerrar la bienvenida recuerda un indicador visual del navegador independiente de la biblioteca; K2 sigue reconociendo una instalación vacía. El bloqueo, los siete apartados de Ajustes y el editor usan la misma paleta. No se cambian modelos, cifrado ni formato de las notas o de las copias.
+
+Verificación local: 168 pruebas de Delta. CI de la rama y validación física del Motorola se registran por separado en el PR. Los PR #72 (UX) y #74 (Whisper) tienen trabajo concurrente.
+
 ## 22/11/2026 · Revisión estética y de marketing aplicada (Claude; rama `estetica-marketing-2026-11-22`, base `4211a02`)
 
 - **Origen:** informe «DictaVoz · Revisión estética y de marketing» (PDF del 22/11/2026). Ignacio pidió aplicarlo en una rama para probarlo antes de pasarlo a `main`. **Sin unir a `main`.**

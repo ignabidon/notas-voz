@@ -456,7 +456,7 @@ test('Delta 08: ajustes agrupados y privacidad, audio y diccionario intactos', (
 
 test('Delta 08: nuevo sistema visual y diseño móvil adaptable', () => {
   assert.match(html,/\/\* DELTA 08: three real screens/);
-  assert.match(html,/--bg:#F4F7F8/);
+  assert.match(html,/--bg:#F7F2EA/);
   assert.match(html,/#rec\{width:154px;height:154px/);
   assert.match(html,/#clock\{font-size:64px/);
   assert.match(html,/\.studio-dock \.studio-nav\{display:grid;grid-template-columns:repeat\(4,1fr\)/);
@@ -2260,9 +2260,9 @@ test('B3: fecha corta y vista previa de la lista, sin tocar los sellos guardados
   assert.equal(JSON.stringify(d), antes, 'armar el resumen no modifica los datos');
 });
 
-test('B3 (revisión 22/11): la burbuja muestra solo «⋯»; Copiar, Editar, Mover y Borrar van en el menú', () => {
+test('B3 (revisión 22/11): la burbuja permite copiar directamente; Copiar, Editar, Mover y Borrar van en el menú', () => {
   const render = html.match(/function renderConv\(\)\{[\s\S]*?\n\}/)[0];
-  assert.match(render, /acts\.append\(more\);/);
+  assert.ok(render.includes("acts.append(convButton('Copiar', () => convCopy(e.text)), more)"));
   assert.match(render, /menu\.append\(item\('Copiar'[^\n]*item\('Editar'[^\n]*item\('Mover a otro cuaderno'[^\n]*item\('Borrar esta nota'[^\n]*'ghost danger'\)\);/);
   assert.match(render, /aria-haspopup', 'menu'/); assert.match(render, /aria-expanded', 'false'/); assert.match(render, /setAttribute\('role', 'menu'\)/);
   // Todo con textContent (convButton y createElement); nada de innerHTML con datos.

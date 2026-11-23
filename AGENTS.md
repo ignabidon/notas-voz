@@ -50,7 +50,10 @@
 - **Copia cifrada (K1, 17/11/2026):** bloques `COPIA` (formato y comprobación, sin acceso al almacenamiento) y `COPIA-USO` (botones) en `index.html`. **Solo lee**: una prueba falla si esos bloques escriben o borran algo. El formato 1 está publicado: no cambiarlo; un formato nuevo lleva número nuevo y su propio archivo de ejemplo fijo en `tests/`. No decir en la interfaz que la copia se puede restaurar hasta que exista K2.
 - **Audios por nota, copia cifrada, mudanza del texto y original recuperable (plan del 16/11/2026; E1, E2, K1 y E3 ya en `main`):** el tablero con los pasos, su estado y los pedidos para cada IA es [docs/PLAN-ALMACENAMIENTO-CIFRADO.md](docs/PLAN-ALMACENAMIENTO-CIFRADO.md) (nombre fijo); el diseño, [docs/DISENO-ALMACENAMIENTO-CIFRADO-2026-11-16.md](docs/DISENO-ALMACENAMIENTO-CIFRADO-2026-11-16.md). Un paso por vez; el plan y el permiso se manejan según `docs/DECISIONES.md` (W1 y W2).
 
-## Colores y apariencia (U5, 18/11/2026)
+## Colores y apariencia
+- Cuaderno de margen (22/11/2026): marfil y ciruela en claro, ciruela oscuro en nocturno. Los títulos y el texto de lectura usan serif local. Dictar y Ajustes comparten una sola preferencia de conservación. En la burbuja, Copiar es directo y el menú reúne todas las acciones.
+
+### Base de U5 (18/11/2026)
 - Todos los colores salen de las variables de `:root` de `index.html` (claro) y de `:root[data-theme="dark"]` (nocturno). **No escribir colores a mano en las reglas**: si hace falta un tono nuevo, se agrega como variable en las dos apariencias, con contraste de 4,5:1 para texto y 3:1 para bordes de controles. La apariencia se guarda en el campo `theme` de la configuración existente y se aplica antes de pintar (`dvTheme`). Lo que exporta la app (Word, TXT) sale siempre en claro sobre blanco. Prueba: `tests/apariencia-browser.mjs`.
 
 ## Almacenamiento: preservarlo
