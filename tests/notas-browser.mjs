@@ -73,7 +73,7 @@ try {
  await run('document.getElementById("convRename").click()');
  assert.equal(await run('document.getElementById("convTitle").textContent'),'Supermercado');
  const before=await run('JSON.stringify(convStore.data.entries.map(e=>[e.id,e.savedAt]))');
- await run('[...document.querySelectorAll("#convBubbles .conv-bubble")][0].querySelector(".conv-actions button:nth-child(2)").click()');
+ await run('[...document.querySelectorAll("#convBubbles .conv-bubble")][0].querySelector(".conv-more").click();[...document.querySelectorAll("#convBubbles .conv-bubble")][0].querySelector(".conv-menu [role=menuitem]:nth-child(2)").click()');   // revisión 22/11: Editar está en el menú «⋯»
  assert.match(await run('document.getElementById("convTarget").textContent'),/Editando/);
  await type('Comprar yerba ficticia y fideos.');
  await run('document.getElementById("save").click()');
@@ -82,9 +82,9 @@ try {
  assert.equal(await run('document.querySelector("#convBubbles .conv-text").textContent'),'Comprar yerba ficticia y fideos.');
  // 6) Mover un mensaje con Deshacer.
  const cuaderno=await run('convOpenId');
- // B3: «Mover» y «Borrar» viven en el menú «⋯» de la nota. Copiar y Editar siguen a la vista.
- assert.deepEqual(await run('[...document.querySelectorAll("#convBubbles .conv-bubble")][1].querySelectorAll(".conv-actions button").length'),3);
- assert.equal(await run('(()=>{const b=[...document.querySelectorAll("#convBubbles .conv-bubble")][1],m=b.querySelector(".conv-more"),menu=b.querySelector(".conv-menu");return [...b.querySelectorAll(".conv-actions button")].map(x=>x.textContent).join("|")+"/"+m.getAttribute("aria-label")+"/"+m.getAttribute("aria-haspopup")+"/"+m.getAttribute("aria-expanded")+"/"+menu.hidden+"/"+[...menu.querySelectorAll("[role=menuitem]")].map(x=>x.textContent).join("|")})()'),'Copiar|Editar|⋯/Más acciones de esta nota/menu/false/true/Mover a otro cuaderno|Borrar esta nota');
+ // B3 (revisión 22/11): todas las acciones de la nota viven en el menú «⋯»; Copiar también está junto al texto.
+ assert.deepEqual(await run('[...document.querySelectorAll("#convBubbles .conv-bubble")][1].querySelectorAll(".conv-actions button").length'),2);
+ assert.equal(await run('(()=>{const b=[...document.querySelectorAll("#convBubbles .conv-bubble")][1],m=b.querySelector(".conv-more"),menu=b.querySelector(".conv-menu");return [...b.querySelectorAll(".conv-actions button")].map(x=>x.textContent).join("|")+"/"+m.getAttribute("aria-label")+"/"+m.getAttribute("aria-haspopup")+"/"+m.getAttribute("aria-expanded")+"/"+menu.hidden+"/"+[...menu.querySelectorAll("[role=menuitem]")].map(x=>x.textContent).join("|")})()'),'Copiar|⋯/Más acciones de esta nota/menu/false/true/Copiar|Editar|Mover a otro cuaderno|Borrar esta nota');
  await run('[...document.querySelectorAll("#convBubbles .conv-bubble")][1].querySelector(".conv-more").click()');
  assert.equal(await run('(()=>{const b=[...document.querySelectorAll("#convBubbles .conv-bubble")][1],m=b.querySelector(".conv-more"),menu=b.querySelector(".conv-menu");return m.getAttribute("aria-expanded")+"/"+menu.hidden+"/"+(document.activeElement===menu.querySelector("button"))+"/"+[...menu.querySelectorAll("button")].every(x=>x.getBoundingClientRect().height>=48)+"/"+(m.getBoundingClientRect().width>=48&&m.getBoundingClientRect().height>=48)})()'),'true/false/true/true/true','el menú se abre, enfoca su primera acción y respeta 48 px');
  // Abrir el menú de otra nota cierra este; Escape cierra y devuelve el foco; tocar afuera cierra.
@@ -96,7 +96,7 @@ try {
  await run('document.getElementById("convTitle").click()');
  assert.equal(await run('[...document.querySelectorAll("#convBubbles .conv-menu")].every(m=>m.hidden)'),true,'tocar afuera cierra el menú');
  await run('[...document.querySelectorAll("#convBubbles .conv-bubble")][1].querySelector(".conv-more").click()');
- await run('[...document.querySelectorAll("#convBubbles .conv-bubble")][1].querySelector(".conv-menu [role=menuitem]").click()');
+ await run('[...document.querySelectorAll("#convBubbles .conv-bubble")][1].querySelector(".conv-menu [role=menuitem]:nth-child(3)").click()');
  assert.equal(await run('document.getElementById("convMoveDialog").open'),true);
  await run('document.getElementById("convMoveForm").requestSubmit()');
  assert.equal(await run('convEntriesOf(convStore.data,'+JSON.stringify(cuaderno)+').length'),1);

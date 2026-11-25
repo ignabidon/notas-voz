@@ -91,10 +91,11 @@ try {
     assert.match(await run(`document.getElementById('ajStatusLine').textContent`), protegida ? /15 minutos/ : /Sin protección/);
     assert.equal(await visible('ajLock'), protegida, '«Bloquear ahora» solo con la protección activada');
     assert.equal(await visible('ajCopy'), true);
+    assert.equal(await visible('ajProtect'), !protegida, 'revisión 22/11 (S2): sin protección, la acción principal de la tarjeta es «Activar protección»');
     assert.equal(await run(`document.getElementById('ajLastCopy').textContent`), 'Todavía no preparaste ninguna copia.');
     assert.equal(await run(`document.getElementById('ajCredit').textContent`), 'Psicólogo Ignacio Lasarte · creador de la aplicación');
     assert.equal(await run(`/\\b(Claude|ChatGPT|OpenAI|Anthropic)\\b/i.test(document.getElementById('ajustes').textContent)`), false, 'sin nombres de IA en Ajustes');
-    assert.deepEqual(await run(`[...document.querySelectorAll('#ajHome .aj-group')].map(h=>h.textContent)`), ['Datos y privacidad', 'Dictado', 'Lectura', 'Avanzado']);
+    assert.deepEqual(await run(`[...document.querySelectorAll('#ajHome .aj-group')].map(h=>h.textContent)`), ['Datos y privacidad', 'Lectura', 'Dictado', 'Avanzado']);   // revisión 22/11: lo de lectura antes que lo técnico
     for (const id of ['saveAudio', 'listPreview', 'textSize']) assert.equal(await visible(id), true, '#' + id + ' está directamente en la pantalla principal');
     let m = await medidas();
     assert.ok(m.ancho <= 360, modo + ': sin desplazamiento horizontal en la principal (' + m.ancho + ')');
@@ -146,6 +147,14 @@ try {
     await run(`(()=>{document.querySelector('.studio-dictionary').open=true;const d=document.getElementById('dict');d.value='palabra mal => palabra bien';d.dispatchEvent(new Event('input',{bubbles:true}));return 1})()`); await sleep(300);
     assert.match(await run(`vaultStore.getItem(DKEY)||''`), /palabra mal => palabra bien/, 'el diccionario se guarda');
     for (const id of ['applyDict', 'voseo']) assert.equal(await visible(id), true, '#' + id);
+    // Voseo: el botón agrega lo que falta (también a un diccionario que ya tenía una versión vieja) y no duplica.
+    await run(`(()=>{const d=document.getElementById('dict');d.value='# Voseo rioplatense\\nquieres => querés';d.dispatchEvent(new Event('input',{bubbles:true}));document.getElementById('voseo').click();return 1})()`); await sleep(300);
+    const dic = await run(`document.getElementById('dict').value`);
+    assert.match(dic, /queréis => querés/, 'el voseo agrega «queréis»'); assert.match(dic, /podéis => podés/);
+    assert.equal(dic.split('quieres => querés').length, 2, 'no repite lo que ya estaba'); assert.equal(dic.split('# Voseo rioplatense').length, 2, 'no repite el encabezado');
+    await run(`document.getElementById('voseo').click()`); await sleep(200);
+    assert.equal(await run(`document.getElementById('dict').value`), dic, 'una segunda vez no cambia nada');
+    assert.equal(await run(`applyDict('¿Queréis venir? Vosotros podéis.', D)`), '¿Querés venir? Ustedes podés.', 'se aplica al texto');
     await volver();
     // Persisten tras recargar.
     await load(protegida);

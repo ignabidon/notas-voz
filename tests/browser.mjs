@@ -24,6 +24,15 @@ try {
  await call('Page.navigate',{url:'http://127.0.0.1:'+server.address().port});
  for(let i=0;i<100;i++){if(await run('document.readyState==="complete" && typeof updateDockRecording === "function"'))break;await new Promise(r=>setTimeout(r,50));}
  const settle=()=>run('new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)))');
+ // Primera visita: empezar quita la bienvenida, conserva el foco en Dictar y sobrevive a recargar.
+ for(let i=0;i<100 && await run('document.getElementById("firstWelcome").hidden');i++) await new Promise(r=>setTimeout(r,50));
+ assert.equal(await run('document.getElementById("firstWelcome").hidden'),false);
+ await run('document.getElementById("welcomeStart").click()');
+ assert.equal(await run('document.getElementById("firstWelcome").hidden && document.activeElement.id==="rec"'),true);
+ await call('Page.reload',{ignoreCache:true});
+ for(let i=0;i<100;i++){try{if(await run('document.readyState==="complete" && typeof convStore!=="undefined" && convStore.data!==null'))break;}catch{} await new Promise(r=>setTimeout(r,50));}
+ assert.equal(await run('document.getElementById("firstWelcome").hidden'),true);
+ assert.equal(await run('k2StorageEmpty()'),true,'la bienvenida conserva la restauración en vacío');
  // Native keyboard activation of help controls.
  await call('Page.bringToFront');
  await call('Emulation.setFocusEmulationEnabled',{enabled:true});
@@ -31,13 +40,14 @@ try {
  const helpId=await run('document.activeElement.getAttribute("aria-controls")');assert.ok(helpId,'la primera ayuda controla un texto');   // U19: ya no está la ayuda de «Conservar audio»
  for(const [key,hidden] of [['Enter',false],['Enter',true]]){await call('Input.dispatchKeyEvent',{type:'keyDown',key,code:'Enter',text:'\r',windowsVirtualKeyCode:13});await call('Input.dispatchKeyEvent',{type:'keyUp',key,code:'Enter',windowsVirtualKeyCode:13});assert.equal(await run('document.getElementById("'+helpId+'").hidden'),hidden); }
  assert.equal(await run('document.getElementById("'+helpId+'").hidden'),true);
-// U19: «Conservar audio» vive solo en Ajustes (#saveAudio): se cambia ahí y se bloquea durante la captura.
-await run('document.getElementById("saveAudio").click()');
+// Cuaderno de margen: ambas vistas usan la misma preferencia y el bloqueo de captura.
+await run('document.getElementById("dictRetention").click()');
 assert.equal(await run('document.getElementById("saveAudio").checked'),true);
 await run('document.getElementById("saveAudio").click()');
 assert.equal(await run('document.getElementById("saveAudio").checked'),false);
 await run('lockUI(true)');
 assert.equal(await run('document.getElementById("saveAudio").disabled'),true);
+assert.equal(await run('document.getElementById("dictRetention").disabled'),true);
  await run('lockUI(false)');
  for(const width of [320,360,412,760,1365]){
   await call('Emulation.setDeviceMetricsOverride',{width,height:850,deviceScaleFactor:1,mobile:width<761});
@@ -63,7 +73,8 @@ assert.equal(await run('document.getElementById("saveAudio").disabled'),true);
   await call('Emulation.setDeviceMetricsOverride',{width,height:850,deviceScaleFactor:1,mobile:true});
   for(const view of ['grabacion','transcripcion','anonimizar','ajustes']){
    await run('document.querySelector(\'[data-delta-view="'+view+'"]\').click()');await settle();
-   assert.ok(await run('(()=>{const r=document.getElementById("studioDockCapture").getBoundingClientRect();return r.height>0 && r.top>=0 && r.bottom<=innerHeight && document.documentElement.scrollWidth<=innerWidth+1})()'),'captura visible '+width+' '+view);
+   // Revisión 22/11 (R1): en Dictar, con el círculo grande a la vista, la barra fija no repite Pausar/Detener; si el círculo sale de la vista, vuelve.
+   assert.ok(await run('(()=>{const r=document.getElementById("studioDockCapture").getBoundingClientRect(),m=document.getElementById("rec").getBoundingClientRect(),micVisible=document.body.dataset.view==="grabacion"&&document.body.classList.contains("record-mic-visible");return (micVisible ? r.height===0 && m.top>=0 && m.bottom<=innerHeight : r.height>0 && r.top>=0 && r.bottom<=innerHeight) && document.documentElement.scrollWidth<=innerWidth+1})()'),'captura visible '+width+' '+view);
   }
  }
  await run('recording=false;updateDockRecording()');

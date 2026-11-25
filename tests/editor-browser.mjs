@@ -61,6 +61,7 @@ try {
  await view('anonimizar');assert.equal(await run('document.getElementById("text").value'),revised);await view('transcripcion');
  for(const [w,h,kh] of [[320,640,360],[360,740,360],[412,892,420]])for(const size of ['normal','large']){
   await viewport(w,h);await run(`applyTextSize('${size}');document.getElementById('text').focus();`);await waitLayout();await viewport(w,kh);
+  assert.ok(await run(`[...document.querySelectorAll('.studio-nav a svg')].every(icon=>icon.getBoundingClientRect().height>0)`), 'el editor conserva los íconos de las cuatro pestañas');
   const g=await geometry();assert.ok(g.scroll<=w+1,`editor sin desborde ${w} ${size}`);assert.ok(g.text.height>=120,`editor con teclado amplio ${w} ${size}: ${g.text.height}`);assert.ok(g.text.top>=0&&g.text.bottom<=g.save.top,`texto libre de acciones ${w} ${size}`);assert.ok(await controlsReachable(),`Guardar/Cancelar/Grabar accesibles ${w} ${size}`);
   await run(`(()=>{const t=document.getElementById('text');t.setSelectionRange(t.value.length,t.value.length);t.scrollTop=t.scrollHeight;})()`);assert.ok(await run(`(()=>{const t=document.getElementById('text');return t.scrollTop+t.clientHeight>=t.scrollHeight-2})()`),'última línea del texto desplazable');
   if(size==='normal')await capture('teclado-'+w);
@@ -99,7 +100,7 @@ try {
  assert.ok(await run('document.getElementById("studioDockStop").getBoundingClientRect().height>=48'),'control nativo visible');
  await run('recording=false;recEng="whisper";stopUI();updProgress();window.confirm=()=>true;document.getElementById("convDiscard").click();document.activeElement.blur();document.getElementById("flash").textContent="";');
  await view('transcripcion');await run(`convOpen(${JSON.stringify(book)});`);await waitLayout();
- const ratios=await run(`(()=>{const lum=c=>{const v=c.match(/[\\d.]+/g).slice(0,3).map(Number).map(n=>{n/=255;return n<=.04045?n/12.92:((n+.055)/1.055)**2.4});return v[0]*.2126+v[1]*.7152+v[2]*.0722};return ['#text','.conv-actions button','#studioDockStart'].map(s=>{const c=getComputedStyle(document.querySelector(s));const a=lum(c.borderColor),b=lum(c.backgroundColor);return (Math.max(a,b)+.05)/(Math.min(a,b)+.05)})})()`);assert.ok(ratios.every(n=>n>=3),'bordes con contraste 3:1');
+ const ratios=await run(`(()=>{const lum=c=>{const v=c.match(/[\\d.]+/g).slice(0,3).map(Number).map(n=>{n/=255;return n<=.04045?n/12.92:((n+.055)/1.055)**2.4});return v[0]*.2126+v[1]*.7152+v[2]*.0722};return ['#text','.conv-menu button','#studioDockStart'].map(s=>{const c=getComputedStyle(document.querySelector(s));const a=lum(c.borderColor),b=lum(c.backgroundColor);return (Math.max(a,b)+.05)/(Math.min(a,b)+.05)})})()`);assert.ok(ratios.every(n=>n>=3),'bordes con contraste 3:1');
  assert.equal(await run('getComputedStyle(document.querySelector(".conv-menu .danger")).color'),'rgb(155, 44, 38)','Borrar conserva rojo');
  console.log('EDITOR OK: lectura compacta, edición amplia, teclado 320/360/412 Normal/Grande, controles alcanzables, herramientas/corrección, minimizar, destino, sello, cancelar, borrador recuperado, micrófono visible, detalles y contraste.');
 } finally {ws?.close();chrome.kill();server.close();setTimeout(()=>rmSync(profile,{recursive:true,force:true}),500).unref();}

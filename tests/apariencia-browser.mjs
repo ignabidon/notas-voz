@@ -19,8 +19,8 @@ await new Promise(r => server.listen(0, '127.0.0.1', r));
 const ORIGIN = 'http://localhost:' + server.address().port;
 const chrome = spawn(process.env.CHROME_BIN || 'google-chrome', ['--headless', '--no-sandbox', '--disable-dev-shm-usage', '--remote-debugging-port=0', '--user-data-dir=' + profile, 'about:blank']);
 const PA = 'frase inventada de prueba 111';
-const BG = {light: 'rgb(244, 247, 248)', dark: 'rgb(11, 30, 36)'};
-const TC = {light: '#F4F7F8', dark: '#0B1E24'};
+const BG = {light: 'rgb(247, 242, 234)', dark: 'rgb(40, 34, 41)'};
+const TC = {light: '#F7F2EA', dark: '#282229'};
 const tabla = [];   // filas de la tabla de contrastes: [apariencia, pantalla, par, contraste]
 let ws;
 try {
@@ -150,7 +150,7 @@ try {
   let e = await estado();
   assert.deepEqual([e.tema, e.pref, e.esquema, e.color, e.css, e.fondo, e.radio], ['light', 'light', 'light', TC.light, 'light', BG.light, 'light'], 'por defecto: Clara');
   const paleta = await run(`(() => { const cs = getComputedStyle(document.documentElement); return ['--bg','--card','--bg2','--line','--ink','--mut','--acc','--acc-ink','--note-bg','--note-ink','--error-bg','--error'].map(v => cs.getPropertyValue(v).trim().toUpperCase()).join(' ') })()`);
-  assert.equal(paleta, '#F4F7F8 #FFFFFF #E6F0F3 #D6E1E5 #12262C #4F646A #0E5A6B #FFFFFF #FFF4DD #7A4E00 #FBEAEA #9B2C26', 'la paleta clara es la actual');
+  assert.equal(paleta, '#F7F2EA #FFFDF8 #EFDFE8 #D4C4CB #302933 #655964 #713F60 #FFFFFF #FFF4DD #7A4E00 #FBEAEA #9B2C26', 'la paleta clara es la actual');
   console.log('U5 · por defecto Clara OK');
 
   // =====================================================================================================
@@ -171,7 +171,7 @@ try {
   await load(); e = await estado();
   assert.deepEqual([e.tema, e.pref, e.esquema, e.color, e.css, e.fondo, e.cfg, e.radio], ['dark', 'dark', 'dark', TC.dark, 'dark', BG.dark, 'dark', 'dark'], 'Nocturna sobrevive a recargar');
   const paletaN = await run(`(() => { const cs = getComputedStyle(document.documentElement); return ['--bg','--card','--bg2','--line','--ink','--mut','--acc','--acc-ink'].map(v => cs.getPropertyValue(v).trim().toUpperCase()).join(' ') })()`);
-  assert.equal(paletaN, '#0B1E24 #12343D #1F4D57 #24505A #E6F2F2 #A9C1C4 #7FD1C7 #0B1E24', 'la paleta nocturna pedida');
+  assert.equal(paletaN, '#282229 #342D34 #4E3949 #675A64 #FAF0F1 #D1C2C9 #F0BDDA #282229', 'la paleta nocturna pedida');
   await elegir('light'); await load(); e = await estado();
   assert.deepEqual([e.tema, e.cfg, e.radio, e.fondo], ['light', 'light', 'light', BG.light], 'Clara sobrevive a recargar');
   console.log('U5 · Clara y Nocturna: cambian, se guardan y sobreviven a recargar OK');
@@ -231,9 +231,9 @@ try {
     assert.ok(rec.ancho >= 144 && rec.ancho <= 152 && rec.ancho === rec.alto, nombre + ': el botón de grabar es redondo y mide unos 150 px (' + rec.ancho + ')');
     assert.ok(rec.radio.includes('%') ? parseFloat(rec.radio) >= 50 : parseFloat(rec.radio) >= rec.ancho / 2 - 1, 'es redondo (' + rec.radio + ')');
     assert.match(rec.anillo, /0px 0px 0px 12px/, 'tiene un anillo suave alrededor');
-    const dest = await run(`(() => { const d = document.getElementById('dictDest'), cs = getComputedStyle(d); return {radio: parseFloat(cs.borderTopLeftRadius), borde: cs.borderTopWidth, fondo: cs.backgroundColor, contiene: !!d.querySelector('select#dictDestSel')} })()`);
-    assert.ok(dest.contiene && dest.radio >= 18 && dest.radio <= 20 && dest.borde === '1px', nombre + ': «Guardar en» está en una tarjeta de esquinas 18 a 20 px y borde fino');
-    assert.notEqual(dest.fondo, 'rgba(0, 0, 0, 0)');
+    // Revisión 22/11 (D1): «Guardar en» ya no es una tarjeta: es una línea plegable con borde de control.
+    const dest = await run(`(() => { const d = document.getElementById('dictDest'), t = document.getElementById('dictDestToggle'), cs = getComputedStyle(t); return {borde: cs.borderTopWidth, radio: parseFloat(cs.borderTopLeftRadius), alto: t.getBoundingClientRect().height, contiene: !!d.querySelector('select#dictDestSel')} })()`);
+    assert.ok(dest.contiene && dest.borde === '1px' && dest.radio >= 12 && dest.alto >= 47.5, nombre + ': «Se guarda en» es una línea de 48 px con borde fino');
     const tit = await run(`parseFloat(getComputedStyle(document.querySelector('.screen-title h2')).fontSize)`);
     assert.ok(tit >= 25.5 && tit <= 27, 'título de pantalla de unos 26 px (' + tit + ')');
     const tarj = await run(`parseFloat(getComputedStyle(document.querySelector('.c-rec')).borderTopLeftRadius)`);
@@ -250,13 +250,13 @@ try {
     assert.equal(await ir('transcripcion'), 'transcripcion'); await sleep(150);
     assert.equal(await run('document.querySelectorAll("#convList .conv-item").length'), 3);
     const item = await run(`(() => { const b = document.querySelector('#convList .conv-item'), cs = getComputedStyle(b), ico = b.querySelector('.conv-ico'), t = b.children[1], s = b.children[2];
-      return {radio: parseFloat(cs.borderTopLeftRadius), borde: cs.borderTopWidth, ico: !!ico && ico.getBoundingClientRect().width, icoFondo: getComputedStyle(ico).backgroundColor, icoRadio: parseFloat(getComputedStyle(ico).borderTopLeftRadius),
+      return {radio: parseFloat(cs.borderTopLeftRadius), borde: cs.borderBottomWidth, ico: !!ico && ico.getBoundingClientRect().width, icoFondo: getComputedStyle(ico).backgroundColor, icoRadio: parseFloat(getComputedStyle(ico).borderTopLeftRadius),
         peso: +getComputedStyle(t).fontWeight, tY: t.getBoundingClientRect().top, sY: s.getBoundingClientRect().top, icoX: ico.getBoundingClientRect().right, tX: t.getBoundingClientRect().left, small: s.tagName + ' ' + s.textContent, hijos: [...b.children].map(c => c.tagName.toLowerCase())} })()`);
-    assert.ok(item.radio >= 18 && item.radio <= 20 && item.borde === '1px', nombre + ': filas de Cuadernos con esquinas 18 a 20 px y borde fino');
-    assert.equal(item.ico, 44); assert.notEqual(item.icoFondo, 'rgba(0, 0, 0, 0)'); assert.ok(item.icoRadio >= 10, 'ícono en un cuadrado suave');
+    assert.ok(item.radio === 0 && item.borde === '1px', nombre + ': filas de índice con separador inferior');
+    assert.equal(item.ico, 0, 'el índice reserva el ancho para los títulos');
     assert.ok(item.icoX <= item.tX, 'el ícono queda a la izquierda del nombre'); assert.ok(item.peso >= 700, 'nombre en negrita'); assert.ok(item.sY > item.tY, '«N notas · fecha» queda debajo del nombre');
     assert.match(item.small, /^SMALL 1 nota/, 'N notas · fecha');
-    assert.deepEqual(item.hijos.slice(0, 3), ['svg', 'span', 'small']);
+    assert.deepEqual(item.hijos.slice(0, 3), ['span', 'span', 'small']);   // revisión 22/11 (C3): avatar (inicial o ícono) + nombre + «N notas · fecha»
     await medirPantalla(nombre, 'Cuadernos · lista', '.wrap'); await medirPantalla(nombre, 'Cuadernos · barra inferior', '.studio-dock');
     await captura(`u5-cuadernos-lista-360-${nombre}.png`);
     // ---- Cuadernos: un cuaderno abierto (con dos notas) ----
@@ -271,7 +271,7 @@ try {
     await run(`document.getElementById('convMoveDialog').showModal()`); await sleep(100);
     await medirPantalla(nombre, 'Diálogo · mover nota', '#convMoveDialog');
     const dlg = await run(`(() => { const d = document.getElementById('convMoveDialog'), cs = getComputedStyle(d), b = getComputedStyle(d, '::backdrop'); return {fondo: cs.backgroundColor, radio: parseFloat(cs.borderTopLeftRadius), backdrop: b.backgroundColor} })()`);
-    assert.equal(dlg.fondo, tema === 'dark' ? 'rgb(18, 52, 61)' : 'rgb(255, 255, 255)', nombre + ': el diálogo usa la tarjeta de la apariencia'); assert.ok(dlg.radio >= 18 && dlg.radio <= 20);
+    assert.equal(dlg.fondo, tema === 'dark' ? 'rgb(52, 45, 52)' : 'rgb(255, 253, 248)', nombre + ': el diálogo usa la tarjeta de la apariencia'); assert.ok(dlg.radio >= 18 && dlg.radio <= 20);
     assert.notEqual(dlg.backdrop, 'rgba(0, 0, 0, 0)');
     await run(`document.getElementById('convMoveDialog').close()`);
     await run(`document.getElementById('correctionDialog').showModal()`); await sleep(100);
@@ -303,7 +303,7 @@ try {
     assert.equal(await run(`!document.getElementById('vaultLock').hidden`), true, 'la pantalla de bloqueo está a la vista');
     e = await estado(); assert.equal(e.tema, tema, 'el bloqueo también sigue la apariencia');
     const blq = await run(`(() => { const l = document.getElementById('vaultLock'), cs = getComputedStyle(l), c = getComputedStyle(l.querySelector('.vault-lock-card')); return {fondo: cs.backgroundColor, tarjeta: c.backgroundColor, radio: parseFloat(c.borderTopLeftRadius)} })()`);
-    assert.equal(blq.fondo, BG[tema]); assert.equal(blq.tarjeta, tema === 'dark' ? 'rgb(18, 52, 61)' : 'rgb(255, 255, 255)');
+    assert.equal(blq.fondo, BG[tema]); assert.equal(blq.tarjeta, tema === 'dark' ? 'rgb(52, 45, 52)' : 'rgb(255, 253, 248)');
     await medirPantalla(nombre, 'Pantalla de bloqueo', '#vaultLock');
     await captura(`u5-bloqueo-360-${nombre}.png`);
     // Al desbloquear con la contraseña, sigue igual.
