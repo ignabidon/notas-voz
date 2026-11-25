@@ -3333,7 +3333,9 @@ function renderConv(){
     const item = (label, fn, cls) => { const b = convButton(label, () => { convCloseMenu(false); fn(); }, cls); b.setAttribute('role', 'menuitem'); return b; };
     // Revisión 22/11: la burbuja muestra solo el texto, la hora y «⋯»; todas las acciones de la nota viven en ese menú.
     menu.append(item('Copiar', () => convCopy(e.text)), item('Editar', () => convEdit(e.id)), item('Mover a otro cuaderno', () => convAskMove('one', e.id)), item('Borrar esta nota', () => convDelete(e.id), 'ghost danger'));
-    acts.append(convButton('Copiar', () => convCopy(e.text)), more);
+    // U14: una nota con audio y sin texto (la transcripción falló o se cortó) ofrece volver a transcribir en lugar de «Copiar».
+    const sinTexto = !!e.audioId && !e.text.trim();
+    acts.append(sinTexto ? convButton('Transcribir audio', () => void convRetranscribe(e.id)) : convButton('Copiar', () => convCopy(e.text)), more);
     m.append(acts);
     if (e.audioId) {
       d.append(e3Player(e));
@@ -3377,6 +3379,33 @@ function convEdit(id){
   convCtx++; convAudioId = null; convAudioMs = null; convAudioBase = null;
   convEditingId = id; cur = null; $('text').value = e.text; baseline = e.text; resetEdit(); resetLive(); updWC(); saveDraft();
   renderConv(); $('text').focus();
+}
+/* U14 · Reintentar la transcripción de una nota que quedó con audio y sin texto.
+   Abre la nota en modo edición, lee SU audio guardado (cifrado o sin cifrar) y lo transcribe con el mismo proceso de siempre; el texto queda
+   en el editor para revisarlo y recién se guarda al tocar Guardar. No agrega ni cambia audio: solo lee. Si el audio no se puede leer o la
+   transcripción falla otra vez, la nota queda como estaba. */
+async function convRetranscribe(id){
+  const e = convEntry(id); if (!e || !e.audioId) return;
+  if (e.text.trim()) return flash('Esta nota ya tiene texto. Para no pisarlo, no se vuelve a transcribir.');
+  if (audioBusy() || convAudioWork()) return flash('Esperá a que termine la grabación, la transcripción o el guardado.');
+  if (!anAudioReady()) return flash('Desbloqueá la protección para transcribir este audio.');
+  if (convEditingId !== id && ($('title').value.trim() || tags.length)) return flash('Primero guardá o descartá la nota que estás escribiendo.');
+  if (convEditingId !== id) convEdit(id);
+  if (convEditingId !== id) return;   // convEdit ya explicó por qué no pudo abrirla
+  if ($('text').value.trim()) return flash('El editor ya tiene texto. Guardalo o cancelá la edición antes de transcribir.');
+  const audioId = e.audioId, hid = vault.header && vault.header.id;
+  const leer = async () => {
+    const db = await anDb(), meta = await anGetMeta(db, audioId);
+    if (!meta) throw new Error('el audio ya no está disponible');
+    let parts;
+    if (anIsPlainMeta(meta)) parts = await anPlainRead(db, audioId);
+    else { if (!anUsable()) throw new Error('desbloqueá la protección'); parts = await anReadAudio(db, vault.audioKey, hid, audioId); }
+    if (!parts.length) throw new Error('el audio está vacío');
+    return parts.map(p => p.blob);
+  };
+  document.querySelector('[data-delta-view="grabacion"]').click();   // el avance y los errores de la transcripción se ven en Dictar
+  flash('Transcribiendo el audio de la nota. Cuando termine, revisá el texto y tocá Guardar.');
+  return transcribeBlob(leer, e.durationMs == null ? null : e.durationMs, 'el audio de la nota');
 }
 function convDelete(id){
   const e = convEntry(id), audioId = e && e.audioId;
@@ -3968,15 +3997,20 @@ $('share').onclick = shareNote;
 /* ====================================================================
    Diccionario propio
    ==================================================================== */
+/* Voseo rioplatense. Whisper a veces escribe la forma de España («queréis») o la de «tú» («quieres») aunque se haya dicho «querés»: cada regla
+   la lleva a la forma rioplatense. Las formas con «-éis»/«-áis» (vosotros) no se usan en el Río de la Plata, así que corregirlas no pierde nada. */
+const VOSEO = ['# Voseo rioplatense', 'tú => vos', 'tienes => tenés', 'quieres => querés', 'puedes => podés', 'sabes => sabés', 'eres => sos', 'vienes => venís', 'haces => hacés', 'dices => decís', 'piensas => pensás', 'sientes => sentís',
+  'queréis => querés', 'podéis => podés', 'tenéis => tenés', 'sabéis => sabés', 'sois => sos', 'hacéis => hacés', 'pensáis => pensás', 'vosotros => ustedes'];
 const DEFAULT_DICT = [
   '# Reglas: lo que escribe Whisper => lo que querés que diga',
   'por vos => por voz',
+  '',
+  ...VOSEO,
   '',
   '# Palabras propias: una por línea (o separadas por coma).',
   '# Si Whisper escribe algo que suena parecido, se corrige.',
   'Winnicott', 'Klein', 'Freud'
 ].join('\n');
-const VOSEO = ['# Voseo rioplatense', 'tú => vos', 'tienes => tenés', 'quieres => querés', 'puedes => podés', 'sabes => sabés', 'eres => sos', 'vienes => venís', 'haces => hacés', 'dices => decís', 'piensas => pensás', 'sientes => sentís'];
 let D = {rules: [], V: []};
 function loadDict(){
   let s = null; try { s = vaultStore.getItem(DKEY); } catch (e) {}
@@ -4034,8 +4068,12 @@ $('applyDict').onclick = () => {
   $('text').value = n; flash('Correcciones aplicadas.');
 };
 $('voseo').onclick = () => {
-  if ($('dict').value.includes('# Voseo rioplatense')) return flash('El voseo ya está en el diccionario.');
-  $('dict').value = $('dict').value.replace(/\s*$/, '') + '\n\n' + VOSEO.join('\n') + '\n'; updDict(true);
+  /* Agrega solo las reglas que todavía no están, así también completa un diccionario que ya tenía una versión anterior del voseo. */
+  const have = new Set(parseDict($('dict').value).rules.map(r => r.a.toLowerCase()));
+  const missing = VOSEO.slice(1).filter(l => !have.has(l.split('=>')[0].trim().toLowerCase()));
+  if (!missing.length) return flash('El voseo ya está en el diccionario.');
+  const head = $('dict').value.includes(VOSEO[0]) ? '' : VOSEO[0] + '\n';
+  $('dict').value = $('dict').value.replace(/\s*$/, '') + '\n\n' + head + missing.join('\n') + '\n'; updDict(true);
   flash('Agregado. Podés borrar las reglas que no quieras.');
 };
 function showSuggestions(list){
@@ -7553,6 +7591,13 @@ function inspectImport(blob){
   });
 }
 async function decodePcm(blob, rate){
+  if (Array.isArray(blob)) {   // audio de una nota con varias partes: se decodifica cada una y se unen en orden
+    const pcms = []; let n = 0;
+    for (const b of blob) { const p = await decodePcm(b, rate); pcms.push(p); n += p.length; }
+    const all = new Float32Array(n); let o = 0;
+    for (const p of pcms) { all.set(p, o); o += p.length; }
+    return all;
+  }
   const buf = await withDeadline(blob.arrayBuffer(), 15000, 'lectura del archivo');
   const ctx = new OfflineAudioContext(1, 1, rate);
   const ab = await withDeadline(new Promise((res, rej) => ctx.decodeAudioData(buf, res, rej)), 30000, 'decodificación del archivo');

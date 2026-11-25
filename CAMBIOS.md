@@ -2,6 +2,29 @@
 
 ChatGPT · rama `fix/impresiones-movil-dictavoz` · base `1cb38a4`. La lectura y edición de cuadernos usan la letra del cuerpo de la app y la navegación conserva las cuatro pestañas con íconos. El botón de grabar reutiliza el dibujo del micrófono de la navegación y muestra el símbolo de detener durante la captura. El estado de Whisper indica preparación, lectura o transcripción según la actividad. El porcentaje aproxima la proporción de audio procesada por fragmentos; el tiempo restante es una estimación. Se mantienen los motores y las rutas de guardado. Validación física de estas correcciones pendiente.
 
+## 24/11/2026 · U14: reintentar la transcripción de una nota con audio guardado (Claude; rama `feat/reintentar-transcripcion-2026-11-24`, base `1cb38a4`)
+
+- **Problema:** si la transcripción fallaba y «Conservar audio» estaba activado, la nota quedaba con el audio pero sin texto, y la única salida era escribir a mano o grabar de nuevo.
+- **Cambio:** una nota con audio y **sin texto** muestra el botón **«Transcribir audio»** (en lugar de «Copiar», que no tenía qué copiar). Al tocarlo, `convRetranscribe` abre esa nota en edición, lee **su** audio guardado (sin cifrar con `anPlainRead`; cifrado con `anReadAudio`, solo con la protección abierta) y lo transcribe con el mismo `transcribeBlob` de siempre. El texto queda en el editor para revisarlo y se confirma con **Guardar**, como cualquier edición: la nota conserva su fecha, su audio y su vínculo. `decodePcm` acepta una lista de partes (un audio puede venir de varias grabaciones).
+- **No cambia:** formato de notas, audio, cifrado, copias ni K2. No agrega ni modifica audio: solo lee. Una nota con texto no se vuelve a transcribir (no pisa nada). Si el audio falta o está dañado, se explica en el estado de Dictar y la nota queda como estaba. Cancelar la edición descarta el texto sin tocar la nota.
+- **Límite conocido:** el campo interno `transcriptionStatus` de la nota no se actualiza al guardar el texto (hoy no se muestra en ninguna pantalla).
+- **Pruebas:** `tests/reintentar-browser.mjs` (nueva, agregada al CI): Chrome real con audio sintético, con y sin protección; Whisper sustituido por un doble que cuenta las muestras recibidas. Comprueba botón, lectura del audio, texto en la misma nota, audio intacto, no pisa texto y mensaje si falta el audio. Se ajustó `tests/delta.test.mjs` (el botón directo de la burbuja). Node 203/203 y las suites de Chrome en verde en laboratorio.
+- **Tres niveles:** (a) código guardado en la rama; (b) pruebas técnicas en verde en laboratorio, CI por verificar en el PR; (c) **no probado en el Motorola**, y la transcripción real con Whisper tampoco se ejecutó (en laboratorio se usa un sustituto).
+
+## 24/11/2026 · Voseo: «queréis» → «querés» (Claude; rama `fix/voseo-queres-2026-11-24`, base `1cb38a4`)
+
+- **Problema:** Whisper a veces escribe la forma de España («queréis», «podéis») o la de «tú» donde se dijo «querés». El botón «Agregar formas rioplatenses» ya existía, pero no cubría las formas con «-éis/-áis».
+- **Cambio acotado (solo el diccionario de voseo):** `VOSEO` suma `queréis`, `podéis`, `tenéis`, `sabéis`, `sois`, `hacéis`, `pensáis` y `vosotros`; el diccionario inicial (instalaciones nuevas) ya lo trae; el botón agrega **solo las reglas que faltan** (antes lo bloqueaba si ya existía el encabezado) y no repite el encabezado. No cambia el motor de transcripción, el almacenamiento, el cifrado ni los datos guardados. **El diccionario ya existente de Ignacio no se toca solo:** para sumar las reglas nuevas hay que tocar el botón en Ajustes › Diccionario.
+- **Pruebas:** `node --test tests/*.test.mjs` 204/204 (una prueba nueva); `tests/ajustes-browser.mjs` suma el caso del botón (completa un diccionario viejo, no duplica, se aplica al texto); `browser`, `notas-browser`, `apariencia-browser` y `dictar-simple-browser` en verde. CI por verificar en el PR.
+- **Tres niveles:** (a) código guardado en la rama; (b) pruebas técnicas en verde en laboratorio; (c) **no probado en el Motorola**.
+
+## 24/11/2026 · Orden de la documentación (Claude; rama `docs/ordenar-documentacion-2026-11-24`, base `1cb38a4`)
+
+- **Solo documentación, sin tocar código.** `CONTINUAR-AQUI.md`: tabla de `main` y «Pasos a seguir» al día (hasta #76), sin numeración repetida, sin #65 como abierto. `docs/DECISIONES.md`: estados corregidos (K2, Ajustes, estética, modo nocturno, autoría, U19, A4, A11, A12, A13) y fila nueva **U20** (Cuaderno de margen), confirmada por Ignacio el 24/11.
+- **Verificado antes de escribir:** autoría presente en Ajustes (`index.html`); 203 pruebas de Node y las suites de Chrome ejecutadas (incluida `dictar-simple-browser.mjs`) en verde.
+- **No se tocó:** `docs/PLAN-ALMACENAMIENTO-CIFRADO.md` (el tablero todavía dice que U19 no tiene PR), `README.md` y `CLAUDE.md` («Prueba Delta»), ni el CI (`dictar-simple-browser.mjs` no se ejecuta ahí): quedan como pasos aparte.
+- **Tres niveles:** (a) código guardado en la rama; (b) no aplica (sin cambios de código); (c) no aplica.
+
 ## 22/11/2026 · Cuaderno de margen (opción A)
 
 ChatGPT · rama `diseno/cuaderno-de-margen-2026-11-22` · base `6c503b8`. Se aplica la dirección elegida por Ignacio en la comparación visual. Paleta marfil/ciruela y tema nocturno, tipografía local de lectura, índice de cuadernos con vistas previas configurables, agrupación por fecha, copia directa y menú inferior móvil. Dictar expone la preferencia de audio también en Ajustes y oculta el reloj en reposo. La revisión posterior resalta editar y deshacer. La bienvenida se muestra en perfiles nuevos y se descarta al empezar. Cerrar la bienvenida recuerda un indicador visual del navegador independiente de la biblioteca; K2 sigue reconociendo una instalación vacía. El bloqueo, los siete apartados de Ajustes y el editor usan la misma paleta. No se cambian modelos, cifrado ni formato de las notas o de las copias.

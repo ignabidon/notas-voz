@@ -18,6 +18,20 @@ test('los scripts se pueden analizar', () => {
   scripts.forEach((s,i) => assert.doesNotThrow(() => new Script(s, { filename: 'inline-'+i+'.js' })));
 });
 
+test('voseo: «queréis», «podéis» y «tú» se llevan a la forma rioplatense, y el diccionario nuevo ya lo trae', () => {
+  const match = html.match(/\/\*PURE-START\*\/([\s\S]*?)\/\*PURE-END\*\//);
+  const {parseDict,applyDict} = new Function(match[1]+';return {parseDict,applyDict};')();
+  const v = html.match(/const VOSEO = \[([\s\S]*?)\];/);
+  assert.ok(v, 'falta la lista VOSEO');
+  const reglas = new Function('return [' + v[1] + ']')().filter(l => l.includes('=>')).join('\n');
+  const D = parseDict(reglas);
+  assert.equal(applyDict('¿Queréis venir? Vosotros podéis, tú tienes tiempo.', D), '¿Querés venir? Ustedes podés, vos tenés tiempo.');
+  assert.equal(applyDict('Sois muy amable y sabéis hacéis pensáis.', D), 'Sos muy amable y sabés hacés pensás.');
+  assert.equal(applyDict('Ya querés, podés y tenés.', D), 'Ya querés, podés y tenés.');   // lo que ya está bien no cambia
+  assert.match(html, /const DEFAULT_DICT = \[[\s\S]*?\.\.\.VOSEO,[\s\S]*?\]\.join/, 'el diccionario inicial debe traer el voseo');
+  assert.ok(html.indexOf('const VOSEO =') < html.indexOf('const DEFAULT_DICT ='), 'VOSEO se define antes de usarse');
+});
+
 test('IDs únicos y referencias existentes', () => {
   assert.equal(new Set(ids).size, ids.length, 'IDs duplicados');
   const refs = [...html.matchAll(/\$\('([^']+)'\)/g)].map(m => m[1]);
@@ -2266,7 +2280,8 @@ test('B3: fecha corta y vista previa de la lista, sin tocar los sellos guardados
 
 test('B3 (revisión 22/11): la burbuja permite copiar directamente; Copiar, Editar, Mover y Borrar van en el menú', () => {
   const render = html.match(/function renderConv\(\)\{[\s\S]*?\n\}/)[0];
-  assert.ok(render.includes("acts.append(convButton('Copiar', () => convCopy(e.text)), more)"));
+  assert.ok(render.includes("convButton('Copiar', () => convCopy(e.text)), more)"));   // 24/11 (U14): sin texto y con audio, el botón directo es «Transcribir audio»
+  assert.ok(render.includes("convButton('Transcribir audio', () => void convRetranscribe(e.id))"));
   assert.match(render, /menu\.append\(item\('Copiar'[^\n]*item\('Editar'[^\n]*item\('Mover a otro cuaderno'[^\n]*item\('Borrar esta nota'[^\n]*'ghost danger'\)\);/);
   assert.match(render, /aria-haspopup', 'menu'/); assert.match(render, /aria-expanded', 'false'/); assert.match(render, /setAttribute\('role', 'menu'\)/);
   // Todo con textContent (convButton y createElement); nada de innerHTML con datos.
