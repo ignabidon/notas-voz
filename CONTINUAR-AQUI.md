@@ -4,6 +4,10 @@
 > **Ordenada el 24/11/2026 (Claude, solo documentación):** se pusieron al día los pasos y la tabla de `main` (hasta #76) y los estados de `docs/DECISIONES.md`. No se tocó código.
 > **Estado al 21/11/2026 (ChatGPT):** PR #71 fue revisado por una IA independiente, sus cuatro hallazgos F1/F2/M1/M2 se dieron por resueltos y se **fusionó a `main` sin squash** (merge `8ccc08ac`). El propietario probó en su Motorola G56 5G grabar, guardar/reproducir audio y cerrar/reabrir sin pérdida; también descargó y **verificó** una copia cifrada de **10 cuadernos, 16 notas y 9 audios (aprox. 0,5 MB)**. No probó restaurar. Se detectó un formulario de contraseña oculto al crear la copia; corrección puntual en rama `fix-copias-formulario-visible-2026-11-21`, **sin fusionar** y pendiente de CI y prueba física. PR #72 es visual, permanece en borrador y su rama quedó desfasada respecto del `main` que incluye #71; se debe actualizar/resolver conflictos antes de fusionarlo. Solo datos ficticios hasta completar las validaciones de seguridad.
 
+## Prueba en el celular · 22/11/2026
+
+La opción A llegó a main en #76 (`1cb38a4`). Ignacio observó diferencias en Cuadernos, un aviso prematuro al transcribir y un óvalo en Grabar. ChatGPT implementó las correcciones en `fix/impresiones-movil-dictavoz`. El PR de esa rama contiene los resultados automáticos. Pendiente repetir esos tres puntos en el Motorola.
+
 ## Revisión visual · 22/11/2026 (unida)
 
 Ignacio eligió **A · Cuaderno de margen**. Quedó unida a `main` con #75 (revisión estética y de marketing) y #76 (`1cb38a4`). Ignacio la probó el 24/11 y le gusta. **Por comprobar en el Motorola:** letra grande, lectura y copia de una nota, conservación de audio y dictado con una mano. Coordinar cualquier integración de #72 por el solapamiento visual.

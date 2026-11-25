@@ -1,3 +1,7 @@
+## 22/11/2026 · Primeras impresiones en el celular
+
+ChatGPT · rama `fix/impresiones-movil-dictavoz` · base `1cb38a4`. La lectura y edición de cuadernos usan la letra del cuerpo de la app y la navegación conserva las cuatro pestañas con íconos. El botón de grabar reutiliza el dibujo del micrófono de la navegación y muestra el símbolo de detener durante la captura. El estado de Whisper indica preparación, lectura o transcripción según la actividad. El porcentaje aproxima la proporción de audio procesada por fragmentos; el tiempo restante es una estimación. Se mantienen los motores y las rutas de guardado. Validación física de estas correcciones pendiente.
+
 ## 24/11/2026 · U14: reintentar la transcripción de una nota con audio guardado (Claude; rama `feat/reintentar-transcripcion-2026-11-24`, base `1cb38a4`)
 
 - **Problema:** si la transcripción fallaba y «Conservar audio» estaba activado, la nota quedaba con el audio pero sin texto, y la única salida era escribir a mano o grabar de nuevo.
