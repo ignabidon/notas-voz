@@ -5,6 +5,13 @@
 - **Pruebas:** `node --test tests/*.test.mjs` 204/204 (una prueba nueva); `tests/ajustes-browser.mjs` suma el caso del botón (completa un diccionario viejo, no duplica, se aplica al texto); `browser`, `notas-browser`, `apariencia-browser` y `dictar-simple-browser` en verde. CI por verificar en el PR.
 - **Tres niveles:** (a) código guardado en la rama; (b) pruebas técnicas en verde en laboratorio; (c) **no probado en el Motorola**.
 
+## 24/11/2026 · Orden de la documentación (Claude; rama `docs/ordenar-documentacion-2026-11-24`, base `1cb38a4`)
+
+- **Solo documentación, sin tocar código.** `CONTINUAR-AQUI.md`: tabla de `main` y «Pasos a seguir» al día (hasta #76), sin numeración repetida, sin #65 como abierto. `docs/DECISIONES.md`: estados corregidos (K2, Ajustes, estética, modo nocturno, autoría, U19, A4, A11, A12, A13) y fila nueva **U20** (Cuaderno de margen), confirmada por Ignacio el 24/11.
+- **Verificado antes de escribir:** autoría presente en Ajustes (`index.html`); 203 pruebas de Node y las suites de Chrome ejecutadas (incluida `dictar-simple-browser.mjs`) en verde.
+- **No se tocó:** `docs/PLAN-ALMACENAMIENTO-CIFRADO.md` (el tablero todavía dice que U19 no tiene PR), `README.md` y `CLAUDE.md` («Prueba Delta»), ni el CI (`dictar-simple-browser.mjs` no se ejecuta ahí): quedan como pasos aparte.
+- **Tres niveles:** (a) código guardado en la rama; (b) no aplica (sin cambios de código); (c) no aplica.
+
 ## 22/11/2026 · Cuaderno de margen (opción A)
 
 ChatGPT · rama `diseno/cuaderno-de-margen-2026-11-22` · base `6c503b8`. Se aplica la dirección elegida por Ignacio en la comparación visual. Paleta marfil/ciruela y tema nocturno, tipografía local de lectura, índice de cuadernos con vistas previas configurables, agrupación por fecha, copia directa y menú inferior móvil. Dictar expone la preferencia de audio también en Ajustes y oculta el reloj en reposo. La revisión posterior resalta editar y deshacer. La bienvenida se muestra en perfiles nuevos y se descarta al empezar. Cerrar la bienvenida recuerda un indicador visual del navegador independiente de la biblioteca; K2 sigue reconociendo una instalación vacía. El bloqueo, los siete apartados de Ajustes y el editor usan la misma paleta. No se cambian modelos, cifrado ni formato de las notas o de las copias.
