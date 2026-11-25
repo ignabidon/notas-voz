@@ -1,3 +1,9 @@
+## 21/11/2026 · Texto de arranque rioplatense para Whisper (Claude; rama whisper-texto-arranque-rioplatense-2026-11-21)
+
+- **Qué hace:** antes de transcribir, Whisper recibe una frase corta con voseo («contame vos», «¿querés…?», «tenés razón») para que tienda a escribir «querés» y no «queréis» (Q3).
+- **Seguro ante fallos:** si el motor no admite el texto de arranque, transcribe como antes y lo anota en el diagnóstico. Si la frase aparece en el resultado, se recorta.
+- **Pruebas:** `node --test` en verde. **Sin probar con audio real ni en Motorola**: el efecto es más débil en modelos chicos (tiny/base).
+
 ## 22/11/2026 · Primeras impresiones en el celular
 
 ChatGPT · rama `fix/impresiones-movil-dictavoz` · base `1cb38a4`. La lectura y edición de cuadernos usan la letra del cuerpo de la app y la navegación conserva las cuatro pestañas con íconos. El botón de grabar reutiliza el dibujo del micrófono de la navegación y muestra el símbolo de detener durante la captura. El estado de Whisper indica preparación, lectura o transcripción según la actividad. El porcentaje aproxima la proporción de audio procesada por fragmentos; el tiempo restante es una estimación. Se mantienen los motores y las rutas de guardado. Validación física de estas correcciones pendiente.

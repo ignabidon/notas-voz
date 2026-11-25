@@ -4387,16 +4387,34 @@ function workerBody(){
       if (m.type === 'load') { await load(m.model, m.accel); say({type:'ready', id:m.id, backend:be}); }
       else if (m.type === 'run') {
         const opt = {language:'spanish', task:'transcribe'};
+        // Texto de arranque rioplatense: orienta a Whisper hacia el voseo («querés», no «queréis»).
+        const PROMPT_AR = 'Bueno, contame vos cómo estás. ¿Querés que lo charlemos? Dale, tenés razón, sentate.';
+        let pids = null;
+        try {
+          const tk = asr && asr.tokenizer;
+          if (tk && typeof tk.get_prompt_ids === 'function') pids = tk.get_prompt_ids(PROMPT_AR);
+          else if (tk && typeof tk.encode === 'function') {
+            const st = tk.model && tk.model.tokens_to_ids && tk.model.tokens_to_ids.get('<|startofprev|>');
+            if (st != null) pids = [st, ...tk.encode(' ' + PROMPT_AR, {add_special_tokens:false})];
+          }
+        } catch (e) { pids = null; }
+        const optAR = pids ? {...opt, prompt_ids: pids} : opt;
+        const limpiar = t => { t = String(t || ''); const i = t.indexOf(PROMPT_AR); return (i >= 0 ? t.slice(i + PROMPT_AR.length) : t).trim(); };
         let r;
         stage = 'transcripción';
         if (!(m.audio instanceof Float32Array) || !m.audio.length) throw new Error('Audio PCM vacío o inválido');
-        try { r = await asr(m.audio, opt); }
+        const correr = async () => {
+          if (optAR === opt) return asr(m.audio, opt);
+          try { const x = await asr(m.audio, optAR); x.text = limpiar(x.text); return x; }
+          catch (e) { note('Texto de arranque rioplatense no admitido (' + String(e && e.message || e) + '): se transcribe sin él.'); return asr(m.audio, opt); }
+        };
+        try { r = await correr(); }
         catch (e) {
           if (be !== 'GPU') throw e;
           note('La placa de video falló al transcribir (' + String(e && e.message || e) + '): sigue con el procesador.');
           asr = await build(model, false); be = 'CPU'; // la GPU falló: sigue con el procesador
           stage = 'transcripción';
-          r = await asr(m.audio, opt);
+          r = await correr();
         }
         say({type:'result', id:m.id, text:r.text, backend:be});
       }
