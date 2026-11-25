@@ -18,6 +18,20 @@ test('los scripts se pueden analizar', () => {
   scripts.forEach((s,i) => assert.doesNotThrow(() => new Script(s, { filename: 'inline-'+i+'.js' })));
 });
 
+test('voseo: «queréis», «podéis» y «tú» se llevan a la forma rioplatense, y el diccionario nuevo ya lo trae', () => {
+  const match = html.match(/\/\*PURE-START\*\/([\s\S]*?)\/\*PURE-END\*\//);
+  const {parseDict,applyDict} = new Function(match[1]+';return {parseDict,applyDict};')();
+  const v = html.match(/const VOSEO = \[([\s\S]*?)\];/);
+  assert.ok(v, 'falta la lista VOSEO');
+  const reglas = new Function('return [' + v[1] + ']')().filter(l => l.includes('=>')).join('\n');
+  const D = parseDict(reglas);
+  assert.equal(applyDict('¿Queréis venir? Vosotros podéis, tú tienes tiempo.', D), '¿Querés venir? Ustedes podés, vos tenés tiempo.');
+  assert.equal(applyDict('Sois muy amable y sabéis hacéis pensáis.', D), 'Sos muy amable y sabés hacés pensás.');
+  assert.equal(applyDict('Ya querés, podés y tenés.', D), 'Ya querés, podés y tenés.');   // lo que ya está bien no cambia
+  assert.match(html, /const DEFAULT_DICT = \[[\s\S]*?\.\.\.VOSEO,[\s\S]*?\]\.join/, 'el diccionario inicial debe traer el voseo');
+  assert.ok(html.indexOf('const VOSEO =') < html.indexOf('const DEFAULT_DICT ='), 'VOSEO se define antes de usarse');
+});
+
 test('IDs únicos y referencias existentes', () => {
   assert.equal(new Set(ids).size, ids.length, 'IDs duplicados');
   const refs = [...html.matchAll(/\$\('([^']+)'\)/g)].map(m => m[1]);
