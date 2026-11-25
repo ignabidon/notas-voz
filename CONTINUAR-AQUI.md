@@ -6,7 +6,7 @@
 
 ## Prueba en el celular · 22/11/2026
 
-La opción A llegó a main en #76 (`1cb38a4`). Ignacio observó diferencias en Cuadernos, un aviso prematuro al transcribir y un óvalo en Grabar. ChatGPT implementó las correcciones en `fix/impresiones-movil-dictavoz`. El PR de esa rama contiene los resultados automáticos. Pendiente repetir esos tres puntos en el Motorola.
+La opción A llegó a main en #76 (`1cb38a4`). Ignacio observó diferencias en Cuadernos, un aviso prematuro al transcribir y un óvalo en Grabar. ChatGPT las corrigió en #77, **unido a `main` el 24/11** (sin squash, CI en verde). **Por repetir en el Motorola:** pestañas con íconos en Cuadernos, micrófono en Grabar y mensajes de transcripción (preparando / leyendo / transcribiendo y porcentaje).
 
 ## Revisión visual · 22/11/2026 (unida)
 
@@ -54,7 +54,7 @@ DictaVoz (antes DictaNota; solo cambió lo visible): transcribe voz a texto en e
 
 ## Pasos a seguir (en este orden)
 
-1. **Probar en el Motorola** lo último de `main` (#75, #76, U5, U17, U18, U12, U19), con datos inventados. Es una prueba corta que solo puede hacer Ignacio.
+1. **Probar en el Motorola** lo último de `main` (#75, #76, #77, U5, U17, U18, U12, U19, voseo #79, «Transcribir audio» #80), con datos inventados. De #74 (texto de arranque rioplatense de Whisper, unido el 24/11, programado por Claude y sin probar con audio real): dictar «querés» y «podés» y avisar si aparece la frase de arranque o se repiten partes. Es una prueba corta que solo puede hacer Ignacio.
 2. **Copia oculta:** confirmar si el PR de la rama `fix-copias-formulario-visible-2026-11-21` ya se unió; si no, revisarlo con el CI en verde y unirlo sin squash. Comprobar el formulario en el Motorola sin restaurar ni borrar datos.
 3. **PR #72 visual:** actualizarlo sobre el `main` actual, retirar aserciones obsoletas, resolver conflictos y probar accesibilidad móvil. No unir directamente la rama atrasada.
 4. **Agregar `tests/dictar-simple-browser.mjs` al CI** (`.github/workflows/verificar-delta.yml`): pasa, pero hoy no se ejecuta en cada cambio.

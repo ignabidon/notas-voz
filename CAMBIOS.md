@@ -1,3 +1,10 @@
+## 24/11/2026 · Estado tras unir #77 y #74 (Claude; rama `docs/estado-tras-77-74-2026-11-24`)
+
+- **Qué:** #77 (correcciones de Cuadernos, micrófono y mensajes de transcripción) y #74 (texto de arranque rioplatense de Whisper) se unieron a `main` sin squash, en ese orden, con el CI en verde y 204 pruebas de Node. Los conflictos eran solo de documentación y se resolvieron conservando ambas entradas.
+- **Cambio en este PR:** solo `CONTINUAR-AQUI.md` (estado y paso 1) y esta entrada. No se tocó código.
+- **Sin probar en el Motorola:** #77 y #74. #74 no se probó con audio real; lo programó Claude y no tuvo revisión de otra IA.
+- **Tres niveles:** (a) guardado en GitHub y unido a `main`; (b) prueba técnica aprobada (Node y Chrome en laboratorio); (c) no probado en Motorola.
+
 ## 21/11/2026 · Texto de arranque rioplatense para Whisper (Claude; rama whisper-texto-arranque-rioplatense-2026-11-21)
 
 - **Qué hace:** antes de transcribir, Whisper recibe una frase corta con voseo («contame vos», «¿querés…?», «tenés razón») para que tienda a escribir «querés» y no «queréis» (Q3).
