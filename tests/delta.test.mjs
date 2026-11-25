@@ -2276,7 +2276,8 @@ test('B3: fecha corta y vista previa de la lista, sin tocar los sellos guardados
 
 test('B3 (revisión 22/11): la burbuja permite copiar directamente; Copiar, Editar, Mover y Borrar van en el menú', () => {
   const render = html.match(/function renderConv\(\)\{[\s\S]*?\n\}/)[0];
-  assert.ok(render.includes("acts.append(convButton('Copiar', () => convCopy(e.text)), more)"));
+  assert.ok(render.includes("convButton('Copiar', () => convCopy(e.text)), more)"));   // 24/11 (U14): sin texto y con audio, el botón directo es «Transcribir audio»
+  assert.ok(render.includes("convButton('Transcribir audio', () => void convRetranscribe(e.id))"));
   assert.match(render, /menu\.append\(item\('Copiar'[^\n]*item\('Editar'[^\n]*item\('Mover a otro cuaderno'[^\n]*item\('Borrar esta nota'[^\n]*'ghost danger'\)\);/);
   assert.match(render, /aria-haspopup', 'menu'/); assert.match(render, /aria-expanded', 'false'/); assert.match(render, /setAttribute\('role', 'menu'\)/);
   // Todo con textContent (convButton y createElement); nada de innerHTML con datos.

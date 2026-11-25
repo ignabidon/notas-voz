@@ -1,3 +1,12 @@
+## 24/11/2026 · U14: reintentar la transcripción de una nota con audio guardado (Claude; rama `feat/reintentar-transcripcion-2026-11-24`, base `1cb38a4`)
+
+- **Problema:** si la transcripción fallaba y «Conservar audio» estaba activado, la nota quedaba con el audio pero sin texto, y la única salida era escribir a mano o grabar de nuevo.
+- **Cambio:** una nota con audio y **sin texto** muestra el botón **«Transcribir audio»** (en lugar de «Copiar», que no tenía qué copiar). Al tocarlo, `convRetranscribe` abre esa nota en edición, lee **su** audio guardado (sin cifrar con `anPlainRead`; cifrado con `anReadAudio`, solo con la protección abierta) y lo transcribe con el mismo `transcribeBlob` de siempre. El texto queda en el editor para revisarlo y se confirma con **Guardar**, como cualquier edición: la nota conserva su fecha, su audio y su vínculo. `decodePcm` acepta una lista de partes (un audio puede venir de varias grabaciones).
+- **No cambia:** formato de notas, audio, cifrado, copias ni K2. No agrega ni modifica audio: solo lee. Una nota con texto no se vuelve a transcribir (no pisa nada). Si el audio falta o está dañado, se explica en el estado de Dictar y la nota queda como estaba. Cancelar la edición descarta el texto sin tocar la nota.
+- **Límite conocido:** el campo interno `transcriptionStatus` de la nota no se actualiza al guardar el texto (hoy no se muestra en ninguna pantalla).
+- **Pruebas:** `tests/reintentar-browser.mjs` (nueva, agregada al CI): Chrome real con audio sintético, con y sin protección; Whisper sustituido por un doble que cuenta las muestras recibidas. Comprueba botón, lectura del audio, texto en la misma nota, audio intacto, no pisa texto y mensaje si falta el audio. Se ajustó `tests/delta.test.mjs` (el botón directo de la burbuja). Node 203/203 y las suites de Chrome en verde en laboratorio.
+- **Tres niveles:** (a) código guardado en la rama; (b) pruebas técnicas en verde en laboratorio, CI por verificar en el PR; (c) **no probado en el Motorola**, y la transcripción real con Whisper tampoco se ejecutó (en laboratorio se usa un sustituto).
+
 ## 24/11/2026 · Voseo: «queréis» → «querés» (Claude; rama `fix/voseo-queres-2026-11-24`, base `1cb38a4`)
 
 - **Problema:** Whisper a veces escribe la forma de España («queréis», «podéis») o la de «tú» donde se dijo «querés». El botón «Agregar formas rioplatenses» ya existía, pero no cubría las formas con «-éis/-áis».

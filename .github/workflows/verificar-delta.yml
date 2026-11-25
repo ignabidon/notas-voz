@@ -92,3 +92,6 @@ jobs:
       - name: "Capa única de registros cifrados en Chrome (almacén falso: protección, copia, verificación y restauración K2; datos ficticios)"
         run: node tests/capa-registros-browser.mjs
         timeout-minutes: 5
+      - name: Reintentar la transcripción de una nota con audio (Chrome; audio sintético claro y cifrado, Whisper sustituido; datos ficticios)
+        run: node tests/reintentar-browser.mjs
+        timeout-minutes: 4

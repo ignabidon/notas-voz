@@ -48,7 +48,7 @@ Una línea con ID nuevo, fecha, la frase de Ignacio lo más literal posible y la
 | U11 | Proteger `main` en GitHub. Lo activa Ignacio | 16/11 | chat | **Pendiente: `main` sigue sin protección (verificado 17/11)** |
 | U12 | Elegir cuaderno y nombre desde Dictar (por defecto, uno nuevo con fecha y hora) | 17/11 | PR #49 y #52 (sin unir) | Hecho (#67) |
 | U13 | Revisar la transcripción como borrador dentro del cuaderno y confirmar a mano; conservar borradores al volver a la app | 17/11 | PR #52 (sin unir) | Hecho (#59) |
-| U14 | Si Whisper falla y «Conservar audio» estaba activado: mostrar el audio en el cuaderno y permitir «guardar solo audio», reintentar y escribir a mano. Si estaba desactivado: no guardar el audio | 17/11 | PR #52 (sin unir) | En parte (#59 unido hace «guardar solo audio»; falta reintentar) |
+| U14 | Si Whisper falla y «Conservar audio» estaba activado: mostrar el audio en el cuaderno y permitir «guardar solo audio», reintentar y escribir a mano. Si estaba desactivado: no guardar el audio | 17/11 | PR #52 (sin unir) | Hecho (#59 «guardar solo audio»; #80 «Transcribir audio» para reintentar). Falta probarlo en el Motorola con Whisper real |
 | U15 | Reproductor compacto en la misma burbuja, con prioridad visual para el texto | 17/11 | PR #52 (sin unir) | Pendiente |
 | U16 | **Prioridad de mejoras de uso** (después de las revisiones cruzadas): primero **elegir cuaderno y nombre desde Dictar** (U12) y el **rediseño de Ajustes** (primero una maqueta; no se programa hasta que Ignacio la apruebe). No eligió por ahora: reintentar Whisper desde el audio guardado (U14, parte pendiente) ni deshacer una edición guardada | 17/11 | chat | Vigente |
 | U17 | **Ignacio aprobó la maqueta de Ajustes (lista de secciones con subpantallas) el 18/11.** Pantalla principal con tarjeta de estado y filas; cada fila abre su subpantalla con «‹ Ajustes»; sin pestañas nuevas | 18/11 | chat | Hecho (#68); falta probarlo en el Motorola |
@@ -91,6 +91,6 @@ Una línea con ID nuevo, fecha, la frase de Ignacio lo más literal posible y la
 |---|---|---|
 | Q1 | ¿Cuándo se **publica** el formato 2 de copia? A3 solo lo permite en laboratorio | #60 |
 | Q2 | Reglas de **AO**: qué se guarda, qué se exporta (anonimizada / original) y cuándo avisar | Diseño 2.3; D9 |
-| Q3 | Pendientes de producto sin prioridad: **deshacer una edición guardada**, **reintentar Whisper desde el audio guardado**, mensaje de «otra pestaña» más claro, «querés» transcripto como «queréis», motor Whisper propio dentro del repo | `docs/historial/CONTINUAR-AQUI-hasta-2026-11-17.md`, U10, U14 |
+| Q3 | Pendientes de producto sin prioridad: **deshacer una edición guardada**, mensaje de «otra pestaña» más claro, motor Whisper propio dentro del repo | `docs/historial/CONTINUAR-AQUI-hasta-2026-11-17.md`, U10 |
 
 **Respondidas el 17/11 y movidas a la tabla A:** K2 (A4, A5) · «Conservar audio» por defecto (A6) · retirar compatibilidad con datos de prueba (A7) · borrar bases viejas de prueba (A8) · dónde alojar el texto de T (A9).

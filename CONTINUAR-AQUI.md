@@ -59,7 +59,7 @@ DictaVoz (antes DictaNota; solo cambió lo visible): transcribe voz a texto en e
 7. **T** (mudar el texto), con permiso explícito de Ignacio (cabecera v:2, durabilidad estricta, borrar `localStorage` recién en el desbloqueo siguiente). Después, AO.
 8. **Pendiente de Ignacio:** proteger `main` en GitHub (sigue sin protección), sobre todo antes de dar permisos de escritura a otra persona.
 
-**Todavía sin decidir:** cuándo se publica el formato 2 de copia (Q1), las reglas de AO (Q2) y el orden de los pendientes menores (Q3: deshacer una edición guardada, reintentar Whisper, mensaje de «otra pestaña», voseo).
+**Todavía sin decidir:** cuándo se publica el formato 2 de copia (Q1), las reglas de AO (Q2) y el orden de los pendientes menores (Q3: deshacer una edición guardada, mensaje de «otra pestaña»).
 
 ## Estado de las pruebas (tres niveles, siempre separados)
 
@@ -69,7 +69,7 @@ DictaVoz (antes DictaNota; solo cambió lo visible): transcribe voz a texto en e
 
 ## Pendientes de producto sin prioridad
 
-Deshacer una edición ya guardada · reintentar Whisper desde el audio guardado · mensaje de «otra pestaña» más claro · «querés» transcripto como «queréis» · motor Whisper propio dentro del repositorio. Los dos que tenían prioridad (elegir cuaderno desde Dictar y rediseño de Ajustes) ya están hechos. Detalle: `docs/DECISIONES.md`.
+Deshacer una edición ya guardada · mensaje de «otra pestaña» más claro · motor Whisper propio dentro del repositorio. Los dos que tenían prioridad (elegir cuaderno desde Dictar y rediseño de Ajustes) ya están hechos. Detalle: `docs/DECISIONES.md`.
 
 ## Historia
 
