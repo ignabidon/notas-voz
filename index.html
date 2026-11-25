@@ -3969,15 +3969,20 @@ $('share').onclick = shareNote;
 /* ====================================================================
    Diccionario propio
    ==================================================================== */
+/* Voseo rioplatense. Whisper a veces escribe la forma de España («queréis») o la de «tú» («quieres») aunque se haya dicho «querés»: cada regla
+   la lleva a la forma rioplatense. Las formas con «-éis»/«-áis» (vosotros) no se usan en el Río de la Plata, así que corregirlas no pierde nada. */
+const VOSEO = ['# Voseo rioplatense', 'tú => vos', 'tienes => tenés', 'quieres => querés', 'puedes => podés', 'sabes => sabés', 'eres => sos', 'vienes => venís', 'haces => hacés', 'dices => decís', 'piensas => pensás', 'sientes => sentís',
+  'queréis => querés', 'podéis => podés', 'tenéis => tenés', 'sabéis => sabés', 'sois => sos', 'hacéis => hacés', 'pensáis => pensás', 'vosotros => ustedes'];
 const DEFAULT_DICT = [
   '# Reglas: lo que escribe Whisper => lo que querés que diga',
   'por vos => por voz',
+  '',
+  ...VOSEO,
   '',
   '# Palabras propias: una por línea (o separadas por coma).',
   '# Si Whisper escribe algo que suena parecido, se corrige.',
   'Winnicott', 'Klein', 'Freud'
 ].join('\n');
-const VOSEO = ['# Voseo rioplatense', 'tú => vos', 'tienes => tenés', 'quieres => querés', 'puedes => podés', 'sabes => sabés', 'eres => sos', 'vienes => venís', 'haces => hacés', 'dices => decís', 'piensas => pensás', 'sientes => sentís'];
 let D = {rules: [], V: []};
 function loadDict(){
   let s = null; try { s = vaultStore.getItem(DKEY); } catch (e) {}
@@ -4035,8 +4040,12 @@ $('applyDict').onclick = () => {
   $('text').value = n; flash('Correcciones aplicadas.');
 };
 $('voseo').onclick = () => {
-  if ($('dict').value.includes('# Voseo rioplatense')) return flash('El voseo ya está en el diccionario.');
-  $('dict').value = $('dict').value.replace(/\s*$/, '') + '\n\n' + VOSEO.join('\n') + '\n'; updDict(true);
+  /* Agrega solo las reglas que todavía no están, así también completa un diccionario que ya tenía una versión anterior del voseo. */
+  const have = new Set(parseDict($('dict').value).rules.map(r => r.a.toLowerCase()));
+  const missing = VOSEO.slice(1).filter(l => !have.has(l.split('=>')[0].trim().toLowerCase()));
+  if (!missing.length) return flash('El voseo ya está en el diccionario.');
+  const head = $('dict').value.includes(VOSEO[0]) ? '' : VOSEO[0] + '\n';
+  $('dict').value = $('dict').value.replace(/\s*$/, '') + '\n\n' + head + missing.join('\n') + '\n'; updDict(true);
   flash('Agregado. Podés borrar las reglas que no quieras.');
 };
 function showSuggestions(list){

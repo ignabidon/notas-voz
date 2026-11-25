@@ -147,6 +147,14 @@ try {
     await run(`(()=>{document.querySelector('.studio-dictionary').open=true;const d=document.getElementById('dict');d.value='palabra mal => palabra bien';d.dispatchEvent(new Event('input',{bubbles:true}));return 1})()`); await sleep(300);
     assert.match(await run(`vaultStore.getItem(DKEY)||''`), /palabra mal => palabra bien/, 'el diccionario se guarda');
     for (const id of ['applyDict', 'voseo']) assert.equal(await visible(id), true, '#' + id);
+    // Voseo: el botón agrega lo que falta (también a un diccionario que ya tenía una versión vieja) y no duplica.
+    await run(`(()=>{const d=document.getElementById('dict');d.value='# Voseo rioplatense\\nquieres => querés';d.dispatchEvent(new Event('input',{bubbles:true}));document.getElementById('voseo').click();return 1})()`); await sleep(300);
+    const dic = await run(`document.getElementById('dict').value`);
+    assert.match(dic, /queréis => querés/, 'el voseo agrega «queréis»'); assert.match(dic, /podéis => podés/);
+    assert.equal(dic.split('quieres => querés').length, 2, 'no repite lo que ya estaba'); assert.equal(dic.split('# Voseo rioplatense').length, 2, 'no repite el encabezado');
+    await run(`document.getElementById('voseo').click()`); await sleep(200);
+    assert.equal(await run(`document.getElementById('dict').value`), dic, 'una segunda vez no cambia nada');
+    assert.equal(await run(`applyDict('¿Queréis venir? Vosotros podéis.', D)`), '¿Querés venir? Ustedes podés.', 'se aplica al texto');
     await volver();
     // Persisten tras recargar.
     await load(protegida);
